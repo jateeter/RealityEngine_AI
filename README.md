@@ -2,6 +2,8 @@
 
 A sophisticated reality engine system implementing vector-based state machines with dynamic transitions and pattern matching capabilities. The system models reality as a collection of vector states that transition based on observations, enabling complex event sequence processing and reality manipulation through output assertions.
 
+Claude Code generated seed version of the Reality Engine (with incremental prompt specification)
+
 ## Table of Contents
 
 - [Overview](#overview)

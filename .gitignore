@@ -38,3 +38,6 @@ qdrant_storage/
 # Temporary files
 tmp/
 temp/
+
+# Runtime files
+.api.pid
