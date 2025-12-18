@@ -1,0 +1,311 @@
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import axios from 'axios';
+import { WebSocketServer } from 'ws';
+import * as http from 'http';
+
+/**
+ * Visualization Backend Server
+ *
+ * This server acts as a proxy between the React frontend and the Reality Engine,
+ * providing WebSocket support for real-time updates without modifying the core engine.
+ */
+
+const app = express();
+const PORT = parseInt(process.env.VIZ_PORT || '3001', 10);
+const REALITY_ENGINE_URL = process.env.REALITY_ENGINE_URL || 'http://localhost:3000';
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Create WebSocket server
+const wss = new WebSocketServer({ server, path: '/ws' });
+
+// Store connected clients
+const clients = new Set<any>();
+
+wss.on('connection', (ws) => {
+  console.log('WebSocket client connected');
+  clients.add(ws);
+
+  ws.on('close', () => {
+    console.log('WebSocket client disconnected');
+    clients.delete(ws);
+  });
+
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+    clients.delete(ws);
+  });
+});
+
+// Broadcast function to all connected clients
+function broadcast(data: any) {
+  const message = JSON.stringify(data);
+  clients.forEach((client) => {
+    if (client.readyState === 1) { // OPEN
+      client.send(message);
+    }
+  });
+}
+
+// Health check
+app.get('/health', (req: Request, res: Response) => {
+  res.json({
+    status: 'healthy',
+    service: 'reality-engine-visualizer',
+    timestamp: Date.now()
+  });
+});
+
+// Proxy endpoint: Get all sequences with graph data
+app.get('/api/viz/sequences', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences`);
+    const sequences = response.data.sequences;
+
+    // Transform sequences into graph-ready format
+    const graphData = sequences.map((sequence: any) => {
+      const nodes: any[] = [];
+      const edges: any[] = [];
+
+      // Create nodes from vectors
+      sequence.vectors.forEach((vector: any) => {
+        nodes.push({
+          id: vector.id,
+          label: `V-${vector.id.substring(0, 8)}`,
+          isInitial: vector.isInitial,
+          isActive: vector.state === 'ACTIVE',
+          hasOutput: vector.outputVectors && vector.outputVectors.length > 0,
+          elements: vector.elements,
+          metadata: vector.metadata,
+          outputVectors: vector.outputVectors || []
+        });
+
+        // Create edges from next vector connections
+        if (vector.nextVectorIds && vector.nextVectorIds.length > 0) {
+          vector.nextVectorIds.forEach((targetId: string) => {
+            edges.push({
+              id: `${vector.id}-${targetId}`,
+              source: vector.id,
+              target: targetId
+            });
+          });
+        }
+      });
+
+      return {
+        sequenceId: sequence.id,
+        sequenceName: sequence.name,
+        metadata: sequence.metadata,
+        nodes,
+        edges,
+        stats: {
+          totalVectors: nodes.length,
+          activeVectors: nodes.filter((n: any) => n.isActive).length,
+          initialVectors: nodes.filter((n: any) => n.isInitial).length,
+          outputVectors: nodes.filter((n: any) => n.hasOutput).length
+        }
+      };
+    });
+
+    res.json({ sequences: graphData });
+  } catch (error: any) {
+    console.error('Error fetching sequences:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Get specific sequence graph
+app.get('/api/viz/sequences/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences/${id}`);
+    const sequence = response.data.sequence;
+
+    const nodes: any[] = [];
+    const edges: any[] = [];
+
+    // Create nodes from vectors
+    sequence.vectors.forEach((vector: any) => {
+      nodes.push({
+        id: vector.id,
+        label: `V-${vector.id.substring(0, 8)}`,
+        isInitial: vector.isInitial,
+        isActive: vector.state === 'ACTIVE',
+        hasOutput: vector.outputVectors && vector.outputVectors.length > 0,
+        elements: vector.elements,
+        metadata: vector.metadata,
+        outputVectors: vector.outputVectors || []
+      });
+
+      // Create edges from next vector connections
+      if (vector.nextVectorIds && vector.nextVectorIds.length > 0) {
+        vector.nextVectorIds.forEach((targetId: string) => {
+          edges.push({
+            id: `${vector.id}-${targetId}`,
+            source: vector.id,
+            target: targetId
+          });
+        });
+      }
+    });
+
+    const graphData = {
+      sequenceId: sequence.id,
+      sequenceName: sequence.name,
+      metadata: sequence.metadata,
+      nodes,
+      edges,
+      stats: {
+        totalVectors: nodes.length,
+        activeVectors: nodes.filter((n: any) => n.isActive).length,
+        initialVectors: nodes.filter((n: any) => n.isInitial).length,
+        outputVectors: nodes.filter((n: any) => n.hasOutput).length
+      }
+    };
+
+    res.json(graphData);
+  } catch (error: any) {
+    console.error('Error fetching sequence:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Get engine stats
+app.get('/api/viz/stats', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/engine/stats`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error fetching stats:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Get active vectors
+app.get('/api/viz/active', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/engine/active`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error fetching active vectors:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Get history
+app.get('/api/viz/history', async (req: Request, res: Response) => {
+  try {
+    const limit = req.query.limit ? `?limit=${req.query.limit}` : '';
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/engine/history${limit}`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error fetching history:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Reset sequence
+app.post('/api/viz/sequences/:id/reset', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/sequences/${id}/reset`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'sequence-reset',
+      sequenceId: id,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error resetting sequence:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Process input (with WebSocket broadcast)
+app.post('/api/viz/process', async (req: Request, res: Response) => {
+  try {
+    const { vector } = req.body;
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/engine/process`, { vector });
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'input-processed',
+      data: response.data,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error processing input:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Polling endpoint to check for updates (alternative to WebSocket)
+let lastUpdateTime = Date.now();
+let cachedSequences: any = null;
+
+app.get('/api/viz/poll', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences`);
+    const sequences = response.data.sequences;
+
+    // Simple change detection based on active vectors
+    const currentState = JSON.stringify(sequences.map((s: any) =>
+      s.vectors.map((v: any) => ({ id: v.id, state: v.state }))
+    ));
+
+    const previousState = cachedSequences
+      ? JSON.stringify(cachedSequences.map((s: any) =>
+          s.vectors.map((v: any) => ({ id: v.id, state: v.state }))
+        ))
+      : null;
+
+    const hasChanges = currentState !== previousState;
+
+    if (hasChanges) {
+      lastUpdateTime = Date.now();
+      cachedSequences = sequences;
+    }
+
+    res.json({
+      hasChanges,
+      lastUpdateTime,
+      timestamp: Date.now()
+    });
+  } catch (error: any) {
+    console.error('Error polling for updates:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Start server
+server.listen(PORT, () => {
+  console.log(`Reality Engine Visualizer Backend running on port ${PORT}`);
+  console.log(`WebSocket server available at ws://localhost:${PORT}/ws`);
+  console.log(`Proxying to Reality Engine at ${REALITY_ENGINE_URL}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    process.exit(0);
+  });
+});

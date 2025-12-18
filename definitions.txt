@@ -1,0 +1,18 @@
+Reality Vector
+
+Input Reality Vector
+
+Output Reality Vector
+
+Event is a RealityVector with associated attributes of Initial (true/false), Active (true/false) AND membership in at lease one Set of Active Events, Terminal (true/false), Output RealityVector is a Reality Vector to be applied when the Event is Active AND matches the Current Reality Vector applied to the system.
+Event Sequence
+
+Critical Event
+
+Critical Event Sequence
+
+Input Event
+
+OutputEvent
+
+ActiveEventCollections

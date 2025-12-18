@@ -1,0 +1,31 @@
+create a new app with three primary points of focus. 1) a PreceptionOfReality, 2) Reality as sampled via observation, and 3) one or more RealityEngines. The RealityEngy has the ability to store and manipulate a 1xn demintional RealityVector. (note: Provide configuration capabilty for the threashold of n.) Identify and deploy, in a docker-compose set of packages, open source vector storage capabilities with api to create, store, and interconnect RealityVectors. In addition, each RealityVector has a collection of NextVectors. Each RealityVector MAY also have a collection of 1 or more OutputVectors associated with it. each RealityVector has the characteristic of "Active" associated with it. When active, "Match" orperations are performed upon any presentation of an InputRealityVector. 
+
+Each element within a RealityVector shall behave as a comparitor for equality, and/or TriggerThreshold. this may be eq, equal, or any pattern matching funciton that results in either true==>Match or "false" notMatch for any valid InputRealityVector. 
+
+Each RealityVector shall have operators to "set-Active", "clear-Active", and "transition". each RealityVector is either Active or notActive.
+
+A WorldViewOfReality occurs whenever an InputRealityVector is resolved
+by forming a PreceptionOfReality. The PreceptionOfReality provides stimulus
+to the RealityEngine in the form of a InputRealityVector(s). The RealityEngine issues a "Transition" to each CriticalEventSequence that, in turn, issues a "Transition" to each of it's Active RealityVectors. 
+transitive operation that performes a "set-active" operation. Each
+RealityVector has a collection of NextActive vectors. Upone a
+Transition, the RealityVector is presented with a vector (as obaned
+from reality) and if that vector matches any Active RealityVectors,
+then a Transition operations is requested of all members of the
+NextActive collection.
+
+CriticalEventSequences are defined as having some implact on Reality via the assertion of an OutputRealityVector during the Transition operation. Transition is instigated whenever an InputRealityVector is sampled from  within Reality. CriticalEventSequences contain (at least) one RealityVector that asserts an OutputRealityVector and 1 or more InitialRealityVectors that are always in the Active state.
+
+Reality is affected whenever an OutputRealityVctor asserted by any RealityVector within the RealityEngine. (note: one might consider the resolution via observation of quantum events to exemplify the assertion of an OutputRealityVector and the observation of an InputRealityVector to be the motivator for transitions within the RealityEngine. Note this definition of the RealityEngine_QuantumFoam. Realizations from this foam are  provided as inputs to the "Matches" operation for each Active RealityVector in any CriticalEventSequence in the univeree (or span of the representational store) of RealityVectors.
+
+Physical characteristics of reality are determined, of course by Physics. The resolution of RealitySamples, as captured from Physical Reality, provide the prompting of InputState to the RealityEngine. The OutputState of the RealityEngine is a composition from the OutputVectors of any CriticalEventSequence containing an RealityVector with an OutputVector that has just received the Transition operation. 
+
+
+for all EventSequences, operations on each element of the 1.x.n vector within and RealityVector the operations of a) isEqual which compares an InputRealityVector to the RealityVector AND resets the RealityVector to notActive if the vector is not a member of a collection of InitialRealityVectors for the CreiticalEventSequence.
+
+
+ constraint(s) associated with the vector, and b) transitions a "set-active" in its collection of NextRealityVectors and c) asserts any OutputRealityVectors  and all
+  sequences - termed "EventSequences" that may contain the event..) 
+B
+
+kc021 - 11352504835 - joeseph - optimal solutions call center - 587 - 
