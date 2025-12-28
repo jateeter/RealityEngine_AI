@@ -36,10 +36,17 @@ echo ""
 # Check Node.js
 if command -v node &> /dev/null; then
     NODE_VERSION=$(node --version)
+    NODE_MAJOR=$(echo $NODE_VERSION | cut -d'.' -f1 | sed 's/v//')
     print_success "Node.js installed: $NODE_VERSION"
+
+    if [ "$NODE_MAJOR" -lt 22 ]; then
+        print_error "Node.js version 22+ required (found: $NODE_VERSION)"
+        echo "  Please install Node.js 22+ from https://nodejs.org/"
+        exit 1
+    fi
 else
     print_error "Node.js is not installed"
-    echo "  Please install Node.js 18+ from https://nodejs.org/"
+    echo "  Please install Node.js 22+ from https://nodejs.org/"
     exit 1
 fi
 
@@ -87,10 +94,23 @@ echo ""
 
 # Create .env file if it doesn't exist
 if [ ! -f .env ]; then
-    print_info "Creating .env file from template..."
-    cp .env.example .env
-    print_success ".env file created"
-    echo "  You can customize settings in .env file"
+    if [ -f .env.example ]; then
+        print_info "Creating .env file from template..."
+        cp .env.example .env
+        print_success ".env file created"
+        echo "  You can customize settings in .env file"
+    else
+        print_info "No .env.example found, creating minimal .env file..."
+        cat > .env << EOF
+# Reality Engine Configuration
+NODE_ENV=production
+PORT=3000
+QDRANT_URL=http://qdrant:6333
+VECTOR_DIMENSION=128
+EOF
+        print_success ".env file created with defaults"
+        echo "  You can customize settings in .env file"
+    fi
 else
     print_success ".env file already exists"
 fi

@@ -1,4 +1,3 @@
-import React from 'react';
 import { SequenceGraph, EngineStats } from '../types';
 
 interface SidebarProps {
@@ -7,6 +6,7 @@ interface SidebarProps {
   stats: EngineStats | null;
   onSequenceSelect: (id: string) => void;
   onRefresh: () => void;
+  onLoadDemo?: () => void;
   isConnected: boolean;
 }
 
@@ -16,6 +16,7 @@ export default function Sidebar({
   stats,
   onSequenceSelect,
   onRefresh,
+  onLoadDemo,
   isConnected
 }: SidebarProps) {
   return (
@@ -90,8 +91,36 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Refresh button */}
-      <div style={{ padding: '16px', borderBottom: '1px solid #222' }}>
+      {/* Action buttons */}
+      <div style={{ padding: '16px', borderBottom: '1px solid #222', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {onLoadDemo && (
+          <button
+            onClick={onLoadDemo}
+            style={{
+              width: '100%',
+              padding: '8px 16px',
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              boxShadow: '0 4px 12px rgba(139, 92, 246, 0.4)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(139, 92, 246, 0.6)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
+            }}
+          >
+            🎯 Load Demo
+          </button>
+        )}
         <button
           onClick={onRefresh}
           style={{

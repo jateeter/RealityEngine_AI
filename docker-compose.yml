@@ -3,7 +3,9 @@ version: '3.8'
 services:
   # Qdrant Vector Database
   qdrant:
-    image: qdrant/qdrant:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.qdrant
     container_name: reality-engine-qdrant
     ports:
       - "6333:6333"
@@ -16,7 +18,7 @@ services:
     networks:
       - reality-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6333/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "-O", "/dev/null", "http://localhost:6333/"]
       interval: 10s
       timeout: 5s
       retries: 5

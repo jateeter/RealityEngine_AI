@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 
 interface VectorNodeData {
@@ -9,6 +9,9 @@ interface VectorNodeData {
   elements: any[];
   metadata: Record<string, any>;
   outputVectors: any[];
+  heatmapCount?: number;
+  heatmapMax?: number;
+  isHeatmapEnabled?: boolean;
 }
 
 interface VectorNodeProps {
@@ -24,14 +27,61 @@ function VectorNode({ data, selected }: VectorNodeProps) {
     hasOutput,
     elements,
     metadata,
-    outputVectors
+    outputVectors,
+    heatmapCount = 0,
+    heatmapMax = 1,
+    isHeatmapEnabled = false
   } = data;
+
+  // Calculate heatmap intensity (0-1)
+  const getHeatmapIntensity = (): number => {
+    if (!isHeatmapEnabled || heatmapCount === 0 || heatmapMax === 0) {
+      return 0;
+    }
+    return Math.min(heatmapCount / heatmapMax, 1);
+  };
+
+  // Get heatmap color based on intensity
+  const getHeatmapColor = (intensity: number): string => {
+    if (intensity === 0) return 'transparent';
+
+    // Blue → Green → Yellow → Red gradient
+    if (intensity < 0.25) {
+      // Blue to Cyan
+      const t = intensity / 0.25;
+      return `rgba(59, 130, 246, ${0.3 + t * 0.3})`;
+    } else if (intensity < 0.5) {
+      // Cyan to Green
+      const t = (intensity - 0.25) / 0.25;
+      return `rgba(34, 197, 94, ${0.4 + t * 0.3})`;
+    } else if (intensity < 0.75) {
+      // Green to Yellow
+      const t = (intensity - 0.5) / 0.25;
+      return `rgba(234, 179, 8, ${0.5 + t * 0.3})`;
+    } else {
+      // Yellow to Red
+      const t = (intensity - 0.75) / 0.25;
+      return `rgba(239, 68, 68, ${0.6 + t * 0.4})`;
+    }
+  };
 
   // Determine node styling based on state
   const getNodeStyle = () => {
     let borderColor = '#444';
     let backgroundColor = '#1a1a1a';
     let glowColor = 'transparent';
+
+    // Apply heatmap styling if enabled
+    if (isHeatmapEnabled && heatmapCount > 0) {
+      const intensity = getHeatmapIntensity();
+      const heatColor = getHeatmapColor(intensity);
+      backgroundColor = heatColor;
+
+      // Add subtle glow for high activation
+      if (intensity > 0.5) {
+        glowColor = heatColor;
+      }
+    }
 
     if (isActive) {
       borderColor = '#22c55e'; // green
@@ -56,7 +106,7 @@ function VectorNode({ data, selected }: VectorNodeProps) {
       borderRadius: '8px',
       padding: '12px 16px',
       minWidth: '120px',
-      boxShadow: isActive
+      boxShadow: isActive || (isHeatmapEnabled && heatmapCount > 0 && getHeatmapIntensity() > 0.5)
         ? `0 0 20px ${glowColor}44, 0 0 40px ${glowColor}22`
         : '0 2px 8px rgba(0, 0, 0, 0.5)',
       transition: 'all 0.3s ease',
@@ -163,6 +213,32 @@ function VectorNode({ data, selected }: VectorNodeProps) {
           }}
         >
           + metadata
+        </div>
+      )}
+
+      {/* Heatmap activation count */}
+      {isHeatmapEnabled && heatmapCount > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '-8px',
+            right: '-8px',
+            background: '#1a1a1a',
+            border: '2px solid #fff',
+            borderRadius: '50%',
+            width: '24px',
+            height: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            color: '#fff',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.5)'
+          }}
+          title={`Activated ${heatmapCount} time${heatmapCount !== 1 ? 's' : ''}`}
+        >
+          {heatmapCount}
         </div>
       )}
 

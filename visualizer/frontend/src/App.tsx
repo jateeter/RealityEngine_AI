@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useVisualizerStore } from './store';
 import { api } from './api';
 import Sidebar from './components/Sidebar';
 import SequenceGraph from './components/SequenceGraph';
 import InfoPanel from './components/InfoPanel';
+import DemoDashboard from './components/DemoDashboard';
 import { VectorNode } from './types';
 
 function App() {
@@ -14,15 +15,18 @@ function App() {
     isConnected,
     autoRefresh,
     refreshInterval,
+    isDemoLoaded,
     setSequences,
     setSelectedSequence,
     setStats,
-    setConnected
+    setConnected,
+    loadDemo
   } = useVisualizerStore();
 
   const [selectedNode, setSelectedNode] = useState<VectorNode | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // Load data
   const loadData = useCallback(async () => {
@@ -92,8 +96,28 @@ function App() {
     [sequences, selectedSequenceId]
   );
 
+  // Handle demo load
+  const handleLoadDemo = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await loadDemo();
+      setIsDemoMode(true);
+      await loadData(); // Refresh sequences after demo load
+    } catch (err: any) {
+      console.error('Error loading demo:', err);
+      setError(err.message || 'Failed to load demo');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadDemo, loadData]);
+
   // Get selected sequence
   const selectedSequence = sequences.find((s) => s.sequenceId === selectedSequenceId);
+
+  // If in demo mode, render the demo dashboard
+  if (isDemoMode) {
+    return <DemoDashboard />;
+  }
 
   return (
     <div style={{ display: 'flex', width: '100vw', height: '100vh', background: '#0a0a0a' }}>
@@ -104,6 +128,7 @@ function App() {
         stats={stats}
         onSequenceSelect={handleSequenceSelect}
         onRefresh={loadData}
+        onLoadDemo={handleLoadDemo}
         isConnected={isConnected}
       />
 

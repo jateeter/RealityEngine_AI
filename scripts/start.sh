@@ -34,8 +34,8 @@ fi
 source .env
 
 # Start Docker services
-print_info "Starting Qdrant vector database..."
-docker-compose up -d qdrant
+print_info "Starting Docker services (Qdrant, Visualizer Backend, Visualizer Frontend)..."
+docker-compose up -d
 
 echo ""
 print_info "Waiting for Qdrant to be ready..."
@@ -111,12 +111,19 @@ echo "Reality Engine Started Successfully!"
 echo "=================================================="
 echo ""
 echo "Services:"
-echo "  - Qdrant:          http://localhost:6333"
-echo "  - Qdrant UI:       http://localhost:6333/dashboard"
-echo "  - Reality Engine:  http://localhost:${PORT:-3000}"
-echo "  - API Health:      http://localhost:${PORT:-3000}/api/health"
+echo "  - Qdrant Vector DB:      http://localhost:6333"
+echo "  - Qdrant Dashboard:      http://localhost:6333/dashboard"
+echo "  - Reality Engine API:    http://localhost:${PORT:-3000}"
+echo "  - API Health:            http://localhost:${PORT:-3000}/api/health"
+echo "  - Visualizer Backend:    http://localhost:3001"
+echo "  - Visualizer Frontend:   http://localhost:5173"
 echo ""
 echo "API PID: $API_PID (saved to .api.pid)"
+echo ""
+echo "Quick Start:"
+echo "  1. Open Visualizer:  http://localhost:5173"
+echo "  2. Click 'Load Demo' to load the 30-sequence demonstration"
+echo "  3. Select a sequence and use simulation controls"
 echo ""
 echo "Useful commands:"
 echo "  Status:   ./scripts/status.sh"

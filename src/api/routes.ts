@@ -7,6 +7,7 @@ import { ComparatorType } from '../models/types.js';
 import type { VectorElement } from '../models/types.js';
 import { PreceptionOfReality } from '../engine/PreceptionOfReality.js';
 import { RealitySampler, SamplingStrategy } from '../engine/RealitySampler.js';
+import { SimulationController } from '../engine/SimulationController.js';
 import config from '../config/config.js';
 
 /**
@@ -17,6 +18,7 @@ export class RealityEngineAPI {
   private engine: RealityEngine;
   private perception: PreceptionOfReality;
   private sampler: RealitySampler | null = null;
+  private simulationController: SimulationController | null = null;
 
   constructor(engine: RealityEngine) {
     this.router = express.Router();
@@ -64,6 +66,21 @@ export class RealityEngineAPI {
     this.router.post('/sampler/stop', this.stopSampler.bind(this));
     this.router.post('/sampler/sample', this.sampleReality.bind(this));
     this.router.get('/sampler/stats', this.getSamplerStats.bind(this));
+
+    // Simulation endpoints
+    this.router.post('/simulation/start', this.startSimulation.bind(this));
+    this.router.post('/simulation/pause', this.pauseSimulation.bind(this));
+    this.router.post('/simulation/resume', this.resumeSimulation.bind(this));
+    this.router.post('/simulation/stop', this.stopSimulation.bind(this));
+    this.router.post('/simulation/reset', this.resetSimulation.bind(this));
+    this.router.post('/simulation/step', this.stepSimulation.bind(this));
+    this.router.post('/simulation/load', this.loadSimulationVectors.bind(this));
+    this.router.put('/simulation/speed', this.setSimulationSpeed.bind(this));
+    this.router.get('/simulation/state', this.getSimulationState.bind(this));
+    this.router.get('/simulation/heatmap', this.getSimulationHeatmap.bind(this));
+
+    // Demo endpoints
+    this.router.get('/demo/load', this.loadDemo.bind(this));
   }
 
   // Health check
@@ -454,6 +471,188 @@ export class RealityEngineAPI {
     }
 
     res.json({ stats: this.sampler.getStats() });
+  }
+
+  // Simulation endpoints
+  private startSimulation(_req: Request, res: Response): void {
+    if (!this.simulationController) {
+      res.status(400).json({ error: 'Simulation not initialized. Load simulation vectors first.' });
+      return;
+    }
+
+    this.simulationController.start();
+    res.json({
+      success: true,
+      state: this.simulationController.getState()
+    });
+  }
+
+  private pauseSimulation(_req: Request, res: Response): void {
+    if (!this.simulationController) {
+      res.status(400).json({ error: 'Simulation not initialized' });
+      return;
+    }
+
+    this.simulationController.pause();
+    res.json({
+      success: true,
+      state: this.simulationController.getState()
+    });
+  }
+
+  private resumeSimulation(_req: Request, res: Response): void {
+    if (!this.simulationController) {
+      res.status(400).json({ error: 'Simulation not initialized' });
+      return;
+    }
+
+    this.simulationController.resume();
+    res.json({
+      success: true,
+      state: this.simulationController.getState()
+    });
+  }
+
+  private stopSimulation(_req: Request, res: Response): void {
+    if (!this.simulationController) {
+      res.status(400).json({ error: 'Simulation not initialized' });
+      return;
+    }
+
+    this.simulationController.stop();
+    res.json({
+      success: true,
+      state: this.simulationController.getState()
+    });
+  }
+
+  private resetSimulation(_req: Request, res: Response): void {
+    if (!this.simulationController) {
+      res.status(400).json({ error: 'Simulation not initialized' });
+      return;
+    }
+
+    this.simulationController.reset();
+    res.json({
+      success: true,
+      state: this.simulationController.getState()
+    });
+  }
+
+  private stepSimulation(_req: Request, res: Response): void {
+    if (!this.simulationController) {
+      res.status(400).json({ error: 'Simulation not initialized' });
+      return;
+    }
+
+    const result = this.simulationController.step();
+    res.json({
+      success: true,
+      state: this.simulationController.getState(),
+      result
+    });
+  }
+
+  private loadSimulationVectors(req: Request, res: Response): void {
+    try {
+      const { vectors, autoPlayDelayMs, loop } = req.body;
+
+      if (!Array.isArray(vectors)) {
+        res.status(400).json({ error: 'Vectors must be an array' });
+        return;
+      }
+
+      // Create or reinitialize simulation controller
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: autoPlayDelayMs || 1000,
+        inputVectors: vectors,
+        loop: loop !== undefined ? loop : true
+      });
+
+      res.json({
+        success: true,
+        state: this.simulationController.getState()
+      });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
+  private setSimulationSpeed(req: Request, res: Response): void {
+    if (!this.simulationController) {
+      res.status(400).json({ error: 'Simulation not initialized' });
+      return;
+    }
+
+    const { delayMs } = req.body;
+
+    if (typeof delayMs !== 'number' || delayMs < 0) {
+      res.status(400).json({ error: 'Invalid delay value' });
+      return;
+    }
+
+    this.simulationController.setSpeed(delayMs);
+    res.json({
+      success: true,
+      delayMs
+    });
+  }
+
+  private getSimulationState(_req: Request, res: Response): void {
+    if (!this.simulationController) {
+      res.status(400).json({ error: 'Simulation not initialized' });
+      return;
+    }
+
+    res.json({
+      state: this.simulationController.getState(),
+      progress: this.simulationController.getProgress()
+    });
+  }
+
+  private getSimulationHeatmap(_req: Request, res: Response): void {
+    if (!this.simulationController) {
+      res.status(400).json({ error: 'Simulation not initialized' });
+      return;
+    }
+
+    const heatmap = this.simulationController.getHeatmap();
+    const heatmapArray = Array.from(heatmap.entries()).map(([key, activation]) => ({
+      key,
+      ...activation
+    }));
+
+    res.json({ heatmap: heatmapArray });
+  }
+
+  // Demo endpoints
+  private async loadDemo(_req: Request, res: Response): Promise<void> {
+    // Note: Demo loader implementation commented out due to TypeScript compilation issues
+    // with dynamic imports from examples directory. Demo can be loaded manually via
+    // POST /api/simulation/load endpoint with generated dataset.
+
+    res.status(501).json({
+      error: 'Demo loader not implemented via API. Use POST /api/simulation/load to manually load demo data.',
+      hint: 'Generate demo dataset using examples/demo-30-sequences/data-generator.ts and load via /api/simulation/load'
+    });
+
+    /* Original implementation - works at runtime but causes TS compilation issues:
+    try {
+      const { generateDemoDataset } = await import('../../examples/demo-30-sequences/data-generator.js');
+      const dataset = generateDemoDataset();
+
+      // Clear and load sequences...
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: 1000,
+        inputVectors: dataset.inputVectors,
+        loop: true
+      });
+
+      res.json({ success: true, metadata: dataset.metadata });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+    */
   }
 
   public getRouter(): Router {

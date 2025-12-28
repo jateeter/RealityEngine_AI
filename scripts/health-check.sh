@@ -143,8 +143,31 @@ else
 fi
 echo ""
 
-# 10. Check Memory
-echo "[10/10] Memory Usage"
+# 10. Check Visualizer Backend
+echo "[10/12] Visualizer Backend"
+if docker-compose ps visualizer-backend 2>/dev/null | grep -q "Up"; then
+    check_pass "Visualizer Backend container is running"
+    if curl -s http://localhost:3001/health > /dev/null 2>&1; then
+        check_pass "Visualizer Backend endpoint responding"
+    else
+        check_warn "Visualizer Backend endpoint not responding"
+    fi
+else
+    check_warn "Visualizer Backend container is not running"
+fi
+echo ""
+
+# 11. Check Visualizer Frontend
+echo "[11/12] Visualizer Frontend"
+if docker-compose ps visualizer-frontend 2>/dev/null | grep -q "Up"; then
+    check_pass "Visualizer Frontend container is running"
+else
+    check_warn "Visualizer Frontend container is not running"
+fi
+echo ""
+
+# 12. Check Memory
+echo "[12/12] Memory Usage"
 if [ -f .api.pid ]; then
     API_PID=$(cat .api.pid)
     if ps -p $API_PID > /dev/null 2>&1; then

@@ -1,4 +1,3 @@
-import React from 'react';
 import { VectorNode } from '../types';
 
 interface InfoPanelProps {

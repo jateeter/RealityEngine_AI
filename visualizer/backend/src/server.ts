@@ -288,6 +288,202 @@ app.get('/api/viz/poll', async (req: Request, res: Response) => {
   }
 });
 
+// ===== Simulation Proxy Endpoints (with WebSocket Broadcasting) =====
+
+// Proxy endpoint: Load simulation vectors
+app.post('/api/simulation/load', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/load`, req.body);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'simulation-loaded',
+      data: response.data,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error loading simulation:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Start simulation
+app.post('/api/simulation/start', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/start`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'simulation-started',
+      state: response.data.state,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error starting simulation:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Pause simulation
+app.post('/api/simulation/pause', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/pause`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'simulation-paused',
+      state: response.data.state,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error pausing simulation:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Resume simulation
+app.post('/api/simulation/resume', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/resume`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'simulation-resumed',
+      state: response.data.state,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error resuming simulation:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Stop simulation
+app.post('/api/simulation/stop', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/stop`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'simulation-stopped',
+      state: response.data.state,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error stopping simulation:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Reset simulation
+app.post('/api/simulation/reset', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/reset`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'simulation-reset',
+      state: response.data.state,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error resetting simulation:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Step simulation
+app.post('/api/simulation/step', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/step`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'simulation-stepped',
+      state: response.data.state,
+      result: response.data.result,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error stepping simulation:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Set simulation speed
+app.put('/api/simulation/speed', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.put(`${REALITY_ENGINE_URL}/api/simulation/speed`, req.body);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'simulation-speed-changed',
+      delayMs: response.data.delayMs,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error setting simulation speed:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Get simulation state
+app.get('/api/simulation/state', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/simulation/state`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error getting simulation state:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Get simulation heatmap
+app.get('/api/simulation/heatmap', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/simulation/heatmap`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error getting simulation heatmap:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Load demo data
+app.get('/api/demo/load', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/load`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'demo-loaded',
+      metadata: response.data.metadata,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error loading demo:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Start server
 server.listen(PORT, () => {
   console.log(`Reality Engine Visualizer Backend running on port ${PORT}`);

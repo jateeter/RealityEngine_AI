@@ -73,6 +73,34 @@ fi
 
 echo ""
 
+# Check Visualizer Backend
+echo "Visualizer Backend:"
+if docker-compose ps visualizer-backend 2>/dev/null | grep -q "Up"; then
+    echo -e "  Status: ${GREEN}RUNNING${NC}"
+
+    if curl -s http://localhost:3001/health > /dev/null 2>&1; then
+        echo -e "  Health: ${GREEN}HEALTHY${NC}"
+        echo "  URL:    http://localhost:3001"
+    else
+        echo -e "  Health: ${RED}UNHEALTHY${NC}"
+    fi
+else
+    echo -e "  Status: ${RED}STOPPED${NC}"
+fi
+
+echo ""
+
+# Check Visualizer Frontend
+echo "Visualizer Frontend:"
+if docker-compose ps visualizer-frontend 2>/dev/null | grep -q "Up"; then
+    echo -e "  Status: ${GREEN}RUNNING${NC}"
+    echo "  URL:    http://localhost:5173"
+else
+    echo -e "  Status: ${RED}STOPPED${NC}"
+fi
+
+echo ""
+
 # Check Docker
 echo "Docker:"
 if docker info > /dev/null 2>&1; then
@@ -85,10 +113,17 @@ echo ""
 echo "=================================================="
 
 # Overall status
-if [ -f .api.pid ] && ps -p $(cat .api.pid) > /dev/null 2>&1 && docker-compose ps qdrant 2>/dev/null | grep -q "Up"; then
+QDRANT_UP=$(docker-compose ps qdrant 2>/dev/null | grep -q "Up" && echo "1" || echo "0")
+VISUALIZER_BACKEND_UP=$(docker-compose ps visualizer-backend 2>/dev/null | grep -q "Up" && echo "1" || echo "0")
+VISUALIZER_FRONTEND_UP=$(docker-compose ps visualizer-frontend 2>/dev/null | grep -q "Up" && echo "1" || echo "0")
+API_UP=$([ -f .api.pid ] && ps -p $(cat .api.pid) > /dev/null 2>&1 && echo "1" || echo "0")
+
+if [ "$QDRANT_UP" = "1" ] && [ "$API_UP" = "1" ] && [ "$VISUALIZER_BACKEND_UP" = "1" ] && [ "$VISUALIZER_FRONTEND_UP" = "1" ]; then
     echo -e "Overall: ${GREEN}ALL SERVICES RUNNING${NC}"
+elif [ "$QDRANT_UP" = "1" ] && [ "$API_UP" = "1" ]; then
+    echo -e "Overall: ${YELLOW}CORE SERVICES RUNNING, VISUALIZER DOWN${NC}"
 else
-    echo -e "Overall: ${YELLOW}SOME SERVICES DOWN${NC}"
+    echo -e "Overall: ${RED}SOME SERVICES DOWN${NC}"
 fi
 
 echo "=================================================="

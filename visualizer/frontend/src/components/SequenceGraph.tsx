@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -14,6 +14,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { SequenceGraph as SequenceGraphType } from '../types';
+import { useVisualizerStore } from '../store';
 import VectorNode from './VectorNode';
 
 interface SequenceGraphProps {
@@ -29,6 +30,17 @@ function SequenceGraphInner({ sequence, onNodeClick }: SequenceGraphProps) {
   const { fitView, zoomIn, zoomOut, setCenter } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+  // Get heatmap data from store
+  const { heatmapData, isHeatmapEnabled } = useVisualizerStore();
+
+  // Create heatmap lookup map
+  const heatmapMap = new Map(
+    heatmapData.map(h => [h.vectorId, h.count])
+  );
+  const maxHeatmapCount = heatmapData.length > 0
+    ? Math.max(...heatmapData.map(h => h.count))
+    : 1;
 
   // Convert sequence data to ReactFlow format
   useEffect(() => {
@@ -50,7 +62,10 @@ function SequenceGraphInner({ sequence, onNodeClick }: SequenceGraphProps) {
           hasOutput: node.hasOutput,
           elements: node.elements,
           metadata: node.metadata,
-          outputVectors: node.outputVectors
+          outputVectors: node.outputVectors,
+          heatmapCount: heatmapMap.get(node.id) || 0,
+          heatmapMax: maxHeatmapCount,
+          isHeatmapEnabled: isHeatmapEnabled
         }
       };
     });
@@ -75,7 +90,7 @@ function SequenceGraphInner({ sequence, onNodeClick }: SequenceGraphProps) {
 
     // Fit view after a short delay to ensure layout is complete
     setTimeout(() => fitView({ padding: 0.2, duration: 800 }), 100);
-  }, [sequence, setNodes, setEdges, fitView]);
+  }, [sequence, setNodes, setEdges, fitView, heatmapData, isHeatmapEnabled, heatmapMap, maxHeatmapCount]);
 
   // Handle node click
   const handleNodeClick = useCallback(

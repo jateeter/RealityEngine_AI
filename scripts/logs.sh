@@ -28,11 +28,29 @@ case $SERVICE in
         docker-compose logs --tail=$LINES qdrant
         ;;
 
+    visualizer-backend|viz-backend)
+        echo "Showing Visualizer Backend logs (last $LINES lines):"
+        echo ""
+        docker-compose logs --tail=$LINES visualizer-backend
+        ;;
+
+    visualizer-frontend|viz-frontend)
+        echo "Showing Visualizer Frontend logs (last $LINES lines):"
+        echo ""
+        docker-compose logs --tail=$LINES visualizer-frontend
+        ;;
+
+    docker)
+        echo "Showing all Docker service logs (last $LINES lines):"
+        echo ""
+        docker-compose logs --tail=$LINES
+        ;;
+
     all)
         echo "=== Reality Engine API Logs ==="
         echo ""
         if [ -f logs/api.log ]; then
-            tail -n 20 logs/api.log
+            tail -n 15 logs/api.log
         else
             echo "No API logs found"
         fi
@@ -41,18 +59,32 @@ case $SERVICE in
         echo ""
         echo "=== Qdrant Logs ==="
         echo ""
-        docker-compose logs --tail=20 qdrant
+        docker-compose logs --tail=15 qdrant
+
+        echo ""
+        echo ""
+        echo "=== Visualizer Backend Logs ==="
+        echo ""
+        docker-compose logs --tail=15 visualizer-backend
+
+        echo ""
+        echo ""
+        echo "=== Visualizer Frontend Logs ==="
+        echo ""
+        docker-compose logs --tail=15 visualizer-frontend
         ;;
 
     follow)
         echo "Following all logs (Ctrl+C to exit)..."
         echo ""
-        tail -f logs/api.log &
-        API_TAIL_PID=$!
-        docker-compose logs -f qdrant &
-        QDRANT_TAIL_PID=$!
+        if [ -f logs/api.log ]; then
+            tail -f logs/api.log &
+            API_TAIL_PID=$!
+        fi
+        docker-compose logs -f &
+        DOCKER_TAIL_PID=$!
 
-        trap "kill $API_TAIL_PID $QDRANT_TAIL_PID 2>/dev/null; exit 0" INT
+        trap "kill $API_TAIL_PID $DOCKER_TAIL_PID 2>/dev/null; exit 0" INT
         wait
         ;;
 
@@ -60,16 +92,20 @@ case $SERVICE in
         echo "Usage: ./scripts/logs.sh [service] [lines]"
         echo ""
         echo "Services:"
-        echo "  api       - Reality Engine API logs"
-        echo "  qdrant    - Qdrant database logs"
-        echo "  all       - All logs (default)"
-        echo "  follow    - Follow logs in real-time"
+        echo "  api                - Reality Engine API logs"
+        echo "  qdrant             - Qdrant database logs"
+        echo "  visualizer-backend - Visualizer backend logs"
+        echo "  visualizer-frontend- Visualizer frontend logs"
+        echo "  docker             - All Docker service logs"
+        echo "  all                - All logs (default)"
+        echo "  follow             - Follow logs in real-time"
         echo ""
         echo "Lines: Number of lines to show (default: 50)"
         echo ""
         echo "Examples:"
         echo "  ./scripts/logs.sh api 100"
-        echo "  ./scripts/logs.sh qdrant"
+        echo "  ./scripts/logs.sh visualizer-backend"
+        echo "  ./scripts/logs.sh docker"
         echo "  ./scripts/logs.sh follow"
         ;;
 esac

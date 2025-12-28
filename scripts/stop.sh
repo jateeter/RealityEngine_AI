@@ -53,13 +53,13 @@ fi
 echo ""
 
 # Stop Docker services
-print_info "Stopping Qdrant..."
-docker-compose stop qdrant
+print_info "Stopping Docker services (Qdrant, Visualizer Backend, Visualizer Frontend)..."
+docker-compose stop
 
 if [ $? -eq 0 ]; then
-    print_success "Qdrant stopped"
+    print_success "All Docker services stopped"
 else
-    echo "Warning: Failed to stop Qdrant"
+    echo "Warning: Failed to stop some Docker services"
 fi
 
 echo ""
