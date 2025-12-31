@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useVisualizerStore } from '../store';
 import SimulationControls from './SimulationControls';
 import InputTimeline from './InputTimeline';
@@ -6,6 +6,8 @@ import SequenceGraph from './SequenceGraph';
 import ActivityFeed from './ActivityFeed';
 import HeatmapOverlay from './HeatmapOverlay';
 import ManualInputPanel from './ManualInputPanel';
+import CriticalEventGraphView from './CriticalEventGraphView';
+import ViewToggle from './ViewToggle';
 
 const DemoDashboard: React.FC = () => {
   const {
@@ -20,6 +22,7 @@ const DemoDashboard: React.FC = () => {
   } = useVisualizerStore();
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'graph'>('list');
 
   // Connect WebSocket on mount
   useEffect(() => {
@@ -65,11 +68,39 @@ const DemoDashboard: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Sequence Graph (Left/Center) */}
         <div className="flex-1 relative">
-          {selectedSequence ? (
-            <>
-              <SequenceGraph sequence={selectedSequence} />
-              <HeatmapOverlay />
-            </>
+          {/* View Toggle */}
+          <div style={{
+            position: 'absolute',
+            top: '16px',
+            left: '16px',
+            zIndex: 10
+          }}>
+            <ViewToggle view={viewMode} onViewChange={setViewMode} />
+          </div>
+
+          {selectedSequence || sequences.length > 0 ? (
+            viewMode === 'graph' ? (
+              <CriticalEventGraphView selectedSequenceId={selectedSequenceId} />
+            ) : (
+              <>
+                {selectedSequence ? (
+                  <>
+                    <SequenceGraph sequence={selectedSequence} />
+                    <HeatmapOverlay />
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-full bg-gray-900">
+                    <div className="text-center space-y-4 max-w-md p-8">
+                      <div className="text-6xl mb-4">🎯</div>
+                      <h2 className="text-2xl font-bold text-white">Select a Sequence</h2>
+                      <p className="text-gray-400">
+                        Choose a sequence from the sidebar to view its graph.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )
           ) : (
             <div className="flex items-center justify-center h-full bg-gray-900">
               <div className="text-center space-y-4 max-w-md p-8">

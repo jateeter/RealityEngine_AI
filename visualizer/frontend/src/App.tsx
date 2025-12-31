@@ -5,6 +5,8 @@ import Sidebar from './components/Sidebar';
 import SequenceGraph from './components/SequenceGraph';
 import InfoPanel from './components/InfoPanel';
 import DemoDashboard from './components/DemoDashboard';
+import CriticalEventGraphView from './components/CriticalEventGraphView';
+import ViewToggle from './components/ViewToggle';
 import { VectorNode } from './types';
 
 function App() {
@@ -27,6 +29,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'graph'>('list');
 
   // Load data
   const loadData = useCallback(async () => {
@@ -207,13 +210,25 @@ function App() {
           </div>
         )}
 
+        {/* View Toggle */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            zIndex: 100
+          }}
+        >
+          <ViewToggle view={viewMode} onViewChange={setViewMode} />
+        </div>
+
         {/* Sequence name header */}
-        {selectedSequence && (
+        {selectedSequence && viewMode === 'list' && (
           <div
             style={{
               position: 'absolute',
               top: '20px',
-              left: '20px',
+              left: '180px',
               zIndex: 100,
               background: 'rgba(0, 0, 0, 0.8)',
               padding: '12px 20px',
@@ -241,7 +256,9 @@ function App() {
         )}
 
         {/* Sequence graph */}
-        {selectedSequence ? (
+        {viewMode === 'graph' ? (
+          <CriticalEventGraphView selectedSequenceId={selectedSequenceId} />
+        ) : selectedSequence ? (
           <SequenceGraph sequence={selectedSequence} onNodeClick={handleNodeClick} />
         ) : (
           <div
