@@ -25,6 +25,38 @@ export class RealityEngineAPI {
     this.engine = engine;
     this.perception = new PreceptionOfReality(config.getVectorDimension());
     this.setupRoutes();
+    this.initializeDefaultSequences();
+  }
+
+  /**
+   * Initialize default sequences on startup
+   */
+  private async initializeDefaultSequences(): Promise<void> {
+    try {
+      console.log('Loading default NAND gate sequences on startup...');
+      const { createNANDGateSequences, generateNANDTestVectors } =
+        await import('../examples/nand-gate/nand-gate-sequences.js');
+
+      const sequences = createNANDGateSequences();
+      const testVectors = generateNANDTestVectors();
+      const allInputVectors = testVectors.map(t => t.vector);
+
+      // Load sequences
+      for (const sequence of sequences) {
+        this.engine.addSequence(sequence);
+      }
+
+      // Initialize simulation controller
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: 2000,
+        inputVectors: allInputVectors,
+        loop: true
+      });
+
+      console.log(`✓ Loaded ${sequences.length} NAND gate sequences with ${allInputVectors.length} test vectors`);
+    } catch (error) {
+      console.error('Error loading default NAND gate sequences:', error);
+    }
   }
 
   private setupRoutes(): void {

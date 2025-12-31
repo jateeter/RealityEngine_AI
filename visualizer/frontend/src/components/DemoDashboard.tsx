@@ -22,7 +22,7 @@ const DemoDashboard: React.FC = () => {
   } = useVisualizerStore();
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'graph'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'graph'>('graph');
 
   // Connect WebSocket on mount
   useEffect(() => {
