@@ -4,6 +4,17 @@ A sophisticated reality engine system implementing vector-based state machines w
 
 Claude Code generated seed version of the Reality Engine (with incremental prompt specification)
 
+## 🌐 Service Access URLs
+
+After starting with `./docker-start.sh` or `docker-compose up -d`:
+
+| Service | URL |
+|---------|-----|
+| **Visualizer Frontend** | http://localhost:5173 |
+| **Reality Engine API** | http://localhost:3000 |
+| **Visualizer Backend** | http://localhost:3001 |
+| **Qdrant Dashboard** | http://localhost:6333/dashboard |
+
 ## Table of Contents
 
 - [Overview](#overview)
