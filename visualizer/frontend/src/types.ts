@@ -82,7 +82,7 @@ export interface VectorActivation {
 
 export interface ActivityEvent {
   id: string;
-  type: 'vector-processed' | 'sequence-matched' | 'output-asserted' | 'transition' | 'error';
+  type: 'vector-processed' | 'sequence-matched' | 'output-asserted' | 'transition' | 'error' | 'info';
   message: string;
   timestamp: number;
   severity: 'info' | 'success' | 'warning' | 'error';

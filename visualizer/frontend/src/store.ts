@@ -52,6 +52,7 @@ interface VisualizerState {
   refreshSimulationState: () => Promise<void>;
   refreshHeatmap: () => Promise<void>;
   loadDemo: () => Promise<void>;
+  loadDataCenterExample: () => Promise<void>;
   connectWebSocket: () => void;
   disconnectWebSocket: () => void;
   addActivityEvent: (event: ActivityEvent) => void;
@@ -306,6 +307,38 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         id: `event-${Date.now()}`,
         type: 'error',
         message: 'Failed to load demo dataset',
+        timestamp: Date.now(),
+        severity: 'error'
+      });
+    }
+  },
+
+  loadDataCenterExample: async () => {
+    try {
+      const result = await api.loadDataCenterExample();
+      set({
+        isDemoLoaded: true,
+        demoMetadata: result.metadata
+      });
+
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'info',
+        message: 'Data Center Example loaded',
+        timestamp: Date.now(),
+        severity: 'success',
+        metadata: result.metadata
+      });
+
+      // Refresh sequences after loading example
+      const sequences = await api.getSequences();
+      set({ sequences });
+    } catch (error) {
+      console.error('Error loading data center example:', error);
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to load data center example',
         timestamp: Date.now(),
         severity: 'error'
       });

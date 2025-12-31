@@ -5,7 +5,6 @@ import {
   HistoryEntry,
   SimulationState,
   VectorActivation,
-  DemoDataset,
   TransitionResult
 } from './types';
 
@@ -142,6 +141,12 @@ export const api = {
   // Load demo dataset
   async loadDemo(): Promise<{ success: boolean; metadata: any }> {
     const response = await axios.get('/api/demo/load');
+    return response.data;
+  },
+
+  // Load data center example
+  async loadDataCenterExample(): Promise<{ success: boolean; metadata: any }> {
+    const response = await axios.get('/api/demo/data-center');
     return response.data;
   }
 };

@@ -7,6 +7,7 @@ interface SidebarProps {
   onSequenceSelect: (id: string) => void;
   onRefresh: () => void;
   onLoadDemo?: () => void;
+  onLoadDataCenter?: () => void;
   isConnected: boolean;
 }
 
@@ -17,6 +18,7 @@ export default function Sidebar({
   onSequenceSelect,
   onRefresh,
   onLoadDemo,
+  onLoadDataCenter,
   isConnected
 }: SidebarProps) {
   return (
@@ -119,6 +121,34 @@ export default function Sidebar({
             }}
           >
             🎯 Load Demo
+          </button>
+        )}
+        {onLoadDataCenter && (
+          <button
+            onClick={onLoadDataCenter}
+            style={{
+              width: '100%',
+              padding: '8px 16px',
+              background: 'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.6)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.4)';
+            }}
+          >
+            🏢 Data Center Example
           </button>
         )}
         <button

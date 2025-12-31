@@ -81,6 +81,7 @@ export class RealityEngineAPI {
 
     // Demo endpoints
     this.router.get('/demo/load', this.loadDemo.bind(this));
+    this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
   }
 
   // Health check
@@ -627,32 +628,96 @@ export class RealityEngineAPI {
 
   // Demo endpoints
   private async loadDemo(_req: Request, res: Response): Promise<void> {
-    // Note: Demo loader implementation commented out due to TypeScript compilation issues
-    // with dynamic imports from examples directory. Demo can be loaded manually via
-    // POST /api/simulation/load endpoint with generated dataset.
-
-    res.status(501).json({
-      error: 'Demo loader not implemented via API. Use POST /api/simulation/load to manually load demo data.',
-      hint: 'Generate demo dataset using examples/demo-30-sequences/data-generator.ts and load via /api/simulation/load'
-    });
-
-    /* Original implementation - works at runtime but causes TS compilation issues:
     try {
-      const { generateDemoDataset } = await import('../../examples/demo-30-sequences/data-generator.js');
+      const { generateDemoDataset } = await import('../demo/data-generator.js');
       const dataset = generateDemoDataset();
 
-      // Clear and load sequences...
+      // Clear existing sequences
+      const existingSequences = this.engine.getAllSequences();
+      for (const seq of existingSequences) {
+        this.engine.removeSequence(seq.id);
+      }
+
+      // Load new sequences
+      for (const sequence of dataset.sequences) {
+        this.engine.addSequence(sequence);
+      }
+
+      // Initialize simulation controller
       this.simulationController = new SimulationController(this.engine, {
         autoPlayDelayMs: 1000,
         inputVectors: dataset.inputVectors,
         loop: true
       });
 
-      res.json({ success: true, metadata: dataset.metadata });
+      res.json({
+        success: true,
+        metadata: dataset.metadata,
+        sequencesLoaded: dataset.sequences.length,
+        inputVectorsLoaded: dataset.inputVectors.length
+      });
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      console.error('Error loading demo:', error);
+      res.status(500).json({
+        error: 'Failed to load demo dataset',
+        details: error.message
+      });
     }
-    */
+  }
+
+  private async loadDataCenterExample(_req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        createDataCenterSequences,
+        generateInitialEvents,
+        generateProgressionVectors
+      } = await import('../examples/data-center-monitoring/data-center-sequences.js');
+
+      // Generate sequences and input vectors
+      const sequences = createDataCenterSequences();
+      const initialEvents = generateInitialEvents();
+      const progressionVectors = generateProgressionVectors();
+      const allInputVectors = [...initialEvents, ...progressionVectors];
+
+      // Clear existing sequences
+      const existingSequences = this.engine.getAllSequences();
+      for (const seq of existingSequences) {
+        this.engine.removeSequence(seq.id);
+      }
+
+      // Load new sequences
+      for (const sequence of sequences) {
+        this.engine.addSequence(sequence);
+      }
+
+      // Initialize simulation controller
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: 1500,
+        inputVectors: allInputVectors,
+        loop: false
+      });
+
+      res.json({
+        success: true,
+        metadata: {
+          name: 'Data Center Monitoring - 5 Critical Event Sequences',
+          description: 'Demonstrates 5 critical event sequences with depth of 5 each',
+          totalSequences: sequences.length,
+          sequenceNames: sequences.map(s => s.name),
+          totalInputVectors: allInputVectors.length,
+          initialEvents: initialEvents.length,
+          progressionVectors: progressionVectors.length
+        },
+        sequencesLoaded: sequences.length,
+        inputVectorsLoaded: allInputVectors.length
+      });
+    } catch (error: any) {
+      console.error('Error loading data center example:', error);
+      res.status(500).json({
+        error: 'Failed to load data center example',
+        details: error.message
+      });
+    }
   }
 
   public getRouter(): Router {

@@ -15,12 +15,12 @@ function App() {
     isConnected,
     autoRefresh,
     refreshInterval,
-    isDemoLoaded,
     setSequences,
     setSelectedSequence,
     setStats,
     setConnected,
-    loadDemo
+    loadDemo,
+    loadDataCenterExample
   } = useVisualizerStore();
 
   const [selectedNode, setSelectedNode] = useState<VectorNode | null>(null);
@@ -111,6 +111,21 @@ function App() {
     }
   }, [loadDemo, loadData]);
 
+  // Handle data center example load
+  const handleLoadDataCenter = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await loadDataCenterExample();
+      setIsDemoMode(true);
+      await loadData(); // Refresh sequences after example load
+    } catch (err: any) {
+      console.error('Error loading data center example:', err);
+      setError(err.message || 'Failed to load data center example');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadDataCenterExample, loadData]);
+
   // Get selected sequence
   const selectedSequence = sequences.find((s) => s.sequenceId === selectedSequenceId);
 
@@ -129,6 +144,7 @@ function App() {
         onSequenceSelect={handleSequenceSelect}
         onRefresh={loadData}
         onLoadDemo={handleLoadDemo}
+        onLoadDataCenter={handleLoadDataCenter}
         isConnected={isConnected}
       />
 

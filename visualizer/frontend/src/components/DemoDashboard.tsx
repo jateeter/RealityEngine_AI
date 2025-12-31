@@ -5,6 +5,7 @@ import InputTimeline from './InputTimeline';
 import SequenceGraph from './SequenceGraph';
 import ActivityFeed from './ActivityFeed';
 import HeatmapOverlay from './HeatmapOverlay';
+import ManualInputPanel from './ManualInputPanel';
 
 const DemoDashboard: React.FC = () => {
   const {
@@ -12,7 +13,6 @@ const DemoDashboard: React.FC = () => {
     selectedSequenceId,
     simulationState,
     inputVectors,
-    loadDemo,
     connectWebSocket,
     disconnectWebSocket,
     refreshSimulationState,
@@ -100,9 +100,17 @@ const DemoDashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Activity Feed (Right Panel) */}
-        <div className="w-96">
-          <ActivityFeed />
+        {/* Right Panel */}
+        <div className="w-96 flex flex-col overflow-hidden">
+          {/* Manual Input Panel */}
+          <div className="p-4 border-b border-gray-700">
+            <ManualInputPanel />
+          </div>
+
+          {/* Activity Feed */}
+          <div className="flex-1 overflow-hidden">
+            <ActivityFeed />
+          </div>
         </div>
       </div>
 

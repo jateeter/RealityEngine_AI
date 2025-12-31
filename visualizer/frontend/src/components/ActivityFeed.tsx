@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useVisualizerStore } from '../store';
-import { ActivityEvent } from '../types';
 
 const ActivityFeed: React.FC = () => {
   const {
@@ -55,13 +54,14 @@ const ActivityFeed: React.FC = () => {
 
   const formatTimestamp = (timestamp: number): string => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', {
+    const timeStr = date.toLocaleTimeString('en-US', {
       hour12: false,
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
-      fractionalSecondDigits: 3
+      second: '2-digit'
     });
+    const ms = date.getMilliseconds().toString().padStart(3, '0');
+    return `${timeStr}.${ms}`;
   };
 
   const getFilterCount = (severity: 'all' | 'info' | 'success' | 'warning' | 'error'): number => {

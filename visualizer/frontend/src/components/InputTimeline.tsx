@@ -9,8 +9,7 @@ const InputTimeline: React.FC<TimelineProps> = ({ height = 80 }) => {
   const {
     inputVectors,
     simulationState,
-    stepSimulation,
-    loadSimulation
+    stepSimulation
   } = useVisualizerStore();
 
   const containerRef = useRef<HTMLDivElement>(null);

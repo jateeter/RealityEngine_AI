@@ -4,7 +4,6 @@ import { useVisualizerStore } from '../store';
 const SimulationControls: React.FC = () => {
   const {
     simulationState,
-    simulationProgress,
     startSimulation,
     pauseSimulation,
     resumeSimulation,
@@ -12,7 +11,6 @@ const SimulationControls: React.FC = () => {
     resetSimulation,
     stepSimulation,
     setSimulationSpeed,
-    loadSimulation,
     inputVectors
   } = useVisualizerStore();
 
@@ -31,7 +29,7 @@ const SimulationControls: React.FC = () => {
     }
 
     const interval = setInterval(() => {
-      if (isPlaying) {
+      if (isPlaying && simulationState.startTime) {
         setElapsedTime(Date.now() - simulationState.startTime);
       }
     }, 100);
