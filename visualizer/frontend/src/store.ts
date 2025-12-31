@@ -53,6 +53,7 @@ interface VisualizerState {
   refreshHeatmap: () => Promise<void>;
   loadDemo: () => Promise<void>;
   loadDataCenterExample: () => Promise<void>;
+  loadNANDGateExample: () => Promise<void>;
   connectWebSocket: () => void;
   disconnectWebSocket: () => void;
   addActivityEvent: (event: ActivityEvent) => void;
@@ -339,6 +340,38 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         id: `event-${Date.now()}`,
         type: 'error',
         message: 'Failed to load data center example',
+        timestamp: Date.now(),
+        severity: 'error'
+      });
+    }
+  },
+
+  loadNANDGateExample: async () => {
+    try {
+      const result = await api.loadNANDGateExample();
+      set({
+        isDemoLoaded: true,
+        demoMetadata: result.metadata
+      });
+
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'info',
+        message: 'NAND Gate Example loaded',
+        timestamp: Date.now(),
+        severity: 'success',
+        metadata: result.metadata
+      });
+
+      // Refresh sequences after loading example
+      const sequences = await api.getSequences();
+      set({ sequences });
+    } catch (error) {
+      console.error('Error loading NAND gate example:', error);
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to load NAND gate example',
         timestamp: Date.now(),
         severity: 'error'
       });

@@ -82,6 +82,7 @@ export class RealityEngineAPI {
     // Demo endpoints
     this.router.get('/demo/load', this.loadDemo.bind(this));
     this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
+    this.router.get('/demo/nand-gate', this.loadNANDGateExample.bind(this));
   }
 
   // Health check
@@ -715,6 +716,64 @@ export class RealityEngineAPI {
       console.error('Error loading data center example:', error);
       res.status(500).json({
         error: 'Failed to load data center example',
+        details: error.message
+      });
+    }
+  }
+
+  private async loadNANDGateExample(_req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        createNANDGateSequences,
+        generateNANDTestVectors
+      } = await import('../examples/nand-gate/nand-gate-sequences.js');
+
+      // Generate sequences and test vectors
+      const sequences = createNANDGateSequences();
+      const testVectors = generateNANDTestVectors();
+      const allInputVectors = testVectors.map(t => t.vector);
+
+      // Clear existing sequences
+      const existingSequences = this.engine.getAllSequences();
+      for (const seq of existingSequences) {
+        this.engine.removeSequence(seq.id);
+      }
+
+      // Load new sequences
+      for (const sequence of sequences) {
+        this.engine.addSequence(sequence);
+      }
+
+      // Initialize simulation controller
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: 2000,
+        inputVectors: allInputVectors,
+        loop: true
+      });
+
+      res.json({
+        success: true,
+        metadata: {
+          name: 'NAND Gate Implementation - Universal Logic Gate',
+          description: 'Demonstrates 4 NAND gate sequences implementing complete truth table',
+          totalSequences: sequences.length,
+          sequenceNames: sequences.map(s => s.name),
+          totalInputVectors: allInputVectors.length,
+          truthTable: [
+            'NAND(0, 0) = 1',
+            'NAND(0, 1) = 1',
+            'NAND(1, 0) = 1',
+            'NAND(1, 1) = 0'
+          ],
+          note: 'All sequences have initial events that activate on matching input patterns'
+        },
+        sequencesLoaded: sequences.length,
+        inputVectorsLoaded: allInputVectors.length
+      });
+    } catch (error: any) {
+      console.error('Error loading NAND gate example:', error);
+      res.status(500).json({
+        error: 'Failed to load NAND gate example',
         details: error.message
       });
     }

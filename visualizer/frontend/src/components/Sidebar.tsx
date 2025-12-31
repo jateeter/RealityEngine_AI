@@ -8,6 +8,7 @@ interface SidebarProps {
   onRefresh: () => void;
   onLoadDemo?: () => void;
   onLoadDataCenter?: () => void;
+  onLoadNANDGate?: () => void;
   isConnected: boolean;
 }
 
@@ -19,6 +20,7 @@ export default function Sidebar({
   onRefresh,
   onLoadDemo,
   onLoadDataCenter,
+  onLoadNANDGate,
   isConnected
 }: SidebarProps) {
   return (
@@ -149,6 +151,34 @@ export default function Sidebar({
             }}
           >
             🏢 Data Center Example
+          </button>
+        )}
+        {onLoadNANDGate && (
+          <button
+            onClick={onLoadNANDGate}
+            style={{
+              width: '100%',
+              padding: '8px 16px',
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.6)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
+            }}
+          >
+            🔵 NAND Gate Logic
           </button>
         )}
         <button

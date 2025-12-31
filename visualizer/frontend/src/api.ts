@@ -148,5 +148,11 @@ export const api = {
   async loadDataCenterExample(): Promise<{ success: boolean; metadata: any }> {
     const response = await axios.get('/api/demo/data-center');
     return response.data;
+  },
+
+  // Load NAND gate example
+  async loadNANDGateExample(): Promise<{ success: boolean; metadata: any }> {
+    const response = await axios.get('/api/demo/nand-gate');
+    return response.data;
   }
 };

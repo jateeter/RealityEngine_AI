@@ -22,7 +22,8 @@ function App() {
     setStats,
     setConnected,
     loadDemo,
-    loadDataCenterExample
+    loadDataCenterExample,
+    loadNANDGateExample
   } = useVisualizerStore();
 
   const [selectedNode, setSelectedNode] = useState<VectorNode | null>(null);
@@ -129,6 +130,21 @@ function App() {
     }
   }, [loadDataCenterExample, loadData]);
 
+  // Handle NAND gate example load
+  const handleLoadNANDGate = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await loadNANDGateExample();
+      setIsDemoMode(true);
+      await loadData(); // Refresh sequences after example load
+    } catch (err: any) {
+      console.error('Error loading NAND gate example:', err);
+      setError(err.message || 'Failed to load NAND gate example');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadNANDGateExample, loadData]);
+
   // Get selected sequence
   const selectedSequence = sequences.find((s) => s.sequenceId === selectedSequenceId);
 
@@ -148,6 +164,7 @@ function App() {
         onRefresh={loadData}
         onLoadDemo={handleLoadDemo}
         onLoadDataCenter={handleLoadDataCenter}
+        onLoadNANDGate={handleLoadNANDGate}
         isConnected={isConnected}
       />
 
