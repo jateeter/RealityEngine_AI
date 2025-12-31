@@ -22,7 +22,17 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   // Get the selected sequence or all sequences
+  // For simple sequences (like NAND gates), always show all sequences together
   const displaySequences = useMemo(() => {
+    // Check if all sequences are simple (single node each)
+    const allSimpleSequences = sequences.every(seq => seq.nodes.length === 1);
+
+    // If all sequences are simple, show them all together regardless of selection
+    if (allSimpleSequences) {
+      return sequences;
+    }
+
+    // For complex sequences, respect the selection
     if (selectedSequenceId) {
       return sequences.filter(s => s.sequenceId === selectedSequenceId);
     }
