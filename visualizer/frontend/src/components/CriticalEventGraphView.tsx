@@ -17,13 +17,18 @@ interface CriticalEventGraphViewProps {
 }
 
 const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selectedSequenceId }) => {
-  const { sequences } = useVisualizerStore();
+  const { sequences, currentMachine } = useVisualizerStore();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   // Get the selected sequence or all sequences
-  // For simple sequences (like NAND gates), always show all sequences together
+  // For machines or simple sequences (like NAND gates), always show all sequences together
   const displaySequences = useMemo(() => {
+    // If there's a current machine, show all its sequences together
+    if (currentMachine) {
+      return sequences.filter(seq => currentMachine.sequenceIds.includes(seq.sequenceId));
+    }
+
     // Check if all sequences are simple (single node each)
     const allSimpleSequences = sequences.every(seq => seq.nodes.length === 1);
 
@@ -37,7 +42,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       return sequences.filter(s => s.sequenceId === selectedSequenceId);
     }
     return sequences;
-  }, [sequences, selectedSequenceId]);
+  }, [sequences, selectedSequenceId, currentMachine]);
 
   // Build graph data
   useEffect(() => {
@@ -294,7 +299,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
   }, [displaySequences, setNodes, setEdges]);
 
   return (
-    <div style={{ width: '100%', height: '100%', background: '#0a0a0a' }}>
+    <div style={{ width: '100%', height: '100%', background: '#0a0a0a', position: 'relative' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -335,68 +340,123 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
         position: 'absolute',
         top: '16px',
         right: '16px',
-        background: 'rgba(0, 0, 0, 0.8)',
+        background: 'rgba(0, 0, 0, 0.9)',
         border: '1px solid #333',
         borderRadius: '8px',
         padding: '16px',
         color: '#fff',
         fontSize: '12px',
-        minWidth: '200px'
+        minWidth: '240px',
+        maxHeight: 'calc(100vh - 120px)',
+        overflowY: 'auto'
       }}>
         <div style={{ fontWeight: 'bold', marginBottom: '12px', fontSize: '14px' }}>
           Legend
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-          <div style={{
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            background: '#22c55e',
-            border: '2px solid #16a34a',
-            marginRight: '8px',
-            boxShadow: '0 0 10px #22c55e'
-          }} />
-          <span>Active Event</span>
+        {/* Event Spaces Section */}
+        <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #333' }}>
+          <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px' }}>
+            Event Spaces
+          </div>
+
+          <div style={{ marginBottom: '8px', paddingLeft: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+              <div style={{
+                width: 16,
+                height: 16,
+                borderRadius: '50%',
+                background: '#3b82f6',
+                border: '2px solid #2563eb',
+                marginRight: '8px'
+              }} />
+              <span style={{ fontWeight: '600' }}>Input Event Space</span>
+            </div>
+            <div style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '24px' }}>
+              Initial events where inputs enter the system
+            </div>
+          </div>
+
+          <div style={{ paddingLeft: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+              <div style={{
+                width: 16,
+                height: 16,
+                borderRadius: '50%',
+                background: '#64748b',
+                border: '4px solid #f59e0b',
+                marginRight: '8px'
+              }} />
+              <span style={{ fontWeight: '600' }}>Output Event Space</span>
+            </div>
+            <div style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '24px' }}>
+              Events that emit outputs from the system
+            </div>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-          <div style={{
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            background: '#3b82f6',
-            border: '2px solid #2563eb',
-            marginRight: '8px'
-          }} />
-          <span>Initial Event</span>
+        {/* Event States Section */}
+        <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #333' }}>
+          <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px' }}>
+            Event States
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: '#22c55e',
+              border: '2px solid #16a34a',
+              marginRight: '8px',
+              boxShadow: '0 0 10px #22c55e'
+            }} />
+            <span>Active Event</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: '#3b82f6',
+              border: '2px solid #2563eb',
+              marginRight: '8px'
+            }} />
+            <span>Initial Event</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: '#64748b',
+              border: '2px solid #475569',
+              marginRight: '8px'
+            }} />
+            <span>Inactive Event</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: '#64748b',
+              border: '4px solid #f59e0b',
+              marginRight: '8px'
+            }} />
+            <span>Has Outputs</span>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-          <div style={{
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            background: '#64748b',
-            border: '2px solid #475569',
-            marginRight: '8px'
-          }} />
-          <span>Inactive Event</span>
-        </div>
+        {/* Transitions Section */}
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px' }}>
+            Transitions
+          </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-          <div style={{
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            background: '#64748b',
-            border: '4px solid #f59e0b',
-            marginRight: '8px'
-          }} />
-          <span>Has Outputs</span>
-        </div>
-
-        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #333' }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
             <span style={{ marginRight: '8px', fontSize: '16px' }}>→</span>
             <span>Transition</span>

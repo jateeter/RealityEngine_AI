@@ -42,6 +42,38 @@ export interface SequenceGraph {
   };
 }
 
+export interface Machine {
+  id: string;
+  name: string;
+  description: string;
+  sequenceCount: number;
+  totalVectors: number;
+  sequenceIds: string[];
+  sequences: Array<{
+    id: string;
+    name: string;
+  }>;
+  metadata: Record<string, any>;
+  isExample: boolean;
+  createdAt: number;
+  updatedAt: number;
+  lastAccessedAt: number | null;
+}
+
+export interface MachineCreateRequest {
+  name: string;
+  description: string;
+  sequenceIds?: string[];
+  metadata?: Record<string, any>;
+}
+
+export interface MachineUpdateRequest {
+  name?: string;
+  description?: string;
+  sequenceIds?: string[];
+  metadata?: Record<string, any>;
+}
+
 export interface EngineStats {
   totalSequences: number;
   totalVectors: number;

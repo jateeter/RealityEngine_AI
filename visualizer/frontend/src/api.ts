@@ -5,7 +5,10 @@ import {
   HistoryEntry,
   SimulationState,
   VectorActivation,
-  TransitionResult
+  TransitionResult,
+  Machine,
+  MachineCreateRequest,
+  MachineUpdateRequest
 } from './types';
 
 const API_BASE_URL = '/api/viz';
@@ -60,6 +63,38 @@ export const api = {
   // Poll for updates
   async poll(): Promise<{ hasChanges: boolean; lastUpdateTime: number; timestamp: number }> {
     const response = await axios.get(`${API_BASE_URL}/poll`);
+    return response.data;
+  },
+
+  // ===== Machine Methods =====
+
+  // Get all machines
+  async getMachines(): Promise<Machine[]> {
+    const response = await axios.get('/api/machines');
+    return response.data.machines;
+  },
+
+  // Get specific machine
+  async getMachine(id: string): Promise<Machine> {
+    const response = await axios.get(`/api/machines/${id}`);
+    return response.data.machine;
+  },
+
+  // Create new machine
+  async createMachine(request: MachineCreateRequest): Promise<Machine> {
+    const response = await axios.post('/api/machines', request);
+    return response.data.machine;
+  },
+
+  // Update machine
+  async updateMachine(id: string, request: MachineUpdateRequest): Promise<Machine> {
+    const response = await axios.put(`/api/machines/${id}`, request);
+    return response.data.machine;
+  },
+
+  // Delete machine
+  async deleteMachine(id: string): Promise<{ success: boolean }> {
+    const response = await axios.delete(`/api/machines/${id}`);
     return response.data;
   },
 
@@ -127,6 +162,7 @@ export const api = {
   async getSimulationState(): Promise<{
     state: SimulationState;
     progress: number;
+    inputVectors?: number[][];
   }> {
     const response = await axios.get(SIMULATION_API_BASE + '/state');
     return response.data;
@@ -153,6 +189,12 @@ export const api = {
   // Load NAND gate example
   async loadNANDGateExample(): Promise<{ success: boolean; metadata: any }> {
     const response = await axios.get('/api/demo/nand-gate');
+    return response.data;
+  },
+
+  // Load multi-step sequences example
+  async loadMultiStepExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
+    const response = await axios.get('/api/demo/multi-step');
     return response.data;
   }
 };
