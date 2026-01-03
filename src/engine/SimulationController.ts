@@ -218,6 +218,13 @@ export class SimulationController {
   }
 
   /**
+   * Get input vectors
+   */
+  public getInputVectors(): number[][] {
+    return this.config.inputVectors;
+  }
+
+  /**
    * Get activation heatmap
    */
   public getHeatmap(): Map<string, VectorActivation> {

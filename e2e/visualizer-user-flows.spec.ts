@@ -124,7 +124,7 @@ test.describe('Visualizer User Flows', () => {
       await page.waitForTimeout(300);
     });
 
-    // Step 6: Select a machine and navigate to Administration View
+    // Step 6 (renumbered from old 6): Select a machine and navigate to Administration View
     await test.step('Select machine and navigate to Administration View', async () => {
       // Find a machine card (prefer NAND gate or first available)
       const machineCards = page.locator('[style*="width: 300px"][style*="height: 200px"]');
@@ -160,7 +160,7 @@ test.describe('Visualizer User Flows', () => {
       await expect(canvas).toBeVisible({ timeout: 10000 });
     });
 
-    // Step 7: Verify graph visualization elements
+    // Step 7 (renumbered from old 7): Verify graph visualization elements
     await test.step('Verify graph visualization loaded', async () => {
       // Wait for graph to render
       await page.waitForTimeout(2000);
@@ -187,11 +187,12 @@ test.describe('Visualizer User Flows', () => {
   test('Flow 2: Run simulation with input stream and reset machine', async ({ page }) => {
     test.setTimeout(90000);
 
-    // Step 1: Navigate to a machine (reuse setup from Flow 1)
+    // Step 1: Navigate to the Multi-Step Workflow machine (has pre-loaded vectors)
     await test.step('Navigate to machine with simulation data', async () => {
-      // Click on first available machine
-      const firstCard = page.locator('[style*="width: 300px"][style*="height: 200px"]').first();
-      await firstCard.click();
+      // Look for the Multi-Step Workflow machine card
+      const multiStepCard = page.locator('h3:has-text("Multi-Step Workflow")').locator('..');
+      await expect(multiStepCard).toBeVisible({ timeout: 10000 });
+      await multiStepCard.click();
 
       // Wait for machine to load
       await page.waitForLoadState('networkidle');
@@ -240,27 +241,26 @@ test.describe('Visualizer User Flows', () => {
       await expect(page.locator('button:has-text("Reset")')).toBeVisible();
     });
 
-    // Step 5: Check if input vectors are loaded
-    await test.step('Verify input vectors loaded', async () => {
-      // Look for "Total: X vectors" text
-      const totalVectorsText = page.locator('text=/Total:.*vectors/');
+    // Step 5: Verify simulation controls are ready
+    // Note: Input vectors are pre-loaded with the machine data
+    await test.step('Verify simulation ready', async () => {
+      // Verify Play button is ready (simulation controls are functional)
+      const playButton = page.locator('button:has-text("Play"), button:has-text("Resume")').first();
+      await expect(playButton).toBeVisible({ timeout: 5000 });
 
-      if (await totalVectorsText.isVisible()) {
-        // Vectors are loaded, proceed with simulation
-        console.log('Input vectors found, proceeding with simulation');
-      } else {
-        // No vectors loaded - this is expected for some machines
-        console.log('No input vectors loaded - skipping playback test');
-        test.skip();
-      }
+      // Wait a moment for any background loading
+      await page.waitForTimeout(1000);
     });
 
     // Step 6: Start simulation playback
     await test.step('Start simulation playback', async () => {
       const playButton = page.locator('button:has-text("Play"), button:has-text("▶ Play")').first();
 
-      // Verify button is enabled
-      await expect(playButton).toBeEnabled();
+      // Wait for vectors to be auto-loaded (example machines auto-load on open)
+      await page.waitForTimeout(2000);
+
+      // Verify button is enabled (vectors loaded)
+      await expect(playButton).toBeEnabled({ timeout: 10000 });
 
       // Click play
       await playButton.click();
@@ -276,7 +276,7 @@ test.describe('Visualizer User Flows', () => {
       await page.waitForTimeout(2000);
     });
 
-    // Step 7: Verify graph updates during playback
+    // Step 7 (renumbered from old 7): Verify graph updates during playback
     await test.step('Verify graph animates during playback', async () => {
       // Look for active (green) nodes or animated edges
       // This is visual verification - in reality, we'd check DOM updates
@@ -290,7 +290,7 @@ test.describe('Visualizer User Flows', () => {
       await expect(statusSection).toBeVisible();
     });
 
-    // Step 8: Pause simulation
+    // Step 8 (renumbered from old 8): Pause simulation
     await test.step('Pause simulation', async () => {
       const pauseButton = page.locator('button:has-text("Pause"), button:has-text("⏸ Pause")').first();
 
@@ -305,7 +305,7 @@ test.describe('Visualizer User Flows', () => {
       await expect(page.locator('button:has-text("Resume"), button:has-text("▶ Resume")')).toBeVisible();
     });
 
-    // Step 9: Test step functionality
+    // Step 9 (renumbered from old 9): Test step functionality
     await test.step('Test step-by-step advance', async () => {
       const stepButton = page.locator('button:has-text("Step"), button:has-text("⏭ Step")').first();
 
@@ -328,7 +328,7 @@ test.describe('Visualizer User Flows', () => {
       }
     });
 
-    // Step 10: Resume playback
+    // Step 10 (renumbered from old 10): Resume playback
     await test.step('Resume simulation playback', async () => {
       const resumeButton = page.locator('button:has-text("Resume"), button:has-text("▶ Resume")').first();
 
@@ -343,7 +343,7 @@ test.describe('Visualizer User Flows', () => {
       await page.waitForTimeout(2000);
     });
 
-    // Step 11: Stop simulation
+    // Step 11 (renumbered from old 11): Stop simulation
     await test.step('Stop simulation', async () => {
       const stopButton = page.locator('button:has-text("Stop"), button:has-text("⏹ Stop")').first();
 
@@ -358,7 +358,7 @@ test.describe('Visualizer User Flows', () => {
       await expect(page.locator('button:has-text("Play"), button:has-text("▶ Play")')).toBeVisible();
     });
 
-    // Step 12: Reset machine
+    // Step 12 (renumbered from old 12): Reset machine
     await test.step('Reset machine to initial state', async () => {
       const resetButton = page.locator('button:has-text("Reset"), button:has-text("↻ Reset")').first();
 
@@ -373,7 +373,7 @@ test.describe('Visualizer User Flows', () => {
       await expect(page.locator('text=/Vector 0/').or(page.locator('text=/Current:.*0/'))).toBeVisible();
     });
 
-    // Step 13: Test speed controls
+    // Step 13 (renumbered from old 13): Test speed controls
     await test.step('Test playback speed controls', async () => {
       // Find speed buttons
       const speed100 = page.locator('button:has-text("100ms")');
@@ -453,27 +453,27 @@ test.describe('Visualizer User Flows', () => {
       await expect(nameInput).toHaveValue('Test Sequence E2E');
     });
 
-    // Step 6: Define initial vectors (implementation TBD)
+    // Step 6 (renumbered from old 6): Define initial vectors (implementation TBD)
     await test.step('Define initial vectors', async () => {
       // This would involve clicking "+ Add Vector" buttons
       // and filling in vector elements
       // Implementation TBD
     });
 
-    // Step 7: Add transitions (implementation TBD)
+    // Step 7 (renumbered from old 7): Add transitions (implementation TBD)
     await test.step('Add transitions', async () => {
       // This would involve defining edges between vectors
       // Implementation TBD
     });
 
-    // Step 8: Add outputs (implementation TBD)
+    // Step 8 (renumbered from old 8): Add outputs (implementation TBD)
     await test.step('Add output vectors', async () => {
       // This would involve marking vectors as having outputs
       // and defining output vector values
       // Implementation TBD
     });
 
-    // Step 9: Save sequence
+    // Step 9 (renumbered from old 9): Save sequence
     await test.step('Save sequence', async () => {
       const saveButton = page.locator('button:has-text("Save"), button:has-text("Create")');
       await saveButton.click();
@@ -486,7 +486,7 @@ test.describe('Visualizer User Flows', () => {
       await expect(page.locator('text=Test Sequence E2E')).toBeVisible();
     });
 
-    // Step 10: Verify sequence in graph
+    // Step 10 (renumbered from old 10): Verify sequence in graph
     await test.step('Verify sequence appears in graph', async () => {
       // Close panel to see full graph
       const panel = page.locator('[style*="position: fixed"][style*="bottom: 20px"]').first();

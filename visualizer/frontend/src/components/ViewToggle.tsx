@@ -1,11 +1,12 @@
 import React from 'react';
 
 interface ViewToggleProps {
-  view: 'list' | 'graph';
-  onViewChange: (view: 'list' | 'graph') => void;
+  view: 'list' | 'graph' | 'machine';
+  onViewChange: (view: 'list' | 'graph' | 'machine') => void;
+  showMachineView?: boolean;
 }
 
-const ViewToggle: React.FC<ViewToggleProps> = ({ view, onViewChange }) => {
+const ViewToggle: React.FC<ViewToggleProps> = ({ view, onViewChange, showMachineView = false }) => {
   return (
     <div style={{
       display: 'flex',
@@ -80,6 +81,41 @@ const ViewToggle: React.FC<ViewToggleProps> = ({ view, onViewChange }) => {
         <span>🔵</span>
         <span>Graph View</span>
       </button>
+
+      {showMachineView && (
+        <button
+          onClick={() => onViewChange('machine')}
+          style={{
+            padding: '8px 16px',
+            background: view === 'machine'
+              ? 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+              : 'transparent',
+            color: view === 'machine' ? '#fff' : '#888',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: view === 'machine' ? 'bold' : 'normal',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+          onMouseEnter={(e) => {
+            if (view !== 'machine') {
+              e.currentTarget.style.background = '#2a2a2a';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (view !== 'machine') {
+              e.currentTarget.style.background = 'transparent';
+            }
+          }}
+        >
+          <span>🤖</span>
+          <span>Machine View</span>
+        </button>
+      )}
     </div>
   );
 };

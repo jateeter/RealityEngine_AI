@@ -1,0 +1,587 @@
+{
+  "config": {
+    "configFile": "/Users/johnt/workspace/idahoApp/realityEngine/playwright.config.ts",
+    "rootDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/global-setup.ts",
+    "globalTeardown": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "e2e-report"
+        }
+      ],
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "e2e-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/Users/johnt/workspace/idahoApp/realityEngine/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/johnt/workspace/idahoApp/realityEngine/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/johnt/workspace/idahoApp/realityEngine/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/johnt/workspace/idahoApp/realityEngine/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.57.0",
+    "workers": 5,
+    "webServer": {
+      "command": "docker-compose up -d && sleep 10",
+      "url": "http://localhost:5173",
+      "timeout": 120000,
+      "reuseExistingServer": true
+    }
+  },
+  "suites": [
+    {
+      "title": "visualizer-user-flows.spec.ts",
+      "file": "visualizer-user-flows.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Visualizer User Flows",
+          "file": "visualizer-user-flows.spec.ts",
+          "line": 15,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Flow 2: Run simulation with input stream and reset machine",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 18329,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                        "location": {
+                          "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                          "column": 32,
+                          "line": 263
+                        },
+                        "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                            "column": 32,
+                            "line": 263
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n\n  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Navigate to machine with simulation data",
+                          "duration": 2076
+                        },
+                        {
+                          "title": "Open Floating Control Panel",
+                          "duration": 1550
+                        },
+                        {
+                          "title": "Navigate to Simulation tab",
+                          "duration": 531
+                        },
+                        {
+                          "title": "Verify simulation status display",
+                          "duration": 11
+                        },
+                        {
+                          "title": "Verify simulation ready",
+                          "duration": 1004
+                        },
+                        {
+                          "title": "Start simulation playback",
+                          "duration": 12010,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                            "location": {
+                              "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                              "column": 32,
+                              "line": 263
+                            },
+                            "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-01-03T14:53:59.110Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                        "column": 32,
+                        "line": 263
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-6323973ea457246a24df",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 187,
+              "column": 3
+            },
+            {
+              "title": "Flow 2: Run simulation with input stream and reset machine",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 18842,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                        "location": {
+                          "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                          "column": 32,
+                          "line": 263
+                        },
+                        "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                            "column": 32,
+                            "line": 263
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n\n  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Navigate to machine with simulation data",
+                          "duration": 2061
+                        },
+                        {
+                          "title": "Open Floating Control Panel",
+                          "duration": 1564
+                        },
+                        {
+                          "title": "Navigate to Simulation tab",
+                          "duration": 538
+                        },
+                        {
+                          "title": "Verify simulation status display",
+                          "duration": 26
+                        },
+                        {
+                          "title": "Verify simulation ready",
+                          "duration": 1003
+                        },
+                        {
+                          "title": "Start simulation playback",
+                          "duration": 12008,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                            "location": {
+                              "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                              "column": 32,
+                              "line": 263
+                            },
+                            "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-01-03T14:53:59.109Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-firefox/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-firefox/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-firefox/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                        "column": 32,
+                        "line": 263
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-8b8afe6165895c6fd9ab",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 187,
+              "column": 3
+            },
+            {
+              "title": "Flow 2: Run simulation with input stream and reset machine",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 18598,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                        "location": {
+                          "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                          "column": 32,
+                          "line": 263
+                        },
+                        "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                            "column": 32,
+                            "line": 263
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n\n  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Navigate to machine with simulation data",
+                          "duration": 2081
+                        },
+                        {
+                          "title": "Open Floating Control Panel",
+                          "duration": 1543
+                        },
+                        {
+                          "title": "Navigate to Simulation tab",
+                          "duration": 535
+                        },
+                        {
+                          "title": "Verify simulation status display",
+                          "duration": 12
+                        },
+                        {
+                          "title": "Verify simulation ready",
+                          "duration": 1005
+                        },
+                        {
+                          "title": "Start simulation playback",
+                          "duration": 12006,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                            "location": {
+                              "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                              "column": 32,
+                              "line": 263
+                            },
+                            "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-01-03T14:53:59.101Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-webkit/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-webkit/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-webkit/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                        "column": 32,
+                        "line": 263
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-dc1dd0d4286ec1f76e16",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 187,
+              "column": 3
+            },
+            {
+              "title": "Flow 2: Run simulation with input stream and reset machine",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 18235,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                        "location": {
+                          "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                          "column": 32,
+                          "line": 263
+                        },
+                        "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                            "column": 32,
+                            "line": 263
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n\n  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Navigate to machine with simulation data",
+                          "duration": 2080
+                        },
+                        {
+                          "title": "Open Floating Control Panel",
+                          "duration": 1548
+                        },
+                        {
+                          "title": "Navigate to Simulation tab",
+                          "duration": 542
+                        },
+                        {
+                          "title": "Verify simulation status display",
+                          "duration": 13
+                        },
+                        {
+                          "title": "Verify simulation ready",
+                          "duration": 1003
+                        },
+                        {
+                          "title": "Start simulation playback",
+                          "duration": 12009,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                            "location": {
+                              "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                              "column": 32,
+                              "line": 263
+                            },
+                            "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-01-03T14:53:59.105Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-Mobile-Chrome/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-Mobile-Chrome/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-Mobile-Chrome/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                        "column": 32,
+                        "line": 263
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-81f8231aaada5e41c1c7",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 187,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-01-03T14:53:56.064Z",
+    "duration": 23132.104,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 4,
+    "flaky": 0
+  }
+}

@@ -18,6 +18,7 @@ After starting with `./docker-start.sh` or `docker-compose up -d`:
 ## Table of Contents
 
 - [Overview](#overview)
+- [Visualizer User Guide](#visualizer-user-guide) ⭐ **NEW**
 - [Core Concepts](#core-concepts)
 - [Architecture](#architecture)
 - [Installation](#installation)
@@ -39,6 +40,34 @@ The Reality Engine is built on three primary components:
 3. **RealityEngine**: Manages CriticalEventSequences and processes vector transitions
 
 The system uses **Qdrant**, an open-source vector database, for storing and querying high-dimensional vectors with efficient similarity search capabilities.
+
+## Visualizer User Guide
+
+The Reality Engine Visualizer provides a production-ready web interface for managing and visualizing critical event sequence machines. The new UI/UX focuses on machine-centric workflows with two primary views:
+
+### Machine Selection View
+- **Library interface** for browsing all machines (examples + custom)
+- **Search and filter** capabilities for quick machine discovery
+- **Machine cards** with statistics and quick actions
+- **CRUD operations** for creating, editing, and deleting machines
+
+### Machine Administration View
+- **Full-screen graph visualization** of critical event sequences
+- **Floating control panel** with four tabs:
+  - **Overview**: Machine metadata and statistics
+  - **Simulation**: Playback controls for input vector streams
+  - **Sequences**: Detailed sequence inspection and management
+  - **Settings**: Visualization and machine configuration
+- **Enhanced legend** with Input/Output Event Space indicators
+- **Real-time updates** during simulation playback
+
+### Quick Access
+- **Frontend**: http://localhost:5173
+- **Comprehensive Guide**: [VISUALIZER_USER_GUIDE.md](./VISUALIZER_USER_GUIDE.md)
+- **User Flows**: Three common workflows with click-by-click instructions
+- **E2E Tests**: [e2e/visualizer-user-flows.spec.ts](./e2e/visualizer-user-flows.spec.ts)
+
+The visualizer automatically loads your last viewed machine on startup for seamless workflow continuity.
 
 ## Core Concepts
 

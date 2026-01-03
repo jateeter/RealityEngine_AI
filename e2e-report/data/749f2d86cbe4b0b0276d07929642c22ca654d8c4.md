@@ -1,0 +1,101 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - button "← Back" [ref=e6] [cursor=pointer]:
+        - generic [ref=e7]: ←
+        - text: Back
+      - generic [ref=e8]:
+        - generic [ref=e9] [cursor=pointer]: Machines
+        - generic [ref=e10]: /
+        - generic [ref=e11]: Multi-Step Workflow
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]: "Sequences:"
+        - generic [ref=e15]: "0"
+      - generic [ref=e17]:
+        - generic [ref=e18]: "Vectors:"
+        - generic [ref=e19]: "0"
+      - generic [ref=e21]: Example
+  - generic [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic:
+            - img
+        - img [ref=e27]
+        - generic [ref=e29]:
+          - button "zoom in" [ref=e30] [cursor=pointer]:
+            - img [ref=e31]
+          - button "zoom out" [ref=e33] [cursor=pointer]:
+            - img [ref=e34]
+          - button "fit view" [ref=e36] [cursor=pointer]:
+            - img [ref=e37]
+          - button "toggle interactivity" [ref=e39] [cursor=pointer]:
+            - img [ref=e40]
+        - img [ref=e42]
+        - link "React Flow" [ref=e45] [cursor=pointer]:
+          - /url: https://reactflow.dev
+      - generic [ref=e46]:
+        - generic [ref=e47]: Legend
+        - generic [ref=e48]:
+          - generic [ref=e49]: Event Spaces
+          - generic [ref=e50]:
+            - generic [ref=e53]: Input Event Space
+            - generic [ref=e54]: Initial events where inputs enter the system
+          - generic [ref=e55]:
+            - generic [ref=e58]: Output Event Space
+            - generic [ref=e59]: Events that emit outputs from the system
+        - generic [ref=e60]:
+          - generic [ref=e61]: Event States
+          - generic [ref=e64]: Active Event
+          - generic [ref=e67]: Initial Event
+          - generic [ref=e70]: Inactive Event
+          - generic [ref=e73]: Has Outputs
+        - generic [ref=e74]:
+          - generic [ref=e75]: Transitions
+          - generic [ref=e76]:
+            - generic [ref=e77]: →
+            - generic [ref=e78]: Transition
+          - generic [ref=e79]:
+            - generic [ref=e80]: ⚡
+            - generic [ref=e81]: Active Transition
+    - generic [ref=e82]:
+      - generic [ref=e83]:
+        - generic [ref=e84]:
+          - button "📊 Overview" [ref=e85] [cursor=pointer]:
+            - generic [ref=e86]: 📊
+            - generic [ref=e87]: Overview
+          - button "▶ Simulation" [active] [ref=e88] [cursor=pointer]:
+            - generic [ref=e89]: ▶
+            - generic [ref=e90]: Simulation
+          - button "🔗 Sequences" [ref=e91] [cursor=pointer]:
+            - generic [ref=e92]: 🔗
+            - generic [ref=e93]: Sequences
+          - button "⚙ Settings" [ref=e94] [cursor=pointer]:
+            - generic [ref=e95]: ⚙
+            - generic [ref=e96]: Settings
+        - button "▼" [ref=e97] [cursor=pointer]
+      - generic [ref=e99]:
+        - generic [ref=e100]:
+          - generic [ref=e101]: Status
+          - generic [ref=e105]: Stopped
+        - generic [ref=e106]:
+          - generic [ref=e107]: Controls
+          - generic [ref=e108]:
+            - button "▶ Play" [disabled] [ref=e109]
+            - button "⏹ Stop" [ref=e110] [cursor=pointer]
+            - button "⏭ Step" [disabled] [ref=e111]
+            - button "↻ Reset" [disabled] [ref=e112]
+        - generic [ref=e113]:
+          - generic [ref=e114]: Playback Speed
+          - generic [ref=e115]:
+            - generic [ref=e116]:
+              - button "100ms" [ref=e117] [cursor=pointer]
+              - button "500ms" [ref=e118] [cursor=pointer]
+              - button "1000ms" [ref=e119] [cursor=pointer]
+              - button "2000ms" [ref=e120] [cursor=pointer]
+            - generic [ref=e121]: Delay between vectors
+```

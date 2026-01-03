@@ -7,12 +7,14 @@ import ActivityFeed from './ActivityFeed';
 import HeatmapOverlay from './HeatmapOverlay';
 import ManualInputPanel from './ManualInputPanel';
 import CriticalEventGraphView from './CriticalEventGraphView';
+import MachineView from './MachineView';
 import ViewToggle from './ViewToggle';
 
 const DemoDashboard: React.FC = () => {
   const {
     sequences,
     selectedSequenceId,
+    currentMachine,
     simulationState,
     inputVectors,
     connectWebSocket,
@@ -22,7 +24,7 @@ const DemoDashboard: React.FC = () => {
   } = useVisualizerStore();
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'graph'>('graph');
+  const [viewMode, setViewMode] = useState<'list' | 'graph' | 'machine'>('graph');
 
   // Connect WebSocket on mount
   useEffect(() => {
@@ -75,11 +77,17 @@ const DemoDashboard: React.FC = () => {
             left: '16px',
             zIndex: 10
           }}>
-            <ViewToggle view={viewMode} onViewChange={setViewMode} />
+            <ViewToggle
+              view={viewMode}
+              onViewChange={setViewMode}
+              showMachineView={currentMachine !== null}
+            />
           </div>
 
           {selectedSequence || sequences.length > 0 ? (
-            viewMode === 'graph' ? (
+            viewMode === 'machine' && currentMachine ? (
+              <MachineView machine={currentMachine} sequences={sequences} />
+            ) : viewMode === 'graph' ? (
               <CriticalEventGraphView selectedSequenceId={selectedSequenceId} />
             ) : (
               <>

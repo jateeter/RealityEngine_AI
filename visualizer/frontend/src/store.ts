@@ -167,6 +167,22 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
       // Load sequences for this machine
       const sequences = await api.getSequences();
       set({ sequences });
+
+      // Automatically load simulation vectors for example machines
+      if (machine.isExample) {
+        try {
+          // Load the appropriate example based on machine ID
+          if (machineId === 'multi-step-example') {
+            await get().loadMultiStepExample();
+          } else if (machineId === 'nand-gate-example') {
+            await get().loadNANDGateExample();
+          } else if (machineId === 'data-center-example') {
+            await get().loadDataCenterExample();
+          }
+        } catch (error) {
+          console.log('Could not load example data for machine:', error);
+        }
+      }
     } catch (error) {
       console.error('Error loading machine:', error);
       throw error;

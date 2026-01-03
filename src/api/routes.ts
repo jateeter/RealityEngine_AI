@@ -115,6 +115,7 @@ export class RealityEngineAPI {
     this.router.get('/demo/load', this.loadDemo.bind(this));
     this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
     this.router.get('/demo/nand-gate', this.loadNANDGateExample.bind(this));
+    this.router.get('/demo/multi-step', this.loadMultiStepExample.bind(this));
   }
 
   // Health check
@@ -640,7 +641,8 @@ export class RealityEngineAPI {
 
     res.json({
       state: this.simulationController.getState(),
-      progress: this.simulationController.getProgress()
+      progress: this.simulationController.getProgress(),
+      inputVectors: this.simulationController.getInputVectors()
     });
   }
 
@@ -749,6 +751,77 @@ export class RealityEngineAPI {
       res.status(500).json({
         error: 'Failed to load data center example',
         details: error.message
+      });
+    }
+  }
+
+  private async loadMultiStepExample(_req: Request, res: Response): Promise<void> {
+    try {
+      const { createMultiStepMachine, generateTestVectors } =
+        await import('../examples/multi-step-sequences/sequence-definitions.js');
+
+      const machine = createMultiStepMachine();
+      const testVectors = generateTestVectors();
+      const allInputVectors = testVectors.map(t => t.vector);
+
+      // Clear existing sequences and machines
+      const existingMachines = this.engine.getAllMachines();
+      for (const m of existingMachines) {
+        this.engine.removeMachine(m.id);
+      }
+
+      const existingSequences = this.engine.getAllSequences();
+      for (const seq of existingSequences) {
+        this.engine.removeSequence(seq.id);
+      }
+
+      // Load machine (which also loads its sequences)
+      this.engine.addMachine(machine);
+
+      // Initialize simulation controller
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: 1500,
+        inputVectors: allInputVectors,
+        loop: true
+      });
+
+      res.json({
+        success: true,
+        machine: machine.toJSON(),
+        metadata: {
+          name: machine.name,
+          description: machine.description,
+          machineId: machine.id,
+          totalSequences: machine.getSequenceCount(),
+          sequenceNames: machine.getAllSequences().map(s => s.name),
+          totalInputVectors: allInputVectors.length,
+          eventSpace: '3D binary vectors: 000-111',
+          outputSpace: '2D binary vectors: {00, 01, 10, 11}',
+          sequences: [
+            {
+              name: 'Sequence 1',
+              path: '000 → 001 → 011',
+              output: '01',
+              depth: 3
+            },
+            {
+              name: 'Sequence 2',
+              path: '100 → 101 → 111',
+              output: '10',
+              depth: 3
+            }
+          ],
+          note: 'All sequences in the machine are visualized together and process the same input sequence'
+        },
+        sequencesLoaded: machine.getSequenceCount(),
+        inputVectorsLoaded: allInputVectors.length
+      });
+    } catch (error: any) {
+      console.error('Error loading multi-step sequences example:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to load multi-step sequences example',
+        message: error.message
       });
     }
   }

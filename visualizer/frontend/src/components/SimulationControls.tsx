@@ -11,7 +11,8 @@ const SimulationControls: React.FC = () => {
     resetSimulation,
     stepSimulation,
     setSimulationSpeed,
-    inputVectors
+    inputVectors,
+    currentMachine
   } = useVisualizerStore();
 
   const [speed, setSpeed] = useState(1000);
@@ -105,13 +106,13 @@ const SimulationControls: React.FC = () => {
           <button
             onClick={handlePlayPause}
             disabled={!inputVectors.length}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            title={isPlaying ? 'Pause' : 'Play'}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+            title={isPlaying ? 'Pause' : (currentMachine ? 'Run Input Sequence through Machine' : 'Play')}
           >
             {isPlaying ? (
               <span>❚❚ Pause</span>
             ) : (
-              <span>▶ {isPaused ? 'Resume' : 'Play'}</span>
+              <span>▶ {isPaused ? 'Resume' : (currentMachine ? 'Run Input Sequence' : 'Play')}</span>
             )}
           </button>
 
@@ -185,6 +186,13 @@ const SimulationControls: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Machine Info */}
+      {currentMachine && (
+        <div className="mt-3 text-sm text-blue-300 bg-blue-900/20 border border-blue-700 rounded px-3 py-2">
+          🤖 Machine: <strong>{currentMachine.name}</strong> ({currentMachine.sequenceCount} sequences, {inputVectors.length} input vectors)
+        </div>
+      )}
 
       {/* No Vectors Warning */}
       {!inputVectors.length && (

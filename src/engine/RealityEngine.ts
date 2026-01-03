@@ -1,5 +1,6 @@
 import { CriticalEventSequence } from '../models/CriticalEventSequence.js';
 import { RealityVector } from '../models/RealityVector.js';
+import { Machine } from '../models/Machine.js';
 import type { OutputVector } from '../models/types.js';
 import { VectorStore } from '../services/VectorStore.js';
 
@@ -29,12 +30,14 @@ export interface TransitionResult {
  */
 export class RealityEngine {
   private sequences: Map<string, CriticalEventSequence>;
+  private machines: Map<string, Machine>;
   private vectorStore: VectorStore;
   private transitionHistory: TransitionResult[];
   private maxHistorySize: number;
 
   constructor(vectorStore: VectorStore, maxHistorySize: number = 1000) {
     this.sequences = new Map();
+    this.machines = new Map();
     this.vectorStore = vectorStore;
     this.transitionHistory = [];
     this.maxHistorySize = maxHistorySize;
@@ -80,6 +83,53 @@ export class RealityEngine {
    */
   getAllSequences(): CriticalEventSequence[] {
     return Array.from(this.sequences.values());
+  }
+
+  /**
+   * Add a Machine to the engine
+   * This also adds all sequences from the machine
+   */
+  addMachine(machine: Machine): void {
+    this.machines.set(machine.id, machine);
+
+    // Add all sequences from the machine to the engine
+    for (const sequence of machine.getAllSequences()) {
+      this.addSequence(sequence);
+    }
+
+    console.log(`Added machine: ${machine.name} (${machine.id}) with ${machine.getSequenceCount()} sequences`);
+  }
+
+  /**
+   * Remove a machine from the engine
+   * This also removes all sequences from the machine
+   */
+  removeMachine(machineId: string): boolean {
+    const machine = this.machines.get(machineId);
+    if (!machine) {
+      return false;
+    }
+
+    // Remove all sequences from the machine
+    for (const sequenceId of machine.getSequenceIds()) {
+      this.removeSequence(sequenceId);
+    }
+
+    return this.machines.delete(machineId);
+  }
+
+  /**
+   * Get a machine by ID
+   */
+  getMachine(machineId: string): Machine | undefined {
+    return this.machines.get(machineId);
+  }
+
+  /**
+   * Get all machines
+   */
+  getAllMachines(): Machine[] {
+    return Array.from(this.machines.values());
   }
 
   /**

@@ -12,6 +12,11 @@ function App() {
     loadMachine
   } = useVisualizerStore();
 
+  // Expose store to window for E2E testing
+  useEffect(() => {
+    (window as any).useVisualizerStore = useVisualizerStore;
+  }, []);
+
   // Initialize app - check for last viewed machine
   useEffect(() => {
     const initializeApp = async () => {
