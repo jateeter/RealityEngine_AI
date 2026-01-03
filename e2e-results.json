@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 4
+      "actualWorkers": 5
     },
     "preserveOutput": "always",
     "reporter": [
@@ -43,7 +43,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 4
+          "actualWorkers": 5
         },
         "id": "chromium",
         "name": "chromium",
@@ -59,7 +59,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 4
+          "actualWorkers": 5
         },
         "id": "firefox",
         "name": "firefox",
@@ -75,7 +75,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 4
+          "actualWorkers": 5
         },
         "id": "webkit",
         "name": "webkit",
@@ -91,7 +91,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 4
+          "actualWorkers": 5
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
@@ -131,6 +131,70 @@
           "column": 6,
           "specs": [
             {
+              "title": "Flow 1: Browse machine library and select machine for visualization",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9407,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Verify Machine Selection View loads",
+                          "duration": 73
+                        },
+                        {
+                          "title": "Test search functionality",
+                          "duration": 1065
+                        },
+                        {
+                          "title": "Test filter tabs",
+                          "duration": 1423
+                        },
+                        {
+                          "title": "Test sort dropdown",
+                          "duration": 1026
+                        },
+                        {
+                          "title": "Test machine card hover effects",
+                          "duration": 643
+                        },
+                        {
+                          "title": "Select machine and navigate to Administration View",
+                          "duration": 2059
+                        },
+                        {
+                          "title": "Verify graph visualization loaded",
+                          "duration": 2027
+                        }
+                      ],
+                      "startTime": "2026-01-03T15:20:09.352Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-cc1f35eb3558db3ca47e",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 28,
+              "column": 3
+            },
+            {
               "title": "Flow 2: Run simulation with input stream and reset machine",
               "ok": false,
               "tags": [],
@@ -143,70 +207,88 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
                       "status": "failed",
-                      "duration": 18329,
+                      "duration": 21051,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
                         "location": {
                           "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                          "column": 32,
-                          "line": 263
+                          "column": 49,
+                          "line": 338
                         },
-                        "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                        "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
                       },
                       "errors": [
                         {
                           "location": {
                             "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "column": 32,
-                            "line": 263
+                            "column": 49,
+                            "line": 338
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n\n  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n\n  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5"
                         }
                       ],
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "📊 Simulation state from backend: {\n  \"state\": {\n    \"status\": \"stopped\",\n    \"currentIndex\": 0,\n    \"totalVectors\": 11,\n    \"startTime\": null,\n    \"lastStepTime\": null\n  },\n  \"progress\": 0,\n  \"inputVectors\": [\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      1,\n      1\n    ],\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      0,\n      1,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ]\n  ]\n}\n"
+                        },
+                        {
+                          "text": "Store update result: { success: \u001b[33mtrue\u001b[39m, inputVectorsLength: \u001b[33m11\u001b[39m }\n"
+                        },
+                        {
+                          "text": "✓ Loaded 11 vectors into store\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
                       "steps": [
                         {
                           "title": "Navigate to machine with simulation data",
-                          "duration": 2076
+                          "duration": 2131
                         },
                         {
                           "title": "Open Floating Control Panel",
-                          "duration": 1550
+                          "duration": 1605
                         },
                         {
                           "title": "Navigate to Simulation tab",
-                          "duration": 531
+                          "duration": 542
                         },
                         {
                           "title": "Verify simulation status display",
-                          "duration": 11
+                          "duration": 49
                         },
                         {
-                          "title": "Verify simulation ready",
-                          "duration": 1004
+                          "title": "Load simulation state",
+                          "duration": 4631
                         },
                         {
                           "title": "Start simulation playback",
-                          "duration": 12010,
+                          "duration": 4551
+                        },
+                        {
+                          "title": "Verify graph animates during playback",
+                          "duration": 1013
+                        },
+                        {
+                          "title": "Pause simulation",
+                          "duration": 5530,
                           "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
                             "location": {
                               "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                              "column": 32,
-                              "line": 263
+                              "column": 49,
+                              "line": 338
                             },
-                            "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                            "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
                           }
                         }
                       ],
-                      "startTime": "2026-01-03T14:53:59.110Z",
+                      "startTime": "2026-01-03T15:20:09.359Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -227,8 +309,8 @@
                       ],
                       "errorLocation": {
                         "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "column": 32,
-                        "line": 263
+                        "column": 49,
+                        "line": 338
                       }
                     }
                   ],
@@ -237,7 +319,205 @@
               ],
               "id": "1a60b4631330e4878589-6323973ea457246a24df",
               "file": "visualizer-user-flows.spec.ts",
-              "line": 187,
+              "line": 186,
+              "column": 3
+            },
+            {
+              "title": "Flow 3: Add new critical event sequence (NOT IMPLEMENTED)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                        "line": 440,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "skipped",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-03T15:20:08.869Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                            "line": 440,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1a60b4631330e4878589-4c484f34e196505d43b0",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 440,
+              "column": 8
+            },
+            {
+              "title": "Bonus: Complete navigation round-trip",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 7309,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-03T15:20:09.343Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-5f4f796125a7200334a9",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 541,
+              "column": 3
+            },
+            {
+              "title": "Bonus: Create, edit, and delete custom machine",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 9311,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Create new machine",
+                          "duration": 2669
+                        },
+                        {
+                          "title": "Edit machine metadata",
+                          "duration": 3086
+                        },
+                        {
+                          "title": "Delete machine",
+                          "duration": 2617
+                        }
+                      ],
+                      "startTime": "2026-01-03T15:20:09.356Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-16c4d5a6ddb4d456590f",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 581,
+              "column": 3
+            },
+            {
+              "title": "Flow 1: Browse machine library and select machine for visualization",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 10181,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Verify Machine Selection View loads",
+                          "duration": 64
+                        },
+                        {
+                          "title": "Test search functionality",
+                          "duration": 1036
+                        },
+                        {
+                          "title": "Test filter tabs",
+                          "duration": 1439
+                        },
+                        {
+                          "title": "Test sort dropdown",
+                          "duration": 1035
+                        },
+                        {
+                          "title": "Test machine card hover effects",
+                          "duration": 635
+                        },
+                        {
+                          "title": "Select machine and navigate to Administration View",
+                          "duration": 2141
+                        },
+                        {
+                          "title": "Verify graph visualization loaded",
+                          "duration": 2044
+                        }
+                      ],
+                      "startTime": "2026-01-03T15:20:09.342Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-50c0384f86dcdc2c393c",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 28,
               "column": 3
             },
             {
@@ -253,70 +533,88 @@
                   "projectName": "firefox",
                   "results": [
                     {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
+                      "workerIndex": 5,
+                      "parallelIndex": 3,
                       "status": "failed",
-                      "duration": 18842,
+                      "duration": 21673,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
                         "location": {
                           "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                          "column": 32,
-                          "line": 263
+                          "column": 49,
+                          "line": 338
                         },
-                        "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                        "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
                       },
                       "errors": [
                         {
                           "location": {
                             "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "column": 32,
-                            "line": 263
+                            "column": 49,
+                            "line": 338
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n\n  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n\n  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5"
                         }
                       ],
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "📊 Simulation state from backend: {\n  \"state\": {\n    \"status\": \"stopped\",\n    \"currentIndex\": 0,\n    \"totalVectors\": 11,\n    \"startTime\": null,\n    \"lastStepTime\": null\n  },\n  \"progress\": 0,\n  \"inputVectors\": [\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      1,\n      1\n    ],\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      0,\n      1,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ]\n  ]\n}\n"
+                        },
+                        {
+                          "text": "Store update result: { success: \u001b[33mtrue\u001b[39m, inputVectorsLength: \u001b[33m11\u001b[39m }\n"
+                        },
+                        {
+                          "text": "✓ Loaded 11 vectors into store\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
                       "steps": [
                         {
                           "title": "Navigate to machine with simulation data",
-                          "duration": 2061
+                          "duration": 2058
                         },
                         {
                           "title": "Open Floating Control Panel",
-                          "duration": 1564
+                          "duration": 1600
                         },
                         {
                           "title": "Navigate to Simulation tab",
-                          "duration": 538
+                          "duration": 542
                         },
                         {
                           "title": "Verify simulation status display",
-                          "duration": 26
+                          "duration": 28
                         },
                         {
-                          "title": "Verify simulation ready",
-                          "duration": 1003
+                          "title": "Load simulation state",
+                          "duration": 4699
                         },
                         {
                           "title": "Start simulation playback",
-                          "duration": 12008,
+                          "duration": 4557
+                        },
+                        {
+                          "title": "Verify graph animates during playback",
+                          "duration": 1011
+                        },
+                        {
+                          "title": "Pause simulation",
+                          "duration": 5538,
                           "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
                             "location": {
                               "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                              "column": 32,
-                              "line": 263
+                              "column": 49,
+                              "line": 338
                             },
-                            "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                            "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
                           }
                         }
                       ],
-                      "startTime": "2026-01-03T14:53:59.109Z",
+                      "startTime": "2026-01-03T15:20:17.455Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -337,8 +635,8 @@
                       ],
                       "errorLocation": {
                         "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "column": 32,
-                        "line": 263
+                        "column": 49,
+                        "line": 338
                       }
                     }
                   ],
@@ -347,7 +645,205 @@
               ],
               "id": "1a60b4631330e4878589-8b8afe6165895c6fd9ab",
               "file": "visualizer-user-flows.spec.ts",
-              "line": 187,
+              "line": 186,
+              "column": 3
+            },
+            {
+              "title": "Flow 3: Add new critical event sequence (NOT IMPLEMENTED)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                        "line": 440,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "skipped",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-03T15:20:18.911Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                            "line": 440,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1a60b4631330e4878589-4ea2675ed496af27eee0",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 440,
+              "column": 8
+            },
+            {
+              "title": "Bonus: Complete navigation round-trip",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 7824,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-03T15:20:19.347Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-fd0473e416a0190f0de0",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 541,
+              "column": 3
+            },
+            {
+              "title": "Bonus: Create, edit, and delete custom machine",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10032,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Create new machine",
+                          "duration": 2842
+                        },
+                        {
+                          "title": "Edit machine metadata",
+                          "duration": 3101
+                        },
+                        {
+                          "title": "Delete machine",
+                          "duration": 2625
+                        }
+                      ],
+                      "startTime": "2026-01-03T15:20:19.434Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-ef77657fd9c2624282a8",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 581,
+              "column": 3
+            },
+            {
+              "title": "Flow 1: Browse machine library and select machine for visualization",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 9891,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Verify Machine Selection View loads",
+                          "duration": 66
+                        },
+                        {
+                          "title": "Test search functionality",
+                          "duration": 1059
+                        },
+                        {
+                          "title": "Test filter tabs",
+                          "duration": 1424
+                        },
+                        {
+                          "title": "Test sort dropdown",
+                          "duration": 1023
+                        },
+                        {
+                          "title": "Test machine card hover effects",
+                          "duration": 664
+                        },
+                        {
+                          "title": "Select machine and navigate to Administration View",
+                          "duration": 2052
+                        },
+                        {
+                          "title": "Verify graph visualization loaded",
+                          "duration": 2032
+                        }
+                      ],
+                      "startTime": "2026-01-03T15:20:21.619Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-b1ba94a608043b7990fb",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 28,
               "column": 3
             },
             {
@@ -363,70 +859,88 @@
                   "projectName": "webkit",
                   "results": [
                     {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
+                      "workerIndex": 9,
+                      "parallelIndex": 4,
                       "status": "failed",
-                      "duration": 18598,
+                      "duration": 20873,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
                         "location": {
                           "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                          "column": 32,
-                          "line": 263
+                          "column": 49,
+                          "line": 338
                         },
-                        "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                        "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
                       },
                       "errors": [
                         {
                           "location": {
                             "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "column": 32,
-                            "line": 263
+                            "column": 49,
+                            "line": 338
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n\n  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n\n  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5"
                         }
                       ],
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "📊 Simulation state from backend: {\n  \"state\": {\n    \"status\": \"stopped\",\n    \"currentIndex\": 0,\n    \"totalVectors\": 11,\n    \"startTime\": null,\n    \"lastStepTime\": null\n  },\n  \"progress\": 0,\n  \"inputVectors\": [\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      1,\n      1\n    ],\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      0,\n      1,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ]\n  ]\n}\n"
+                        },
+                        {
+                          "text": "Store update result: { success: \u001b[33mtrue\u001b[39m, inputVectorsLength: \u001b[33m11\u001b[39m }\n"
+                        },
+                        {
+                          "text": "✓ Loaded 11 vectors into store\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
                       "steps": [
                         {
                           "title": "Navigate to machine with simulation data",
-                          "duration": 2081
+                          "duration": 2061
                         },
                         {
                           "title": "Open Floating Control Panel",
-                          "duration": 1543
+                          "duration": 1526
                         },
                         {
                           "title": "Navigate to Simulation tab",
-                          "duration": 535
+                          "duration": 522
                         },
                         {
                           "title": "Verify simulation status display",
-                          "duration": 12
+                          "duration": 15
                         },
                         {
-                          "title": "Verify simulation ready",
-                          "duration": 1005
+                          "title": "Load simulation state",
+                          "duration": 4606
                         },
                         {
                           "title": "Start simulation playback",
-                          "duration": 12006,
+                          "duration": 4539
+                        },
+                        {
+                          "title": "Verify graph animates during playback",
+                          "duration": 1013
+                        },
+                        {
+                          "title": "Pause simulation",
+                          "duration": 5532,
                           "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
                             "location": {
                               "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                              "column": 32,
-                              "line": 263
+                              "column": 49,
+                              "line": 338
                             },
-                            "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
+                            "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
                           }
                         }
                       ],
-                      "startTime": "2026-01-03T14:53:59.101Z",
+                      "startTime": "2026-01-03T15:20:28.548Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -447,8 +961,8 @@
                       ],
                       "errorLocation": {
                         "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "column": 32,
-                        "line": 263
+                        "column": 49,
+                        "line": 338
                       }
                     }
                   ],
@@ -457,12 +971,210 @@
               ],
               "id": "1a60b4631330e4878589-dc1dd0d4286ec1f76e16",
               "file": "visualizer-user-flows.spec.ts",
-              "line": 187,
+              "line": 186,
+              "column": 3
+            },
+            {
+              "title": "Flow 3: Add new critical event sequence (NOT IMPLEMENTED)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                        "line": 440,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "skipped",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-03T15:20:30.403Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                            "line": 440,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1a60b4631330e4878589-f535148e552be8deb327",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 440,
+              "column": 8
+            },
+            {
+              "title": "Bonus: Complete navigation round-trip",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7086,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-03T15:20:31.156Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-991b408a7c4fa0d449b0",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 541,
+              "column": 3
+            },
+            {
+              "title": "Bonus: Create, edit, and delete custom machine",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 9158,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Create new machine",
+                          "duration": 2579
+                        },
+                        {
+                          "title": "Edit machine metadata",
+                          "duration": 3090
+                        },
+                        {
+                          "title": "Delete machine",
+                          "duration": 2557
+                        }
+                      ],
+                      "startTime": "2026-01-03T15:20:31.052Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-ccc51fd5130f8d99e038",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 581,
+              "column": 3
+            },
+            {
+              "title": "Flow 1: Browse machine library and select machine for visualization",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 8993,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Verify Machine Selection View loads",
+                          "duration": 40
+                        },
+                        {
+                          "title": "Test search functionality",
+                          "duration": 1032
+                        },
+                        {
+                          "title": "Test filter tabs",
+                          "duration": 1421
+                        },
+                        {
+                          "title": "Test sort dropdown",
+                          "duration": 1030
+                        },
+                        {
+                          "title": "Test machine card hover effects",
+                          "duration": 631
+                        },
+                        {
+                          "title": "Select machine and navigate to Administration View",
+                          "duration": 2029
+                        },
+                        {
+                          "title": "Verify graph visualization loaded",
+                          "duration": 2017
+                        }
+                      ],
+                      "startTime": "2026-01-03T15:20:32.143Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-31695b83f80625697edf",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 28,
               "column": 3
             },
             {
               "title": "Flow 2: Run simulation with input stream and reset machine",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -473,101 +1185,226 @@
                   "projectName": "Mobile Chrome",
                   "results": [
                     {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 18235,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
-                        "location": {
-                          "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                          "column": 32,
-                          "line": 263
-                        },
-                        "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
-                      },
-                      "errors": [
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 21097,
+                      "errors": [],
+                      "stdout": [
                         {
-                          "location": {
-                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "column": 32,
-                            "line": 263
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n\n  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5"
+                          "text": "📊 Simulation state from backend: {\n  \"state\": {\n    \"status\": \"stopped\",\n    \"currentIndex\": 0,\n    \"totalVectors\": 11,\n    \"startTime\": null,\n    \"lastStepTime\": null\n  },\n  \"progress\": 0,\n  \"inputVectors\": [\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      1,\n      1\n    ],\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      0,\n      1,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ]\n  ]\n}\n"
+                        },
+                        {
+                          "text": "Store update result: { success: \u001b[33mtrue\u001b[39m, inputVectorsLength: \u001b[33m11\u001b[39m }\n"
+                        },
+                        {
+                          "text": "✓ Loaded 11 vectors into store\n"
+                        },
+                        {
+                          "text": "Stepped from \"Vector 2 / 11\" to \"Vector 3 / 11\"\n"
                         }
                       ],
-                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
                       "steps": [
                         {
                           "title": "Navigate to machine with simulation data",
-                          "duration": 2080
+                          "duration": 2122
                         },
                         {
                           "title": "Open Floating Control Panel",
-                          "duration": 1548
+                          "duration": 1564
                         },
                         {
                           "title": "Navigate to Simulation tab",
-                          "duration": 542
+                          "duration": 545
                         },
                         {
                           "title": "Verify simulation status display",
-                          "duration": 13
+                          "duration": 11
                         },
                         {
-                          "title": "Verify simulation ready",
-                          "duration": 1003
+                          "title": "Load simulation state",
+                          "duration": 4590
                         },
                         {
                           "title": "Start simulation playback",
-                          "duration": 12009,
-                          "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeEnabled\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\nExpected: enabled\nReceived: disabled\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"toBeEnabled\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Play\"), button:has-text(\"▶ Play\")').first()\u001b[22m\n\u001b[2m    14 × locator resolved to <button disabled>▶ Play</button>\u001b[22m\n\u001b[2m       - unexpected value \"disabled\"\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:263:32\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:256:5",
-                            "location": {
-                              "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                              "column": 32,
-                              "line": 263
-                            },
-                            "snippet": "  261 |\n  262 |       // Verify button is enabled (vectors loaded)\n> 263 |       await expect(playButton).toBeEnabled({ timeout: 10000 });\n      |                                ^\n  264 |\n  265 |       // Click play\n  266 |       await playButton.click();"
-                          }
+                          "duration": 4531
+                        },
+                        {
+                          "title": "Verify graph animates during playback",
+                          "duration": 1004
+                        },
+                        {
+                          "title": "Pause simulation",
+                          "duration": 524
+                        },
+                        {
+                          "title": "Test step-by-step advance",
+                          "duration": 530
+                        },
+                        {
+                          "title": "Resume simulation playback",
+                          "duration": 2529
+                        },
+                        {
+                          "title": "Stop simulation",
+                          "duration": 525
+                        },
+                        {
+                          "title": "Reset machine to initial state",
+                          "duration": 1036
+                        },
+                        {
+                          "title": "Test playback speed controls",
+                          "duration": 640
                         }
                       ],
-                      "startTime": "2026-01-03T14:53:59.105Z",
+                      "startTime": "2026-01-03T15:20:38.849Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-Mobile-Chrome/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-Mobile-Chrome/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-Mobile-Chrome/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "column": 32,
-                        "line": 263
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "1a60b4631330e4878589-81f8231aaada5e41c1c7",
               "file": "visualizer-user-flows.spec.ts",
-              "line": 187,
+              "line": 186,
+              "column": 3
+            },
+            {
+              "title": "Flow 3: Add new critical event sequence (NOT IMPLEMENTED)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "location": {
+                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                        "line": 440,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": -1,
+                      "parallelIndex": -1,
+                      "status": "skipped",
+                      "duration": 0,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-03T15:20:40.185Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "location": {
+                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
+                            "line": 440,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1a60b4631330e4878589-5428e35a7867935cf63a",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 440,
+              "column": 8
+            },
+            {
+              "title": "Bonus: Complete navigation round-trip",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 6954,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-03T15:20:40.557Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-0e0a9b4c5ec7799c585c",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 541,
+              "column": 3
+            },
+            {
+              "title": "Bonus: Create, edit, and delete custom machine",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 8913,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Create new machine",
+                          "duration": 2590
+                        },
+                        {
+                          "title": "Edit machine metadata",
+                          "duration": 3049
+                        },
+                        {
+                          "title": "Delete machine",
+                          "duration": 2540
+                        }
+                      ],
+                      "startTime": "2026-01-03T15:20:40.769Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "1a60b4631330e4878589-cb613cd689d3f3a13332",
+              "file": "visualizer-user-flows.spec.ts",
+              "line": 581,
               "column": 3
             }
           ]
@@ -577,11 +1414,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-01-03T14:53:56.064Z",
-    "duration": 23132.104,
-    "expected": 0,
-    "skipped": 0,
-    "unexpected": 4,
+    "startTime": "2026-01-03T15:20:06.012Z",
+    "duration": 54234.659,
+    "expected": 13,
+    "skipped": 4,
+    "unexpected": 3,
     "flaky": 0
   }
 }
