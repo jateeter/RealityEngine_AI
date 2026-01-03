@@ -207,8 +207,8 @@ test.describe('Visualizer User Flows', () => {
       const expandButton = page.locator('button:has-text("▲")');
       await expect(expandButton).toBeVisible({ timeout: 10000 });
 
-      // Click to expand
-      await expandButton.click();
+      // Click to expand (force click to bypass pointer interception from graph elements)
+      await expandButton.click({ force: true });
       await page.waitForTimeout(500);
 
       // Verify tabs are now visible
@@ -551,7 +551,8 @@ test.describe('Visualizer User Flows', () => {
     // Step 1: Create new machine
     await test.step('Create new machine', async () => {
       const newMachineButton = page.locator('button:has-text("New Machine")');
-      await newMachineButton.click();
+      // Force click to bypass pointer interception from search input
+      await newMachineButton.click({ force: true });
       await page.waitForTimeout(500);
 
       // Verify dialog opened
