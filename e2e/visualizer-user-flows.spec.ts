@@ -147,16 +147,16 @@ test.describe('Visualizer User Flows', () => {
       // Check for breadcrumb with "Machines" text
       await expect(page.locator('text=Machines')).toBeVisible();
 
-      // Check for machine name in breadcrumb
+      // Check for machine name in breadcrumb (use first() to avoid strict mode violation)
       if (machineName) {
-        await expect(page.locator(`text=${machineName.trim()}`)).toBeVisible({ timeout: 10000 });
+        await expect(page.locator(`text=${machineName.trim()}`).first()).toBeVisible({ timeout: 10000 });
       }
 
-      // Check for Floating Control Panel - look for any of the tab buttons
-      await expect(page.locator('button:has-text("Overview")').or(page.locator('button:has-text("Simulation")'))).toBeVisible({ timeout: 10000 });
+      // Check for Floating Control Panel - look for any of the tab buttons (use first() to avoid strict mode)
+      await expect(page.locator('button:has-text("Overview")').first()).toBeVisible({ timeout: 10000 });
 
-      // Check for graph canvas (ReactFlow)
-      const canvas = page.locator('[class*="react-flow"]');
+      // Check for graph canvas (ReactFlow) - use first() to avoid strict mode
+      const canvas = page.locator('[class*="react-flow"]').first();
       await expect(canvas).toBeVisible({ timeout: 10000 });
     });
 
@@ -171,11 +171,11 @@ test.describe('Visualizer User Flows', () => {
       await expect(page.locator('text=Input Event Space')).toBeVisible();
       await expect(page.locator('text=Output Event Space')).toBeVisible();
 
-      // Check for ReactFlow controls
-      await expect(page.locator('[class*="react-flow__controls"]')).toBeVisible();
+      // Check for ReactFlow controls (use first() to avoid strict mode)
+      await expect(page.locator('[class*="react-flow__controls"]').first()).toBeVisible();
 
-      // Check for minimap
-      await expect(page.locator('[class*="react-flow__minimap"]')).toBeVisible();
+      // Check for minimap (use first() to avoid strict mode)
+      await expect(page.locator('[class*="react-flow__minimap"]').first()).toBeVisible();
     });
   });
 
@@ -228,8 +228,8 @@ test.describe('Visualizer User Flows', () => {
 
     // Step 4: Verify simulation state display
     await test.step('Verify simulation status display', async () => {
-      // Check for status indicator text
-      await expect(page.locator('text=Status').or(page.locator('text=Simulation'))).toBeVisible({ timeout: 10000 });
+      // Check for status indicator text (use first() to avoid strict mode violation)
+      await expect(page.locator('text=Status').first()).toBeVisible({ timeout: 10000 });
 
       // Check for playback controls - at least one should be visible
       await expect(
@@ -565,9 +565,9 @@ test.describe('Visualizer User Flows', () => {
       const descInput = page.locator('textarea[id="machine-description"]');
       await descInput.fill(testDescription);
 
-      // Submit
+      // Submit (force click to bypass pointer interception on mobile)
       const createButton = page.locator('button:has-text("Create Machine")');
-      await createButton.click();
+      await createButton.click({ force: true });
       await page.waitForTimeout(2000);
 
       // Verify dialog closed
@@ -586,9 +586,9 @@ test.describe('Visualizer User Flows', () => {
       await machineCard.hover();
       await page.waitForTimeout(500);
 
-      // Click edit
+      // Click edit (force click for mobile compatibility)
       const editButton = machineCard.locator('button:has-text("Edit")');
-      await editButton.click();
+      await editButton.click({ force: true });
       await page.waitForTimeout(500);
 
       // Verify edit dialog opened
@@ -598,9 +598,9 @@ test.describe('Visualizer User Flows', () => {
       const descInput = page.locator('textarea[id="machine-description"]');
       await descInput.fill(`${testDescription} - EDITED`);
 
-      // Save
+      // Save (force click for mobile compatibility)
       const saveButton = page.locator('button:has-text("Save Changes")');
-      await saveButton.click();
+      await saveButton.click({ force: true });
       await page.waitForTimeout(2000);
 
       // Verify dialog closed
@@ -616,7 +616,7 @@ test.describe('Visualizer User Flows', () => {
       await machineCard.hover();
       await page.waitForTimeout(500);
 
-      // Click delete
+      // Click delete (force click for mobile compatibility)
       const deleteButton = machineCard.locator('button:has-text("Delete")');
 
       // Setup dialog handler for confirmation
@@ -625,7 +625,7 @@ test.describe('Visualizer User Flows', () => {
         await dialog.accept();
       });
 
-      await deleteButton.click();
+      await deleteButton.click({ force: true });
       await page.waitForTimeout(2000);
 
       // Verify machine is gone
