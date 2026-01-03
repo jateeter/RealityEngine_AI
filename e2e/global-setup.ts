@@ -37,7 +37,7 @@ async function globalSetup(config: FullConfig) {
 
 async function waitForServices() {
   const services = [
-    { name: 'Qdrant', url: 'http://localhost:6333/' },
+    { name: 'Qdrant', url: 'http://localhost:6333/readyz' },
     { name: 'Reality Engine', url: 'http://localhost:3000/api/engine/stats' },
     { name: 'Visualizer Backend', url: 'http://localhost:3001/health' },
     { name: 'Visualizer Frontend', url: 'http://localhost:5173/' },
@@ -71,6 +71,8 @@ async function waitForServices() {
         retries++;
         if (retries < maxRetries) {
           await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          console.error(`  ❌ ${service.name} health check failed after ${maxRetries} retries:`, error);
         }
       }
     }

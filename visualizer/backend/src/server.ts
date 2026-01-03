@@ -484,6 +484,279 @@ app.get('/api/demo/load', async (req: Request, res: Response) => {
   }
 });
 
+// Proxy endpoint: Load data center example
+app.get('/api/demo/data-center', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/data-center`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'demo-loaded',
+      metadata: response.data.metadata,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error loading data center example:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Load NAND gate example
+app.get('/api/demo/nand-gate', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/nand-gate`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'demo-loaded',
+      metadata: response.data.metadata,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error loading NAND gate example:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Load multi-step sequences example
+app.get('/api/demo/multi-step', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/multi-step`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'demo-loaded',
+      metadata: response.data.metadata,
+      machine: response.data.machine,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error loading multi-step sequences example:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===== Machine Management Endpoints =====
+
+// In-memory machine storage (for demo purposes - would use a database in production)
+interface Machine {
+  id: string;
+  name: string;
+  description: string;
+  sequenceCount: number;
+  totalVectors: number;
+  sequenceIds: string[];
+  sequences: Array<{ id: string; name: string }>;
+  metadata: Record<string, any>;
+  isExample: boolean;
+  createdAt: number;
+  updatedAt: number;
+  lastAccessedAt: number | null;
+}
+
+const machines: Map<string, Machine> = new Map();
+
+// Initialize with example machines
+function initializeExampleMachines() {
+  const exampleMachines: Partial<Machine>[] = [
+    {
+      id: 'nand-gate-example',
+      name: 'NAND Gate Logic',
+      description: 'Critical event sequence modeling a NAND gate operation with truth table verification',
+      isExample: true,
+      metadata: { type: 'logic-gate', difficulty: 'beginner' }
+    },
+    {
+      id: 'data-center-example',
+      name: 'Data Center Monitoring',
+      description: 'Multi-step sequence tracking server health, load balancing, and failover events',
+      isExample: true,
+      metadata: { type: 'infrastructure', difficulty: 'intermediate' }
+    },
+    {
+      id: 'multi-step-example',
+      name: 'Multi-Step Workflow',
+      description: 'Complex sequence demonstrating cascading events and conditional transitions',
+      isExample: true,
+      metadata: { type: 'workflow', difficulty: 'advanced' }
+    }
+  ];
+
+  exampleMachines.forEach((example) => {
+    const machine: Machine = {
+      id: example.id!,
+      name: example.name!,
+      description: example.description!,
+      sequenceCount: 0,
+      totalVectors: 0,
+      sequenceIds: [],
+      sequences: [],
+      metadata: example.metadata || {},
+      isExample: example.isExample!,
+      createdAt: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
+      updatedAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
+      lastAccessedAt: null
+    };
+    machines.set(machine.id, machine);
+  });
+}
+
+initializeExampleMachines();
+
+// Get all machines
+app.get('/api/machines', async (req: Request, res: Response) => {
+  try {
+    // Fetch sequences from Reality Engine to populate machine stats
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences`);
+    const sequences = response.data.sequences;
+
+    // Update example machines with current sequence data
+    machines.forEach((machine) => {
+      if (machine.isExample) {
+        const machineSequences = sequences.filter((seq: any) =>
+          seq.name.toLowerCase().includes(machine.name.toLowerCase().split(' ')[0])
+        );
+        machine.sequenceIds = machineSequences.map((seq: any) => seq.id);
+        machine.sequences = machineSequences.map((seq: any) => ({ id: seq.id, name: seq.name }));
+        machine.sequenceCount = machineSequences.length;
+        machine.totalVectors = machineSequences.reduce((sum: number, seq: any) => sum + (seq.vectors?.length || 0), 0);
+      }
+    });
+
+    const machineList = Array.from(machines.values());
+    res.json({ machines: machineList });
+  } catch (error: any) {
+    console.error('Error fetching machines:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get specific machine
+app.get('/api/machines/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const machine = machines.get(id);
+
+    if (!machine) {
+      return res.status(404).json({ error: 'Machine not found' });
+    }
+
+    // Fetch updated sequence data
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences`);
+    const sequences = response.data.sequences;
+
+    const machineSequences = sequences.filter((seq: any) => machine.sequenceIds.includes(seq.id));
+    machine.sequences = machineSequences.map((seq: any) => ({ id: seq.id, name: seq.name }));
+    machine.sequenceCount = machineSequences.length;
+    machine.totalVectors = machineSequences.reduce((sum: number, seq: any) => sum + (seq.vectors?.length || 0), 0);
+
+    res.json({ machine });
+  } catch (error: any) {
+    console.error('Error fetching machine:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create new machine
+app.post('/api/machines', async (req: Request, res: Response) => {
+  try {
+    const { name, description, sequenceIds = [], metadata = {} } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Machine name is required' });
+    }
+
+    const id = `machine-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const now = Date.now();
+
+    const machine: Machine = {
+      id,
+      name,
+      description: description || '',
+      sequenceCount: sequenceIds.length,
+      totalVectors: 0,
+      sequenceIds,
+      sequences: [],
+      metadata,
+      isExample: false,
+      createdAt: now,
+      updatedAt: now,
+      lastAccessedAt: null
+    };
+
+    machines.set(id, machine);
+
+    res.json({ machine });
+  } catch (error: any) {
+    console.error('Error creating machine:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update machine
+app.put('/api/machines/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const machine = machines.get(id);
+
+    if (!machine) {
+      return res.status(404).json({ error: 'Machine not found' });
+    }
+
+    const { name, description, sequenceIds, metadata } = req.body;
+
+    if (name !== undefined) machine.name = name;
+    if (description !== undefined) machine.description = description;
+    if (sequenceIds !== undefined) {
+      machine.sequenceIds = sequenceIds;
+      machine.sequenceCount = sequenceIds.length;
+    }
+    if (metadata !== undefined) {
+      machine.metadata = { ...machine.metadata, ...metadata };
+      // Update lastAccessedAt if provided in metadata
+      if (metadata.lastAccessedAt !== undefined) {
+        machine.lastAccessedAt = metadata.lastAccessedAt;
+      }
+    }
+
+    machine.updatedAt = Date.now();
+
+    res.json({ machine });
+  } catch (error: any) {
+    console.error('Error updating machine:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete machine
+app.delete('/api/machines/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const machine = machines.get(id);
+
+    if (!machine) {
+      return res.status(404).json({ error: 'Machine not found' });
+    }
+
+    if (machine.isExample) {
+      return res.status(403).json({ error: 'Cannot delete example machines' });
+    }
+
+    machines.delete(id);
+
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Error deleting machine:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Start server
 server.listen(PORT, () => {
   console.log(`Reality Engine Visualizer Backend running on port ${PORT}`);
