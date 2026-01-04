@@ -89,26 +89,107 @@ Each card (300×200px) displays:
 ## Machine Administration View
 
 ### Purpose
-Full-screen workspace for visualizing, monitoring, and controlling a single machine and its critical event sequences.
+Full-screen workspace for visualizing, monitoring, and controlling a single machine and its critical event sequences. The view presents a visual metaphor of a machine with **input vectors flowing in**, **internal critical event processing**, and **output vectors flowing out**.
 
 ### Layout
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│ ← Machines / Machine Name                    [View Mode] │ ← Top Navigation (60px)
-├──────────────────────────────────────────────────────────┤
-│                                                            │
-│                                                            │
-│           Critical Event Graph Visualization              │
-│                  (Full Screen)                            │
-│                                                            │
-│                                                            │
-│                                 ┌──────────────────────┐  │
-│                                 │ Floating Control     │  │
-│                                 │ [Overview][Sim]...   │  │
-│                                 └──────────────────────┘  │
-└──────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│ ← Machines / Machine Name                             [View Mode]   │ ← Top Navigation (60px)
+├─────────────────────────────────────────────────────────────────────┤
+│ ┌──────────┐  ┌──────────────────────────────────┐  ┌──────────┐  │
+│ │  INPUT   │  │     MACHINE CONTAINER            │  │  OUTPUT  │  │
+│ │  STREAM  │→ │  ┌───────────────────────────┐  │ →│  STREAM  │  │
+│ │          │  │  │  Critical Event Sequences │  │  │          │  │
+│ │  ┌────┐  │  │  │    (Graph Visualization)  │  │  │  ┌────┐  │  │
+│ │  │ V1 │→ │  │  │                           │  │  │→ │ O1 │  │  │
+│ │  │ V2 │→ │  │  │   [Active Nodes & Edges]  │  │  │→ │ O2 │  │  │
+│ │  │ V3 │→ │  │  │                           │  │  │  └────┘  │  │
+│ │  └────┘  │  │  └───────────────────────────┘  │  │          │  │
+│ │          │  │                                  │  │          │  │
+│ └──────────┘  └──────────────────────────────────┘  └──────────┘  │
+│                                 ┌──────────────────────┐            │
+│                                 │ Floating Control     │            │
+│                                 │ [Overview][Sim]...   │            │
+│                                 └──────────────────────┘            │
+└─────────────────────────────────────────────────────────────────────┘
 ```
+
+### Three-Panel Architecture
+
+The machine view is divided into three synchronized panels that visualize the complete data flow:
+
+#### Left Panel: Input Stream (220px width)
+**Visual Design:**
+- Blue-themed gradient background (`#0f172a` → `#1e293b`)
+- Blue border (`#3b82f6`) indicating input event space
+- Vertical queue showing next 5 input vectors
+
+**Contents:**
+- **Header**: "→ INPUT STREAM" with current vector position (e.g., "Vector 3 / 10")
+- **Vector Queue**: Stack of upcoming vectors to be processed
+  - Active vector (currently processing): Blue gradient with glow effect
+  - Next vectors: Gray cards showing preview
+  - Animated arrow (→) pointing into the machine when playing
+
+**Behavior:**
+- Automatically scrolls to show current vector at top
+- Pulses and animates during active processing
+- Shows vector values in monospace format: `[0.52, 0.79]`
+
+#### Center Panel: Machine Container (Flexible width)
+**Visual Design:**
+- Dark container with mechanical border (`#475569`)
+- Blue glow effect suggesting active machinery
+- Internal grid pattern background
+- Header showing machine name and status
+
+**Contents:**
+- **Machine Header Bar**:
+  - Machine name and "Internal State Visualization" label
+  - Status indicator (green dot = playing, orange = paused, gray = stopped)
+  - Real-time status text
+
+- **Critical Event Graph**:
+  - Full ReactFlow visualization of sequences
+  - Node colors: Blue (initial), Green (active), Gray (inactive)
+  - Edge animations showing transitions
+  - Output nodes marked with orange borders
+
+- **Processing Indicator**:
+  - Bottom-center overlay when simulation is running
+  - Shows "PROCESSING VECTOR N" with animated dot
+
+**Behavior:**
+- Graph updates in real-time as vectors are processed
+- Nodes light up green when activated
+- Edges animate when transitions occur
+- Maintains zoom and pan controls
+
+#### Right Panel: Output Stream (220px width)
+**Visual Design:**
+- Orange-themed gradient background (`#1e293b` → `#0f172a`)
+- Orange border (`#f59e0b`) indicating output event space
+- Vertical stack showing most recent outputs (up to 10)
+
+**Contents:**
+- **Header**: "OUTPUT STREAM →" with total output count
+- **Output Queue**: Reverse-chronological list of outputs
+  - Most recent output: Orange gradient with glow effect
+  - Older outputs: Faded gray cards
+  - Animated arrow (→) pointing out of the machine for new outputs
+
+**Output Card Details:**
+- **ID**: Output identifier or auto-generated name
+- **Vector**: Numerical values in monospace: `[1.00, 0.50]`
+- **Metadata**: Optional metadata preview (truncated to 50 chars)
+- **Sparkle Effect**: ✨ appears on brand new outputs (< 3 seconds old)
+
+**Behavior:**
+- New outputs slide in from the left with animation
+- Most recent output highlighted with orange glow
+- Auto-scrolls to show latest outputs
+- Outputs persist until simulation reset
 
 ### Top Navigation Bar
 
@@ -192,34 +273,56 @@ The full-screen graph displays all critical event sequences for the current mach
 
 **Controls**:
 
-1. **Status Indicator**
+1. **Load Input Vectors** (Always visible):
+   - **Load Example Vectors Button** (blue):
+     - Pre-configured binary truth table vectors
+     - Loads [[0,0], [0,1], [1,0], [1,1]]
+     - Default speed: 2000ms delay for easier observation
+     - Disabled while simulation is playing
+
+   - **Custom Vector Input** (JSON textarea):
+     - Format: Array of arrays, e.g., `[[0,0], [0,1], [1,0], [1,1]]`
+     - Placeholder shows example format
+     - **Load Custom Vectors** button validates and loads
+     - Disabled while simulation is playing
+     - Shows error message if JSON is invalid
+
+   - **Reload Capability**:
+     - Section remains visible even after vectors are loaded
+     - Can reload with different vectors while stopped
+     - Cannot change vectors during playback
+
+2. **Status Indicator**
    - Green dot: Playing
    - Orange dot: Paused
    - Gray dot: Stopped
    - Shows current vector index / total
 
-2. **Playback Buttons** (2×2 grid):
+3. **Playback Buttons** (2×2 grid):
    - **Play/Resume** (green): Start or resume simulation
    - **Pause** (orange): Pause without resetting progress
    - **Step** (blue): Advance one vector (disabled while playing)
    - **Stop** (red): Stop and prepare for new run
    - **Reset** (gray): Reset to initial state
 
-3. **Speed Control**:
+4. **Speed Control**:
    - Buttons: 100ms, 500ms, 1000ms, 2000ms
    - Sets delay between vector processing
    - Click to change speed
+   - Default: 2000ms for example vectors (slower playback)
 
-4. **Progress Display**:
+5. **Progress Display**:
    - Shows total input vectors loaded
    - Current position in stream
    - Progress bar (blue gradient)
 
 **Interaction Flow**:
 ```
-Load Vectors → Play → (Pause/Resume) → Stop → Reset
-              ↓
-           Step (manual advance)
+Load Vectors (Example or Custom) → Play → (Pause/Resume) → Stop → Reset
+                                     ↓
+                                  Step (manual advance)
+                                     ↓
+                                  Reload new vectors (if stopped)
 ```
 
 #### Tab: Sequences
@@ -373,30 +476,44 @@ Load Vectors → Play → (Pause/Resume) → Stop → Reset
    ↓
 2. Click "Simulation" tab
    ↓
-3. Input vectors already loaded (from machine setup)
+3. Load input vectors (choose one):
+   → Option A: Click "📊 Load Example Vectors" (quick start)
+   → Option B: Enter custom JSON vectors in textarea, click "Load Custom Vectors"
    ↓
-4. Click "Play" button (green)
+4. Vectors loaded confirmation:
+   - "Total: X vectors" appears
+   - Progress section shows vector count
+   - Playback controls become enabled
    ↓
-5. Graph animates: nodes turn green, edges animate
+5. Click "Play" button (green)
    ↓
-6. Status shows "Playing", progress advances
+6. Graph animates: nodes turn green, edges animate
    ↓
-7. (Optional) Click "Pause" to pause
+7. Status shows "Playing", progress advances automatically
    ↓
-8. (Optional) Click "Step" to manually advance
+8. (Optional) Click "Pause" to pause simulation
    ↓
-9. Click "Stop" to end simulation
+9. (Optional) Click "Resume" to continue from pause
    ↓
-10. Click "Reset" to return to initial state
+10. (Optional) Click "Step" to manually advance one vector at a time
+   ↓
+11. Click "Stop" to end simulation
+   ↓
+12. Click "Reset" to return to initial state
+   ↓
+13. (Optional) Reload different vectors and repeat
 ```
 
 **Click Responses**:
-- **Play**: Button changes to "Pause", status dot turns green, animation starts
-- **Pause**: Button changes to "Resume", status dot turns orange, animation freezes
-- **Step**: Graph advances one vector, disabled during playback
-- **Stop**: Animation stops, button states reset
-- **Reset**: Graph returns to initial state, progress bar clears
-- **Speed buttons**: Selected button highlights blue, speed changes immediately
+- **Load Example Vectors**: Vectors load instantly, confirmation message appears, controls enable
+- **Load Custom Vectors**: JSON is parsed and validated, error shown if invalid, vectors load on success
+- **Play**: Button changes to "Pause", status dot turns green, animation starts at 2000ms intervals
+- **Pause**: Button changes to "Resume", status dot turns orange, animation freezes at current vector
+- **Resume**: Animation continues from paused position
+- **Step**: Graph advances one vector, progress increments, disabled during playback
+- **Stop**: Animation stops, button states reset, ready for new playback
+- **Reset**: Graph returns to initial state, progress bar clears, vector index resets to 0
+- **Speed buttons**: Selected button highlights blue, speed changes take effect immediately
 
 ### Workflow 3: Add New Critical Event Sequence
 

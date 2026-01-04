@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useVisualizerStore } from '../../store';
 import { Machine } from '../../types';
 
@@ -10,6 +10,7 @@ const SimulationTab: React.FC<SimulationTabProps> = ({ machine }) => {
   const {
     simulationState,
     inputVectors,
+    loadSimulation,
     startSimulation,
     pauseSimulation,
     resumeSimulation,
@@ -18,6 +19,9 @@ const SimulationTab: React.FC<SimulationTabProps> = ({ machine }) => {
     stepSimulation,
     setSimulationSpeed
   } = useVisualizerStore();
+
+  const [vectorInput, setVectorInput] = useState('');
+  const [loadError, setLoadError] = useState('');
 
   if (!machine) {
     return (
@@ -31,6 +35,43 @@ const SimulationTab: React.FC<SimulationTabProps> = ({ machine }) => {
   const isPaused = simulationState?.status === 'paused';
   const isStopped = simulationState?.status === 'stopped';
   const hasVectors = inputVectors.length > 0;
+
+  // Helper: Load example vectors (for NAND gate - binary truth table)
+  const handleLoadExampleVectors = async () => {
+    const exampleVectors = [
+      [0, 0],
+      [0, 1],
+      [1, 0],
+      [1, 1]
+    ];
+    try {
+      // Use 2000ms delay for slower playback, easier to pause
+      await loadSimulation(exampleVectors, { autoPlayDelayMs: 2000 });
+      setLoadError('');
+      setVectorInput('');
+    } catch (error: any) {
+      setLoadError(error.message || 'Failed to load example vectors');
+    }
+  };
+
+  // Helper: Load custom vectors from JSON input
+  const handleLoadCustomVectors = async () => {
+    try {
+      const vectors = JSON.parse(vectorInput);
+      if (!Array.isArray(vectors)) {
+        throw new Error('Input must be an array of vectors');
+      }
+      if (!vectors.every(v => Array.isArray(v))) {
+        throw new Error('Each vector must be an array');
+      }
+      // Use 2000ms delay for slower playback
+      await loadSimulation(vectors, { autoPlayDelayMs: 2000 });
+      setLoadError('');
+      setVectorInput('');
+    } catch (error: any) {
+      setLoadError(error.message || 'Failed to load custom vectors');
+    }
+  };
 
   return (
     <div style={{ padding: '20px', height: '100%', overflowY: 'auto' }}>
@@ -69,6 +110,87 @@ const SimulationTab: React.FC<SimulationTabProps> = ({ machine }) => {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Load Input Vectors - Always visible */}
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ fontSize: '12px', fontWeight: '600', color: '#94a3b8', marginBottom: '12px' }}>
+          {hasVectors ? 'Reload Input Vectors' : 'Load Input Vectors'}
+        </div>
+        <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', padding: '16px' }}>
+          {/* Quick Load Example */}
+          <button
+            onClick={handleLoadExampleVectors}
+            disabled={isPlaying}
+            style={{
+              width: '100%',
+              background: isPlaying ? '#64748b' : '#3b82f6',
+              border: 'none',
+              borderRadius: '6px',
+              color: '#fff',
+              padding: '12px',
+              fontSize: '13px',
+              fontWeight: '600',
+              cursor: isPlaying ? 'not-allowed' : 'pointer',
+              opacity: isPlaying ? 0.5 : 1,
+              marginBottom: '12px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            📊 Load Example Vectors
+          </button>
+
+          <div style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', margin: '12px 0' }}>
+            or
+          </div>
+
+          {/* Custom Vector Input */}
+          <textarea
+            value={vectorInput}
+            onChange={(e) => setVectorInput(e.target.value)}
+            placeholder='[[0,0], [0,1], [1,0], [1,1]]'
+            disabled={isPlaying}
+            style={{
+              width: '100%',
+              minHeight: '80px',
+              background: isPlaying ? '#0f172a' : '#1e293b',
+              border: '1px solid #334155',
+              borderRadius: '6px',
+              color: '#e2e8f0',
+              padding: '12px',
+              fontSize: '12px',
+              fontFamily: 'monospace',
+              resize: 'vertical',
+              marginBottom: '8px',
+              opacity: isPlaying ? 0.5 : 1
+            }}
+          />
+          <button
+            onClick={handleLoadCustomVectors}
+            disabled={!vectorInput.trim() || isPlaying}
+            style={{
+              width: '100%',
+              background: (vectorInput.trim() && !isPlaying) ? '#8b5cf6' : '#64748b',
+              border: 'none',
+              borderRadius: '6px',
+              color: '#fff',
+              padding: '10px',
+              fontSize: '12px',
+              fontWeight: '600',
+              cursor: (vectorInput.trim() && !isPlaying) ? 'pointer' : 'not-allowed',
+              opacity: (vectorInput.trim() && !isPlaying) ? 1 : 0.5,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Load Custom Vectors
+          </button>
+
+          {loadError && (
+            <div style={{ marginTop: '12px', padding: '12px', background: '#7f1d1d', border: '1px solid #991b1b', borderRadius: '6px', color: '#fca5a5', fontSize: '12px' }}>
+              {loadError}
+            </div>
+          )}
         </div>
       </div>
 

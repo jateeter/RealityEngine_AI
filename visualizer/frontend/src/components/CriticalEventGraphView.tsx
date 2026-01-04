@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -20,6 +20,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
   const { sequences, currentMachine } = useVisualizerStore();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [legendHovered, setLegendHovered] = useState(false);
 
   // Get the selected sequence or all sequences
   // For machines or simple sequences (like NAND gates), always show all sequences together
@@ -306,7 +307,6 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         fitView
-        attributionPosition="bottom-left"
         style={{ background: '#0a0a0a' }}
         defaultEdgeOptions={{
           type: 'smoothstep',
@@ -335,138 +335,200 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
         />
       </ReactFlow>
 
-      {/* Legend */}
-      <div style={{
-        position: 'absolute',
-        top: '16px',
-        right: '16px',
-        background: 'rgba(0, 0, 0, 0.9)',
-        border: '1px solid #333',
-        borderRadius: '8px',
-        padding: '16px',
-        color: '#fff',
-        fontSize: '12px',
-        minWidth: '240px',
-        maxHeight: 'calc(100vh - 120px)',
-        overflowY: 'auto'
-      }}>
-        <div style={{ fontWeight: 'bold', marginBottom: '12px', fontSize: '14px' }}>
-          Legend
+      {/* Slide-out Legend Panel */}
+      <div
+        onMouseEnter={() => setLegendHovered(true)}
+        onMouseLeave={() => setLegendHovered(false)}
+        style={{
+          position: 'absolute',
+          top: '50%',
+          right: legendHovered ? '0' : '-260px',
+          transform: 'translateY(-50%)',
+          width: '280px',
+          maxHeight: '80vh',
+          background: 'rgba(0, 0, 0, 0.95)',
+          border: '1px solid #3b82f6',
+          borderRight: 'none',
+          borderTopLeftRadius: '12px',
+          borderBottomLeftRadius: '12px',
+          boxShadow: legendHovered ? '-5px 0 20px rgba(59, 130, 246, 0.3)' : 'none',
+          transition: 'right 0.3s ease-out, box-shadow 0.3s ease-out',
+          zIndex: 100,
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {/* Legend Tab Trigger */}
+        <div style={{
+          position: 'absolute',
+          left: '-40px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: '40px',
+          height: '100px',
+          background: 'rgba(0, 0, 0, 0.9)',
+          border: '1px solid #3b82f6',
+          borderRight: 'none',
+          borderTopLeftRadius: '8px',
+          borderBottomLeftRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: legendHovered ? '-3px 0 10px rgba(59, 130, 246, 0.2)' : 'none',
+          transition: 'box-shadow 0.3s ease-out'
+        }}>
+          <div style={{
+            transform: 'rotate(-90deg)',
+            fontSize: '11px',
+            fontWeight: '700',
+            color: '#3b82f6',
+            letterSpacing: '1px',
+            whiteSpace: 'nowrap'
+          }}>
+            LEGEND
+          </div>
         </div>
 
-        {/* Event Spaces Section */}
-        <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #333' }}>
-          <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px' }}>
-            Event Spaces
+        {/* Legend Content */}
+        <div style={{
+          padding: '20px',
+          color: '#fff',
+          fontSize: '12px',
+          overflowY: 'auto',
+          flex: 1
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '16px', fontSize: '15px', color: '#3b82f6' }}>
+            Graph Legend
           </div>
 
-          <div style={{ marginBottom: '8px', paddingLeft: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+          {/* Event Spaces Section */}
+          <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #334155' }}>
+            <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Event Spaces
+            </div>
+
+            <div style={{ marginBottom: '10px', paddingLeft: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                <div style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  background: '#3b82f6',
+                  border: '2px solid #2563eb',
+                  marginRight: '8px',
+                  flexShrink: 0
+                }} />
+                <span style={{ fontWeight: '600' }}>Input Event Space</span>
+              </div>
+              <div style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '24px' }}>
+                Initial events where inputs enter the system
+              </div>
+            </div>
+
+            <div style={{ paddingLeft: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                <div style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  background: '#64748b',
+                  border: '4px solid #f59e0b',
+                  marginRight: '8px',
+                  flexShrink: 0
+                }} />
+                <span style={{ fontWeight: '600' }}>Output Event Space</span>
+              </div>
+              <div style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '24px' }}>
+                Events that emit outputs from the system
+              </div>
+            </div>
+          </div>
+
+          {/* Event States Section */}
+          <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #334155' }}>
+            <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Event States
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
               <div style={{
-                width: 16,
-                height: 16,
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: '#22c55e',
+                border: '2px solid #16a34a',
+                marginRight: '8px',
+                boxShadow: '0 0 10px #22c55e',
+                flexShrink: 0
+              }} />
+              <span>Active Event</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+              <div style={{
+                width: 20,
+                height: 20,
                 borderRadius: '50%',
                 background: '#3b82f6',
                 border: '2px solid #2563eb',
-                marginRight: '8px'
+                marginRight: '8px',
+                flexShrink: 0
               }} />
-              <span style={{ fontWeight: '600' }}>Input Event Space</span>
+              <span>Initial Event</span>
             </div>
-            <div style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '24px' }}>
-              Initial events where inputs enter the system
-            </div>
-          </div>
 
-          <div style={{ paddingLeft: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
               <div style={{
-                width: 16,
-                height: 16,
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: '#64748b',
+                border: '2px solid #475569',
+                marginRight: '8px',
+                flexShrink: 0
+              }} />
+              <span>Inactive Event</span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+              <div style={{
+                width: 20,
+                height: 20,
                 borderRadius: '50%',
                 background: '#64748b',
                 border: '4px solid #f59e0b',
-                marginRight: '8px'
+                marginRight: '8px',
+                flexShrink: 0
               }} />
-              <span style={{ fontWeight: '600' }}>Output Event Space</span>
-            </div>
-            <div style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '24px' }}>
-              Events that emit outputs from the system
+              <span>Has Outputs</span>
             </div>
           </div>
-        </div>
 
-        {/* Event States Section */}
-        <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #333' }}>
-          <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px' }}>
-            Event States
-          </div>
+          {/* Transitions Section */}
+          <div>
+            <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Transitions
+            </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              background: '#22c55e',
-              border: '2px solid #16a34a',
-              marginRight: '8px',
-              boxShadow: '0 0 10px #22c55e'
-            }} />
-            <span>Active Event</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              background: '#3b82f6',
-              border: '2px solid #2563eb',
-              marginRight: '8px'
-            }} />
-            <span>Initial Event</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              background: '#64748b',
-              border: '2px solid #475569',
-              marginRight: '8px'
-            }} />
-            <span>Inactive Event</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <div style={{
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              background: '#64748b',
-              border: '4px solid #f59e0b',
-              marginRight: '8px'
-            }} />
-            <span>Has Outputs</span>
-          </div>
-        </div>
-
-        {/* Transitions Section */}
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px' }}>
-            Transitions
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ marginRight: '8px', fontSize: '16px' }}>→</span>
-            <span>Transition</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={{ marginRight: '8px', fontSize: '16px', color: '#22c55e' }}>⚡</span>
-            <span>Active Transition</span>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ marginRight: '8px', fontSize: '16px' }}>→</span>
+              <span>Transition</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ marginRight: '8px', fontSize: '16px', color: '#22c55e' }}>⚡</span>
+              <span>Active Transition</span>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Hide ReactFlow attribution */}
+      <style>{`
+        .react-flow__attribution {
+          display: none !important;
+        }
+      `}</style>
     </div>
   );
 };

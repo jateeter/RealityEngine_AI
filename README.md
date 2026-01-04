@@ -53,13 +53,15 @@ The Reality Engine Visualizer provides a production-ready web interface for mana
 
 ### Machine Administration View
 - **Full-screen graph visualization** of critical event sequences
-- **Floating control panel** with four tabs:
-  - **Overview**: Machine metadata and statistics
-  - **Simulation**: Playback controls for input vector streams
-  - **Sequences**: Detailed sequence inspection and management
-  - **Settings**: Visualization and machine configuration
-- **Enhanced legend** with Input/Output Event Space indicators
-- **Real-time updates** during simulation playback
+- **Slide-out legend panel** - Hover on right edge to reveal graph legend with event space indicators
+- **Input stream controls**:
+  - **Reality Sensing Mode**: Auto-activates random vector generation when no test inputs available
+  - **Random Vector Generator**: Generate test input vectors with configurable dimension and count
+  - **Binary Threshold**: Optional rounding to {0.00, 1.00} for discrete event testing
+  - **Speed Control**: Adjust simulation playback from 200ms to 1000ms
+  - **Manual Step**: Single-step through input vectors for detailed inspection
+- **Real-time visualization**: Active events highlight during simulation playback
+- **Clean interface**: Processing indicators and attributions removed for production-ready appearance
 
 ### Quick Access
 - **Frontend**: http://localhost:5173

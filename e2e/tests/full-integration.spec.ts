@@ -76,9 +76,10 @@ test.describe('Full Integration - End to End Flow', () => {
     const statsResponse = await request.get(`${API_BASE_URL}/api/engine/stats`);
     expect(statsResponse.ok()).toBeTruthy();
 
-    const stats = await statsResponse.json();
-    expect(stats.sequenceCount).toBeGreaterThan(0);
-    console.log(`✓ Engine has ${stats.sequenceCount} sequences`);
+    const result = await statsResponse.json();
+    const stats = result.stats || result;
+    expect(stats.totalSequences).toBeGreaterThan(0);
+    console.log(`✓ Engine has ${stats.totalSequences} sequences`);
 
     // Step 4: Open Visualizer and verify sequence appears
     console.log('Step 4: Opening Visualizer UI...');
@@ -142,7 +143,8 @@ test.describe('Full Integration - End to End Flow', () => {
       const statsResponse = await request.get(`${API_BASE_URL}/api/sampler/stats`);
       expect(statsResponse.ok()).toBeTruthy();
 
-      const stats = await statsResponse.json();
+      const result = await statsResponse.json();
+      const stats = result.stats || result;
       expect(stats.isRunning).toBeTruthy();
       console.log('✓ Sampler is running');
 

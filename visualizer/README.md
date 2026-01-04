@@ -4,13 +4,31 @@ A real-time visualization application for the Reality Engine, displaying Critica
 
 ## Features
 
-- **Directed Network Graphs**: Each Critical Event Sequence is visualized as a directed graph showing vector relationships
-- **Active Vector Highlighting**: Visual indicators (green glow, pulsing) for active vectors in real-time
-- **Reactive Windowing**: Smooth zoom in/out and pan controls
-- **Keyboard Controls**: Navigate and control the visualization using keyboard shortcuts
-- **Interactive Nodes**: Click nodes to view detailed information about vectors
-- **Real-time Updates**: Auto-refresh to show current state of the Reality Engine
-- **Non-invasive**: Works as a separate application without modifying the Reality Engine
+### Visualization
+- **Directed Network Graphs**: Critical Event Sequences displayed as interactive directed graphs
+- **Active Vector Highlighting**: Real-time green glow and pulsing for active vectors
+- **Slide-out Legend Panel**: Hover on right edge to reveal comprehensive graph legend
+- **Event Space Indicators**: Visual grouping for Input and Output event spaces
+- **Reactive Windowing**: Smooth zoom, pan, and fit controls
+- **Clean Interface**: Production-ready appearance with minimal overlays
+
+### Simulation Controls
+- **Reality Sensing Mode**: Automatically generates random input vectors when no test data available
+- **Random Vector Generator**:
+  - Configurable dimension (1-128) and count (1-1000)
+  - Binary Threshold option: Round values to {0.00, 1.00} for discrete event testing
+  - Continuous or discrete vector generation
+- **Playback Controls**:
+  - Speed adjustment: 200ms to 1000ms per vector
+  - Manual step-through for detailed analysis
+  - Play/Pause/Reset simulation controls
+- **Input Stream Visualization**: Real-time display of upcoming input vectors
+
+### Interaction
+- **Keyboard Controls**: Navigate and control visualization using keyboard shortcuts
+- **Interactive Nodes**: Click nodes to view detailed vector information
+- **Real-time Updates**: WebSocket-based live updates during simulation
+- **Non-invasive**: Separate application that doesn't modify the Reality Engine
 
 ## Architecture
 

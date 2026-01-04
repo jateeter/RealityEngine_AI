@@ -29,33 +29,60 @@ export class RealityEngineAPI {
   }
 
   /**
-   * Initialize default sequences on startup
+   * Initialize default machines and sequences on startup
    */
   private async initializeDefaultSequences(): Promise<void> {
     try {
-      console.log('Loading default NAND gate sequences on startup...');
-      const { createNANDGateSequences, generateNANDTestVectors } =
-        await import('../examples/nand-gate/nand-gate-sequences.js');
+      console.log('Loading example machines on startup...');
 
-      const sequences = createNANDGateSequences();
-      const testVectors = generateNANDTestVectors();
-      const allInputVectors = testVectors.map(t => t.vector);
-
-      // Load sequences
-      for (const sequence of sequences) {
-        this.engine.addSequence(sequence);
+      // Load Multi-Step Machine
+      try {
+        const { createMultiStepMachine } = await import('../examples/multi-step-sequences/sequence-definitions.js');
+        const multiStepMachine = createMultiStepMachine();
+        this.engine.addMachine(multiStepMachine);
+        console.log('  ✓ Multi-Step Sequences machine loaded');
+      } catch (err) {
+        console.error('  ✗ Failed to load Multi-Step machine:', err);
       }
 
-      // Initialize simulation controller
-      this.simulationController = new SimulationController(this.engine, {
-        autoPlayDelayMs: 2000,
-        inputVectors: allInputVectors,
-        loop: true
-      });
+      // Load Kleene Star Machine
+      try {
+        const { createKleeneStarMachine } = await import('../examples/kleene-star-operator/kleene-star-sequences.js');
+        const kleeneMachine = createKleeneStarMachine();
+        this.engine.addMachine(kleeneMachine);
+        console.log('  ✓ Kleene Star Operator machine loaded');
+      } catch (err) {
+        console.error('  ✗ Failed to load Kleene Star machine:', err);
+      }
 
-      console.log(`✓ Loaded ${sequences.length} NAND gate sequences with ${allInputVectors.length} test vectors`);
+      // Load NAND gate sequences (not a machine, just sequences)
+      try {
+        const { createNANDGateSequences, generateNANDTestVectors } =
+          await import('../examples/nand-gate/nand-gate-sequences.js');
+        const sequences = createNANDGateSequences();
+        const testVectors = generateNANDTestVectors();
+        const allInputVectors = testVectors.map(t => t.vector);
+
+        // Load sequences
+        for (const sequence of sequences) {
+          this.engine.addSequence(sequence);
+        }
+
+        console.log('  ✓ NAND Gate sequences loaded');
+
+        // Initialize simulation controller with NAND test vectors
+        this.simulationController = new SimulationController(this.engine, {
+          autoPlayDelayMs: 2000,
+          inputVectors: allInputVectors,
+          loop: true
+        });
+      } catch (err) {
+        console.error('  ✗ Failed to load NAND Gate sequences:', err);
+      }
+
+      console.log('Example machines and sequences loaded successfully');
     } catch (error) {
-      console.error('Error loading default NAND gate sequences:', error);
+      console.error('Error loading default machines:', error);
     }
   }
 
@@ -111,11 +138,19 @@ export class RealityEngineAPI {
     this.router.get('/simulation/state', this.getSimulationState.bind(this));
     this.router.get('/simulation/heatmap', this.getSimulationHeatmap.bind(this));
 
+    // Machine endpoints
+    this.router.get('/machines', this.getAllMachines.bind(this));
+    this.router.get('/machines/:id', this.getMachine.bind(this));
+    this.router.post('/machines', this.createMachine.bind(this));
+    this.router.put('/machines/:id', this.updateMachine.bind(this));
+    this.router.delete('/machines/:id', this.deleteMachine.bind(this));
+
     // Demo endpoints
     this.router.get('/demo/load', this.loadDemo.bind(this));
     this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
     this.router.get('/demo/nand-gate', this.loadNANDGateExample.bind(this));
     this.router.get('/demo/multi-step', this.loadMultiStepExample.bind(this));
+    this.router.get('/demo/kleene-star', this.loadKleeneStarExample.bind(this));
   }
 
   // Health check
@@ -661,6 +696,160 @@ export class RealityEngineAPI {
     res.json({ heatmap: heatmapArray });
   }
 
+  // Machine endpoints
+  private getAllMachines(_req: Request, res: Response): void {
+    const machines = this.engine.getAllMachines();
+    res.json({
+      machines: machines.map(m => ({
+        ...m.toJSON(),
+        isExample: true, // All current machines are examples
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        lastAccessedAt: null
+      }))
+    });
+  }
+
+  private getMachine(req: Request, res: Response): void {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).json({ error: 'Machine ID required' });
+      return;
+    }
+
+    const machine = this.engine.getMachine(id);
+
+    if (!machine) {
+      res.status(404).json({ error: 'Machine not found' });
+      return;
+    }
+
+    res.json({
+      machine: {
+        ...machine.toJSON(),
+        isExample: true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        lastAccessedAt: null
+      }
+    });
+  }
+
+  private createMachine(req: Request, res: Response): void {
+    try {
+      const { name, description, sequenceIds, metadata } = req.body;
+
+      if (!name) {
+        res.status(400).json({ error: 'Machine name required' });
+        return;
+      }
+
+      // Import Machine class
+      const { Machine } = require('../models/Machine.js');
+      const machine = new Machine(name, description);
+
+      if (metadata) {
+        machine.metadata = metadata;
+      }
+
+      // Add sequences if provided
+      if (sequenceIds && Array.isArray(sequenceIds)) {
+        for (const seqId of sequenceIds) {
+          const sequence = this.engine.getSequence(seqId);
+          if (sequence) {
+            machine.addSequence(sequence);
+          }
+        }
+      }
+
+      this.engine.addMachine(machine);
+
+      res.json({
+        machine: {
+          ...machine.toJSON(),
+          isExample: false,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          lastAccessedAt: null
+        }
+      });
+    } catch (error: any) {
+      console.error('Error creating machine:', error);
+      res.status(500).json({
+        error: 'Failed to create machine',
+        details: error.message
+      });
+    }
+  }
+
+  private updateMachine(req: Request, res: Response): void {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({ error: 'Machine ID required' });
+        return;
+      }
+
+      const machine = this.engine.getMachine(id);
+
+      if (!machine) {
+        res.status(404).json({ error: 'Machine not found' });
+        return;
+      }
+
+      // Note: Machine properties (name, description) are readonly
+      // Only metadata can be modified, but it's also readonly
+      // For now, just return the current machine state
+      // Future: Implement machine recreation with new properties
+
+      res.json({
+        machine: {
+          ...machine.toJSON(),
+          isExample: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          lastAccessedAt: null
+        }
+      });
+    } catch (error: any) {
+      console.error('Error updating machine:', error);
+      res.status(500).json({
+        error: 'Failed to update machine',
+        details: error.message
+      });
+    }
+  }
+
+  private deleteMachine(req: Request, res: Response): void {
+    try {
+      const { id } = req.params;
+
+      if (!id) {
+        res.status(400).json({ error: 'Machine ID required' });
+        return;
+      }
+
+      const machine = this.engine.getMachine(id);
+
+      if (!machine) {
+        res.status(404).json({ error: 'Machine not found' });
+        return;
+      }
+
+      this.engine.removeMachine(id);
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Error deleting machine:', error);
+      res.status(500).json({
+        error: 'Failed to delete machine',
+        details: error.message
+      });
+    }
+  }
+
   // Demo endpoints
   private async loadDemo(_req: Request, res: Response): Promise<void> {
     try {
@@ -760,23 +949,17 @@ export class RealityEngineAPI {
       const { createMultiStepMachine, generateTestVectors } =
         await import('../examples/multi-step-sequences/sequence-definitions.js');
 
-      const machine = createMultiStepMachine();
       const testVectors = generateTestVectors();
       const allInputVectors = testVectors.map(t => t.vector);
 
-      // Clear existing sequences and machines
-      const existingMachines = this.engine.getAllMachines();
-      for (const m of existingMachines) {
-        this.engine.removeMachine(m.id);
-      }
+      // Find the machine by name (should already be loaded from startup)
+      let machine = this.engine.getAllMachines().find(m => m.name === 'Multi-Step Sequences');
 
-      const existingSequences = this.engine.getAllSequences();
-      for (const seq of existingSequences) {
-        this.engine.removeSequence(seq.id);
+      // If not loaded, create and add it
+      if (!machine) {
+        machine = createMultiStepMachine();
+        this.engine.addMachine(machine);
       }
-
-      // Load machine (which also loads its sequences)
-      this.engine.addMachine(machine);
 
       // Initialize simulation controller
       this.simulationController = new SimulationController(this.engine, {
@@ -880,6 +1063,69 @@ export class RealityEngineAPI {
       res.status(500).json({
         error: 'Failed to load NAND gate example',
         details: error.message
+      });
+    }
+  }
+
+  private async loadKleeneStarExample(_req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        createKleeneStarMachine,
+        generateKleeneStarTestVectors
+      } = await import('../examples/kleene-star-operator/kleene-star-sequences.js');
+
+      const testVectors = generateKleeneStarTestVectors();
+      const allInputVectors = testVectors.map(t => t.vector);
+
+      // Find the machine by name (should already be loaded from startup)
+      let machine = this.engine.getAllMachines().find(m => m.name === '* Operator Test');
+
+      // If not loaded, create and add it
+      if (!machine) {
+        machine = createKleeneStarMachine();
+        this.engine.addMachine(machine);
+      }
+
+      // Initialize simulation controller with faster speed for better UX
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: 500,
+        inputVectors: allInputVectors,
+        loop: true
+      });
+
+      res.json({
+        success: true,
+        machine: machine.toJSON(),
+        metadata: {
+          name: machine.name,
+          description: machine.description,
+          machineId: machine.id,
+          totalSequences: machine.getSequenceCount(),
+          sequenceNames: machine.getAllSequences().map(s => s.name),
+          totalInputVectors: allInputVectors.length,
+          eventSpace: '3D binary vectors: 000-111',
+          outputSpace: '2D binary vectors: {01, 10}',
+          patterns: [
+            {
+              pattern: '001+000*+010 -> [01]',
+              description: '001, then zero or more 000, then 010, outputs [0,1]'
+            },
+            {
+              pattern: '010+(000+001)*+001 -> [10]',
+              description: '010, then zero or more (000 or 001), then 001, outputs [1,0]'
+            }
+          ],
+          note: 'Kleene star implemented via self-loops with exit paths'
+        },
+        sequencesLoaded: machine.getSequenceCount(),
+        inputVectorsLoaded: allInputVectors.length
+      });
+    } catch (error: any) {
+      console.error('Error loading Kleene star example:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to load Kleene star example',
+        message: error.message
       });
     }
   }

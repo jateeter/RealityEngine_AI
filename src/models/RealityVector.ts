@@ -242,6 +242,7 @@ export class RealityVector {
       id: this.id,
       elements: this.elements,
       state: this.state,
+      isActive: this.isActive(),
       nextVectorIds: this.nextVectorIds,
       outputVectors: this.outputVectors,
       isInitial: this.isInitial,

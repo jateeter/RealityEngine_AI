@@ -3,7 +3,7 @@
     "configFile": "/Users/johnt/workspace/idahoApp/realityEngine/playwright.config.ts",
     "rootDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
     "forbidOnly": false,
-    "fullyParallel": true,
+    "fullyParallel": false,
     "globalSetup": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/global-setup.ts",
     "globalTeardown": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/global-teardown.ts",
     "globalTimeout": 0,
@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 5
+      "actualWorkers": 1
     },
     "preserveOutput": "always",
     "reporter": [
@@ -43,7 +43,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 5
+          "actualWorkers": 1
         },
         "id": "chromium",
         "name": "chromium",
@@ -59,7 +59,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 5
+          "actualWorkers": 1
         },
         "id": "firefox",
         "name": "firefox",
@@ -75,7 +75,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 5
+          "actualWorkers": 1
         },
         "id": "webkit",
         "name": "webkit",
@@ -91,7 +91,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 5
+          "actualWorkers": 1
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
@@ -108,7 +108,7 @@
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
     "version": "1.57.0",
-    "workers": 5,
+    "workers": 1,
     "webServer": {
       "command": "docker-compose up -d && sleep 10",
       "url": "http://localhost:5173",
@@ -118,20 +118,20 @@
   },
   "suites": [
     {
-      "title": "visualizer-user-flows.spec.ts",
-      "file": "visualizer-user-flows.spec.ts",
+      "title": "tests/core-data-propagation.spec.ts",
+      "file": "tests/core-data-propagation.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Visualizer User Flows",
-          "file": "visualizer-user-flows.spec.ts",
-          "line": 15,
+          "title": "Core Data Propagation Cycle",
+          "file": "tests/core-data-propagation.spec.ts",
+          "line": 18,
           "column": 6,
           "specs": [
             {
-              "title": "Flow 1: Browse machine library and select machine for visualization",
+              "title": "should validate input queue isolation per machine instance",
               "ok": true,
               "tags": [],
               "tests": [
@@ -146,42 +146,31 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 9407,
+                      "duration": 101,
                       "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
+                      "stdout": [
                         {
-                          "title": "Verify Machine Selection View loads",
-                          "duration": 73
+                          "text": "\n=== TEST: Input Queue Isolation ===\n\n"
                         },
                         {
-                          "title": "Test search functionality",
-                          "duration": 1065
+                          "text": "✓ Created Machine Instance 1: undefined\n"
                         },
                         {
-                          "title": "Test filter tabs",
-                          "duration": 1423
+                          "text": "✓ Created Machine Instance 2: undefined\n"
                         },
                         {
-                          "title": "Test sort dropdown",
-                          "duration": 1026
+                          "text": "✓ Machine 1 processed vector from its queue: [0.52]\n"
                         },
                         {
-                          "title": "Test machine card hover effects",
-                          "duration": 643
+                          "text": "✓ Machine 2 processed vector from its queue: [0.82]\n"
                         },
                         {
-                          "title": "Select machine and navigate to Administration View",
-                          "duration": 2059
-                        },
-                        {
-                          "title": "Verify graph visualization loaded",
-                          "duration": 2027
+                          "text": "\n✅ Input Queue Isolation Validated\n\n"
                         }
                       ],
-                      "startTime": "2026-01-03T15:20:09.352Z",
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:03:53.657Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -189,193 +178,300 @@
                   "status": "expected"
                 }
               ],
-              "id": "1a60b4631330e4878589-cc1f35eb3558db3ca47e",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 28,
+              "id": "8b275e0ff05b995c8ca5-fec2c90e939f9e2d41ac",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 20,
               "column": 3
             },
             {
-              "title": "Flow 2: Run simulation with input stream and reset machine",
-              "ok": false,
+              "title": "should validate multi-step event activation cascade",
+              "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
                   "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 36,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Multi-Step Event Activation ===\n\n"
+                        },
+                        {
+                          "text": "✓ Created cascade sequence: undefined\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 1: Initial Detection ---\n"
+                        },
+                        {
+                          "text": "Input Vector 1: [0.32]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-1-detector (value: 0.3, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "Active vectors after step 1: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "✓ Step 1 completed: step-2-processor should now be active\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 2: Mid-Layer Processing ---\n"
+                        },
+                        {
+                          "text": "Input Vector 2: [0.62]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-2-processor (value: 0.6, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "Active vectors after step 2: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506633776,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "✓ Step 2 completed: step-3-finalizer should now be active\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 3: Final Output Generation ---\n"
+                        },
+                        {
+                          "text": "Input Vector 3: [0.92]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-3-finalizer (value: 0.9, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "✓ Output generated: 1 output(s)\n"
+                        },
+                        {
+                          "text": "✓ Cascade completion output found: [1,1,1]\n"
+                        },
+                        {
+                          "text": "\n--- Final Engine State ---\n"
+                        },
+                        {
+                          "text": "Total sequences: 5\n"
+                        },
+                        {
+                          "text": "Total vectors: 11\n"
+                        },
+                        {
+                          "text": "Active vectors: 6\n"
+                        },
+                        {
+                          "text": "\n✅ Multi-Step Event Activation Cascade Validated\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:03:53.769Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8b275e0ff05b995c8ca5-147a5ab7220799d0a681",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 90,
+              "column": 3
+            },
+            {
+              "title": "should validate next event list activation on match",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 24,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Next Event List Activation ===\n\n"
+                        },
+                        {
+                          "text": "✓ Created branching sequence: undefined\n"
+                        },
+                        {
+                          "text": "\n--- Step 1: Root Event Activation ---\n"
+                        },
+                        {
+                          "text": "✓ Root event matched with vector: [0.52]\n"
+                        },
+                        {
+                          "text": "✓ Expected: All 3 branches (a, b, c) should now be active\n"
+                        },
+                        {
+                          "text": "Active vectors: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "\n--- Step 2-4: Branch Activations ---\n"
+                        },
+                        {
+                          "text": "✓ Vector 2 processed: 1 output(s) generated\n"
+                        },
+                        {
+                          "text": "✓ Vector 3 processed: 1 output(s) generated\n"
+                        },
+                        {
+                          "text": "✓ Vector 4 processed: 3 output(s) generated\n"
+                        },
+                        {
+                          "text": "\n✓ Total outputs from all branches: 5\n"
+                        },
+                        {
+                          "text": "\n✅ Next Event List Activation Validated\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:03:53.811Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8b275e0ff05b995c8ca5-5ccc790cd7669fdda58b",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 225,
+              "column": 3
+            },
+            {
+              "title": "should measure core propagation cycle performance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 26213,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Performance Measurement ===\n\n"
+                        },
+                        {
+                          "text": "Loaded 100 vectors into queue\n"
+                        },
+                        {
+                          "text": "\n--- Performance Metrics ---\n"
+                        },
+                        {
+                          "text": "Total vectors processed: 100\n"
+                        },
+                        {
+                          "text": "Total time: 26173ms\n"
+                        },
+                        {
+                          "text": "Average time per vector: 261.73ms\n"
+                        },
+                        {
+                          "text": "Throughput: 3.82 vectors/second\n"
+                        },
+                        {
+                          "text": "✓ Performance acceptable: 261.73ms per vector\n"
+                        },
+                        {
+                          "text": "\n✅ Performance Measurement Complete\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:03:53.840Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8b275e0ff05b995c8ca5-76ffff9a04a6646cc0f7",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 319,
+              "column": 3
+            },
+            {
+              "title": "should validate input queue isolation per machine instance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
                   "results": [
                     {
                       "workerIndex": 1,
-                      "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 21051,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
-                        "location": {
-                          "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                          "column": 49,
-                          "line": 338
-                        },
-                        "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "column": 49,
-                            "line": 338
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n\n  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5"
-                        }
-                      ],
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 87,
+                      "errors": [],
                       "stdout": [
                         {
-                          "text": "📊 Simulation state from backend: {\n  \"state\": {\n    \"status\": \"stopped\",\n    \"currentIndex\": 0,\n    \"totalVectors\": 11,\n    \"startTime\": null,\n    \"lastStepTime\": null\n  },\n  \"progress\": 0,\n  \"inputVectors\": [\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      1,\n      1\n    ],\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      0,\n      1,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ]\n  ]\n}\n"
+                          "text": "\n=== TEST: Input Queue Isolation ===\n\n"
                         },
                         {
-                          "text": "Store update result: { success: \u001b[33mtrue\u001b[39m, inputVectorsLength: \u001b[33m11\u001b[39m }\n"
+                          "text": "✓ Created Machine Instance 1: undefined\n"
                         },
                         {
-                          "text": "✓ Loaded 11 vectors into store\n"
+                          "text": "✓ Created Machine Instance 2: undefined\n"
+                        },
+                        {
+                          "text": "✓ Machine 1 processed vector from its queue: [0.52]\n"
+                        },
+                        {
+                          "text": "✓ Machine 2 processed vector from its queue: [0.82]\n"
+                        },
+                        {
+                          "text": "\n✅ Input Queue Isolation Validated\n\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Navigate to machine with simulation data",
-                          "duration": 2131
-                        },
-                        {
-                          "title": "Open Floating Control Panel",
-                          "duration": 1605
-                        },
-                        {
-                          "title": "Navigate to Simulation tab",
-                          "duration": 542
-                        },
-                        {
-                          "title": "Verify simulation status display",
-                          "duration": 49
-                        },
-                        {
-                          "title": "Load simulation state",
-                          "duration": 4631
-                        },
-                        {
-                          "title": "Start simulation playback",
-                          "duration": 4551
-                        },
-                        {
-                          "title": "Verify graph animates during playback",
-                          "duration": 1013
-                        },
-                        {
-                          "title": "Pause simulation",
-                          "duration": 5530,
-                          "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
-                            "location": {
-                              "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                              "column": 49,
-                              "line": 338
-                            },
-                            "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
-                          }
-                        }
-                      ],
-                      "startTime": "2026-01-03T15:20:09.359Z",
+                      "startTime": "2026-01-04T06:04:20.658Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "column": 49,
-                        "line": 338
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-6323973ea457246a24df",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 186,
-              "column": 3
-            },
-            {
-              "title": "Flow 3: Add new critical event sequence (NOT IMPLEMENTED)",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [
-                    {
-                      "type": "skip",
-                      "location": {
-                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "line": 440,
-                        "column": 8
-                      }
-                    }
-                  ],
-                  "expectedStatus": "skipped",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": -1,
-                      "parallelIndex": -1,
-                      "status": "skipped",
-                      "duration": 0,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-03T15:20:08.869Z",
-                      "annotations": [
-                        {
-                          "type": "skip",
-                          "location": {
-                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "line": 440,
-                            "column": 8
-                          }
-                        }
-                      ],
                       "attachments": []
                     }
                   ],
-                  "status": "skipped"
+                  "status": "expected"
                 }
               ],
-              "id": "1a60b4631330e4878589-4c484f34e196505d43b0",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 440,
-              "column": 8
+              "id": "8b275e0ff05b995c8ca5-3474a61741f52ad3d821",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 20,
+              "column": 3
             },
             {
-              "title": "Bonus: Complete navigation round-trip",
+              "title": "should validate multi-step event activation cascade",
               "ok": true,
               "tags": [],
               "tests": [
@@ -383,19 +479,272 @@
                   "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 43,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Multi-Step Event Activation ===\n\n"
+                        },
+                        {
+                          "text": "✓ Created cascade sequence: undefined\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 1: Initial Detection ---\n"
+                        },
+                        {
+                          "text": "Input Vector 1: [0.32]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-1-detector (value: 0.3, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "Active vectors after step 1: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "✓ Step 1 completed: step-2-processor should now be active\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 2: Mid-Layer Processing ---\n"
+                        },
+                        {
+                          "text": "Input Vector 2: [0.62]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-2-processor (value: 0.6, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "Active vectors after step 2: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506633776,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506660760,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "✓ Step 2 completed: step-3-finalizer should now be active\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 3: Final Output Generation ---\n"
+                        },
+                        {
+                          "text": "Input Vector 3: [0.92]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-3-finalizer (value: 0.9, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "✓ Output generated: 2 output(s)\n"
+                        },
+                        {
+                          "text": "✓ Cascade completion output found: [1,1,1]\n"
+                        },
+                        {
+                          "text": "\n--- Final Engine State ---\n"
+                        },
+                        {
+                          "text": "Total sequences: 10\n"
+                        },
+                        {
+                          "text": "Total vectors: 22\n"
+                        },
+                        {
+                          "text": "Active vectors: 12\n"
+                        },
+                        {
+                          "text": "\n✅ Multi-Step Event Activation Cascade Validated\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:04:20.755Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8b275e0ff05b995c8ca5-424d5dbb26fef0161d2e",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 90,
+              "column": 3
+            },
+            {
+              "title": "should validate next event list activation on match",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 53,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Next Event List Activation ===\n\n"
+                        },
+                        {
+                          "text": "✓ Created branching sequence: undefined\n"
+                        },
+                        {
+                          "text": "\n--- Step 1: Root Event Activation ---\n"
+                        },
+                        {
+                          "text": "✓ Root event matched with vector: [0.52]\n"
+                        },
+                        {
+                          "text": "✓ Expected: All 3 branches (a, b, c) should now be active\n"
+                        },
+                        {
+                          "text": "Active vectors: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "\n--- Step 2-4: Branch Activations ---\n"
+                        },
+                        {
+                          "text": "✓ Vector 2 processed: 2 output(s) generated\n"
+                        },
+                        {
+                          "text": "✓ Vector 3 processed: 2 output(s) generated\n"
+                        },
+                        {
+                          "text": "✓ Vector 4 processed: 7 output(s) generated\n"
+                        },
+                        {
+                          "text": "\n✓ Total outputs from all branches: 11\n"
+                        },
+                        {
+                          "text": "\n✅ Next Event List Activation Validated\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:04:20.803Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8b275e0ff05b995c8ca5-48f778f94cb41bc3daf9",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 225,
+              "column": 3
+            },
+            {
+              "title": "should measure core propagation cycle performance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 25805,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Performance Measurement ===\n\n"
+                        },
+                        {
+                          "text": "Loaded 100 vectors into queue\n"
+                        },
+                        {
+                          "text": "\n--- Performance Metrics ---\n"
+                        },
+                        {
+                          "text": "Total vectors processed: 100\n"
+                        },
+                        {
+                          "text": "Total time: 25784ms\n"
+                        },
+                        {
+                          "text": "Average time per vector: 257.84ms\n"
+                        },
+                        {
+                          "text": "Throughput: 3.88 vectors/second\n"
+                        },
+                        {
+                          "text": "✓ Performance acceptable: 257.84ms per vector\n"
+                        },
+                        {
+                          "text": "\n✅ Performance Measurement Complete\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:04:20.862Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8b275e0ff05b995c8ca5-b9d3042fac643d2c001d",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 319,
+              "column": 3
+            },
+            {
+              "title": "should validate input queue isolation per machine instance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
                   "results": [
                     {
                       "workerIndex": 2,
-                      "parallelIndex": 3,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 7309,
+                      "duration": 83,
                       "errors": [],
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Input Queue Isolation ===\n\n"
+                        },
+                        {
+                          "text": "✓ Created Machine Instance 1: undefined\n"
+                        },
+                        {
+                          "text": "✓ Created Machine Instance 2: undefined\n"
+                        },
+                        {
+                          "text": "✓ Machine 1 processed vector from its queue: [0.52]\n"
+                        },
+                        {
+                          "text": "✓ Machine 2 processed vector from its queue: [0.82]\n"
+                        },
+                        {
+                          "text": "\n✅ Input Queue Isolation Validated\n\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-01-03T15:20:09.343Z",
+                      "startTime": "2026-01-04T06:04:47.154Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -403,864 +752,286 @@
                   "status": "expected"
                 }
               ],
-              "id": "1a60b4631330e4878589-5f4f796125a7200334a9",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 541,
+              "id": "8b275e0ff05b995c8ca5-4aadc921c2b650d45ba5",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 20,
               "column": 3
             },
             {
-              "title": "Bonus: Create, edit, and delete custom machine",
+              "title": "should validate multi-step event activation cascade",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 41,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Multi-Step Event Activation ===\n\n"
+                        },
+                        {
+                          "text": "✓ Created cascade sequence: undefined\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 1: Initial Detection ---\n"
+                        },
+                        {
+                          "text": "Input Vector 1: [0.32]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-1-detector (value: 0.3, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "Active vectors after step 1: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "✓ Step 1 completed: step-2-processor should now be active\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 2: Mid-Layer Processing ---\n"
+                        },
+                        {
+                          "text": "Input Vector 2: [0.62]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-2-processor (value: 0.6, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "Active vectors after step 2: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506633776,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506660760,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506687254,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "✓ Step 2 completed: step-3-finalizer should now be active\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 3: Final Output Generation ---\n"
+                        },
+                        {
+                          "text": "Input Vector 3: [0.92]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-3-finalizer (value: 0.9, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "✓ Output generated: 3 output(s)\n"
+                        },
+                        {
+                          "text": "✓ Cascade completion output found: [1,1,1]\n"
+                        },
+                        {
+                          "text": "\n--- Final Engine State ---\n"
+                        },
+                        {
+                          "text": "Total sequences: 15\n"
+                        },
+                        {
+                          "text": "Total vectors: 33\n"
+                        },
+                        {
+                          "text": "Active vectors: 18\n"
+                        },
+                        {
+                          "text": "\n✅ Multi-Step Event Activation Cascade Validated\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:04:47.248Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8b275e0ff05b995c8ca5-94ec55a86140cac5f7fd",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 90,
+              "column": 3
+            },
+            {
+              "title": "should validate next event list activation on match",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 26,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Next Event List Activation ===\n\n"
+                        },
+                        {
+                          "text": "✓ Created branching sequence: undefined\n"
+                        },
+                        {
+                          "text": "\n--- Step 1: Root Event Activation ---\n"
+                        },
+                        {
+                          "text": "✓ Root event matched with vector: [0.52]\n"
+                        },
+                        {
+                          "text": "✓ Expected: All 3 branches (a, b, c) should now be active\n"
+                        },
+                        {
+                          "text": "Active vectors: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"6817140e-76dc-4f48-88f9-933630609374\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "\n--- Step 2-4: Branch Activations ---\n"
+                        },
+                        {
+                          "text": "✓ Vector 2 processed: 3 output(s) generated\n"
+                        },
+                        {
+                          "text": "✓ Vector 3 processed: 3 output(s) generated\n"
+                        },
+                        {
+                          "text": "✓ Vector 4 processed: 11 output(s) generated\n"
+                        },
+                        {
+                          "text": "\n✓ Total outputs from all branches: 17\n"
+                        },
+                        {
+                          "text": "\n✅ Next Event List Activation Validated\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:04:47.295Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8b275e0ff05b995c8ca5-e7978b848d4577ca6ca4",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 225,
+              "column": 3
+            },
+            {
+              "title": "should measure core propagation cycle performance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 25616,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Performance Measurement ===\n\n"
+                        },
+                        {
+                          "text": "Loaded 100 vectors into queue\n"
+                        },
+                        {
+                          "text": "\n--- Performance Metrics ---\n"
+                        },
+                        {
+                          "text": "Total vectors processed: 100\n"
+                        },
+                        {
+                          "text": "Total time: 25582ms\n"
+                        },
+                        {
+                          "text": "Average time per vector: 255.82ms\n"
+                        },
+                        {
+                          "text": "Throughput: 3.91 vectors/second\n"
+                        },
+                        {
+                          "text": "✓ Performance acceptable: 255.82ms per vector\n"
+                        },
+                        {
+                          "text": "\n✅ Performance Measurement Complete\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:04:47.326Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8b275e0ff05b995c8ca5-70b11ac42b728dfc1de6",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 319,
+              "column": 3
+            },
+            {
+              "title": "should validate input queue isolation per machine instance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
                   "results": [
                     {
                       "workerIndex": 3,
-                      "parallelIndex": 4,
-                      "status": "passed",
-                      "duration": 9311,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Create new machine",
-                          "duration": 2669
-                        },
-                        {
-                          "title": "Edit machine metadata",
-                          "duration": 3086
-                        },
-                        {
-                          "title": "Delete machine",
-                          "duration": 2617
-                        }
-                      ],
-                      "startTime": "2026-01-03T15:20:09.356Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-16c4d5a6ddb4d456590f",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 581,
-              "column": 3
-            },
-            {
-              "title": "Flow 1: Browse machine library and select machine for visualization",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 4,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 10181,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Verify Machine Selection View loads",
-                          "duration": 64
-                        },
-                        {
-                          "title": "Test search functionality",
-                          "duration": 1036
-                        },
-                        {
-                          "title": "Test filter tabs",
-                          "duration": 1439
-                        },
-                        {
-                          "title": "Test sort dropdown",
-                          "duration": 1035
-                        },
-                        {
-                          "title": "Test machine card hover effects",
-                          "duration": 635
-                        },
-                        {
-                          "title": "Select machine and navigate to Administration View",
-                          "duration": 2141
-                        },
-                        {
-                          "title": "Verify graph visualization loaded",
-                          "duration": 2044
-                        }
-                      ],
-                      "startTime": "2026-01-03T15:20:09.342Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-50c0384f86dcdc2c393c",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 28,
-              "column": 3
-            },
-            {
-              "title": "Flow 2: Run simulation with input stream and reset machine",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 90000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 5,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 21673,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
-                        "location": {
-                          "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                          "column": 49,
-                          "line": 338
-                        },
-                        "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "column": 49,
-                            "line": 338
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n\n  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5"
-                        }
-                      ],
-                      "stdout": [
-                        {
-                          "text": "📊 Simulation state from backend: {\n  \"state\": {\n    \"status\": \"stopped\",\n    \"currentIndex\": 0,\n    \"totalVectors\": 11,\n    \"startTime\": null,\n    \"lastStepTime\": null\n  },\n  \"progress\": 0,\n  \"inputVectors\": [\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      1,\n      1\n    ],\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      0,\n      1,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ]\n  ]\n}\n"
-                        },
-                        {
-                          "text": "Store update result: { success: \u001b[33mtrue\u001b[39m, inputVectorsLength: \u001b[33m11\u001b[39m }\n"
-                        },
-                        {
-                          "text": "✓ Loaded 11 vectors into store\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Navigate to machine with simulation data",
-                          "duration": 2058
-                        },
-                        {
-                          "title": "Open Floating Control Panel",
-                          "duration": 1600
-                        },
-                        {
-                          "title": "Navigate to Simulation tab",
-                          "duration": 542
-                        },
-                        {
-                          "title": "Verify simulation status display",
-                          "duration": 28
-                        },
-                        {
-                          "title": "Load simulation state",
-                          "duration": 4699
-                        },
-                        {
-                          "title": "Start simulation playback",
-                          "duration": 4557
-                        },
-                        {
-                          "title": "Verify graph animates during playback",
-                          "duration": 1011
-                        },
-                        {
-                          "title": "Pause simulation",
-                          "duration": 5538,
-                          "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
-                            "location": {
-                              "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                              "column": 49,
-                              "line": 338
-                            },
-                            "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
-                          }
-                        }
-                      ],
-                      "startTime": "2026-01-03T15:20:17.455Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-firefox/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-firefox/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-firefox/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "column": 49,
-                        "line": 338
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-8b8afe6165895c6fd9ab",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 186,
-              "column": 3
-            },
-            {
-              "title": "Flow 3: Add new critical event sequence (NOT IMPLEMENTED)",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [
-                    {
-                      "type": "skip",
-                      "location": {
-                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "line": 440,
-                        "column": 8
-                      }
-                    }
-                  ],
-                  "expectedStatus": "skipped",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": -1,
-                      "parallelIndex": -1,
-                      "status": "skipped",
-                      "duration": 0,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-03T15:20:18.911Z",
-                      "annotations": [
-                        {
-                          "type": "skip",
-                          "location": {
-                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "line": 440,
-                            "column": 8
-                          }
-                        }
-                      ],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "skipped"
-                }
-              ],
-              "id": "1a60b4631330e4878589-4ea2675ed496af27eee0",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 440,
-              "column": 8
-            },
-            {
-              "title": "Bonus: Complete navigation round-trip",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 6,
-                      "parallelIndex": 4,
-                      "status": "passed",
-                      "duration": 7824,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-03T15:20:19.347Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-fd0473e416a0190f0de0",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 541,
-              "column": 3
-            },
-            {
-              "title": "Bonus: Create, edit, and delete custom machine",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 90000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 7,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 10032,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Create new machine",
-                          "duration": 2842
-                        },
-                        {
-                          "title": "Edit machine metadata",
-                          "duration": 3101
-                        },
-                        {
-                          "title": "Delete machine",
-                          "duration": 2625
-                        }
-                      ],
-                      "startTime": "2026-01-03T15:20:19.434Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-ef77657fd9c2624282a8",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 581,
-              "column": 3
-            },
-            {
-              "title": "Flow 1: Browse machine library and select machine for visualization",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 8,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 9891,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Verify Machine Selection View loads",
-                          "duration": 66
-                        },
-                        {
-                          "title": "Test search functionality",
-                          "duration": 1059
-                        },
-                        {
-                          "title": "Test filter tabs",
-                          "duration": 1424
-                        },
-                        {
-                          "title": "Test sort dropdown",
-                          "duration": 1023
-                        },
-                        {
-                          "title": "Test machine card hover effects",
-                          "duration": 664
-                        },
-                        {
-                          "title": "Select machine and navigate to Administration View",
-                          "duration": 2052
-                        },
-                        {
-                          "title": "Verify graph visualization loaded",
-                          "duration": 2032
-                        }
-                      ],
-                      "startTime": "2026-01-03T15:20:21.619Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-b1ba94a608043b7990fb",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 28,
-              "column": 3
-            },
-            {
-              "title": "Flow 2: Run simulation with input stream and reset machine",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 90000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 9,
-                      "parallelIndex": 4,
-                      "status": "failed",
-                      "duration": 20873,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
-                        "location": {
-                          "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                          "column": 49,
-                          "line": 338
-                        },
-                        "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "column": 49,
-                            "line": 338
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n\n  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5"
-                        }
-                      ],
-                      "stdout": [
-                        {
-                          "text": "📊 Simulation state from backend: {\n  \"state\": {\n    \"status\": \"stopped\",\n    \"currentIndex\": 0,\n    \"totalVectors\": 11,\n    \"startTime\": null,\n    \"lastStepTime\": null\n  },\n  \"progress\": 0,\n  \"inputVectors\": [\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      1,\n      1\n    ],\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      0,\n      1,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ]\n  ]\n}\n"
-                        },
-                        {
-                          "text": "Store update result: { success: \u001b[33mtrue\u001b[39m, inputVectorsLength: \u001b[33m11\u001b[39m }\n"
-                        },
-                        {
-                          "text": "✓ Loaded 11 vectors into store\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Navigate to machine with simulation data",
-                          "duration": 2061
-                        },
-                        {
-                          "title": "Open Floating Control Panel",
-                          "duration": 1526
-                        },
-                        {
-                          "title": "Navigate to Simulation tab",
-                          "duration": 522
-                        },
-                        {
-                          "title": "Verify simulation status display",
-                          "duration": 15
-                        },
-                        {
-                          "title": "Load simulation state",
-                          "duration": 4606
-                        },
-                        {
-                          "title": "Start simulation playback",
-                          "duration": 4539
-                        },
-                        {
-                          "title": "Verify graph animates during playback",
-                          "duration": 1013
-                        },
-                        {
-                          "title": "Pause simulation",
-                          "duration": 5532,
-                          "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=Paused')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=Paused')\u001b[22m\n\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:338:49\n    at /Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts:330:5",
-                            "location": {
-                              "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                              "column": 49,
-                              "line": 338
-                            },
-                            "snippet": "  336 |\n  337 |       // Verify status changed to \"Paused\"\n> 338 |       await expect(page.locator('text=Paused')).toBeVisible();\n      |                                                 ^\n  339 |\n  340 |       // Verify button changed to \"Resume\"\n  341 |       await expect(page.locator('button:has-text(\"Resume\"), button:has-text(\"▶ Resume\")')).toBeVisible();"
-                          }
-                        }
-                      ],
-                      "startTime": "2026-01-03T15:20:28.548Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-webkit/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-webkit/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/johnt/workspace/idahoApp/realityEngine/test-results/visualizer-user-flows-Visu-e5f61-ut-stream-and-reset-machine-webkit/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "column": 49,
-                        "line": 338
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-dc1dd0d4286ec1f76e16",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 186,
-              "column": 3
-            },
-            {
-              "title": "Flow 3: Add new critical event sequence (NOT IMPLEMENTED)",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [
-                    {
-                      "type": "skip",
-                      "location": {
-                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "line": 440,
-                        "column": 8
-                      }
-                    }
-                  ],
-                  "expectedStatus": "skipped",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": -1,
-                      "parallelIndex": -1,
-                      "status": "skipped",
-                      "duration": 0,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-03T15:20:30.403Z",
-                      "annotations": [
-                        {
-                          "type": "skip",
-                          "location": {
-                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "line": 440,
-                            "column": 8
-                          }
-                        }
-                      ],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "skipped"
-                }
-              ],
-              "id": "1a60b4631330e4878589-f535148e552be8deb327",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 440,
-              "column": 8
-            },
-            {
-              "title": "Bonus: Complete navigation round-trip",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 11,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 7086,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-03T15:20:31.156Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-991b408a7c4fa0d449b0",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 541,
-              "column": 3
-            },
-            {
-              "title": "Bonus: Create, edit, and delete custom machine",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 90000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 10,
-                      "parallelIndex": 1,
-                      "status": "passed",
-                      "duration": 9158,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Create new machine",
-                          "duration": 2579
-                        },
-                        {
-                          "title": "Edit machine metadata",
-                          "duration": 3090
-                        },
-                        {
-                          "title": "Delete machine",
-                          "duration": 2557
-                        }
-                      ],
-                      "startTime": "2026-01-03T15:20:31.052Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-ccc51fd5130f8d99e038",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 581,
-              "column": 3
-            },
-            {
-              "title": "Flow 1: Browse machine library and select machine for visualization",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 12,
-                      "parallelIndex": 2,
-                      "status": "passed",
-                      "duration": 8993,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Verify Machine Selection View loads",
-                          "duration": 40
-                        },
-                        {
-                          "title": "Test search functionality",
-                          "duration": 1032
-                        },
-                        {
-                          "title": "Test filter tabs",
-                          "duration": 1421
-                        },
-                        {
-                          "title": "Test sort dropdown",
-                          "duration": 1030
-                        },
-                        {
-                          "title": "Test machine card hover effects",
-                          "duration": 631
-                        },
-                        {
-                          "title": "Select machine and navigate to Administration View",
-                          "duration": 2029
-                        },
-                        {
-                          "title": "Verify graph visualization loaded",
-                          "duration": 2017
-                        }
-                      ],
-                      "startTime": "2026-01-03T15:20:32.143Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "1a60b4631330e4878589-31695b83f80625697edf",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 28,
-              "column": 3
-            },
-            {
-              "title": "Flow 2: Run simulation with input stream and reset machine",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 90000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 13,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 21097,
+                      "duration": 87,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "📊 Simulation state from backend: {\n  \"state\": {\n    \"status\": \"stopped\",\n    \"currentIndex\": 0,\n    \"totalVectors\": 11,\n    \"startTime\": null,\n    \"lastStepTime\": null\n  },\n  \"progress\": 0,\n  \"inputVectors\": [\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ],\n    [\n      1,\n      1,\n      1\n    ],\n    [\n      0,\n      0,\n      0\n    ],\n    [\n      0,\n      0,\n      1\n    ],\n    [\n      0,\n      1,\n      1\n    ],\n    [\n      1,\n      0,\n      0\n    ],\n    [\n      1,\n      0,\n      1\n    ]\n  ]\n}\n"
+                          "text": "\n=== TEST: Input Queue Isolation ===\n\n"
                         },
                         {
-                          "text": "Store update result: { success: \u001b[33mtrue\u001b[39m, inputVectorsLength: \u001b[33m11\u001b[39m }\n"
+                          "text": "✓ Created Machine Instance 1: undefined\n"
                         },
                         {
-                          "text": "✓ Loaded 11 vectors into store\n"
+                          "text": "✓ Created Machine Instance 2: undefined\n"
                         },
                         {
-                          "text": "Stepped from \"Vector 2 / 11\" to \"Vector 3 / 11\"\n"
+                          "text": "✓ Machine 1 processed vector from its queue: [0.52]\n"
+                        },
+                        {
+                          "text": "✓ Machine 2 processed vector from its queue: [0.82]\n"
+                        },
+                        {
+                          "text": "\n✅ Input Queue Isolation Validated\n\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Navigate to machine with simulation data",
-                          "duration": 2122
-                        },
-                        {
-                          "title": "Open Floating Control Panel",
-                          "duration": 1564
-                        },
-                        {
-                          "title": "Navigate to Simulation tab",
-                          "duration": 545
-                        },
-                        {
-                          "title": "Verify simulation status display",
-                          "duration": 11
-                        },
-                        {
-                          "title": "Load simulation state",
-                          "duration": 4590
-                        },
-                        {
-                          "title": "Start simulation playback",
-                          "duration": 4531
-                        },
-                        {
-                          "title": "Verify graph animates during playback",
-                          "duration": 1004
-                        },
-                        {
-                          "title": "Pause simulation",
-                          "duration": 524
-                        },
-                        {
-                          "title": "Test step-by-step advance",
-                          "duration": 530
-                        },
-                        {
-                          "title": "Resume simulation playback",
-                          "duration": 2529
-                        },
-                        {
-                          "title": "Stop simulation",
-                          "duration": 525
-                        },
-                        {
-                          "title": "Reset machine to initial state",
-                          "duration": 1036
-                        },
-                        {
-                          "title": "Test playback speed controls",
-                          "duration": 640
-                        }
-                      ],
-                      "startTime": "2026-01-03T15:20:38.849Z",
+                      "startTime": "2026-01-04T06:05:13.507Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1268,65 +1039,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "1a60b4631330e4878589-81f8231aaada5e41c1c7",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 186,
+              "id": "8b275e0ff05b995c8ca5-dfe368ee3feeb9cc3fb1",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 20,
               "column": 3
             },
             {
-              "title": "Flow 3: Add new critical event sequence (NOT IMPLEMENTED)",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [
-                    {
-                      "type": "skip",
-                      "location": {
-                        "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                        "line": 440,
-                        "column": 8
-                      }
-                    }
-                  ],
-                  "expectedStatus": "skipped",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": -1,
-                      "parallelIndex": -1,
-                      "status": "skipped",
-                      "duration": 0,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-03T15:20:40.185Z",
-                      "annotations": [
-                        {
-                          "type": "skip",
-                          "location": {
-                            "file": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/visualizer-user-flows.spec.ts",
-                            "line": 440,
-                            "column": 8
-                          }
-                        }
-                      ],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "skipped"
-                }
-              ],
-              "id": "1a60b4631330e4878589-5428e35a7867935cf63a",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 440,
-              "column": 8
-            },
-            {
-              "title": "Bonus: Complete navigation round-trip",
+              "title": "should validate multi-step event activation cascade",
               "ok": true,
               "tags": [],
               "tests": [
@@ -1338,15 +1057,82 @@
                   "projectName": "Mobile Chrome",
                   "results": [
                     {
-                      "workerIndex": 14,
-                      "parallelIndex": 3,
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6954,
+                      "duration": 51,
                       "errors": [],
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Multi-Step Event Activation ===\n\n"
+                        },
+                        {
+                          "text": "✓ Created cascade sequence: undefined\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 1: Initial Detection ---\n"
+                        },
+                        {
+                          "text": "Input Vector 1: [0.32]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-1-detector (value: 0.3, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "Active vectors after step 1: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"6817140e-76dc-4f48-88f9-933630609374\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"edf896ca-db3b-4dd9-a227-453ee2df5fd5\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506687329}],\"isInitial\":false,\"metadata\":{}}],\"062897b9-f821-4362-87c0-128eb55ed9cb\":[{\"id\":\"16b0ed46-6ccc-42dd-a860-906127d1df7c\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"a8d25872-76f2-42c8-8cbe-f7616109f8c1\":[{\"id\":\"5be2ec07-303c-45de-a277-653b5723600a\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"da69a683-d603-42e8-9e0c-a6d12398e4f7\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "✓ Step 1 completed: step-2-processor should now be active\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 2: Mid-Layer Processing ---\n"
+                        },
+                        {
+                          "text": "Input Vector 2: [0.62]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-2-processor (value: 0.6, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "Active vectors after step 2: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506633776,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506660760,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506687254,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"6817140e-76dc-4f48-88f9-933630609374\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"edf896ca-db3b-4dd9-a227-453ee2df5fd5\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506687329}],\"isInitial\":false,\"metadata\":{}}],\"062897b9-f821-4362-87c0-128eb55ed9cb\":[{\"id\":\"16b0ed46-6ccc-42dd-a860-906127d1df7c\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"a8d25872-76f2-42c8-8cbe-f7616109f8c1\":[{\"id\":\"5be2ec07-303c-45de-a277-653b5723600a\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"da69a683-d603-42e8-9e0c-a6d12398e4f7\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506713612,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "✓ Step 2 completed: step-3-finalizer should now be active\n"
+                        },
+                        {
+                          "text": "\n--- Processing Step 3: Final Output Generation ---\n"
+                        },
+                        {
+                          "text": "Input Vector 3: [0.92]\n"
+                        },
+                        {
+                          "text": "Expected Match: step-3-finalizer (value: 0.9, threshold: ±0.1)\n"
+                        },
+                        {
+                          "text": "✓ Output generated: 4 output(s)\n"
+                        },
+                        {
+                          "text": "✓ Cascade completion output found: [1,1,1]\n"
+                        },
+                        {
+                          "text": "\n--- Final Engine State ---\n"
+                        },
+                        {
+                          "text": "Total sequences: 20\n"
+                        },
+                        {
+                          "text": "Total vectors: 44\n"
+                        },
+                        {
+                          "text": "Active vectors: 24\n"
+                        },
+                        {
+                          "text": "\n✅ Multi-Step Event Activation Cascade Validated\n\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-01-03T15:20:40.557Z",
+                      "startTime": "2026-01-04T06:05:13.606Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1354,47 +1140,70 @@
                   "status": "expected"
                 }
               ],
-              "id": "1a60b4631330e4878589-0e0a9b4c5ec7799c585c",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 541,
+              "id": "8b275e0ff05b995c8ca5-73bc1aeb50680d548e50",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 90,
               "column": 3
             },
             {
-              "title": "Bonus: Create, edit, and delete custom machine",
+              "title": "should validate next event list activation on match",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 90000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "Mobile Chrome",
                   "projectName": "Mobile Chrome",
                   "results": [
                     {
-                      "workerIndex": 15,
-                      "parallelIndex": 1,
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 8913,
+                      "duration": 40,
                       "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
+                      "stdout": [
                         {
-                          "title": "Create new machine",
-                          "duration": 2590
+                          "text": "\n=== TEST: Next Event List Activation ===\n\n"
                         },
                         {
-                          "title": "Edit machine metadata",
-                          "duration": 3049
+                          "text": "✓ Created branching sequence: undefined\n"
                         },
                         {
-                          "title": "Delete machine",
-                          "duration": 2540
+                          "text": "\n--- Step 1: Root Event Activation ---\n"
+                        },
+                        {
+                          "text": "✓ Root event matched with vector: [0.52]\n"
+                        },
+                        {
+                          "text": "✓ Expected: All 3 branches (a, b, c) should now be active\n"
+                        },
+                        {
+                          "text": "Active vectors: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"6817140e-76dc-4f48-88f9-933630609374\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}}],\"edf896ca-db3b-4dd9-a227-453ee2df5fd5\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506687329}],\"isInitial\":false,\"metadata\":{}}],\"062897b9-f821-4362-87c0-128eb55ed9cb\":[{\"id\":\"16b0ed46-6ccc-42dd-a860-906127d1df7c\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"a8d25872-76f2-42c8-8cbe-f7616109f8c1\":[{\"id\":\"5be2ec07-303c-45de-a277-653b5723600a\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"da69a683-d603-42e8-9e0c-a6d12398e4f7\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"6e0d1402-6a09-4346-8ed8-87a4368acf34\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506713666}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506713666}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506713666}],\"isInitial\":false,\"metadata\":{}}]}}\n"
+                        },
+                        {
+                          "text": "\n--- Step 2-4: Branch Activations ---\n"
+                        },
+                        {
+                          "text": "✓ Vector 2 processed: 4 output(s) generated\n"
+                        },
+                        {
+                          "text": "✓ Vector 3 processed: 4 output(s) generated\n"
+                        },
+                        {
+                          "text": "✓ Vector 4 processed: 15 output(s) generated\n"
+                        },
+                        {
+                          "text": "\n✓ Total outputs from all branches: 23\n"
+                        },
+                        {
+                          "text": "\n✅ Next Event List Activation Validated\n\n"
                         }
                       ],
-                      "startTime": "2026-01-03T15:20:40.769Z",
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:05:13.663Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1402,9 +1211,71 @@
                   "status": "expected"
                 }
               ],
-              "id": "1a60b4631330e4878589-cb613cd689d3f3a13332",
-              "file": "visualizer-user-flows.spec.ts",
-              "line": 581,
+              "id": "8b275e0ff05b995c8ca5-a71d81c00e76df81bbf2",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 225,
+              "column": 3
+            },
+            {
+              "title": "should measure core propagation cycle performance",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 25682,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n=== TEST: Performance Measurement ===\n\n"
+                        },
+                        {
+                          "text": "Loaded 100 vectors into queue\n"
+                        },
+                        {
+                          "text": "\n--- Performance Metrics ---\n"
+                        },
+                        {
+                          "text": "Total vectors processed: 100\n"
+                        },
+                        {
+                          "text": "Total time: 25667ms\n"
+                        },
+                        {
+                          "text": "Average time per vector: 256.67ms\n"
+                        },
+                        {
+                          "text": "Throughput: 3.90 vectors/second\n"
+                        },
+                        {
+                          "text": "✓ Performance acceptable: 256.67ms per vector\n"
+                        },
+                        {
+                          "text": "\n✅ Performance Measurement Complete\n\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-04T06:05:13.708Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8b275e0ff05b995c8ca5-25afd4f190d18813d5df",
+              "file": "tests/core-data-propagation.spec.ts",
+              "line": 319,
               "column": 3
             }
           ]
@@ -1414,11 +1285,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-01-03T15:20:06.012Z",
-    "duration": 54234.659,
-    "expected": 13,
-    "skipped": 4,
-    "unexpected": 3,
+    "startTime": "2026-01-04T06:03:49.122Z",
+    "duration": 110305.347,
+    "expected": 16,
+    "skipped": 0,
+    "unexpected": 0,
     "flaky": 0
   }
 }

@@ -196,5 +196,11 @@ export const api = {
   async loadMultiStepExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
     const response = await axios.get('/api/demo/multi-step');
     return response.data;
+  },
+
+  // Load Kleene star example
+  async loadKleeneStarExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
+    const response = await axios.get('/api/demo/kleene-star');
+    return response.data;
   }
 };

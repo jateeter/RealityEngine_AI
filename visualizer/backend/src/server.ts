@@ -53,6 +53,52 @@ function broadcast(data: any) {
   });
 }
 
+// Simulation state polling for auto-play updates
+let simulationPollInterval: NodeJS.Timeout | null = null;
+let lastSimulationIndex = -1;
+
+function startSimulationPolling() {
+  if (simulationPollInterval) return; // Already polling
+
+  simulationPollInterval = setInterval(async () => {
+    try {
+      const response = await axios.get(`${REALITY_ENGINE_URL}/api/simulation/state`);
+      const state = response.data.state;
+
+      // Check if simulation is still playing
+      if (state.status !== 'playing') {
+        stopSimulationPolling();
+        return;
+      }
+
+      // Check if index changed (new step occurred)
+      if (state.currentIndex !== lastSimulationIndex) {
+        lastSimulationIndex = state.currentIndex;
+
+        // Fetch sequences in graph format to get active node states
+        const seqResponse = await axios.get(`http://localhost:3001/api/viz/sequences`);
+
+        broadcast({
+          type: 'simulation-stepped',
+          state: state,
+          sequences: seqResponse.data.sequences,
+          timestamp: Date.now()
+        });
+      }
+    } catch (error: any) {
+      console.error('Error polling simulation state:', error.message);
+    }
+  }, 200); // Poll every 200ms for responsive updates
+}
+
+function stopSimulationPolling() {
+  if (simulationPollInterval) {
+    clearInterval(simulationPollInterval);
+    simulationPollInterval = null;
+    lastSimulationIndex = -1;
+  }
+}
+
 // Health check
 app.get('/health', (req: Request, res: Response) => {
   res.json({
@@ -79,7 +125,7 @@ app.get('/api/viz/sequences', async (req: Request, res: Response) => {
           id: vector.id,
           label: `V-${vector.id.substring(0, 8)}`,
           isInitial: vector.isInitial,
-          isActive: vector.state === 'ACTIVE',
+          isActive: vector.isActive || vector.state === 'ACTIVE',
           hasOutput: vector.outputVectors && vector.outputVectors.length > 0,
           elements: vector.elements,
           metadata: vector.metadata,
@@ -136,7 +182,7 @@ app.get('/api/viz/sequences/:id', async (req: Request, res: Response) => {
         id: vector.id,
         label: `V-${vector.id.substring(0, 8)}`,
         isInitial: vector.isInitial,
-        isActive: vector.state === 'ACTIVE',
+        isActive: vector.isActive || vector.state === 'ACTIVE',
         hasOutput: vector.outputVectors && vector.outputVectors.length > 0,
         elements: vector.elements,
         metadata: vector.metadata,
@@ -314,6 +360,9 @@ app.post('/api/simulation/start', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/start`);
 
+    // Start polling for simulation updates
+    startSimulationPolling();
+
     // Broadcast update to connected clients
     broadcast({
       type: 'simulation-started',
@@ -332,6 +381,9 @@ app.post('/api/simulation/start', async (req: Request, res: Response) => {
 app.post('/api/simulation/pause', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/pause`);
+
+    // Stop polling when paused
+    stopSimulationPolling();
 
     // Broadcast update to connected clients
     broadcast({
@@ -352,6 +404,9 @@ app.post('/api/simulation/resume', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/resume`);
 
+    // Resume polling when resumed
+    startSimulationPolling();
+
     // Broadcast update to connected clients
     broadcast({
       type: 'simulation-resumed',
@@ -371,6 +426,9 @@ app.post('/api/simulation/stop', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/stop`);
 
+    // Stop polling when stopped
+    stopSimulationPolling();
+
     // Broadcast update to connected clients
     broadcast({
       type: 'simulation-stopped',
@@ -389,6 +447,9 @@ app.post('/api/simulation/stop', async (req: Request, res: Response) => {
 app.post('/api/simulation/reset', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/reset`);
+
+    // Stop polling when reset
+    stopSimulationPolling();
 
     // Broadcast update to connected clients
     broadcast({
@@ -609,146 +670,61 @@ function initializeExampleMachines() {
 
 initializeExampleMachines();
 
-// Get all machines
+// Get all machines - proxy to Reality Engine
 app.get('/api/machines', async (req: Request, res: Response) => {
   try {
-    // Fetch sequences from Reality Engine to populate machine stats
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences`);
-    const sequences = response.data.sequences;
-
-    // Update example machines with current sequence data
-    machines.forEach((machine) => {
-      if (machine.isExample) {
-        const machineSequences = sequences.filter((seq: any) =>
-          seq.name.toLowerCase().includes(machine.name.toLowerCase().split(' ')[0])
-        );
-        machine.sequenceIds = machineSequences.map((seq: any) => seq.id);
-        machine.sequences = machineSequences.map((seq: any) => ({ id: seq.id, name: seq.name }));
-        machine.sequenceCount = machineSequences.length;
-        machine.totalVectors = machineSequences.reduce((sum: number, seq: any) => sum + (seq.vectors?.length || 0), 0);
-      }
-    });
-
-    const machineList = Array.from(machines.values());
-    res.json({ machines: machineList });
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines`);
+    res.json(response.data);
   } catch (error: any) {
     console.error('Error fetching machines:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get specific machine
+// Get specific machine - proxy to Reality Engine
 app.get('/api/machines/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const machine = machines.get(id);
-
-    if (!machine) {
-      return res.status(404).json({ error: 'Machine not found' });
-    }
-
-    // Fetch updated sequence data
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences`);
-    const sequences = response.data.sequences;
-
-    const machineSequences = sequences.filter((seq: any) => machine.sequenceIds.includes(seq.id));
-    machine.sequences = machineSequences.map((seq: any) => ({ id: seq.id, name: seq.name }));
-    machine.sequenceCount = machineSequences.length;
-    machine.totalVectors = machineSequences.reduce((sum: number, seq: any) => sum + (seq.vectors?.length || 0), 0);
-
-    res.json({ machine });
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/${id}`);
+    res.json(response.data);
   } catch (error: any) {
     console.error('Error fetching machine:', error.message);
-    res.status(500).json({ error: error.message });
+    if (error.response?.status === 404) {
+      res.status(404).json({ error: 'Machine not found' });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
   }
 });
 
-// Create new machine
+// Create new machine - proxy to Reality Engine
 app.post('/api/machines', async (req: Request, res: Response) => {
   try {
-    const { name, description, sequenceIds = [], metadata = {} } = req.body;
-
-    if (!name) {
-      return res.status(400).json({ error: 'Machine name is required' });
-    }
-
-    const id = `machine-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    const now = Date.now();
-
-    const machine: Machine = {
-      id,
-      name,
-      description: description || '',
-      sequenceCount: sequenceIds.length,
-      totalVectors: 0,
-      sequenceIds,
-      sequences: [],
-      metadata,
-      isExample: false,
-      createdAt: now,
-      updatedAt: now,
-      lastAccessedAt: null
-    };
-
-    machines.set(id, machine);
-
-    res.json({ machine });
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/machines`, req.body);
+    res.json(response.data);
   } catch (error: any) {
     console.error('Error creating machine:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(error.response?.status || 500).json({ error: error.message });
   }
 });
 
-// Update machine
+// Update machine - proxy to Reality Engine
 app.put('/api/machines/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const machine = machines.get(id);
-
-    if (!machine) {
-      return res.status(404).json({ error: 'Machine not found' });
-    }
-
-    const { name, description, sequenceIds, metadata } = req.body;
-
-    if (name !== undefined) machine.name = name;
-    if (description !== undefined) machine.description = description;
-    if (sequenceIds !== undefined) {
-      machine.sequenceIds = sequenceIds;
-      machine.sequenceCount = sequenceIds.length;
-    }
-    if (metadata !== undefined) {
-      machine.metadata = { ...machine.metadata, ...metadata };
-      // Update lastAccessedAt if provided in metadata
-      if (metadata.lastAccessedAt !== undefined) {
-        machine.lastAccessedAt = metadata.lastAccessedAt;
-      }
-    }
-
-    machine.updatedAt = Date.now();
-
-    res.json({ machine });
+    const response = await axios.put(`${REALITY_ENGINE_URL}/api/machines/${id}`, req.body);
+    res.json(response.data);
   } catch (error: any) {
     console.error('Error updating machine:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(error.response?.status || 500).json({ error: error.message });
   }
 });
 
-// Delete machine
+// Delete machine - proxy to Reality Engine
 app.delete('/api/machines/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const machine = machines.get(id);
-
-    if (!machine) {
-      return res.status(404).json({ error: 'Machine not found' });
-    }
-
-    if (machine.isExample) {
-      return res.status(403).json({ error: 'Cannot delete example machines' });
-    }
-
-    machines.delete(id);
+    const response = await axios.delete(`${REALITY_ENGINE_URL}/api/machines/${id}`);
 
     res.json({ success: true });
   } catch (error: any) {

@@ -85,12 +85,14 @@ interface VisualizerState {
   resetSimulation: () => Promise<void>;
   stepSimulation: () => Promise<void>;
   setSimulationSpeed: (delayMs: number) => Promise<void>;
+  loadRandomVectors: (dimension: number, count: number, binaryThreshold: boolean) => Promise<void>;
   refreshSimulationState: () => Promise<void>;
   refreshHeatmap: () => Promise<void>;
   loadDemo: () => Promise<void>;
   loadDataCenterExample: () => Promise<void>;
   loadNANDGateExample: () => Promise<void>;
   loadMultiStepExample: () => Promise<void>;
+  loadKleeneStarExample: () => Promise<void>;
   connectWebSocket: () => void;
   disconnectWebSocket: () => void;
   addActivityEvent: (event: ActivityEvent) => void;
@@ -178,6 +180,8 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
             await get().loadNANDGateExample();
           } else if (machineId === 'data-center-example') {
             await get().loadDataCenterExample();
+          } else if (machineId === 'kleene-star-example') {
+            await get().loadKleeneStarExample();
           }
         } catch (error) {
           console.log('Could not load example data for machine:', error);
@@ -434,6 +438,50 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
+  loadRandomVectors: async (dimension: number, count: number, binaryThreshold: boolean) => {
+    try {
+      // Generate random vectors
+      let vectors = Array.from({ length: count }, () =>
+        Array.from({ length: dimension }, () => Math.random())
+      );
+
+      // Apply binary threshold if enabled (round to 0.00 or 1.00)
+      if (binaryThreshold) {
+        vectors = vectors.map(vector =>
+          vector.map(value => value >= 0.5 ? 1.0 : 0.0)
+        );
+      }
+
+      // Load into simulation
+      const result = await api.loadSimulation(vectors, { autoPlayDelayMs: 500, loop: true });
+
+      // Update state
+      set({
+        inputVectors: vectors,
+        simulationState: result.state
+      });
+
+      // Add activity event
+      const thresholdMsg = binaryThreshold ? ' (binary threshold)' : '';
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'info',
+        message: `Generated ${count} random ${dimension}D vectors${thresholdMsg}`,
+        timestamp: Date.now(),
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error generating random vectors:', error);
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to generate random vectors',
+        timestamp: Date.now(),
+        severity: 'error'
+      });
+    }
+  },
+
   refreshSimulationState: async () => {
     try {
       const result = await api.getSimulationState();
@@ -588,6 +636,42 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
+  loadKleeneStarExample: async () => {
+    try {
+      const result = await api.loadKleeneStarExample();
+      set({
+        isDemoLoaded: true,
+        demoMetadata: result.metadata,
+        currentMachine: result.machine || null
+      });
+
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'info',
+        message: `Machine loaded: ${result.machine?.name || '* Operator Test'}`,
+        timestamp: Date.now(),
+        severity: 'success',
+        metadata: result.metadata
+      });
+
+      // Refresh sequences after loading example
+      const sequences = await api.getSequences();
+      set({ sequences });
+
+      // Refresh simulation state to load input vectors
+      await get().refreshSimulationState();
+    } catch (error) {
+      console.error('Error loading Kleene star example:', error);
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to load Kleene star example',
+        timestamp: Date.now(),
+        severity: 'error'
+      });
+    }
+  },
+
   connectWebSocket: () => {
     const wsUrl = `ws://${window.location.hostname}:3001/ws`;
     const ws = new WebSocket(wsUrl);
@@ -626,8 +710,22 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
             if (message.state) {
               set({ simulationState: message.state });
             }
+            // Handle sequences from polling mechanism (auto-play updates)
+            if (message.sequences) {
+              set({ sequences: message.sequences });
+            }
             if (message.result) {
+              // Refresh sequences to update active node states (manual step)
+              api.getSequences().then(sequences => {
+                set({ sequences });
+              });
               get().refreshHeatmap();
+
+              // Update output vectors if any were generated
+              const outputs = message.result.totalOutputs || [];
+              if (outputs.length > 0) {
+                set({ currentOutputVectors: outputs });
+              }
             }
             break;
 
