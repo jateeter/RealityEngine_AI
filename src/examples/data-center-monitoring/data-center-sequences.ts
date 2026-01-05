@@ -1,5 +1,6 @@
 import { CriticalEventSequence } from '../../models/CriticalEventSequence.js';
 import { RealityVector } from '../../models/RealityVector.js';
+import { Machine } from '../../models/Machine.js';
 import { ComparatorType } from '../../models/types.js';
 import type { OutputVector } from '../../models/types.js';
 
@@ -451,4 +452,18 @@ export function createDataCenterSequences(): CriticalEventSequence[] {
     createStorageCapacitySequence(),
     createSecurityThreatSequence()
   ];
+}
+
+/**
+ * Create a Data Center Monitoring Machine with all monitoring sequences
+ */
+export function createDataCenterMachine(): Machine {
+  const sequences = createDataCenterSequences();
+  const machine = new Machine('Data Center Monitoring', 'Comprehensive data center monitoring with temperature, network, power, storage, and security sequences');
+
+  for (const sequence of sequences) {
+    machine.addSequence(sequence);
+  }
+
+  return machine;
 }

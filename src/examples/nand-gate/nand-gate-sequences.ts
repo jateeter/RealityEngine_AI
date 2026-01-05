@@ -1,5 +1,6 @@
 import { CriticalEventSequence } from '../../models/CriticalEventSequence.js';
 import { RealityVector } from '../../models/RealityVector.js';
+import { Machine } from '../../models/Machine.js';
 import { ComparatorType } from '../../models/types.js';
 import type { OutputVector } from '../../models/types.js';
 
@@ -189,4 +190,18 @@ export function generateComprehensiveNANDTests(): Array<{ vector: number[]; labe
   );
 
   return tests;
+}
+
+/**
+ * Create a NAND Gate Machine with all truth table sequences
+ */
+export function createNANDGateMachine(): Machine {
+  const sequences = createNANDGateSequences();
+  const machine = new Machine('NAND Gate', 'Complete NAND gate logic implementation with all truth table cases');
+
+  for (const sequence of sequences) {
+    machine.addSequence(sequence);
+  }
+
+  return machine;
 }

@@ -55,20 +55,17 @@ export class RealityEngineAPI {
         console.error('  ✗ Failed to load Kleene Star machine:', err);
       }
 
-      // Load NAND gate sequences (not a machine, just sequences)
+      // Load NAND Gate Machine
       try {
-        const { createNANDGateSequences, generateNANDTestVectors } =
+        const { createNANDGateMachine, generateNANDTestVectors } =
           await import('../examples/nand-gate/nand-gate-sequences.js');
-        const sequences = createNANDGateSequences();
+        const nandMachine = createNANDGateMachine();
+        this.engine.addMachine(nandMachine);
+
         const testVectors = generateNANDTestVectors();
         const allInputVectors = testVectors.map(t => t.vector);
 
-        // Load sequences
-        for (const sequence of sequences) {
-          this.engine.addSequence(sequence);
-        }
-
-        console.log('  ✓ NAND Gate sequences loaded');
+        console.log('  ✓ NAND Gate machine loaded');
 
         // Initialize simulation controller with NAND test vectors
         this.simulationController = new SimulationController(this.engine, {
@@ -77,7 +74,18 @@ export class RealityEngineAPI {
           loop: true
         });
       } catch (err) {
-        console.error('  ✗ Failed to load NAND Gate sequences:', err);
+        console.error('  ✗ Failed to load NAND Gate machine:', err);
+      }
+
+      // Load Data Center Monitoring Machine
+      try {
+        const { createDataCenterMachine } =
+          await import('../examples/data-center-monitoring/data-center-sequences.js');
+        const dataCenterMachine = createDataCenterMachine();
+        this.engine.addMachine(dataCenterMachine);
+        console.log('  ✓ Data Center Monitoring machine loaded');
+      } catch (err) {
+        console.error('  ✗ Failed to load Data Center Monitoring machine:', err);
       }
 
       console.log('Example machines and sequences loaded successfully');
