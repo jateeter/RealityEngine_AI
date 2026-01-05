@@ -145,7 +145,43 @@ export function createMultiStepMachine(): Machine {
         vector: tv.vector,
         label: tv.description,
         expectedOutput: tv.expectedOutput
-      }))
+      })),
+      // Input sequences that trigger critical event outputs
+      inputSequences: [
+        {
+          name: 'Sequence 1 Complete Path',
+          pattern: '000→001→011',
+          description: '3-step sequence producing [0,1] output',
+          vectors: [
+            [0, 0, 0],  // Initial state
+            [0, 0, 1],  // Transition 1
+            [0, 1, 1]   // Final state → outputs [0,1]
+          ]
+        },
+        {
+          name: 'Sequence 2 Complete Path',
+          pattern: '100→101→111',
+          description: '3-step sequence producing [1,0] output',
+          vectors: [
+            [1, 0, 0],  // Initial state
+            [1, 0, 1],  // Transition 1
+            [1, 1, 1]   // Final state → outputs [1,0]
+          ]
+        },
+        {
+          name: 'Both Sequences Interleaved',
+          pattern: '000→001→011...100→101→111',
+          description: 'Execute both sequences with outputs',
+          vectors: [
+            [0, 0, 0],  // Seq 1 start
+            [0, 0, 1],  // Seq 1 step
+            [0, 1, 1],  // Seq 1 complete → [0,1]
+            [1, 0, 0],  // Seq 2 start
+            [1, 0, 1],  // Seq 2 step
+            [1, 1, 1]   // Seq 2 complete → [1,0]
+          ]
+        }
+      ]
     }
   );
 

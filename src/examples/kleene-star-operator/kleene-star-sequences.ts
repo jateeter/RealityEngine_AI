@@ -236,7 +236,55 @@ export function createKleeneStarMachine(): Machine {
         vector: tv.vector,
         label: tv.description,
         expectedOutput: tv.expectedOutput
-      }))
+      })),
+      // Input sequences that trigger critical event outputs (regex patterns)
+      inputSequences: [
+        {
+          name: 'Sequence 1: Zero Repetitions',
+          pattern: '001+010',
+          description: 'Minimal path: 001 → 010 (no 000 loops)',
+          vectors: [
+            [0, 0, 1],  // Start
+            [0, 1, 0]   // End → outputs [0,1]
+          ]
+        },
+        {
+          name: 'Sequence 1: Two Repetitions',
+          pattern: '001+000+000+010',
+          description: 'Path with 2 loops: 001 → 000 → 000 → 010',
+          vectors: [
+            [0, 0, 1],  // Start
+            [0, 0, 0],  // Loop 1
+            [0, 0, 0],  // Loop 2
+            [0, 1, 0]   // End → outputs [0,1]
+          ]
+        },
+        {
+          name: 'Sequence 2: Alternation Pattern',
+          pattern: '010+(000+001)+001',
+          description: 'Path with alternation: 010 → 000 → 001 → 001',
+          vectors: [
+            [0, 1, 0],  // Start
+            [0, 0, 0],  // Loop option 1
+            [0, 0, 1],  // Loop option 2
+            [0, 0, 1]   // End → outputs [1,0]
+          ]
+        },
+        {
+          name: 'Both Sequences Combined',
+          pattern: '001+000*+010...010+(000+001)*+001',
+          description: 'Execute both Kleene star sequences',
+          vectors: [
+            [0, 0, 1],  // Seq 1 start
+            [0, 0, 0],  // Seq 1 loop
+            [0, 1, 0],  // Seq 1 end → [0,1]
+            [0, 1, 0],  // Seq 2 start
+            [0, 0, 0],  // Seq 2 loop
+            [0, 0, 1],  // Seq 2 loop
+            [0, 0, 1]   // Seq 2 end → [1,0]
+          ]
+        }
+      ]
     }
   );
 

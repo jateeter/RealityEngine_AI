@@ -207,7 +207,27 @@ export function createNANDGateMachine(): Machine {
         vector: tv.vector,
         label: tv.label,
         expectedOutput: tv.expectedOutput
-      }))
+      })),
+      // Input sequences that trigger critical event outputs (regex: [01][01]0.5)
+      inputSequences: [
+        {
+          name: 'NAND Truth Table Sequence',
+          pattern: '([01][01]0.5)+',
+          description: 'All NAND gate truth table inputs',
+          vectors: [
+            [0.0, 0.0, 0.5],  // NAND(0,0) = 1
+            [0.0, 1.0, 0.5],  // NAND(0,1) = 1
+            [1.0, 0.0, 0.5],  // NAND(1,0) = 1
+            [1.0, 1.0, 0.5]   // NAND(1,1) = 0
+          ]
+        },
+        {
+          name: 'NAND All-True Test',
+          pattern: '110.5',
+          description: 'Test NAND with both inputs true (expects false output)',
+          vectors: [[1.0, 1.0, 0.5]]
+        }
+      ]
     }
   );
 

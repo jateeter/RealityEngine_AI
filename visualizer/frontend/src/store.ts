@@ -442,22 +442,44 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     try {
       const state = get();
       const sampleVectors = state.currentMachine?.metadata?.sampleVectors || [];
+      const inputSequences = state.currentMachine?.metadata?.inputSequences || [];
 
-      // Generate random vectors with sample vector injection
+      // Generate random vectors with input sequence injection
       let vectors: number[][] = [];
       let sampleCount = 0;
+      let sequencesInjected = 0;
 
-      for (let i = 0; i < count; i++) {
-        // 30% chance to inject a sample vector if available
-        if (sampleVectors.length > 0 && Math.random() < 0.3) {
+      let i = 0;
+      while (i < count) {
+        // 25% chance to inject a complete input sequence if available
+        if (inputSequences.length > 0 && Math.random() < 0.25 && (count - i) >= 2) {
+          const sequence = inputSequences[Math.floor(Math.random() * inputSequences.length)];
+          const seqVectors = sequence.vectors || [];
+
+          // Inject entire sequence
+          for (const vec of seqVectors) {
+            if (i >= count) break;
+            vectors.push([...vec]);
+            i++;
+          }
+          sequencesInjected++;
+        }
+        // 20% chance to inject a single sample vector if available
+        else if (sampleVectors.length > 0 && Math.random() < 0.2) {
           const sample = sampleVectors[Math.floor(Math.random() * sampleVectors.length)];
           vectors.push([...sample.vector]);
           sampleCount++;
-        } else {
-          // Generate random vector
+          i++;
+        }
+        // Otherwise generate random vector
+        else {
           vectors.push(Array.from({ length: dimension }, () => Math.random()));
+          i++;
         }
       }
+
+      // Trim to exact count if sequences caused overflow
+      vectors = vectors.slice(0, count);
 
       // Apply binary threshold if enabled (round to 0.00 or 1.00)
       if (binaryThreshold) {
@@ -477,11 +499,12 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
       // Add activity event
       const thresholdMsg = binaryThreshold ? ' (binary threshold)' : '';
-      const sampleMsg = sampleCount > 0 ? `, ${sampleCount} sample vectors injected` : '';
+      const seqMsg = sequencesInjected > 0 ? `, ${sequencesInjected} critical event sequence${sequencesInjected !== 1 ? 's' : ''} injected` : '';
+      const sampleMsg = sampleCount > 0 ? `, ${sampleCount} sample vector${sampleCount !== 1 ? 's' : ''}` : '';
       get().addActivityEvent({
         id: `event-${Date.now()}`,
         type: 'info',
-        message: `Generated ${count} random ${dimension}D vectors${thresholdMsg}${sampleMsg}`,
+        message: `Generated ${count} random ${dimension}D vectors${thresholdMsg}${seqMsg}${sampleMsg}`,
         timestamp: Date.now(),
         severity: 'success'
       });
