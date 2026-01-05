@@ -1,6 +1,6 @@
 {
   "name": "reality-engine-visualizer-frontend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "React frontend for Reality Engine Visualizer",
   "private": true,
   "engines": {
