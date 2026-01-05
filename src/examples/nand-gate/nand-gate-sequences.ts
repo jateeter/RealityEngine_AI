@@ -197,7 +197,19 @@ export function generateComprehensiveNANDTests(): Array<{ vector: number[]; labe
  */
 export function createNANDGateMachine(): Machine {
   const sequences = createNANDGateSequences();
-  const machine = new Machine('NAND Gate', 'Complete NAND gate logic implementation with all truth table cases');
+  const testVectors = generateNANDTestVectors();
+
+  const machine = new Machine(
+    'NAND Gate',
+    'Complete NAND gate logic implementation with all truth table cases',
+    {
+      sampleVectors: testVectors.map(tv => ({
+        vector: tv.vector,
+        label: tv.label,
+        expectedOutput: tv.expectedOutput
+      }))
+    }
+  );
 
   for (const sequence of sequences) {
     machine.addSequence(sequence);

@@ -207,6 +207,8 @@ export function createKleeneStarSequences(): CriticalEventSequence[] {
  * Create the "* Operator Test" Machine
  */
 export function createKleeneStarMachine(): Machine {
+  const testVectors = generateKleeneStarTestVectors();
+
   const machine = new Machine(
     '* Operator Test',
     'Demonstrates Kleene star (*) operator in critical event sequences - zero or more repetitions with alternation',
@@ -229,7 +231,12 @@ export function createKleeneStarMachine(): Machine {
           description: '010, then zero or more (000 or 001), then 001',
           output: '[1,0]'
         }
-      ]
+      ],
+      sampleVectors: testVectors.map(tv => ({
+        vector: tv.vector,
+        label: tv.description,
+        expectedOutput: tv.expectedOutput
+      }))
     }
   );
 

@@ -440,10 +440,24 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
   loadRandomVectors: async (dimension: number, count: number, binaryThreshold: boolean) => {
     try {
-      // Generate random vectors
-      let vectors = Array.from({ length: count }, () =>
-        Array.from({ length: dimension }, () => Math.random())
-      );
+      const state = get();
+      const sampleVectors = state.currentMachine?.metadata?.sampleVectors || [];
+
+      // Generate random vectors with sample vector injection
+      let vectors: number[][] = [];
+      let sampleCount = 0;
+
+      for (let i = 0; i < count; i++) {
+        // 30% chance to inject a sample vector if available
+        if (sampleVectors.length > 0 && Math.random() < 0.3) {
+          const sample = sampleVectors[Math.floor(Math.random() * sampleVectors.length)];
+          vectors.push([...sample.vector]);
+          sampleCount++;
+        } else {
+          // Generate random vector
+          vectors.push(Array.from({ length: dimension }, () => Math.random()));
+        }
+      }
 
       // Apply binary threshold if enabled (round to 0.00 or 1.00)
       if (binaryThreshold) {
@@ -463,10 +477,11 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
       // Add activity event
       const thresholdMsg = binaryThreshold ? ' (binary threshold)' : '';
+      const sampleMsg = sampleCount > 0 ? `, ${sampleCount} sample vectors injected` : '';
       get().addActivityEvent({
         id: `event-${Date.now()}`,
         type: 'info',
-        message: `Generated ${count} random ${dimension}D vectors${thresholdMsg}`,
+        message: `Generated ${count} random ${dimension}D vectors${thresholdMsg}${sampleMsg}`,
         timestamp: Date.now(),
         severity: 'success'
       });

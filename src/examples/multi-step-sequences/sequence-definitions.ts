@@ -126,6 +126,8 @@ export function createMultiStepSequences(): CriticalEventSequence[] {
  * Create a Machine containing both multi-step sequences
  */
 export function createMultiStepMachine(): Machine {
+  const testVectors = generateTestVectors();
+
   const machine = new Machine(
     'Multi-Step State Machine',
     'Demonstrates 3-step critical event sequences with state transitions and binary outputs',
@@ -138,7 +140,12 @@ export function createMultiStepMachine(): Machine {
       sequences: [
         { name: 'Sequence 1', path: '000→001→011', output: '[0,1]' },
         { name: 'Sequence 2', path: '100→101→111', output: '[1,0]' }
-      ]
+      ],
+      sampleVectors: testVectors.map(tv => ({
+        vector: tv.vector,
+        label: tv.description,
+        expectedOutput: tv.expectedOutput
+      }))
     }
   );
 
