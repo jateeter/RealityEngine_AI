@@ -11,9 +11,10 @@ const OutputStreamVisualization: React.FC<OutputStreamVisualizationProps> = ({
 }) => {
   const historyRef = useRef<HTMLDivElement>(null);
   const currentOutput = outputVectors.length > 0 ? outputVectors[outputVectors.length - 1] : null;
-  const history = outputVectors.length > 1 ? outputVectors.slice(0, -1).reverse() : [];
+  // Keep chronological order (oldest to newest) - will use reverse flex direction
+  const history = outputVectors.length > 1 ? outputVectors.slice(0, -1) : [];
 
-  // Auto-scroll history to top when new output arrives
+  // Auto-scroll history to top when new output arrives (newest items appear at top in reverse flex)
   useEffect(() => {
     if (historyRef.current && outputVectors.length > 0) {
       historyRef.current.scrollTop = 0;
@@ -232,7 +233,7 @@ const OutputStreamVisualization: React.FC<OutputStreamVisualizationProps> = ({
                 style={{
                   flex: 1,
                   display: 'flex',
-                  flexDirection: 'column',
+                  flexDirection: 'column-reverse',
                   gap: '10px',
                   overflowY: 'auto',
                   overflowX: 'hidden',

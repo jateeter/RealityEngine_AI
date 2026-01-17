@@ -50,7 +50,12 @@ interface VisualizerState {
 
   // Machine View state
   expandedSequenceIds: Set<string>;
-  currentOutputVectors: OutputVector[];
+  outputVectorsByMachine: Record<string, OutputVector[]>; // Per-machine output history
+
+  // Sequence Editor state
+  isSequenceEditorOpen: boolean;
+  editingSequenceId: string | null;
+  editingSequence: SequenceGraph | null;
 
   // View actions
   setCurrentView: (view: 'selection' | 'administration') => void;
@@ -65,6 +70,12 @@ interface VisualizerState {
   // UI actions
   toggleFloatingPanel: () => void;
   setFloatingPanelTab: (tab: 'overview' | 'simulation' | 'sequences' | 'settings') => void;
+
+  // Sequence Editor actions
+  openSequenceEditor: (sequenceId: string) => Promise<void>;
+  closeSequenceEditor: () => void;
+  updateEditingSequence: (updates: Partial<SequenceGraph>) => void;
+  saveSequenceChanges: () => Promise<void>;
 
   setSequences: (sequences: SequenceGraph[]) => void;
   setSelectedSequence: (id: string | null) => void;
@@ -90,9 +101,10 @@ interface VisualizerState {
   refreshHeatmap: () => Promise<void>;
   loadDemo: () => Promise<void>;
   loadDataCenterExample: () => Promise<void>;
-  loadNANDGateExample: () => Promise<void>;
+  // loadNANDGateExample removed - example disabled
   loadMultiStepExample: () => Promise<void>;
   loadKleeneStarExample: () => Promise<void>;
+  loadRSFlipFlopExample: () => Promise<void>;
   connectWebSocket: () => void;
   disconnectWebSocket: () => void;
   addActivityEvent: (event: ActivityEvent) => void;
@@ -103,7 +115,10 @@ interface VisualizerState {
   toggleSequenceExpansion: (sequenceId: string) => void;
   expandAllSequences: () => void;
   collapseAllSequences: () => void;
-  setCurrentOutputVectors: (outputs: OutputVector[]) => void;
+  setOutputVectorsForMachine: (machineId: string, outputs: OutputVector[]) => void;
+  addOutputVectorsForMachine: (machineId: string, outputs: OutputVector[]) => void;
+  getCurrentMachineOutputs: () => OutputVector[];
+  clearCurrentMachineOutputs: () => void;
 }
 
 export const useVisualizerStore = create<VisualizerState>((set, get) => ({
@@ -142,7 +157,12 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
   // Machine View state initialization
   expandedSequenceIds: new Set<string>(),
-  currentOutputVectors: [],
+  outputVectorsByMachine: {},
+
+  // Sequence Editor state initialization
+  isSequenceEditorOpen: false,
+  editingSequenceId: null,
+  editingSequence: null,
 
   // View actions implementation
   setCurrentView: (view) => set({ currentView: view }),
@@ -153,12 +173,19 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   loadMachine: async (machineId: string) => {
     try {
       const machine = await api.getMachine(machineId);
-      set({
+
+      // Clear outputs for this machine when loading
+      // Outputs will only accumulate from new simulation steps
+      set((state) => ({
         currentMachine: machine,
         currentMachineId: machineId,
         lastViewedMachineId: machineId,
-        currentView: 'administration'
-      });
+        currentView: 'administration',
+        outputVectorsByMachine: {
+          ...state.outputVectorsByMachine,
+          [machineId]: [] // Start fresh for this machine
+        }
+      }));
 
       // Store in localStorage
       localStorage.setItem('lastViewedMachineId', machineId);
@@ -176,13 +203,12 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
           // Load the appropriate example based on machine ID
           if (machineId === 'multi-step-example') {
             await get().loadMultiStepExample();
-          } else if (machineId === 'nand-gate-example') {
-            await get().loadNANDGateExample();
           } else if (machineId === 'data-center-example') {
             await get().loadDataCenterExample();
           } else if (machineId === 'kleene-star-example') {
             await get().loadKleeneStarExample();
           }
+          // nand-gate-example removed - no longer supported
         } catch (error) {
           console.log('Could not load example data for machine:', error);
         }
@@ -255,6 +281,76 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     set({ floatingPanelActiveTab: tab, isFloatingPanelExpanded: true });
   },
 
+  // Sequence Editor actions implementation
+  openSequenceEditor: async (sequenceId: string) => {
+    try {
+      const sequence = await api.getSequence(sequenceId);
+      set({
+        isSequenceEditorOpen: true,
+        editingSequenceId: sequenceId,
+        editingSequence: sequence
+      });
+    } catch (error) {
+      console.error('Error opening sequence editor:', error);
+    }
+  },
+
+  closeSequenceEditor: () => {
+    set({
+      isSequenceEditorOpen: false,
+      editingSequenceId: null,
+      editingSequence: null
+    });
+  },
+
+  updateEditingSequence: (updates: Partial<SequenceGraph>) => {
+    const current = get().editingSequence;
+    if (current) {
+      set({
+        editingSequence: { ...current, ...updates }
+      });
+    }
+  },
+
+  saveSequenceChanges: async () => {
+    const { editingSequenceId, editingSequence } = get();
+    if (!editingSequenceId || !editingSequence) return;
+
+    try {
+      await api.updateSequence(editingSequenceId, {
+        sequenceName: editingSequence.sequenceName,
+        metadata: editingSequence.metadata,
+        nodes: editingSequence.nodes,
+        edges: editingSequence.edges
+      });
+
+      // Refresh sequences after saving
+      const sequences = await api.getSequences();
+      set({ sequences });
+
+      // Close editor
+      get().closeSequenceEditor();
+
+      // Add success activity event
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'info',
+        message: `Sequence "${editingSequence.sequenceName}" updated successfully`,
+        timestamp: Date.now(),
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error saving sequence:', error);
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'error',
+        message: `Failed to save sequence changes: ${error}`,
+        timestamp: Date.now(),
+        severity: 'error'
+      });
+    }
+  },
+
   setSequences: (sequences) => set({ sequences }),
   setSelectedSequence: (id) => set({ selectedSequenceId: id }),
   setCurrentMachine: (machine) => set({ currentMachine: machine }),
@@ -274,6 +370,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         simulationState: result.state,
         simulationProgress: 0,
         activityEvents: []
+        // Don't clear outputs - they persist per machine
       });
 
       get().addActivityEvent({
@@ -366,6 +463,10 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   resetSimulation: async () => {
     try {
       const result = await api.resetSimulation();
+
+      // Clear outputs for current machine
+      get().clearCurrentMachineOutputs();
+
       set({
         simulationState: result.state,
         simulationProgress: 0,
@@ -393,8 +494,13 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         const { sequenceResults, totalOutputs } = result.result;
         const matchedCount = Object.values(sequenceResults).filter((r: any) => r.matched).length;
 
-        // Store current outputs for Machine View
-        set({ currentOutputVectors: totalOutputs });
+        // Accumulate outputs for current machine
+        if (totalOutputs && totalOutputs.length > 0) {
+          const currentMachineId = get().currentMachineId;
+          if (currentMachineId) {
+            get().addOutputVectorsForMachine(currentMachineId, totalOutputs);
+          }
+        }
 
         get().addActivityEvent({
           id: `event-${Date.now()}`,
@@ -528,6 +634,10 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         simulationProgress: result.progress,
         inputVectors: result.inputVectors || []
       });
+
+      // Don't fetch outputs from history - outputs are only accumulated
+      // from step/websocket events during the current machine session.
+      // This ensures each machine only shows outputs generated while viewing it.
     } catch (error) {
       console.error('Error refreshing simulation state:', error);
     }
@@ -606,37 +716,11 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
-  loadNANDGateExample: async () => {
-    try {
-      const result = await api.loadNANDGateExample();
-      set({
-        isDemoLoaded: true,
-        demoMetadata: result.metadata
-      });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: 'NAND Gate Example loaded',
-        timestamp: Date.now(),
-        severity: 'success',
-        metadata: result.metadata
-      });
-
-      // Refresh sequences after loading example
-      const sequences = await api.getSequences();
-      set({ sequences });
-    } catch (error) {
-      console.error('Error loading NAND gate example:', error);
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to load NAND gate example',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
-    }
-  },
+  // DISABLED: NAND Gate example removed from system
+  // loadNANDGateExample: async () => {
+  //   The NAND Gate example has been permanently disabled.
+  //   Use Multi-Step State Machine or other examples instead.
+  // },
 
   loadMultiStepExample: async () => {
     try {
@@ -710,6 +794,41 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
+  loadRSFlipFlopExample: async () => {
+    try {
+      const result = await api.loadRSFlipFlopExample();
+      set({
+        isDemoLoaded: true,
+        demoMetadata: result.metadata
+      });
+
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'info',
+        message: 'RS Flip Flop Example loaded',
+        timestamp: Date.now(),
+        severity: 'success',
+        metadata: result.metadata
+      });
+
+      // Refresh sequences after loading example
+      const sequences = await api.getSequences();
+      set({ sequences });
+
+      // Refresh simulation state to load input vectors
+      await get().refreshSimulationState();
+    } catch (error) {
+      console.error('Error loading RS Flip Flop example:', error);
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to load RS Flip Flop example',
+        timestamp: Date.now(),
+        severity: 'error'
+      });
+    }
+  },
+
   connectWebSocket: () => {
     const wsUrl = `ws://${window.location.hostname}:3001/ws`;
     const ws = new WebSocket(wsUrl);
@@ -759,10 +878,21 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
               });
               get().refreshHeatmap();
 
-              // Update output vectors if any were generated
+              // Accumulate output vectors if any were generated
               const outputs = message.result.totalOutputs || [];
               if (outputs.length > 0) {
-                set({ currentOutputVectors: outputs });
+                const currentMachineId = get().currentMachineId;
+                if (currentMachineId) {
+                  get().addOutputVectorsForMachine(currentMachineId, outputs);
+                }
+              }
+            }
+
+            // Also check for outputs at the top level (auto-play)
+            if (message.totalOutputs && message.totalOutputs.length > 0) {
+              const currentMachineId = get().currentMachineId;
+              if (currentMachineId) {
+                get().addOutputVectorsForMachine(currentMachineId, message.totalOutputs);
               }
             }
             break;
@@ -832,7 +962,45 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     set({ expandedSequenceIds: new Set<string>() });
   },
 
-  setCurrentOutputVectors: (outputs: OutputVector[]) => {
-    set({ currentOutputVectors: outputs });
+  // Output vector management per machine
+  setOutputVectorsForMachine: (machineId: string, outputs: OutputVector[]) => {
+    set((state) => ({
+      outputVectorsByMachine: {
+        ...state.outputVectorsByMachine,
+        [machineId]: outputs
+      }
+    }));
+  },
+
+  addOutputVectorsForMachine: (machineId: string, outputs: OutputVector[]) => {
+    set((state) => {
+      const existing = state.outputVectorsByMachine[machineId] || [];
+      return {
+        outputVectorsByMachine: {
+          ...state.outputVectorsByMachine,
+          [machineId]: [...existing, ...outputs]
+        }
+      };
+    });
+  },
+
+  getCurrentMachineOutputs: () => {
+    const state = get();
+    const machineId = state.currentMachineId;
+    if (!machineId) return [];
+    return state.outputVectorsByMachine[machineId] || [];
+  },
+
+  clearCurrentMachineOutputs: () => {
+    const state = get();
+    const machineId = state.currentMachineId;
+    if (!machineId) return;
+
+    set((state) => ({
+      outputVectorsByMachine: {
+        ...state.outputVectorsByMachine,
+        [machineId]: []
+      }
+    }));
   }
 }));

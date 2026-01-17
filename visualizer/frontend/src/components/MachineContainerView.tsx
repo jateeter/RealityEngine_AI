@@ -11,7 +11,7 @@ interface MachineContainerViewProps {
 const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSequenceId }) => {
   const {
     inputVectors,
-    currentOutputVectors,
+    getCurrentMachineOutputs,
     simulationState,
     currentMachine,
     startSimulation,
@@ -22,6 +22,9 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
     setSimulationSpeed,
     loadRandomVectors
   } = useVisualizerStore();
+
+  // Get outputs for current machine
+  const currentOutputVectors = getCurrentMachineOutputs();
 
   // Determine current input vector index and state
   const currentIndex = simulationState?.currentIndex ?? 0;

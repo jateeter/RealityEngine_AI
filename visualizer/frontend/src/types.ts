@@ -19,7 +19,7 @@ export interface OutputVector {
   id: string;
   vector: number[];
   timestamp: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any> | string;
 }
 
 export interface Edge {
@@ -157,4 +157,33 @@ export interface TransitionResult {
     outputsAsserted: OutputVector[];
   }>;
   totalOutputs: OutputVector[];
+}
+
+// ===== Sequence Editing Types =====
+
+export interface VectorNodeUpdate {
+  id: string;
+  label?: string;
+  isInitial?: boolean;
+  hasOutput?: boolean;
+  elements?: VectorElement[];
+  metadata?: Record<string, any>;
+  outputVectors?: OutputVector[];
+}
+
+export interface EdgeUpdate {
+  id: string;
+  source?: string;
+  target?: string;
+}
+
+export interface SequenceUpdateRequest {
+  sequenceName?: string;
+  metadata?: Record<string, any>;
+  nodes?: VectorNodeUpdate[];
+  edges?: EdgeUpdate[];
+  addNodes?: VectorNode[];
+  removeNodeIds?: string[];
+  addEdges?: Edge[];
+  removeEdgeIds?: string[];
 }

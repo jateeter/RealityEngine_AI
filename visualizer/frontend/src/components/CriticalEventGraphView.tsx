@@ -17,10 +17,18 @@ interface CriticalEventGraphViewProps {
 }
 
 const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selectedSequenceId }) => {
-  const { sequences, currentMachine } = useVisualizerStore();
+  const { sequences, currentMachine, openSequenceEditor } = useVisualizerStore();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [legendHovered, setLegendHovered] = useState(false);
+
+  // Helper function to format output vector for display
+  const formatOutputVector = (vector: number[]): string => {
+    if (vector.length <= 6) {
+      return `[${vector.map(v => v.toFixed(2)).join(', ')}]`;
+    }
+    return `[${vector.slice(0, 3).map(v => v.toFixed(2)).join(', ')}...${vector.slice(-2).map(v => v.toFixed(2)).join(', ')}]`;
+  };
 
   // Get the selected sequence or all sequences
   // For machines or simple sequences (like NAND gates), always show all sequences together
@@ -75,6 +83,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
         const isActive = node.isActive;
         const isInitial = node.isInitial || false;
         const hasOutputs = node.outputVectors && node.outputVectors.length > 0;
+        const isActiveWithOutput = isActive && hasOutputs; // Final event matched with input
 
         let nodeColor = '#64748b';
         let borderColor = '#475569';
@@ -91,6 +100,12 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
         if (hasOutputs) {
           borderWidth = 4;
           borderColor = '#f59e0b';
+        }
+
+        // Special highlighting for active outputs (output being applied)
+        if (isActiveWithOutput) {
+          borderColor = '#fbbf24'; // Bright amber for active output
+          borderWidth = 5;
         }
 
         newNodes.push({
@@ -117,11 +132,17 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
                 </div>
                 {hasOutputs && (
                   <div style={{
-                    fontSize: '9px',
-                    color: '#fbbf24',
-                    marginTop: '4px'
+                    fontSize: '8px',
+                    color: isActiveWithOutput ? '#fde047' : '#fbbf24',
+                    marginTop: '4px',
+                    fontWeight: isActiveWithOutput ? 'bold' : 'normal',
+                    maxWidth: '160px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
                   }}>
-                    {node.outputVectors.length} output{node.outputVectors.length > 1 ? 's' : ''}
+                    {isActiveWithOutput && '⚡ OUTPUT: '}
+                    {formatOutputVector(node.outputVectors[0].vector)}
+                    {node.outputVectors.length > 1 && ` +${node.outputVectors.length - 1} more`}
                   </div>
                 )}
               </div>
@@ -139,9 +160,11 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
             color: '#fff',
             fontSize: '11px',
             padding: '12px',
-            boxShadow: isActive
-              ? `0 0 20px ${nodeColor}, 0 0 40px ${nodeColor}`
-              : '0 4px 6px rgba(0, 0, 0, 0.3)',
+            boxShadow: isActiveWithOutput
+              ? `0 0 30px ${borderColor}, 0 0 60px ${borderColor}, 0 0 90px rgba(251, 191, 36, 0.5)`
+              : isActive
+                ? `0 0 20px ${nodeColor}, 0 0 40px ${nodeColor}`
+                : '0 4px 6px rgba(0, 0, 0, 0.3)',
             transition: 'all 0.3s ease'
           },
           sourcePosition: Position.Right,
@@ -162,17 +185,35 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
           position: { x: xOffset + 100, y: yOffset },
           data: {
             label: (
-              <div style={{
-                padding: '8px 16px',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                borderRadius: '8px',
-                color: '#fff',
-                fontWeight: 'bold',
-                fontSize: '14px',
-                textAlign: 'center',
-                minWidth: '200px'
-              }}>
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openSequenceEditor(sequence.sequenceId);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                  textAlign: 'center',
+                  minWidth: '200px',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s, box-shadow 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                title="Click to edit sequence"
+              >
                 {sequence.sequenceName || sequence.sequenceId}
+                <span style={{ marginLeft: '8px', fontSize: '12px', opacity: 0.8 }}>⚙️</span>
               </div>
             )
           },
@@ -191,6 +232,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
           const isActive = node.isActive;
           const isInitial = node.isInitial || false;
           const hasOutputs = node.outputVectors && node.outputVectors.length > 0;
+          const isActiveWithOutput = isActive && hasOutputs; // Final event matched with input
 
           // Determine node color based on state
           let nodeColor = '#64748b'; // Default gray
@@ -211,6 +253,12 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
             borderColor = '#f59e0b'; // Orange border for outputs
           }
 
+          // Special highlighting for active outputs (output being applied)
+          if (isActiveWithOutput) {
+            borderColor = '#fbbf24'; // Bright amber for active output
+            borderWidth = 5;
+          }
+
           // Calculate position
           const x = xOffset + (nodeIndex % 3) * 120;
           const y = yOffset + Math.floor(nodeIndex / 3) * 120;
@@ -221,7 +269,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
             position: { x, y },
             data: {
               label: (
-                <div style={{ textAlign: 'center' }}>
+                <div style={{ textAlign: 'center', padding: '2px' }}>
                   <div style={{
                     fontWeight: 'bold',
                     fontSize: '11px',
@@ -232,11 +280,25 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
                   </div>
                   <div style={{
                     fontSize: '9px',
-                    color: isActive ? '#d1fae5' : '#94a3b8'
+                    color: isActive ? '#d1fae5' : '#94a3b8',
+                    marginBottom: hasOutputs ? '2px' : '0'
                   }}>
                     {isInitial && '⭐ '}
-                    {hasOutputs && `${node.outputVectors.length} outputs`}
                   </div>
+                  {hasOutputs && (
+                    <div style={{
+                      fontSize: '7px',
+                      color: isActiveWithOutput ? '#fde047' : '#fbbf24',
+                      fontWeight: isActiveWithOutput ? 'bold' : 'normal',
+                      maxWidth: '70px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {isActiveWithOutput && '⚡ '}
+                      {formatOutputVector(node.outputVectors[0].vector)}
+                    </div>
+                  )}
                 </div>
               )
             },
@@ -252,9 +314,11 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
               color: '#fff',
               fontSize: '10px',
               padding: '8px',
-              boxShadow: isActive
-                ? `0 0 20px ${nodeColor}, 0 0 40px ${nodeColor}`
-                : '0 4px 6px rgba(0, 0, 0, 0.3)',
+              boxShadow: isActiveWithOutput
+                ? `0 0 30px ${borderColor}, 0 0 60px ${borderColor}, 0 0 90px rgba(251, 191, 36, 0.5)`
+                : isActive
+                  ? `0 0 20px ${nodeColor}, 0 0 40px ${nodeColor}`
+                  : '0 4px 6px rgba(0, 0, 0, 0.3)',
               transition: 'all 0.3s ease'
             },
             sourcePosition: Position.Right,
@@ -273,20 +337,16 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
             source: edge.source,
             target: edge.target,
             type: 'smoothstep',
-            animated: isSourceActive,
+            animated: false,
             style: {
-              stroke: isSourceActive ? '#22c55e' : '#64748b',
+              stroke: '#64748b',
               strokeWidth: isSourceActive ? 3 : 2
             },
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: isSourceActive ? '#22c55e' : '#64748b',
+              color: '#64748b',
               width: 20,
               height: 20
-            },
-            label: isSourceActive ? '⚡' : undefined,
-            labelStyle: {
-              fontSize: 16
             }
           });
         });
@@ -503,6 +563,48 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
               }} />
               <span>Has Outputs</span>
             </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+              <div style={{
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: '#22c55e',
+                border: '5px solid #fbbf24',
+                marginRight: '8px',
+                boxShadow: '0 0 15px #fbbf24',
+                flexShrink: 0
+              }} />
+              <div>
+                <div style={{ fontWeight: '600' }}>⚡ Active Output</div>
+                <div style={{ fontSize: '9px', color: '#94a3b8' }}>Output being applied</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Output Vectors Section */}
+          <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #334155' }}>
+            <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Output Vectors
+            </div>
+
+            <div style={{ marginBottom: '8px' }}>
+              <div style={{ fontSize: '10px', color: '#e2e8f0', marginBottom: '4px' }}>
+                Events with outputs display their output vectors below the event name.
+              </div>
+              <div style={{ fontSize: '9px', color: '#94a3b8' }}>
+                Format: [v1, v2, v3, ...]
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '8px' }}>
+              <div style={{ fontSize: '10px', color: '#fde047', fontWeight: 'bold', marginBottom: '2px' }}>
+                ⚡ OUTPUT: [...]
+              </div>
+              <div style={{ fontSize: '9px', color: '#94a3b8' }}>
+                When an active final event matches the input, the output vector is highlighted and will be applied to the machine output stream.
+              </div>
+            </div>
           </div>
 
           {/* Transitions Section */}
@@ -516,8 +618,8 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
               <span>Transition</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ marginRight: '8px', fontSize: '16px', color: '#22c55e' }}>⚡</span>
-              <span>Active Transition</span>
+              <span style={{ marginRight: '8px', fontSize: '16px' }}>⇒</span>
+              <span>Active Transition (thicker)</span>
             </div>
           </div>
         </div>

@@ -55,27 +55,19 @@ export class RealityEngineAPI {
         console.error('  ✗ Failed to load Kleene Star machine:', err);
       }
 
-      // Load NAND Gate Machine
+      // Load RS Flip Flop Machine
       try {
-        const { createNANDGateMachine, generateNANDTestVectors } =
-          await import('../examples/nand-gate/nand-gate-sequences.js');
-        const nandMachine = createNANDGateMachine();
-        this.engine.addMachine(nandMachine);
-
-        const testVectors = generateNANDTestVectors();
-        const allInputVectors = testVectors.map(t => t.vector);
-
-        console.log('  ✓ NAND Gate machine loaded');
-
-        // Initialize simulation controller with NAND test vectors
-        this.simulationController = new SimulationController(this.engine, {
-          autoPlayDelayMs: 2000,
-          inputVectors: allInputVectors,
-          loop: true
-        });
+        const { createRSFlipFlopMachine } = await import('../examples/rs-flip-flop/rs-flip-flop-sequences.js');
+        const rsFlipFlopMachine = createRSFlipFlopMachine();
+        this.engine.addMachine(rsFlipFlopMachine);
+        console.log('  ✓ RS Flip Flop machine loaded');
       } catch (err) {
-        console.error('  ✗ Failed to load NAND Gate machine:', err);
+        console.error('  ✗ Failed to load RS Flip Flop machine:', err);
       }
+
+      // NAND Gate Machine - DISABLED
+      // The NAND Gate example has been removed from default examples
+      // Use Multi-Step State Machine or other examples instead
 
       // Load Data Center Monitoring Machine
       try {
@@ -156,9 +148,10 @@ export class RealityEngineAPI {
     // Demo endpoints
     this.router.get('/demo/load', this.loadDemo.bind(this));
     this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
-    this.router.get('/demo/nand-gate', this.loadNANDGateExample.bind(this));
+    // NAND Gate endpoint removed - example disabled
     this.router.get('/demo/multi-step', this.loadMultiStepExample.bind(this));
     this.router.get('/demo/kleene-star', this.loadKleeneStarExample.bind(this));
+    this.router.get('/demo/rs-flip-flop', this.loadRSFlipFlopExample.bind(this));
   }
 
   // Health check
@@ -1017,63 +1010,11 @@ export class RealityEngineAPI {
     }
   }
 
-  private async loadNANDGateExample(_req: Request, res: Response): Promise<void> {
-    try {
-      const {
-        createNANDGateSequences,
-        generateNANDTestVectors
-      } = await import('../examples/nand-gate/nand-gate-sequences.js');
-
-      // Generate sequences and test vectors
-      const sequences = createNANDGateSequences();
-      const testVectors = generateNANDTestVectors();
-      const allInputVectors = testVectors.map(t => t.vector);
-
-      // Clear existing sequences
-      const existingSequences = this.engine.getAllSequences();
-      for (const seq of existingSequences) {
-        this.engine.removeSequence(seq.id);
-      }
-
-      // Load new sequences
-      for (const sequence of sequences) {
-        this.engine.addSequence(sequence);
-      }
-
-      // Initialize simulation controller
-      this.simulationController = new SimulationController(this.engine, {
-        autoPlayDelayMs: 2000,
-        inputVectors: allInputVectors,
-        loop: true
-      });
-
-      res.json({
-        success: true,
-        metadata: {
-          name: 'NAND Gate Implementation - Universal Logic Gate',
-          description: 'Demonstrates 4 NAND gate sequences implementing complete truth table',
-          totalSequences: sequences.length,
-          sequenceNames: sequences.map(s => s.name),
-          totalInputVectors: allInputVectors.length,
-          truthTable: [
-            'NAND(0, 0) = 1',
-            'NAND(0, 1) = 1',
-            'NAND(1, 0) = 1',
-            'NAND(1, 1) = 0'
-          ],
-          note: 'All sequences have initial events that activate on matching input patterns'
-        },
-        sequencesLoaded: sequences.length,
-        inputVectorsLoaded: allInputVectors.length
-      });
-    } catch (error: any) {
-      console.error('Error loading NAND gate example:', error);
-      res.status(500).json({
-        error: 'Failed to load NAND gate example',
-        details: error.message
-      });
-    }
-  }
+  // DISABLED: NAND Gate example removed from system
+  // private async loadNANDGateExample(_req: Request, res: Response): Promise<void> {
+  //   The NAND Gate example has been permanently disabled.
+  //   Use Multi-Step State Machine or other examples instead.
+  // }
 
   private async loadKleeneStarExample(_req: Request, res: Response): Promise<void> {
     try {
@@ -1133,6 +1074,76 @@ export class RealityEngineAPI {
       res.status(500).json({
         success: false,
         error: 'Failed to load Kleene star example',
+        message: error.message
+      });
+    }
+  }
+
+  private async loadRSFlipFlopExample(_req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        createRSFlipFlopMachine,
+        generateRSTestVectors
+      } = await import('../examples/rs-flip-flop/rs-flip-flop-sequences.js');
+
+      const testVectors = generateRSTestVectors();
+      const allInputVectors = testVectors.map(t => t.vector);
+
+      // Find the machine by name (should already be loaded from startup)
+      let machine = this.engine.getAllMachines().find(m => m.name === 'RS Flip Flop');
+
+      // If not loaded, create and add it
+      if (!machine) {
+        machine = createRSFlipFlopMachine();
+        this.engine.addMachine(machine);
+      }
+
+      // Initialize simulation controller with the test sequence
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: 1000,
+        inputVectors: allInputVectors,
+        loop: true
+      });
+
+      res.json({
+        success: true,
+        machine: machine.toJSON(),
+        metadata: {
+          name: machine.name,
+          description: machine.description,
+          machineId: machine.id,
+          totalSequences: machine.getSequenceCount(),
+          sequenceNames: machine.getAllSequences().map(s => s.name),
+          totalInputVectors: allInputVectors.length,
+          eventSpace: '2D binary vectors: [S, R] inputs (00, 01, 10, 11)',
+          outputSpace: '1D binary: {0=RESET/LOW, 1=SET/HIGH}',
+          sequences: [
+            {
+              name: 'SET Sequence',
+              pattern: '00 → 10',
+              description: 'Transition from hold (00) to set (10), outputs [1]'
+            },
+            {
+              name: 'RESET Sequence',
+              pattern: '00 → 01',
+              description: 'Transition from hold (00) to reset (01), outputs [0]'
+            }
+          ],
+          testSequence: {
+            pattern: '00→10→00→01→00→01→10→01→00',
+            description: 'Complete test sequence with multiple SET/RESET operations',
+            vectors: allInputVectors
+          },
+          note: 'RS Flip Flop bistable multivibrator - outputs maintained until next transition'
+        },
+        sequencesLoaded: machine.getSequenceCount(),
+        inputVectorsLoaded: allInputVectors.length
+      });
+    } catch (error: any) {
+      console.error('Error loading RS Flip Flop example:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to load RS Flip Flop example',
         message: error.message
       });
     }
