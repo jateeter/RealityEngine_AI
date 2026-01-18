@@ -213,5 +213,11 @@ export const api = {
   async loadRSFlipFlopExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
     const response = await axios.get('/api/demo/rs-flip-flop');
     return response.data;
+  },
+
+  // Load Robotics Assembly example
+  async loadRoboticsAssemblyExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
+    const response = await axios.get('/api/demo/robotics-assembly');
+    return response.data;
   }
 };

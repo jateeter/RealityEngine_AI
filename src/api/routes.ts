@@ -80,6 +80,17 @@ export class RealityEngineAPI {
         console.error('  ✗ Failed to load Data Center Monitoring machine:', err);
       }
 
+      // Load Robotics Assembly Machine
+      try {
+        const { createRoboticsAssemblyMachine } =
+          await import('../examples/robotics-assembly/robotics-assembly-sequences.js');
+        const roboticsMachine = createRoboticsAssemblyMachine();
+        this.engine.addMachine(roboticsMachine);
+        console.log('  ✓ Robotics Assembly System machine loaded');
+      } catch (err) {
+        console.error('  ✗ Failed to load Robotics Assembly machine:', err);
+      }
+
       console.log('Example machines and sequences loaded successfully');
     } catch (error) {
       console.error('Error loading default machines:', error);
@@ -152,6 +163,7 @@ export class RealityEngineAPI {
     this.router.get('/demo/multi-step', this.loadMultiStepExample.bind(this));
     this.router.get('/demo/kleene-star', this.loadKleeneStarExample.bind(this));
     this.router.get('/demo/rs-flip-flop', this.loadRSFlipFlopExample.bind(this));
+    this.router.get('/demo/robotics-assembly', this.loadRoboticsAssemblyExample.bind(this));
   }
 
   // Health check
@@ -1144,6 +1156,119 @@ export class RealityEngineAPI {
       res.status(500).json({
         success: false,
         error: 'Failed to load RS Flip Flop example',
+        message: error.message
+      });
+    }
+  }
+
+  private async loadRoboticsAssemblyExample(_req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        createRoboticsAssemblyMachine,
+        generateRoboticsTestVectors
+      } = await import('../examples/robotics-assembly/robotics-assembly-sequences.js');
+
+      const testVectors = generateRoboticsTestVectors();
+      const allInputVectors = testVectors.map(t => t.vector);
+
+      // Find the machine by name (should already be loaded from startup)
+      let machine = this.engine.getAllMachines().find(m => m.name === 'Robotics Assembly System');
+
+      // If not loaded, create and add it
+      if (!machine) {
+        machine = createRoboticsAssemblyMachine();
+        this.engine.addMachine(machine);
+      }
+
+      // Initialize simulation controller with the test sequence
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: 500, // Faster for 70-step sequence
+        inputVectors: allInputVectors,
+        loop: false // Don't loop - complete workflow
+      });
+
+      res.json({
+        success: true,
+        machine: machine.toJSON(),
+        metadata: {
+          name: machine.name,
+          description: machine.description,
+          machineId: machine.id,
+          totalSequences: machine.getSequenceCount(),
+          sequenceNames: machine.getAllSequences().map(s => s.name),
+          totalInputVectors: allInputVectors.length,
+          eventSpace: '5D continuous vectors: [ARM_POSITION, GRIPPER_FORCE, CONVEYOR_SPEED, VISION_CONF, TOOL_TEMP]',
+          outputSpace: '3D vectors: [ACTION_CODE, SPEED_MODIFIER, QUALITY_FLAG]',
+          specifications: {
+            inputDimensions: 5,
+            outputDimensions: 3,
+            totalSequences: 5,
+            totalEvents: 50,
+            averageSequenceLength: 10,
+            outputEventsInSequences: 7,
+            matchThreshold: 0.60,
+            expectedOutputsInSampleRun: 11
+          },
+          sequences: [
+            {
+              name: 'Pick and Place Operation',
+              events: 10,
+              outputs: 2,
+              pattern: 'Home→Pick→Place',
+              description: 'Complete pick-and-place cycle with vision guidance'
+            },
+            {
+              name: 'Quality Inspection Operation',
+              events: 10,
+              outputs: 2,
+              pattern: 'Scan→Analyze→Result',
+              description: 'Multi-point vision-based quality inspection'
+            },
+            {
+              name: 'Tool Change Operation',
+              events: 10,
+              outputs: 1,
+              pattern: 'Tool rack→Change→Complete',
+              description: 'Automated tool changing sequence'
+            },
+            {
+              name: 'Emergency Stop Operation',
+              events: 10,
+              outputs: 1,
+              pattern: 'Anomaly→Escalation→Stop',
+              description: 'Safety shutdown on force/temperature anomaly'
+            },
+            {
+              name: 'Calibration Operation',
+              events: 10,
+              outputs: 1,
+              pattern: 'Calibration points→Complete',
+              description: 'System calibration and homing procedure'
+            }
+          ],
+          sampleRun: {
+            description: '70-step comprehensive workflow executing all 5 sequences',
+            totalSteps: 70,
+            expectedOutputs: 11,
+            breakdown: [
+              '2× Pick and Place cycles (4 outputs)',
+              '2× Quality Inspection cycles (4 outputs)',
+              '1× Tool Change (1 output)',
+              '1× Emergency Stop (1 output)',
+              '1× Calibration (1 output)'
+            ],
+            duration: '~35 seconds at 500ms/step'
+          },
+          note: 'Specification example: 5D input, 3D output, 0.60 threshold, 10+ outputs in sample run'
+        },
+        sequencesLoaded: machine.getSequenceCount(),
+        inputVectorsLoaded: allInputVectors.length
+      });
+    } catch (error: any) {
+      console.error('Error loading Robotics Assembly example:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to load Robotics Assembly example',
         message: error.message
       });
     }

@@ -105,6 +105,7 @@ interface VisualizerState {
   loadMultiStepExample: () => Promise<void>;
   loadKleeneStarExample: () => Promise<void>;
   loadRSFlipFlopExample: () => Promise<void>;
+  loadRoboticsAssemblyExample: () => Promise<void>;
   connectWebSocket: () => void;
   disconnectWebSocket: () => void;
   addActivityEvent: (event: ActivityEvent) => void;
@@ -823,6 +824,41 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         id: `event-${Date.now()}`,
         type: 'error',
         message: 'Failed to load RS Flip Flop example',
+        timestamp: Date.now(),
+        severity: 'error'
+      });
+    }
+  },
+
+  loadRoboticsAssemblyExample: async () => {
+    try {
+      const result = await api.loadRoboticsAssemblyExample();
+      set({
+        isDemoLoaded: true,
+        demoMetadata: result.metadata
+      });
+
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'info',
+        message: 'Robotics Assembly System loaded - 70-step workflow ready',
+        timestamp: Date.now(),
+        severity: 'success',
+        metadata: result.metadata
+      });
+
+      // Refresh sequences after loading example
+      const sequences = await api.getSequences();
+      set({ sequences });
+
+      // Refresh simulation state to load input vectors
+      await get().refreshSimulationState();
+    } catch (error) {
+      console.error('Error loading Robotics Assembly example:', error);
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to load Robotics Assembly example',
         timestamp: Date.now(),
         severity: 'error'
       });

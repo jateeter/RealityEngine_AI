@@ -629,6 +629,26 @@ app.get('/api/demo/rs-flip-flop', async (req: Request, res: Response) => {
   }
 });
 
+// Proxy endpoint: Load Robotics Assembly example
+app.get('/api/demo/robotics-assembly', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/robotics-assembly`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'demo-loaded',
+      metadata: response.data.metadata,
+      machine: response.data.machine,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error loading Robotics Assembly example:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ===== Machine Management Endpoints =====
 
 // In-memory machine storage (for demo purposes - would use a database in production)
@@ -680,6 +700,13 @@ function initializeExampleMachines() {
       description: 'Bistable multivibrator with Set and Reset critical event sequences',
       isExample: true,
       metadata: { type: 'digital-logic', difficulty: 'beginner' }
+    },
+    {
+      id: 'robotics-assembly-example',
+      name: 'Robotics Assembly System',
+      description: 'Automated assembly system with 5 sequences: pick-place, inspection, tool change, emergency stop, calibration',
+      isExample: true,
+      metadata: { type: 'robotics', difficulty: 'intermediate', specifications: '5D input, 3D output, 0.60 threshold' }
     }
   ];
 
