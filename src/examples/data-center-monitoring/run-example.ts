@@ -63,7 +63,7 @@ async function main() {
     const vector = initialEvents[i];
     if (!vector) continue;
 
-    console.log(`\n   Event ${i + 1}: [${vector.slice(0, 5).map(v => v.toFixed(2)).join(', ')}, ...]`);
+    console.log(`\n   Event ${i + 1}: [${vector.slice(0, 5).map((v: number) => v.toFixed(2)).join(', ')}, ...]`);
     const result = engine.processInput(vector);
 
     console.log(`   → Checked ${Array.from(result.sequenceResults.keys()).length} sequences`);
@@ -107,7 +107,7 @@ async function main() {
 
     if (result.totalOutputs.length > 0) {
       console.log(`\n   Step ${i + 1}/20:`);
-      console.log(`   Vector: [${vector.slice(0, 5).map(v => v.toFixed(2)).join(', ')}, ...]`);
+      console.log(`   Vector: [${vector.slice(0, 5).map((v: number) => v.toFixed(2)).join(', ')}, ...]`);
       console.log(`   → ${result.totalOutputs.length} outputs generated`);
 
       if (emergencies.length > 0) {

@@ -899,11 +899,10 @@ export class RealityEngineAPI {
 
   private async loadDataCenterExample(_req: Request, res: Response): Promise<void> {
     try {
-      const {
-        createDataCenterSequences,
-        generateInitialEvents,
-        generateProgressionVectors
-      } = await import('../examples/data-center-monitoring/data-center-sequences.js');
+      const module = await import('../examples/data-center-monitoring/data-center-sequences.js');
+      const createDataCenterSequences = module.createDataCenterSequences;
+      const generateInitialEvents = module.generateInitialEvents;
+      const generateProgressionVectors = module.generateProgressionVectors;
 
       // Generate sequences and input vectors
       const sequences = createDataCenterSequences();
