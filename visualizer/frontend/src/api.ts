@@ -27,6 +27,11 @@ export const api = {
     return response.data;
   },
 
+  // Update sequence
+  async updateSequence(id: string, data: any): Promise<void> {
+    await axios.put(`${API_BASE_URL}/sequences/${id}`, data);
+  },
+
   // Get engine stats
   async getStats(): Promise<EngineStats> {
     const response = await axios.get(`${API_BASE_URL}/stats`);
@@ -186,11 +191,11 @@ export const api = {
     return response.data;
   },
 
-  // Load NAND gate example
-  async loadNANDGateExample(): Promise<{ success: boolean; metadata: any }> {
-    const response = await axios.get('/api/demo/nand-gate');
-    return response.data;
-  },
+  // DISABLED: NAND gate example removed
+  // async loadNANDGateExample(): Promise<{ success: boolean; metadata: any }> {
+  //   const response = await axios.get('/api/demo/nand-gate');
+  //   return response.data;
+  // },
 
   // Load multi-step sequences example
   async loadMultiStepExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
@@ -201,6 +206,18 @@ export const api = {
   // Load Kleene star example
   async loadKleeneStarExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
     const response = await axios.get('/api/demo/kleene-star');
+    return response.data;
+  },
+
+  // Load RS Flip Flop example
+  async loadRSFlipFlopExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
+    const response = await axios.get('/api/demo/rs-flip-flop');
+    return response.data;
+  },
+
+  // Load Robotics Assembly example
+  async loadRoboticsAssemblyExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
+    const response = await axios.get('/api/demo/robotics-assembly');
     return response.data;
   }
 };

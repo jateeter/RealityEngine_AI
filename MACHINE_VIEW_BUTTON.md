@@ -102,7 +102,7 @@ Multi-Step State Machine (2 sequences)
 **When Hidden:**
 - Automatically disappears when machine is unloaded
 - Not shown for individual sequence views
-- Not shown for simple sequence collections (like NAND gates)
+- Only shown when a complete machine is loaded
 
 ---
 
@@ -189,8 +189,8 @@ When the Multi-Step Machine is loaded, users see:
 ├──────────────────────┤
 │ [🎯 Load Demo]       │
 │ [🏢 Data Center]     │
-│ [🔵 NAND Gate]       │
 │ [🔗 Multi-Step] ← Active
+│ [⭐ Kleene Star]     │
 ├──────────────────────┤
 │ SEQUENCES (2)        │
 │ ┌──────────────────┐ │

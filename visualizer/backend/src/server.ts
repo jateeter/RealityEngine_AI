@@ -570,24 +570,10 @@ app.get('/api/demo/data-center', async (req: Request, res: Response) => {
   }
 });
 
-// Proxy endpoint: Load NAND gate example
-app.get('/api/demo/nand-gate', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/nand-gate`);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'demo-loaded',
-      metadata: response.data.metadata,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error loading NAND gate example:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
+// DISABLED: NAND gate example removed
+// app.get('/api/demo/nand-gate', async (req: Request, res: Response) => {
+//   NAND gate example has been permanently disabled
+// });
 
 // Proxy endpoint: Load multi-step sequences example
 app.get('/api/demo/multi-step', async (req: Request, res: Response) => {
@@ -605,6 +591,66 @@ app.get('/api/demo/multi-step', async (req: Request, res: Response) => {
     res.json(response.data);
   } catch (error: any) {
     console.error('Error loading multi-step sequences example:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Load Kleene star example
+app.get('/api/demo/kleene-star', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/kleene-star`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'demo-loaded',
+      metadata: response.data.metadata,
+      machine: response.data.machine,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error loading Kleene star example:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Load RS Flip Flop example
+app.get('/api/demo/rs-flip-flop', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/rs-flip-flop`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'demo-loaded',
+      metadata: response.data.metadata,
+      machine: response.data.machine,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error loading RS Flip Flop example:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Proxy endpoint: Load Robotics Assembly example
+app.get('/api/demo/robotics-assembly', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/robotics-assembly`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'demo-loaded',
+      metadata: response.data.metadata,
+      machine: response.data.machine,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error loading Robotics Assembly example:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -632,13 +678,7 @@ const machines: Map<string, Machine> = new Map();
 // Initialize with example machines
 function initializeExampleMachines() {
   const exampleMachines: Partial<Machine>[] = [
-    {
-      id: 'nand-gate-example',
-      name: 'NAND Gate Logic',
-      description: 'Critical event sequence modeling a NAND gate operation with truth table verification',
-      isExample: true,
-      metadata: { type: 'logic-gate', difficulty: 'beginner' }
-    },
+    // NAND Gate example removed - no longer supported
     {
       id: 'data-center-example',
       name: 'Data Center Monitoring',
@@ -652,6 +692,27 @@ function initializeExampleMachines() {
       description: 'Complex sequence demonstrating cascading events and conditional transitions',
       isExample: true,
       metadata: { type: 'workflow', difficulty: 'advanced' }
+    },
+    {
+      id: 'kleene-star-example',
+      name: 'Kleene Star Operator',
+      description: 'Zero or more repetitions with alternation pattern demonstration',
+      isExample: true,
+      metadata: { type: 'pattern-matching', difficulty: 'advanced' }
+    },
+    {
+      id: 'rs-flip-flop-example',
+      name: 'RS Flip Flop',
+      description: 'Bistable multivibrator with Set and Reset critical event sequences',
+      isExample: true,
+      metadata: { type: 'digital-logic', difficulty: 'beginner' }
+    },
+    {
+      id: 'robotics-assembly-example',
+      name: 'Robotics Assembly System',
+      description: 'Automated assembly system with 5 sequences: pick-place, inspection, tool change, emergency stop, calibration',
+      isExample: true,
+      metadata: { type: 'robotics', difficulty: 'intermediate', specifications: '5D input, 3D output, 0.60 threshold' }
     }
   ];
 
