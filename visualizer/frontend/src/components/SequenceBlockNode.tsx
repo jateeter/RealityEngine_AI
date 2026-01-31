@@ -168,7 +168,7 @@ const SequenceBlockNode: React.FC<NodeProps<SequenceBlockNodeData>> = ({ data })
             nodes={nodes}
             edges={edges}
             fitView
-            attributionPosition="bottom-right"
+            proOptions={{ hideAttribution: true }}
             nodesDraggable={false}
             nodesConnectable={false}
             elementsSelectable={false}

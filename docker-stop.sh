@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Reality Engine Docker Stop Script
-# Stops all services gracefully
+# Stops all services gracefully and clears Docker cache
 
 set -e
 
@@ -18,8 +18,17 @@ fi
 docker-compose down
 
 echo ""
-echo "✅ All services stopped"
+echo "🧹 Clearing Docker build cache..."
+docker builder prune -f
+
+# Remove dangling images
+echo "🗑️  Removing dangling images..."
+docker image prune -f
+
 echo ""
-echo "💡 Tip: To also remove volumes (deletes data), use:"
-echo "   docker-compose down -v"
+echo "✅ All services stopped and cache cleared"
+echo ""
+echo "💡 Tips:"
+echo "   - To also remove volumes (deletes data): docker-compose down -v"
+echo "   - To remove ALL unused images: docker image prune -a -f"
 echo ""

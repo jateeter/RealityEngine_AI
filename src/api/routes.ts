@@ -152,6 +152,7 @@ export class RealityEngineAPI {
     this.router.post('/machines', this.createMachine.bind(this));
     this.router.put('/machines/:id', this.updateMachine.bind(this));
     this.router.delete('/machines/:id', this.deleteMachine.bind(this));
+    this.router.post('/machines/:id/process', this.processMachineInput.bind(this));
 
     // Demo endpoints
     this.router.get('/demo/load', this.loadDemo.bind(this));
@@ -685,7 +686,8 @@ export class RealityEngineAPI {
     res.json({
       state: this.simulationController.getState(),
       progress: this.simulationController.getProgress(),
-      inputVectors: this.simulationController.getInputVectors()
+      inputVectors: this.simulationController.getInputVectors(),
+      lastResult: this.simulationController.getLastResult()
     });
   }
 
@@ -853,6 +855,48 @@ export class RealityEngineAPI {
       console.error('Error deleting machine:', error);
       res.status(500).json({
         error: 'Failed to delete machine',
+        details: error.message
+      });
+    }
+  }
+
+  private processMachineInput(req: Request, res: Response): void {
+    try {
+      const { id } = req.params;
+      const { vector } = req.body;
+
+      if (!id) {
+        res.status(400).json({ error: 'Machine ID required' });
+        return;
+      }
+
+      if (!Array.isArray(vector)) {
+        res.status(400).json({ error: 'Vector must be an array' });
+        return;
+      }
+
+      // Process input through the machine using the new 3-phase workflow
+      const result = this.engine.processMachineInput(id, vector);
+
+      // Convert Map to object for JSON serialization
+      const sequenceResults: Record<string, any> = {};
+      result.sequenceResults.forEach((value, key) => {
+        sequenceResults[key] = value;
+      });
+
+      res.json({
+        result: {
+          inputVector: result.inputVector,
+          timestamp: result.timestamp,
+          sequenceResults,
+          machineOutput: result.machineOutput,
+          arbiterMetadata: result.arbiterMetadata
+        }
+      });
+    } catch (error: any) {
+      console.error('Error processing machine input:', error);
+      res.status(500).json({
+        error: 'Failed to process machine input',
         details: error.message
       });
     }

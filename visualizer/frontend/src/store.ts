@@ -51,6 +51,7 @@ interface VisualizerState {
   // Machine View state
   expandedSequenceIds: Set<string>;
   currentOutputVectors: OutputVector[];
+  highlightedOutputId: string | null;
 
   // View actions
   setCurrentView: (view: 'selection' | 'administration') => void;
@@ -104,6 +105,7 @@ interface VisualizerState {
   expandAllSequences: () => void;
   collapseAllSequences: () => void;
   setCurrentOutputVectors: (outputs: OutputVector[]) => void;
+  setHighlightedOutputId: (outputId: string | null) => void;
 }
 
 export const useVisualizerStore = create<VisualizerState>((set, get) => ({
@@ -143,6 +145,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   // Machine View state initialization
   expandedSequenceIds: new Set<string>(),
   currentOutputVectors: [],
+  highlightedOutputId: null,
 
   // View actions implementation
   setCurrentView: (view) => set({ currentView: view }),
@@ -157,7 +160,8 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         currentMachine: machine,
         currentMachineId: machineId,
         lastViewedMachineId: machineId,
-        currentView: 'administration'
+        currentView: 'administration',
+        currentOutputVectors: []
       });
 
       // Store in localStorage
@@ -369,7 +373,8 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
       set({
         simulationState: result.state,
         simulationProgress: 0,
-        activityEvents: []
+        activityEvents: [],
+        currentOutputVectors: []
       });
 
       get().addActivityEvent({
@@ -393,8 +398,12 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         const { sequenceResults, totalOutputs } = result.result;
         const matchedCount = Object.values(sequenceResults).filter((r: any) => r.matched).length;
 
-        // Store current outputs for Machine View
-        set({ currentOutputVectors: totalOutputs });
+        // NOTE: Outputs are primarily added via WebSocket handler to avoid duplicates
+        // Only add outputs here if WebSocket is not connected (fallback)
+        const { isConnected } = get();
+        if (!isConnected && totalOutputs.length > 0) {
+          set({ currentOutputVectors: [...get().currentOutputVectors, ...totalOutputs] });
+        }
 
         get().addActivityEvent({
           id: `event-${Date.now()}`,
@@ -759,10 +768,10 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
               });
               get().refreshHeatmap();
 
-              // Update output vectors if any were generated
+              // Append new output vectors to existing history
               const outputs = message.result.totalOutputs || [];
               if (outputs.length > 0) {
-                set({ currentOutputVectors: outputs });
+                set({ currentOutputVectors: [...get().currentOutputVectors, ...outputs] });
               }
             }
             break;
@@ -834,5 +843,9 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
   setCurrentOutputVectors: (outputs: OutputVector[]) => {
     set({ currentOutputVectors: outputs });
+  },
+
+  setHighlightedOutputId: (outputId: string | null) => {
+    set({ highlightedOutputId: outputId });
   }
 }));

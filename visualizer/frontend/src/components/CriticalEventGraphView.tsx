@@ -1,339 +1,774 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import ReactFlow, {
-  Node,
-  Edge,
-  Background,
-  Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-  MarkerType,
-  Position
-} from 'react-flow-renderer';
+import React, { useEffect, useRef, useState } from 'react';
+import * as d3 from 'd3';
 import { useVisualizerStore } from '../store';
+import { VectorNode, OutputVector } from '../types';
 
 interface CriticalEventGraphViewProps {
   selectedSequenceId?: string | null;
 }
 
+interface GraphNode extends d3.SimulationNodeDatum {
+  id: string;
+  name: string;
+  label: string;
+  isInitial: boolean;
+  isActive: boolean;
+  hasOutput: boolean;
+  wasJustMatched?: boolean;
+  lastOutputVector?: OutputVector | null;
+  cluster?: string;
+  clusterCenter?: { x: number; y: number };
+  outputCount?: number;
+  sequenceName?: string;
+  metadata?: Record<string, any>;
+  elements?: Array<{
+    value: number;
+    comparatorType: string;
+    threshold?: number;
+  }>;
+  outputVectors?: Array<{
+    id: string;
+    vector: number[];
+    timestamp: number;
+    metadata?: string | Record<string, any>;
+  }>;
+}
+
+interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
+  source: string | GraphNode;
+  target: string | GraphNode;
+  isActive?: boolean;
+}
+
 const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selectedSequenceId }) => {
-  const { sequences, currentMachine } = useVisualizerStore();
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const nodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const zoomTransformRef = useRef<d3.ZoomTransform | null>(null);
+  const previousResetKeyRef = useRef<number>(0);
+  const { sequences, currentMachine, setHighlightedOutputId } = useVisualizerStore();
   const [legendHovered, setLegendHovered] = useState(false);
+  const [layoutResetKey, setLayoutResetKey] = useState(0);
 
-  // Get the selected sequence or all sequences
-  // For machines or simple sequences (like NAND gates), always show all sequences together
-  const displaySequences = useMemo(() => {
-    // If there's a current machine, show all its sequences together
-    if (currentMachine) {
-      return sequences.filter(seq => currentMachine.sequenceIds.includes(seq.sequenceId));
-    }
-
-    // Check if all sequences are simple (single node each)
-    const allSimpleSequences = sequences.every(seq => seq.nodes.length === 1);
-
-    // If all sequences are simple, show them all together regardless of selection
-    if (allSimpleSequences) {
-      return sequences;
-    }
-
-    // For complex sequences, respect the selection
-    if (selectedSequenceId) {
-      return sequences.filter(s => s.sequenceId === selectedSequenceId);
-    }
-    return sequences;
-  }, [sequences, selectedSequenceId, currentMachine]);
-
-  // Build graph data
   useEffect(() => {
-    if (displaySequences.length === 0) {
-      setNodes([]);
-      setEdges([]);
-      return;
+    if (!svgRef.current || !containerRef.current) return;
+
+    // Clear positions only when layout reset key actually changes
+    if (layoutResetKey !== previousResetKeyRef.current) {
+      nodePositionsRef.current.clear();
+      zoomTransformRef.current = null;
+      previousResetKeyRef.current = layoutResetKey;
     }
 
-    const newNodes: Node[] = [];
-    const newEdges: Edge[] = [];
+    // Get display sequences
+    const displaySequences = currentMachine
+      ? sequences.filter(seq => currentMachine.sequenceIds.includes(seq.sequenceId))
+      : selectedSequenceId
+      ? sequences.filter(s => s.sequenceId === selectedSequenceId)
+      : sequences;
 
-    // Check if all sequences are simple (single initial event each)
-    const allSimpleSequences = displaySequences.every(seq => seq.nodes.length === 1);
+    if (displaySequences.length === 0) return;
 
-    if (allSimpleSequences) {
-      // Unified graph layout for simple sequences (like NAND gates)
-      const gridCols = Math.ceil(Math.sqrt(displaySequences.length));
+    // Build graph data
+    const nodes: GraphNode[] = [];
+    const links: GraphLink[] = [];
+    const clusters: Record<string, string[]> = {};
 
-      displaySequences.forEach((sequence, seqIndex) => {
-        const node = sequence.nodes[0];
-        if (!node) return;
+    displaySequences.forEach((sequence) => {
+      const clusterId = sequence.sequenceId;
+      clusters[clusterId] = [];
 
-        const col = seqIndex % gridCols;
-        const row = Math.floor(seqIndex / gridCols);
-        const x = 200 + col * 300;
-        const y = 150 + row * 200;
-
-        const isActive = node.isActive;
-        const isInitial = node.isInitial || false;
-        const hasOutputs = node.outputVectors && node.outputVectors.length > 0;
-
-        let nodeColor = '#64748b';
-        let borderColor = '#475569';
-        let borderWidth = 2;
-
-        if (isActive) {
-          nodeColor = '#22c55e';
-          borderColor = '#16a34a';
-        } else if (isInitial) {
-          nodeColor = '#3b82f6';
-          borderColor = '#2563eb';
-        }
-
-        if (hasOutputs) {
-          borderWidth = 4;
-          borderColor = '#f59e0b';
-        }
-
-        newNodes.push({
+      sequence.nodes.forEach((node: VectorNode) => {
+        const graphNode: GraphNode = {
           id: node.id,
-          type: 'default',
-          position: { x, y },
-          data: {
-            label: (
-              <div style={{ textAlign: 'center', padding: '4px' }}>
-                <div style={{
-                  fontWeight: 'bold',
-                  fontSize: '12px',
-                  marginBottom: '6px',
-                  color: isActive ? '#fff' : '#e2e8f0'
-                }}>
-                  {sequence.sequenceName || `Event ${seqIndex + 1}`}
-                </div>
-                <div style={{
-                  fontSize: '10px',
-                  color: isActive ? '#d1fae5' : '#94a3b8',
-                  marginBottom: '4px'
-                }}>
-                  {isInitial && '⭐ Initial Event'}
-                </div>
-                {hasOutputs && (
-                  <div style={{
-                    fontSize: '9px',
-                    color: '#fbbf24',
-                    marginTop: '4px'
-                  }}>
-                    {node.outputVectors.length} output{node.outputVectors.length > 1 ? 's' : ''}
-                  </div>
-                )}
-              </div>
-            )
-          },
-          style: {
-            background: nodeColor,
-            border: `${borderWidth}px solid ${borderColor}`,
-            borderRadius: '12px',
-            width: 180,
-            height: 120,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#fff',
-            fontSize: '11px',
-            padding: '12px',
-            boxShadow: isActive
-              ? `0 0 20px ${nodeColor}, 0 0 40px ${nodeColor}`
-              : '0 4px 6px rgba(0, 0, 0, 0.3)',
-            transition: 'all 0.3s ease'
-          },
-          sourcePosition: Position.Right,
-          targetPosition: Position.Left
+          name: node.metadata?.name || node.label || node.id,
+          label: node.label,
+          isInitial: node.isInitial,
+          isActive: node.isActive,
+          hasOutput: node.hasOutput || (node.outputVectors && node.outputVectors.length > 0),
+          wasJustMatched: node.wasJustMatched || false,
+          lastOutputVector: node.lastOutputVector || null,
+          cluster: clusterId,
+          outputCount: node.outputVectors?.length || 0,
+          sequenceName: sequence.sequenceName,
+          metadata: node.metadata,
+          elements: node.elements,
+          outputVectors: node.outputVectors
+        };
+        nodes.push(graphNode);
+        clusters[clusterId].push(node.id);
+      });
+
+      sequence.edges.forEach((edge) => {
+        const sourceNode = sequence.nodes.find(n => n.id === edge.source);
+        links.push({
+          source: edge.source,
+          target: edge.target,
+          isActive: sourceNode?.isActive || false
         });
       });
+    });
+
+    // Set up dimensions
+    const container = containerRef.current;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    // Clear previous SVG content
+    d3.select(svgRef.current).selectAll('*').remove();
+
+    const svg = d3.select(svgRef.current)
+      .attr('width', width)
+      .attr('height', height);
+
+    // Create container group for zoom/pan
+    const g = svg.append('g');
+
+    // Set up zoom behavior
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.1, 3])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+        zoomTransformRef.current = event.transform;
+      });
+
+    svg.call(zoom);
+
+    // Restore zoom transform if it exists
+    if (zoomTransformRef.current) {
+      svg.call(zoom.transform, zoomTransformRef.current);
+    }
+
+    // Define arrow markers
+    const defs = svg.append('defs');
+
+    // Normal arrow
+    defs.append('marker')
+      .attr('id', 'arrowhead')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 25)
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', '#64748b');
+
+    // Active arrow (green)
+    defs.append('marker')
+      .attr('id', 'arrowhead-active')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 25)
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', '#22c55e');
+
+    // Calculate cluster centers
+    const clusterIds = Object.keys(clusters);
+    const clusterCenters: Record<string, { x: number; y: number }> = {};
+
+    clusterIds.forEach((clusterId, i) => {
+      const angle = (i / clusterIds.length) * 2 * Math.PI;
+      const radius = Math.min(width, height) * 0.3;
+      clusterCenters[clusterId] = {
+        x: width / 2 + radius * Math.cos(angle),
+        y: height / 2 + radius * Math.sin(angle)
+      };
+    });
+
+    // Assign cluster centers to nodes and restore positions if available
+    let allNodesHavePositions = true;
+    nodes.forEach(node => {
+      if (node.cluster) {
+        node.clusterCenter = clusterCenters[node.cluster];
+      }
+
+      // Restore position from previous render if available
+      const savedPosition = nodePositionsRef.current.get(node.id);
+      if (savedPosition) {
+        node.x = savedPosition.x;
+        node.y = savedPosition.y;
+        node.fx = savedPosition.x; // Fix position temporarily
+        node.fy = savedPosition.y;
+      } else {
+        allNodesHavePositions = false;
+      }
+    });
+
+    // Create force simulation
+    const simulation = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink<GraphNode, GraphLink>(links).id(d => d.id).distance(100).strength(1))
+      .force('charge', d3.forceManyBody<GraphNode>().strength(-300))
+      .force('collision', d3.forceCollide<GraphNode>().radius(35))
+      .force('x', d3.forceX<GraphNode>(d => d.clusterCenter ? d.clusterCenter.x : width / 2).strength(0.3))
+      .force('y', d3.forceY<GraphNode>(d => d.clusterCenter ? d.clusterCenter.y : height / 2).strength(0.3));
+
+    // Create links
+    const link = g.append('g')
+      .selectAll('line')
+      .data(links)
+      .join('line')
+      .attr('class', 'link')
+      .attr('stroke', d => d.isActive ? '#22c55e' : '#64748b')
+      .attr('stroke-width', d => d.isActive ? 3 : 2)
+      .attr('marker-end', d => d.isActive ? 'url(#arrowhead-active)' : 'url(#arrowhead)');
+
+    // Create nodes
+    const node = g.append('g')
+      .selectAll('circle')
+      .data(nodes)
+      .join('circle')
+      .attr('class', 'node')
+      .attr('r', 15)
+      .attr('fill', d => {
+        // Matched final events show purple
+        if (d.wasJustMatched) return '#a855f7';
+        // Active nodes (including active final events) show green
+        if (d.isActive) return '#22c55e';
+        // Initial nodes show blue
+        if (d.isInitial) return '#3b82f6';
+        // Inactive nodes show gray
+        return '#64748b';
+      })
+      .attr('stroke', d => {
+        // Active matched final events show green stroke (to indicate active state)
+        if (d.wasJustMatched && d.isActive) return '#22c55e';
+        // Inactive matched final events show purple stroke
+        if (d.wasJustMatched) return '#c084fc';
+        // Active final events show green stroke
+        if (d.isActive && d.hasOutput) return '#22c55e';
+        // Inactive final events show orange stroke
+        if (d.hasOutput) return '#f59e0b';
+        // Active non-final events show dark green stroke
+        if (d.isActive) return '#16a34a';
+        // Initial events show blue stroke
+        if (d.isInitial) return '#2563eb';
+        // Default gray stroke
+        return '#475569';
+      })
+      .attr('stroke-width', d => {
+        // Active matched events have thick green stroke
+        if (d.wasJustMatched && d.isActive) return 6;
+        // Inactive matched events have thick purple stroke
+        if (d.wasJustMatched) return 5;
+        // Final events have thicker stroke
+        if (d.hasOutput) return 4;
+        // Active events have medium stroke
+        if (d.isActive) return 3;
+        // Default stroke
+        return 2;
+      })
+      .style('cursor', 'pointer')
+      .style('filter', d => {
+        // Matched events have purple glow
+        if (d.wasJustMatched && d.isActive) {
+          // Active matched events have combined purple + green glow
+          return 'drop-shadow(0 0 10px #a855f7) drop-shadow(0 0 8px #22c55e)';
+        }
+        if (d.wasJustMatched) {
+          return 'drop-shadow(0 0 10px #a855f7)';
+        }
+        // Active nodes have subtle green glow
+        if (d.isActive) {
+          return 'drop-shadow(0 0 6px #22c55e)';
+        }
+        return 'none';
+      });
+
+    // Apply drag behavior
+    const dragBehavior = d3.drag<any, GraphNode>()
+      .on('start', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on('drag', (event, d) => {
+        d.fx = event.x;
+        d.fy = event.y;
+      })
+      .on('end', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      });
+
+    node.call(dragBehavior as any);
+
+    // Add hover behavior for final events with outputs
+    node
+      .on('mouseover', (_event, d) => {
+        // Only highlight if this is a final event with an output
+        if (d.hasOutput && d.lastOutputVector && d.lastOutputVector.id) {
+          setHighlightedOutputId(d.lastOutputVector.id);
+        }
+      })
+      .on('mouseout', () => {
+        setHighlightedOutputId(null);
+      });
+
+    // Add labels
+    const label = g.append('g')
+      .selectAll('text')
+      .data(nodes)
+      .join('text')
+      .text(d => d.name)
+      .attr('font-size', 10)
+      .attr('dx', 20)
+      .attr('dy', 5)
+      .attr('fill', '#e2e8f0')
+      .style('pointer-events', 'none');
+
+    // Add output vector display for final events
+    const outputDisplay = g.append('g')
+      .selectAll('g.output-display')
+      .data(nodes.filter(d => d.lastOutputVector))
+      .join('g')
+      .attr('class', 'output-display');
+
+    // Output vector background
+    outputDisplay.append('rect')
+      .attr('x', -50)
+      .attr('y', -40)
+      .attr('width', 100)
+      .attr('height', 20)
+      .attr('rx', 10)
+      .attr('fill', 'rgba(168, 85, 247, 0.9)')
+      .attr('stroke', '#c084fc')
+      .attr('stroke-width', 2)
+      .style('filter', 'drop-shadow(0 0 8px #a855f7)');
+
+    // Output vector text
+    outputDisplay.append('text')
+      .text(d => {
+        if (d.lastOutputVector && d.lastOutputVector.vector) {
+          const formatted = d.lastOutputVector.vector
+            .slice(0, 3)  // Show first 3 values
+            .map(v => v.toFixed(1))
+            .join(', ');
+          return d.lastOutputVector.vector.length > 3
+            ? `[${formatted}...]`
+            : `[${formatted}]`;
+        }
+        return '';
+      })
+      .attr('text-anchor', 'middle')
+      .attr('y', -25)
+      .attr('font-size', 10)
+      .attr('font-family', 'monospace')
+      .attr('font-weight', '700')
+      .attr('fill', '#fff')
+      .style('pointer-events', 'none');
+
+    // Create or reuse tooltip
+    let tooltip;
+
+    if (!tooltipRef.current) {
+      // Create tooltip and append to body for proper positioning
+      tooltip = d3.select('body')
+        .append('div')
+        .attr('class', 'event-tooltip')
+        .style('position', 'fixed')
+        .style('padding', '12px')
+        .style('background', 'rgba(0, 0, 0, 0.98)')
+        .style('border', '2px solid #3b82f6')
+        .style('border-radius', '10px')
+        .style('pointer-events', 'none')
+        .style('font-size', '11px')
+        .style('color', '#e2e8f0')
+        .style('z-index', '10000')
+        .style('display', 'none')
+        .style('max-width', '400px')
+        .style('box-shadow', '0 8px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(59, 130, 246, 0.3)');
+
+      tooltipRef.current = tooltip.node() as HTMLDivElement;
     } else {
-      // Multi-sequence layout for complex sequences
-      let yOffset = 0;
+      tooltip = d3.select(tooltipRef.current);
+    }
 
-      displaySequences.forEach((sequence, seqIndex) => {
-        const xOffset = seqIndex * 400;
+    // Helper function to format metadata
+    const formatMetadata = (metadata: Record<string, any> | undefined) => {
+      if (!metadata || Object.keys(metadata).length === 0) return '';
 
-        // Add sequence label node
-        newNodes.push({
-          id: `seq-label-${sequence.sequenceId}`,
-          type: 'default',
-          position: { x: xOffset + 100, y: yOffset },
-          data: {
-            label: (
-              <div style={{
-                padding: '8px 16px',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-                borderRadius: '8px',
-                color: '#fff',
-                fontWeight: 'bold',
-                fontSize: '14px',
-                textAlign: 'center',
-                minWidth: '200px'
-              }}>
-                {sequence.sequenceName || sequence.sequenceId}
-              </div>
-            )
-          },
-          draggable: false,
-          selectable: false,
-          style: {
-            background: 'transparent',
-            border: 'none'
-          }
+      const items = Object.entries(metadata)
+        .filter(([key]) => key !== 'name') // Skip 'name' as it's shown in header
+        .map(([key, value]) => {
+          const displayValue = typeof value === 'object'
+            ? JSON.stringify(value)
+            : String(value);
+          return `
+            <div style="display: flex; margin: 4px 0;">
+              <span style="color: #94a3b8; min-width: 100px; font-weight: 500;">${key}:</span>
+              <span style="color: #e2e8f0; margin-left: 8px; word-break: break-word;">${displayValue}</span>
+            </div>
+          `;
+        })
+        .join('');
+
+      return items ? `
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #334155;">
+          <div style="font-weight: 700; color: #94a3b8; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Metadata</div>
+          ${items}
+        </div>
+      ` : '';
+    };
+
+    // Helper function to format event vector elements
+    const formatElements = (elements: Array<{ value: number; comparatorType: string; threshold?: number }> | undefined) => {
+      if (!elements || elements.length === 0) return '';
+
+      const elementItems = elements
+        .map((el, idx) => {
+          const thresholdText = el.threshold !== undefined ? ` (threshold: ${el.threshold.toFixed(2)})` : '';
+          return `
+            <div style="display: flex; align-items: center; margin: 4px 0; font-family: monospace; font-size: 10px;">
+              <span style="color: #64748b; min-width: 20px;">[${idx}]</span>
+              <span style="color: #22c55e; margin: 0 8px; font-weight: 600;">${el.value.toFixed(3)}</span>
+              <span style="color: #94a3b8;">${el.comparatorType}${thresholdText}</span>
+            </div>
+          `;
+        })
+        .join('');
+
+      return `
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #334155;">
+          <div style="font-weight: 700; color: #94a3b8; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Event Vector (${elements.length} elements)</div>
+          <div style="background: rgba(15, 23, 42, 0.5); padding: 8px; border-radius: 6px; max-height: 150px; overflow-y: auto;">
+            ${elementItems}
+          </div>
+        </div>
+      `;
+    };
+
+    // Helper function to format output vectors
+    const formatOutputVectors = (outputs: Array<{ id: string; vector: number[]; timestamp: number; metadata?: string | Record<string, any> }> | undefined) => {
+      if (!outputs || outputs.length === 0) return '';
+
+      const outputItems = outputs
+        .map((output, idx) => {
+          const vectorStr = output.vector.map(v => v.toFixed(2)).join(', ');
+          const metaStr = output.metadata
+            ? (typeof output.metadata === 'string'
+                ? output.metadata
+                : JSON.stringify(output.metadata))
+            : '';
+          const timestamp = new Date(output.timestamp).toLocaleTimeString();
+
+          return `
+            <div style="margin: 6px 0; padding: 6px; background: rgba(245, 158, 11, 0.1); border-left: 2px solid #f59e0b; border-radius: 4px;">
+              <div style="font-weight: 600; color: #fbbf24; margin-bottom: 3px;">#${idx + 1}: ${output.id}</div>
+              <div style="font-family: monospace; font-size: 10px; color: #cbd5e1; margin: 2px 0;">[${vectorStr}]</div>
+              ${metaStr ? `<div style="font-size: 10px; color: #94a3b8; margin-top: 3px;">${metaStr}</div>` : ''}
+              <div style="font-size: 9px; color: #64748b; margin-top: 3px;">⏱ ${timestamp}</div>
+            </div>
+          `;
+        })
+        .join('');
+
+      return `
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #334155;">
+          <div style="font-weight: 700; color: #f59e0b; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Output Vectors (${outputs.length})</div>
+          <div style="max-height: 200px; overflow-y: auto;">
+            ${outputItems}
+          </div>
+        </div>
+      `;
+    };
+
+    // Node interactions
+    node.on('mouseover', function(event, d) {
+      // Highlight node
+      d3.select(this)
+        .attr('r', 18)
+        .style('filter', 'brightness(1.5)');
+
+      // Build state badges
+      const states = [];
+      if (d.isInitial) states.push('<span style="background: #3b82f6; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 600;">INITIAL</span>');
+      if (d.isActive) states.push('<span style="background: #22c55e; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 600;">ACTIVE</span>');
+      if (d.hasOutput) states.push('<span style="background: #f59e0b; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 600;">OUTPUT</span>');
+
+      // Build comprehensive tooltip
+      const tooltipContent = `
+        <div style="border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 10px;">
+          <div style="font-weight: 700; font-size: 14px; color: #3b82f6; margin-bottom: 6px;">
+            ${d.name}
+          </div>
+          <div style="display: flex; gap: 4px; margin-bottom: 6px;">
+            ${states.join('')}
+          </div>
+          <div style="font-family: monospace; color: #64748b; font-size: 10px;">
+            ID: <span style="color: #94a3b8;">${d.id}</span>
+          </div>
+          ${d.label && d.label !== d.name ? `
+            <div style="color: #94a3b8; font-size: 10px; margin-top: 3px;">
+              Label: ${d.label}
+            </div>
+          ` : ''}
+          ${d.sequenceName ? `
+            <div style="color: #94a3b8; font-size: 10px; margin-top: 3px;">
+              Sequence: <span style="color: #8b5cf6;">${d.sequenceName}</span>
+            </div>
+          ` : ''}
+        </div>
+
+        ${formatElements(d.elements)}
+        ${formatMetadata(d.metadata)}
+        ${formatOutputVectors(d.outputVectors)}
+      `;
+
+      // Calculate tooltip position to prevent off-screen (using clientX/clientY for fixed positioning)
+      let tooltipX = event.clientX + 15;
+      let tooltipY = event.clientY - 15;
+
+      tooltip.html(tooltipContent)
+        .style('display', 'block')
+        .style('opacity', '0');
+
+      // Get tooltip dimensions after content is set
+      const tooltipNode = tooltip.node() as HTMLElement;
+      const tooltipRect = tooltipNode.getBoundingClientRect();
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+
+      // Adjust X position if tooltip goes off right edge
+      if (tooltipX + tooltipRect.width > windowWidth - 20) {
+        tooltipX = event.clientX - tooltipRect.width - 15;
+      }
+
+      // Adjust Y position if tooltip goes off bottom edge
+      if (tooltipY + tooltipRect.height > windowHeight - 20) {
+        tooltipY = windowHeight - tooltipRect.height - 20;
+      }
+
+      // Ensure tooltip doesn't go off top edge
+      if (tooltipY < 20) {
+        tooltipY = 20;
+      }
+
+      // Ensure tooltip doesn't go off left edge
+      if (tooltipX < 20) {
+        tooltipX = 20;
+      }
+
+      tooltip
+        .style('left', tooltipX + 'px')
+        .style('top', tooltipY + 'px')
+        .style('max-height', (windowHeight - 40) + 'px')
+        .style('overflow-y', 'auto')
+        .transition()
+        .duration(150)
+        .style('opacity', '1');
+
+      // Highlight connected links
+      link.style('opacity', l => {
+        const source = typeof l.source === 'object' ? l.source : nodes.find(n => n.id === l.source);
+        const target = typeof l.target === 'object' ? l.target : nodes.find(n => n.id === l.target);
+        return (source?.id === d.id || target?.id === d.id) ? 1 : 0.2;
+      });
+
+      // Highlight connected nodes
+      node.style('opacity', n => {
+        if (n.id === d.id) return 1;
+        const isConnected = links.some(l => {
+          const source = typeof l.source === 'object' ? l.source : nodes.find(node => node.id === l.source);
+          const target = typeof l.target === 'object' ? l.target : nodes.find(node => node.id === l.target);
+          return (source?.id === d.id && target?.id === n.id) || (target?.id === d.id && source?.id === n.id);
+        });
+        return isConnected ? 1 : 0.3;
+      });
+
+      label.style('opacity', n => n.id === d.id ? 1 : 0.3);
+    })
+    .on('mouseout', function() {
+      // Reset node
+      d3.select(this)
+        .attr('r', 15)
+        .style('filter', 'none');
+
+      // Hide tooltip with fade out
+      tooltip
+        .transition()
+        .duration(100)
+        .style('opacity', '0')
+        .on('end', function() {
+          d3.select(this).style('display', 'none');
         });
 
-        yOffset += 80;
+      // Reset highlights
+      link.style('opacity', 1);
+      node.style('opacity', 1);
+      label.style('opacity', 1);
+    });
 
-        // Process each node in the sequence
-        sequence.nodes.forEach((node, nodeIndex) => {
-          const isActive = node.isActive;
-          const isInitial = node.isInitial || false;
-          const hasOutputs = node.outputVectors && node.outputVectors.length > 0;
-
-          // Determine node color based on state
-          let nodeColor = '#64748b'; // Default gray
-          let borderColor = '#475569';
-          let borderWidth = 2;
-
-          if (isActive) {
-            nodeColor = '#22c55e'; // Active = green
-            borderColor = '#16a34a';
-          } else if (isInitial) {
-            nodeColor = '#3b82f6'; // Initial = blue
-            borderColor = '#2563eb';
-          }
-
-          // Bold outline for output events
-          if (hasOutputs) {
-            borderWidth = 4;
-            borderColor = '#f59e0b'; // Orange border for outputs
-          }
-
-          // Calculate position
-          const x = xOffset + (nodeIndex % 3) * 120;
-          const y = yOffset + Math.floor(nodeIndex / 3) * 120;
-
-          newNodes.push({
-            id: node.id,
-            type: 'default',
-            position: { x, y },
-            data: {
-              label: (
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{
-                    fontWeight: 'bold',
-                    fontSize: '11px',
-                    marginBottom: '4px',
-                    color: isActive ? '#fff' : '#e2e8f0'
-                  }}>
-                    {node.metadata?.name || `Event ${nodeIndex + 1}`}
-                  </div>
-                  <div style={{
-                    fontSize: '9px',
-                    color: isActive ? '#d1fae5' : '#94a3b8'
-                  }}>
-                    {isInitial && '⭐ '}
-                    {hasOutputs && `${node.outputVectors.length} outputs`}
-                  </div>
-                </div>
-              )
-            },
-            style: {
-              background: nodeColor,
-              border: `${borderWidth}px solid ${borderColor}`,
-              borderRadius: '50%',
-              width: 80,
-              height: 80,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontSize: '10px',
-              padding: '8px',
-              boxShadow: isActive
-                ? `0 0 20px ${nodeColor}, 0 0 40px ${nodeColor}`
-                : '0 4px 6px rgba(0, 0, 0, 0.3)',
-              transition: 'all 0.3s ease'
-            },
-            sourcePosition: Position.Right,
-            targetPosition: Position.Left
-          });
-
+    // Update positions on simulation tick
+    simulation.on('tick', () => {
+      link
+        .attr('x1', d => {
+          const source = typeof d.source === 'object' ? d.source : nodes.find(n => n.id === d.source);
+          return source?.x || 0;
+        })
+        .attr('y1', d => {
+          const source = typeof d.source === 'object' ? d.source : nodes.find(n => n.id === d.source);
+          return source?.y || 0;
+        })
+        .attr('x2', d => {
+          const target = typeof d.target === 'object' ? d.target : nodes.find(n => n.id === d.target);
+          return target?.x || 0;
+        })
+        .attr('y2', d => {
+          const target = typeof d.target === 'object' ? d.target : nodes.find(n => n.id === d.target);
+          return target?.y || 0;
         });
 
-        // Add edges from sequence edges
-        sequence.edges.forEach(edge => {
-          const sourceNode = sequence.nodes.find(n => n.id === edge.source);
-          const isSourceActive = sourceNode?.isActive || false;
+      node
+        .attr('cx', d => d.x || 0)
+        .attr('cy', d => d.y || 0);
 
-          newEdges.push({
-            id: `${edge.source}-${edge.target}`,
-            source: edge.source,
-            target: edge.target,
-            type: 'smoothstep',
-            animated: isSourceActive,
-            style: {
-              stroke: isSourceActive ? '#22c55e' : '#64748b',
-              strokeWidth: isSourceActive ? 3 : 2
-            },
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              color: isSourceActive ? '#22c55e' : '#64748b',
-              width: 20,
-              height: 20
-            },
-            label: isSourceActive ? '⚡' : undefined,
-            labelStyle: {
-              fontSize: 16
-            }
-          });
+      label
+        .attr('x', d => d.x || 0)
+        .attr('y', d => d.y || 0);
+
+      // Update output display positions
+      outputDisplay
+        .attr('transform', d => `translate(${d.x || 0}, ${d.y || 0})`);
+
+      // Save positions to preserve layout across re-renders
+      nodes.forEach(n => {
+        if (n.x !== undefined && n.y !== undefined) {
+          nodePositionsRef.current.set(n.id, { x: n.x, y: n.y });
+        }
+      });
+    });
+
+    // If all nodes have saved positions, stop simulation immediately and update visuals once
+    if (allNodesHavePositions) {
+      // Manually update positions once
+      link
+        .attr('x1', d => {
+          const source = typeof d.source === 'object' ? d.source : nodes.find(n => n.id === d.source);
+          return source?.x || 0;
+        })
+        .attr('y1', d => {
+          const source = typeof d.source === 'object' ? d.source : nodes.find(n => n.id === d.source);
+          return source?.y || 0;
+        })
+        .attr('x2', d => {
+          const target = typeof d.target === 'object' ? d.target : nodes.find(n => n.id === d.target);
+          return target?.x || 0;
+        })
+        .attr('y2', d => {
+          const target = typeof d.target === 'object' ? d.target : nodes.find(n => n.id === d.target);
+          return target?.y || 0;
         });
 
-        yOffset += Math.ceil(sequence.nodes.length / 3) * 120 + 100;
+      node
+        .attr('cx', d => d.x || 0)
+        .attr('cy', d => d.y || 0)
+        .attr('fill', d => {
+          if (d.wasJustMatched) return '#a855f7';
+          if (d.isActive) return '#22c55e';
+          if (d.isInitial) return '#3b82f6';
+          return '#64748b';
+        })
+        .attr('stroke', d => {
+          if (d.wasJustMatched) return '#c084fc';
+          if (d.hasOutput) return '#f59e0b';
+          if (d.isActive) return '#16a34a';
+          if (d.isInitial) return '#2563eb';
+          return '#475569';
+        })
+        .attr('stroke-width', d => {
+          if (d.wasJustMatched) return 5;
+          if (d.hasOutput) return 4;
+          return 2;
+        })
+        .style('filter', d => d.wasJustMatched ? 'drop-shadow(0 0 10px #a855f7)' : 'none');
+
+      label
+        .attr('x', d => d.x || 0)
+        .attr('y', d => d.y || 0);
+
+      // Update output display positions
+      outputDisplay
+        .attr('transform', d => `translate(${d.x || 0}, ${d.y || 0})`);
+
+      // Update link colors based on active state
+      link
+        .attr('stroke', d => d.isActive ? '#22c55e' : '#64748b')
+        .attr('stroke-width', d => d.isActive ? 3 : 2)
+        .attr('marker-end', d => d.isActive ? 'url(#arrowhead-active)' : 'url(#arrowhead)');
+
+      // Stop simulation immediately to prevent any repositioning
+      simulation.alpha(0).stop();
+
+      // Unfix positions so nodes can still be dragged
+      nodes.forEach(node => {
+        node.fx = null;
+        node.fy = null;
       });
     }
 
-    setNodes(newNodes);
-    setEdges(newEdges);
-  }, [displaySequences, setNodes, setEdges]);
+    // Cleanup
+    return () => {
+      simulation.stop();
+      // Hide tooltip but don't remove it (it's reused)
+      if (tooltipRef.current) {
+        d3.select(tooltipRef.current).style('display', 'none');
+      }
+    };
+  }, [sequences, selectedSequenceId, currentMachine, layoutResetKey]);
+
+  // Cleanup tooltip on unmount
+  useEffect(() => {
+    return () => {
+      if (tooltipRef.current) {
+        tooltipRef.current.remove();
+        tooltipRef.current = null;
+      }
+    };
+  }, []);
 
   return (
-    <div style={{ width: '100%', height: '100%', background: '#0a0a0a', position: 'relative' }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        fitView
-        style={{ background: '#0a0a0a' }}
-        defaultEdgeOptions={{
-          type: 'smoothstep',
-          animated: false
+    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', background: '#0a0a0a' }}>
+      <svg ref={svgRef} style={{ width: '100%', height: '100%' }} />
+
+      {/* Reset Layout Button */}
+      <button
+        onClick={() => setLayoutResetKey(prev => prev + 1)}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          padding: '8px 16px',
+          background: 'rgba(59, 130, 246, 0.1)',
+          border: '1px solid #3b82f6',
+          borderRadius: '6px',
+          color: '#3b82f6',
+          fontSize: '11px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          zIndex: 50,
+          letterSpacing: '0.5px',
+          textTransform: 'uppercase'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+          e.currentTarget.style.boxShadow = '0 0 10px rgba(59, 130, 246, 0.3)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+          e.currentTarget.style.boxShadow = 'none';
         }}
       >
-        <Background color="#1a1a1a" gap={16} />
-        <Controls
-          style={{
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '8px'
-          }}
-        />
-        <MiniMap
-          nodeColor={(node: Node) => {
-            const style = node.style as any;
-            return style?.background || '#64748b';
-          }}
-          style={{
-            background: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '8px'
-          }}
-          maskColor="rgba(0, 0, 0, 0.5)"
-        />
-      </ReactFlow>
+        Reset Layout
+      </button>
 
       {/* Slide-out Legend Panel */}
       <div
@@ -399,50 +834,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
           flex: 1
         }}>
           <div style={{ fontWeight: 'bold', marginBottom: '16px', fontSize: '15px', color: '#3b82f6' }}>
-            Graph Legend
-          </div>
-
-          {/* Event Spaces Section */}
-          <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #334155' }}>
-            <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Event Spaces
-            </div>
-
-            <div style={{ marginBottom: '10px', paddingLeft: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                <div style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: '50%',
-                  background: '#3b82f6',
-                  border: '2px solid #2563eb',
-                  marginRight: '8px',
-                  flexShrink: 0
-                }} />
-                <span style={{ fontWeight: '600' }}>Input Event Space</span>
-              </div>
-              <div style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '24px' }}>
-                Initial events where inputs enter the system
-              </div>
-            </div>
-
-            <div style={{ paddingLeft: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                <div style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: '50%',
-                  background: '#64748b',
-                  border: '4px solid #f59e0b',
-                  marginRight: '8px',
-                  flexShrink: 0
-                }} />
-                <span style={{ fontWeight: '600' }}>Output Event Space</span>
-              </div>
-              <div style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '24px' }}>
-                Events that emit outputs from the system
-              </div>
-            </div>
+            D3 Force Graph Legend
           </div>
 
           {/* Event States Section */}
@@ -475,7 +867,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
                 marginRight: '8px',
                 flexShrink: 0
               }} />
-              <span>Initial Event</span>
+              <span>Initial Event (Root)</span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
@@ -505,6 +897,20 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
             </div>
           </div>
 
+          {/* Interactions Section */}
+          <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #334155' }}>
+            <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Interactions
+            </div>
+
+            <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.5' }}>
+              <div style={{ marginBottom: '6px' }}>• Hover: View event details</div>
+              <div style={{ marginBottom: '6px' }}>• Drag nodes: Reposition</div>
+              <div style={{ marginBottom: '6px' }}>• Scroll: Zoom in/out</div>
+              <div>• Drag background: Pan</div>
+            </div>
+          </div>
+
           {/* Transitions Section */}
           <div>
             <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -512,21 +918,81 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ marginRight: '8px', fontSize: '16px' }}>→</span>
-              <span>Transition</span>
+              <div style={{
+                width: '30px',
+                height: '2px',
+                background: '#64748b',
+                marginRight: '8px',
+                position: 'relative'
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  right: '-5px',
+                  top: '-3px',
+                  width: '0',
+                  height: '0',
+                  borderLeft: '5px solid #64748b',
+                  borderTop: '4px solid transparent',
+                  borderBottom: '4px solid transparent'
+                }} />
+              </div>
+              <span>Inactive Transition</span>
             </div>
+
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ marginRight: '8px', fontSize: '16px', color: '#22c55e' }}>⚡</span>
+              <div style={{
+                width: '30px',
+                height: '3px',
+                background: '#22c55e',
+                marginRight: '8px',
+                position: 'relative'
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  right: '-5px',
+                  top: '-3px',
+                  width: '0',
+                  height: '0',
+                  borderLeft: '6px solid #22c55e',
+                  borderTop: '4.5px solid transparent',
+                  borderBottom: '4.5px solid transparent'
+                }} />
+              </div>
               <span>Active Transition</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Hide ReactFlow attribution */}
+      {/* Tooltip Scrollbar Styling */}
       <style>{`
-        .react-flow__attribution {
-          display: none !important;
+        /* Custom scrollbar for event tooltip */
+        .event-tooltip {
+          scrollbar-width: thin;
+          scrollbar-color: #3b82f6 rgba(15, 23, 42, 0.5);
+        }
+
+        .event-tooltip::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        .event-tooltip::-webkit-scrollbar-track {
+          background: rgba(15, 23, 42, 0.5);
+          border-radius: 4px;
+        }
+
+        .event-tooltip::-webkit-scrollbar-thumb {
+          background: #3b82f6;
+          border-radius: 4px;
+        }
+
+        .event-tooltip::-webkit-scrollbar-thumb:hover {
+          background: #60a5fa;
+        }
+
+        /* Smooth transitions for tooltips */
+        .event-tooltip {
+          transition: opacity 150ms ease-in-out;
         }
       `}</style>
     </div>

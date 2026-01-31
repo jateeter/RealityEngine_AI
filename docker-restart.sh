@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Reality Engine Docker Restart Script
-# Restarts all services
+# Restarts all services with fresh cache
 
 set -e
 
@@ -15,8 +15,19 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Restart services
-docker-compose restart
+# Stop services
+echo "🛑 Stopping services..."
+docker-compose down
+
+# Clear Docker build cache
+echo "🧹 Clearing Docker build cache..."
+docker builder prune -f
+docker image prune -f
+
+# Rebuild and start services
+echo "📦 Rebuilding services (no cache)..."
+docker-compose build --no-cache
+docker-compose up -d
 
 echo ""
 echo "⏳ Waiting for services to be healthy..."

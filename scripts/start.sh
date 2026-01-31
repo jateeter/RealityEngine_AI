@@ -33,9 +33,51 @@ fi
 # Load environment variables
 source .env
 
-# Start Docker services
+# Clean up any existing containers with the same name
+print_info "Checking for existing containers..."
+
+# Check if any of our containers exist
+EXISTING_CONTAINERS=$(docker ps -a --filter "name=reality-engine-" --format "{{.Names}}" 2>/dev/null | wc -l | tr -d ' ')
+
+if [ "$EXISTING_CONTAINERS" -gt 0 ]; then
+    print_info "Found $EXISTING_CONTAINERS existing container(s). Cleaning up to avoid conflicts..."
+    docker-compose down 2>/dev/null || true
+
+    # Force remove any stubborn containers
+    docker rm -f reality-engine-qdrant reality-engine-app reality-engine-visualizer-backend reality-engine-visualizer-frontend 2>/dev/null || true
+
+    print_success "Old containers removed"
+    echo ""
+fi
+
+# Clear Docker build cache to prevent stale builds
+print_info "Clearing Docker build cache..."
+docker builder prune -f > /dev/null 2>&1
+docker image prune -f > /dev/null 2>&1
+print_success "Docker cache cleared"
+echo ""
+
+# Build and start Docker services
+print_info "Building Docker services (no cache)..."
+docker-compose build --no-cache
+
 print_info "Starting Docker services (Qdrant, Visualizer Backend, Visualizer Frontend)..."
 docker-compose up -d
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "Error: Failed to start Docker services"
+    echo ""
+    echo "Troubleshooting steps:"
+    echo "  1. Run: ./scripts/cleanup.sh"
+    echo "  2. Or manually: docker-compose down -v && docker system prune -f"
+    echo "  3. Then try: ./scripts/start.sh again"
+    echo ""
+    echo "Check logs with: docker-compose logs"
+    exit 1
+fi
+
+print_success "Docker services started"
 
 echo ""
 print_info "Waiting for Qdrant to be ready..."

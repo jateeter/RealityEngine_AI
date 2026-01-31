@@ -136,24 +136,6 @@ const FloatingControlPanel: React.FC<FloatingControlPanelProps> = ({ machine }) 
           {renderTabContent()}
         </div>
       )}
-
-      {/* Collapsed State Label */}
-      {!isFloatingPanelExpanded && (
-        <div
-          style={{
-            position: 'absolute',
-            left: '16px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            fontSize: '14px',
-            fontWeight: '600',
-            color: '#e2e8f0',
-            pointerEvents: 'none'
-          }}
-        >
-          {machine ? machine.name : 'Control Panel'}
-        </div>
-      )}
     </div>
   );
 };

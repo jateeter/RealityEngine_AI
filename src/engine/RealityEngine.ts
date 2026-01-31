@@ -1,7 +1,7 @@
 import { CriticalEventSequence } from '../models/CriticalEventSequence.js';
 import { RealityVector } from '../models/RealityVector.js';
 import { Machine } from '../models/Machine.js';
-import type { OutputVector } from '../models/types.js';
+import type { OutputVector, MachineTransitionResult } from '../models/types.js';
 import { VectorStore } from '../services/VectorStore.js';
 
 /**
@@ -133,8 +133,42 @@ export class RealityEngine {
   }
 
   /**
-   * Process an InputRealityVector through all sequences
-   * This is the main entry point for reality sampling
+   * Process an input through a specific machine (NEW 3-PHASE WORKFLOW)
+   *
+   * Implements the Reality Engine 3-phase workflow:
+   * Phase 1: Resolve new input reality vector
+   * Phase 2: Apply input to all active events
+   * Phase 3: Resolve output reality vector via arbiter
+   *
+   * @param machineId - ID of the machine to process input through
+   * @param inputVector - The input reality vector
+   * @returns MachineTransitionResult with machine output
+   */
+  processMachineInput(machineId: string, inputVector: number[]): MachineTransitionResult {
+    const machine = this.machines.get(machineId);
+    if (!machine) {
+      throw new Error(`Machine not found: ${machineId}`);
+    }
+
+    // The machine handles the full 3-phase workflow
+    const result = machine.processInput(inputVector);
+
+    // Tag the machine output with machine metadata
+    if (result.machineOutput) {
+      result.machineOutput.metadata = {
+        ...result.machineOutput.metadata,
+        machineId,
+        machineName: machine.name
+      };
+    }
+
+    return result;
+  }
+
+  /**
+   * Process an InputRealityVector through all sequences (LEGACY)
+   * This is the legacy entry point for backward compatibility
+   * Consider using processMachineInput() for new code
    */
   processInput(inputVector: number[]): TransitionResult {
     const result: TransitionResult = {
@@ -154,8 +188,16 @@ export class RealityEngine {
         assertedOutputs: transitionResult.assertedOutputs
       });
 
-      // Collect all output vectors
-      result.totalOutputs.push(...transitionResult.assertedOutputs);
+      // Collect all output vectors and tag with sequence ID
+      const taggedOutputs = transitionResult.assertedOutputs.map(output => ({
+        ...output,
+        metadata: {
+          ...(typeof output.metadata === 'object' ? output.metadata : { description: output.metadata }),
+          sequenceId,
+          sequenceName: sequence.name
+        }
+      }));
+      result.totalOutputs.push(...taggedOutputs);
     }
 
     // Store in history

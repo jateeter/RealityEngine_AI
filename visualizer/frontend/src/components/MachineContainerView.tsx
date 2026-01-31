@@ -14,6 +14,7 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
     currentOutputVectors,
     simulationState,
     currentMachine,
+    highlightedOutputId,
     startSimulation,
     pauseSimulation,
     resumeSimulation,
@@ -27,6 +28,17 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
   const currentIndex = simulationState?.currentIndex ?? 0;
   const isPlaying = simulationState?.status === 'playing';
   const isPaused = simulationState?.status === 'paused';
+
+  // Filter outputs to show only those from current machine's sequences
+  const machineSequenceIds = currentMachine?.sequenceIds || [];
+  const filteredOutputs = currentOutputVectors.filter(output => {
+    // Check if output has sequenceId in metadata
+    if (output.metadata && typeof output.metadata === 'object' && 'sequenceId' in output.metadata) {
+      return machineSequenceIds.includes(output.metadata.sequenceId as string);
+    }
+    // If no sequenceId metadata, include all outputs (backward compatibility)
+    return true;
+  });
 
   // Control handlers
   const handleStart = async () => {
@@ -195,8 +207,9 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
 
       {/* Output Stream - Right Side */}
       <OutputStreamVisualization
-        outputVectors={currentOutputVectors}
+        outputVectors={filteredOutputs}
         maxVisible={10}
+        highlightedOutputId={highlightedOutputId}
       />
 
       {/* Animations */}

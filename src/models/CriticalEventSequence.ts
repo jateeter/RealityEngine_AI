@@ -107,6 +107,12 @@ export class CriticalEventSequence {
     const assertedOutputs: OutputVector[] = [];
     const results = new Map<string, MatchResult>();
 
+    // Clear wasJustMatched and lastOutputVector flags on all vectors
+    for (const vector of this.vectors.values()) {
+      vector.clearWasJustMatched();
+      vector.clearLastOutputVector();
+    }
+
     // Process all active vectors
     const activeVectors = this.getActiveVectors();
 
@@ -116,6 +122,17 @@ export class CriticalEventSequence {
 
       if (transitionResult.matched) {
         matchedVectors.push(vector.id);
+
+        // If this vector has outputs and was matched, mark it as just matched
+        // and store the output vector for visualization
+        if (vector.getOutputVectors().length > 0) {
+          vector.setWasJustMatched();
+
+          // Store the first output vector for visualization
+          if (transitionResult.outputVectors.length > 0) {
+            vector.setLastOutputVector(transitionResult.outputVectors[0] || null);
+          }
+        }
 
         // Add next vectors to activation list
         transitionResult.nextVectorIds.forEach(id => {

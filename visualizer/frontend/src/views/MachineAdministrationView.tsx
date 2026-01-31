@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useVisualizerStore } from '../store';
 import TopNavigationBar from '../components/TopNavigationBar';
 import MachineContainerView from '../components/MachineContainerView';
-import FloatingControlPanel from '../components/FloatingControlPanel';
 
 interface MachineAdministrationViewProps {
   machineId: string;
@@ -33,9 +32,6 @@ const MachineAdministrationView: React.FC<MachineAdministrationViewProps> = ({
       {/* Main Content: Machine View with Input/Output Streams */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <MachineContainerView selectedSequenceId={null} />
-
-        {/* Floating Control Panel */}
-        <FloatingControlPanel machine={currentMachine} />
       </div>
     </div>
   );

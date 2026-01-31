@@ -170,7 +170,7 @@ describe('OutputStreamVisualization', () => {
         timestamp: Date.now()
       };
 
-      const { container } = render(<OutputStreamVisualization outputVectors={[output]} />);
+      render(<OutputStreamVisualization outputVectors={[output]} />);
 
       // Should not crash, vector should be visible
       expect(screen.getByText('[1.00]')).toBeInTheDocument();

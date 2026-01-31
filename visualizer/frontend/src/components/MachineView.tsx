@@ -192,7 +192,7 @@ export const MachineView: React.FC<MachineViewProps> = ({ machine, sequences }) 
               minZoom: 0.3,
               maxZoom: 1
             }}
-            attributionPosition="bottom-right"
+            proOptions={{ hideAttribution: true }}
             nodesDraggable={false}
             nodesConnectable={false}
             elementsSelectable={true}

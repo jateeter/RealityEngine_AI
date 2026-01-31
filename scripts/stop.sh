@@ -52,20 +52,27 @@ fi
 
 echo ""
 
-# Stop Docker services
-print_info "Stopping Docker services (Qdrant, Visualizer Backend, Visualizer Frontend)..."
-docker-compose stop
+# Stop and remove Docker services
+print_info "Stopping and removing Docker services (Qdrant, Visualizer Backend, Visualizer Frontend)..."
+docker-compose down
 
 if [ $? -eq 0 ]; then
-    print_success "All Docker services stopped"
+    print_success "All Docker services stopped and removed"
 else
     echo "Warning: Failed to stop some Docker services"
 fi
 
+# Clear Docker build cache
+print_info "Clearing Docker build cache..."
+docker builder prune -f > /dev/null 2>&1
+docker image prune -f > /dev/null 2>&1
+print_success "Docker cache cleared"
+
 echo ""
 echo "=================================================="
-echo "All Services Stopped"
+echo "All Services Stopped and Removed"
 echo "=================================================="
 echo ""
+echo "Docker containers and build cache have been cleared to prevent stale builds."
 echo "To start again: ./scripts/start.sh"
 echo ""

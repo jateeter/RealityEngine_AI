@@ -4,6 +4,8 @@ export interface VectorNode {
   isInitial: boolean;
   isActive: boolean;
   hasOutput: boolean;
+  wasJustMatched?: boolean; // True when a final event was active and just matched by input
+  lastOutputVector?: OutputVector | null; // The last output produced, visible until next input
   elements: VectorElement[];
   metadata: Record<string, any>;
   outputVectors: OutputVector[];
@@ -19,7 +21,7 @@ export interface OutputVector {
   id: string;
   vector: number[];
   timestamp: number;
-  metadata?: Record<string, any>;
+  metadata?: string | Record<string, any>;
 }
 
 export interface Edge {

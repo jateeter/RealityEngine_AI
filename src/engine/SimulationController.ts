@@ -42,6 +42,7 @@ export class SimulationController {
   private heatmap: Map<string, Map<string, VectorActivation>>;
   private intervalId: NodeJS.Timeout | null = null;
   private eventCallbacks: EventCallback[] = [];
+  private lastResult: TransitionResult | null = null;
 
   constructor(engine: RealityEngine, config: SimulationConfig) {
     this.engine = engine;
@@ -139,6 +140,7 @@ export class SimulationController {
       startTime: null,
       lastStepTime: null
     };
+    this.lastResult = null;
     this.heatmap.clear();
     this.engine.resetAllSequences();
 
@@ -172,6 +174,9 @@ export class SimulationController {
       return null;
     }
     const result = this.engine.processInput(inputVector);
+
+    // Store last result for polling access
+    this.lastResult = result;
 
     // Update heatmap
     this.updateHeatmap(result);
@@ -246,6 +251,13 @@ export class SimulationController {
   public getProgress(): number {
     if (this.state.totalVectors === 0) return 0;
     return Math.floor((this.state.currentIndex / this.state.totalVectors) * 100);
+  }
+
+  /**
+   * Get last transition result (for polling during auto-play)
+   */
+  public getLastResult(): TransitionResult | null {
+    return this.lastResult;
   }
 
   /**

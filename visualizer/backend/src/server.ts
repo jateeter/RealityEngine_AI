@@ -64,6 +64,7 @@ function startSimulationPolling() {
     try {
       const response = await axios.get(`${REALITY_ENGINE_URL}/api/simulation/state`);
       const state = response.data.state;
+      const lastResult = response.data.lastResult;
 
       // Check if simulation is still playing
       if (state.status !== 'playing') {
@@ -82,6 +83,7 @@ function startSimulationPolling() {
           type: 'simulation-stepped',
           state: state,
           sequences: seqResponse.data.sequences,
+          result: lastResult, // Include last result for output stream updates
           timestamp: Date.now()
         });
       }
@@ -127,6 +129,8 @@ app.get('/api/viz/sequences', async (req: Request, res: Response) => {
           isInitial: vector.isInitial,
           isActive: vector.isActive || vector.state === 'ACTIVE',
           hasOutput: vector.outputVectors && vector.outputVectors.length > 0,
+          wasJustMatched: vector.wasJustMatched || false,
+          lastOutputVector: vector.lastOutputVector || null,
           elements: vector.elements,
           metadata: vector.metadata,
           outputVectors: vector.outputVectors || []
@@ -184,6 +188,8 @@ app.get('/api/viz/sequences/:id', async (req: Request, res: Response) => {
         isInitial: vector.isInitial,
         isActive: vector.isActive || vector.state === 'ACTIVE',
         hasOutput: vector.outputVectors && vector.outputVectors.length > 0,
+        wasJustMatched: vector.wasJustMatched || false,
+        lastOutputVector: vector.lastOutputVector || null,
         elements: vector.elements,
         metadata: vector.metadata,
         outputVectors: vector.outputVectors || []

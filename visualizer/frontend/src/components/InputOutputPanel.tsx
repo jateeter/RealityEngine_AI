@@ -206,7 +206,7 @@ export const InputOutputPanel: React.FC<InputOutputPanelProps> = ({
                     >
                       Output #{idx + 1}
                     </div>
-                    {output.metadata?.description && (
+                    {output.metadata && typeof output.metadata === 'object' && output.metadata.description && (
                       <div
                         style={{
                           fontSize: '9px',

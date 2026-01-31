@@ -18,6 +18,8 @@ export class RealityVector {
   private nextVectorIds: string[];
   private outputVectors: OutputVector[];
   private isInitial: boolean;
+  private wasJustMatched: boolean;
+  private lastOutputVector: OutputVector | null;
   public metadata: Record<string, any>;
 
   constructor(
@@ -31,6 +33,8 @@ export class RealityVector {
     this.nextVectorIds = [];
     this.outputVectors = [];
     this.isInitial = isInitial;
+    this.wasJustMatched = false;
+    this.lastOutputVector = null;
     this.metadata = {};
   }
 
@@ -70,6 +74,50 @@ export class RealityVector {
     if (!this.isInitial) {
       this.state = VectorState.INACTIVE;
     }
+  }
+
+  /**
+   * Mark this vector as just matched
+   * Used to indicate a final event was active and matched by input
+   */
+  public setWasJustMatched(): void {
+    this.wasJustMatched = true;
+  }
+
+  /**
+   * Clear the just matched flag
+   */
+  public clearWasJustMatched(): void {
+    this.wasJustMatched = false;
+  }
+
+  /**
+   * Check if this vector was just matched
+   */
+  public getWasJustMatched(): boolean {
+    return this.wasJustMatched;
+  }
+
+  /**
+   * Set the last output vector produced by this vector
+   * Used to display the output in visualization until next input
+   */
+  public setLastOutputVector(output: OutputVector | null): void {
+    this.lastOutputVector = output;
+  }
+
+  /**
+   * Get the last output vector produced by this vector
+   */
+  public getLastOutputVector(): OutputVector | null {
+    return this.lastOutputVector;
+  }
+
+  /**
+   * Clear the last output vector
+   */
+  public clearLastOutputVector(): void {
+    this.lastOutputVector = null;
   }
 
   /**
@@ -196,6 +244,7 @@ export class RealityVector {
    * 1. Check if input matches
    * 2. If not initial vector and doesn't match, deactivate
    * 3. If matches, return next vectors to activate and output vectors to assert
+   * 4. Deactivate transitional vectors after successful match
    */
   public transition(inputVector: number[]): {
     matched: boolean;
@@ -219,12 +268,26 @@ export class RealityVector {
     }
 
     // Match successful - return next vectors and outputs
-    return {
+    const result = {
       matched: true,
       nextVectorIds: this.nextVectorIds,
       outputVectors: this.outputVectors,
       matchResult
     };
+
+    // Deactivate transitional vectors after successful match
+    // Transitional vectors are: not initial AND not final (no outputs)
+    // Initial vectors stay active, final vectors stay active to display outputs
+    const isFinalVector = this.outputVectors.length > 0;
+    const isTransitionalVector = !this.isInitial && !isFinalVector;
+
+    if (isTransitionalVector && this.nextVectorIds.length > 0) {
+      // This vector has done its job - it matched and will activate next vectors
+      // Deactivate it so it doesn't interfere with subsequent state progression
+      this.clearActive();
+    }
+
+    return result;
   }
 
   /**
@@ -246,6 +309,8 @@ export class RealityVector {
       nextVectorIds: this.nextVectorIds,
       outputVectors: this.outputVectors,
       isInitial: this.isInitial,
+      wasJustMatched: this.wasJustMatched,
+      lastOutputVector: this.lastOutputVector,
       metadata: this.metadata
     };
   }
@@ -258,6 +323,8 @@ export class RealityVector {
     vector.state = json.state;
     vector.nextVectorIds = json.nextVectorIds || [];
     vector.outputVectors = json.outputVectors || [];
+    vector.wasJustMatched = json.wasJustMatched || false;
+    vector.lastOutputVector = json.lastOutputVector || null;
     vector.metadata = json.metadata || {};
     return vector;
   }

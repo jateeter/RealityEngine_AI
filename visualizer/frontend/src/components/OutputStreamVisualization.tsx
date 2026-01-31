@@ -4,12 +4,15 @@ import { OutputVector } from '../types';
 interface OutputStreamVisualizationProps {
   outputVectors: OutputVector[];
   maxVisible?: number;
+  highlightedOutputId?: string | null;
 }
 
 const OutputStreamVisualization: React.FC<OutputStreamVisualizationProps> = ({
-  outputVectors
+  outputVectors,
+  highlightedOutputId
 }) => {
   const historyRef = useRef<HTMLDivElement>(null);
+  const outputRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const currentOutput = outputVectors.length > 0 ? outputVectors[outputVectors.length - 1] : null;
   const history = outputVectors.length > 1 ? outputVectors.slice(0, -1).reverse() : [];
 
@@ -20,24 +23,55 @@ const OutputStreamVisualization: React.FC<OutputStreamVisualizationProps> = ({
     }
   }, [outputVectors.length]);
 
+  // Auto-scroll to highlighted output when it changes
+  useEffect(() => {
+    if (highlightedOutputId && historyRef.current) {
+      const outputElement = outputRefs.current.get(highlightedOutputId);
+      if (outputElement) {
+        // Scroll the history container to show the highlighted output
+        outputElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+    }
+  }, [highlightedOutputId]);
+
   const renderOutputCard = (output: OutputVector, isCurrent: boolean, index?: number) => {
     const age = Date.now() - (output.timestamp || 0);
     const isNew = age < 3000;
+    const isHighlighted = highlightedOutputId === output.id;
 
     return (
       <div
         key={output.id || index}
+        ref={(el) => {
+          if (el && output.id) {
+            outputRefs.current.set(output.id, el);
+          }
+        }}
         style={{
           padding: '12px',
-          background: isCurrent
+          background: isHighlighted
+            ? 'linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%)'
+            : isCurrent
             ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
             : '#334155',
-          border: isCurrent ? '2px solid #fbbf24' : '1px solid #475569',
+          border: isHighlighted
+            ? '3px solid #c084fc'
+            : isCurrent
+            ? '2px solid #fbbf24'
+            : '1px solid #475569',
           borderRadius: '8px',
           transition: 'all 0.3s ease',
           position: 'relative',
-          boxShadow: isCurrent ? '0 0 20px rgba(245, 158, 11, 0.4)' : 'none',
-          animation: isCurrent && isNew ? 'slideIn 0.3s ease-out' : 'none'
+          boxShadow: isHighlighted
+            ? '0 0 30px rgba(168, 85, 247, 0.6)'
+            : isCurrent
+            ? '0 0 20px rgba(245, 158, 11, 0.4)'
+            : 'none',
+          animation: isCurrent && isNew ? 'slideIn 0.3s ease-out' : 'none',
+          transform: isHighlighted ? 'scale(1.05)' : 'scale(1)'
         }}
       >
         {/* Output ID */}

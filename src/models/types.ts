@@ -67,3 +67,23 @@ export interface OutputVector {
   metadata?: Record<string, any>;
   timestamp: number;
 }
+
+/**
+ * Machine transition result - Result of processing input through a machine
+ */
+export interface MachineTransitionResult {
+  inputVector: number[];
+  timestamp: number;
+  sequenceResults: Map<string, {
+    matchedVectors: string[];
+    activatedVectors: string[];
+    assertedOutputs: OutputVector[];
+  }>;
+  machineOutput: OutputVector | null;
+  arbiterMetadata: {
+    rule: string;
+    totalInputs: number;
+    sequencesWithOutput: number;
+    shouldOutput: boolean;
+  };
+}

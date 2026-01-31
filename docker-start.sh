@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Reality Engine Docker Start Script
-# Starts all services using docker-compose
+# Starts all services using docker-compose with fresh cache
 
 set -e
 
@@ -26,9 +26,14 @@ if [ ! -f .env ]; then
     echo ""
 fi
 
-# Start services
-echo "📦 Building and starting services..."
-docker-compose up -d --build
+# Clear Docker build cache to prevent stale cache issues
+echo "🧹 Clearing Docker build cache..."
+docker builder prune -f
+
+# Start services with no-cache to ensure fresh build
+echo "📦 Building and starting services (no cache)..."
+docker-compose build --no-cache
+docker-compose up -d
 
 echo ""
 echo "⏳ Waiting for services to be healthy..."

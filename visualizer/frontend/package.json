@@ -1,35 +1,37 @@
 {
   "name": "reality-engine-visualizer-frontend",
-  "version": "1.0.1",
-  "description": "React frontend for Reality Engine Visualizer",
+  "version": "1.1.0",
+  "description": "React frontend for Reality Engine Visualizer with D3.js force-directed graphs",
   "private": true,
   "engines": {
     "node": ">=22.0.0",
     "npm": ">=10.0.0"
   },
   "dependencies": {
+    "@types/d3": "^7.4.3",
+    "axios": "^1.6.2",
+    "d3": "^7.9.0",
+    "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-flow-renderer": "^10.3.17",
     "reactflow": "^11.10.1",
-    "axios": "^1.6.2",
-    "zustand": "^4.4.7",
-    "lucide-react": "^0.294.0"
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.1",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/user-event": "^14.5.1",
+    "@types/node": "^22.0.0",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
-    "@types/node": "^22.0.0",
     "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/ui": "^1.1.0",
+    "jsdom": "^23.0.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.7",
-    "@testing-library/react": "^14.1.2",
-    "@testing-library/jest-dom": "^6.1.5",
-    "@testing-library/user-event": "^14.5.1",
-    "@vitest/ui": "^1.1.0",
-    "vitest": "^1.1.0",
-    "jsdom": "^23.0.1",
-    "@playwright/test": "^1.40.1"
+    "vitest": "^1.1.0"
   },
   "scripts": {
     "dev": "vite",
