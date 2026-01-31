@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useVisualizerStore } from './store';
 import MachineSelectionView from './views/MachineSelectionView';
 import MachineAdministrationView from './views/MachineAdministrationView';
+import { MachineInterconnectionView } from './pages/MachineInterconnectionView';
 
 function App() {
   const {
@@ -54,6 +55,10 @@ function App() {
         onNavigateBack={handleNavigateBack}
       />
     );
+  }
+
+  if (currentView === 'interconnection') {
+    return <MachineInterconnectionView />;
   }
 
   return <MachineSelectionView />;

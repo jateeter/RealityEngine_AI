@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useVisualizerStore } from '../store';
 import CriticalEventGraphView from './CriticalEventGraphView';
 import InputStreamVisualization from './InputStreamVisualization';
 import OutputStreamVisualization from './OutputStreamVisualization';
+import { MachineInterconnectionGraph } from './MachineInterconnectionGraph';
+import { api } from '../api';
 
 interface MachineContainerViewProps {
   selectedSequenceId: string | null;
@@ -15,6 +17,7 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
     simulationState,
     currentMachine,
     highlightedOutputId,
+    machines,
     startSimulation,
     pauseSimulation,
     resumeSimulation,
@@ -23,6 +26,25 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
     setSimulationSpeed,
     loadRandomVectors
   } = useVisualizerStore();
+
+  // View toggle state - default to 'graph'
+  const [viewMode, setViewMode] = useState<'graph' | 'sequences'>('graph');
+  const [allMachines, setAllMachines] = useState(machines);
+
+  // Fetch all machines for interconnection graph
+  useEffect(() => {
+    const fetchMachines = async () => {
+      try {
+        const machinesData = await api.getMachines();
+        setAllMachines(machinesData);
+      } catch (error) {
+        console.error('Error fetching machines:', error);
+        setAllMachines(machines);
+      }
+    };
+
+    fetchMachines();
+  }, [machines]);
 
   // Determine current input vector index and state
   const currentIndex = simulationState?.currentIndex ?? 0;
@@ -131,8 +153,71 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
               textTransform: 'uppercase',
               letterSpacing: '0.5px'
             }}>
-              Internal State Visualization
+              {viewMode === 'graph' ? 'Machine Interconnections' : 'Internal State Visualization'}
             </div>
+          </div>
+
+          {/* View Toggle Buttons */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            marginRight: '20px'
+          }}>
+            <button
+              onClick={() => setViewMode('graph')}
+              style={{
+                padding: '8px 16px',
+                background: viewMode === 'graph' ? '#3b82f6' : '#334155',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#e2e8f0',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: viewMode === 'graph' ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (viewMode !== 'graph') {
+                  e.currentTarget.style.background = '#3f4a5c';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (viewMode !== 'graph') {
+                  e.currentTarget.style.background = '#334155';
+                }
+              }}
+            >
+              🔗 Interconnections
+            </button>
+
+            <button
+              onClick={() => setViewMode('sequences')}
+              style={{
+                padding: '8px 16px',
+                background: viewMode === 'sequences' ? '#3b82f6' : '#334155',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#e2e8f0',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: viewMode === 'sequences' ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (viewMode !== 'sequences') {
+                  e.currentTarget.style.background = '#3f4a5c';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (viewMode !== 'sequences') {
+                  e.currentTarget.style.background = '#334155';
+                }
+              }}
+            >
+              📊 Sequences
+            </button>
           </div>
 
           {/* Status Indicator */}
@@ -200,7 +285,18 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
             height: '100%',
             zIndex: 1
           }}>
-            <CriticalEventGraphView selectedSequenceId={selectedSequenceId} />
+            {viewMode === 'graph' ? (
+              currentMachine && (
+                <MachineInterconnectionGraph
+                  currentMachineId={currentMachine.id}
+                  machines={allMachines}
+                  width={1200}
+                  height={700}
+                />
+              )
+            ) : (
+              <CriticalEventGraphView selectedSequenceId={selectedSequenceId} />
+            )}
           </div>
         </div>
       </div>

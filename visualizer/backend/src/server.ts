@@ -739,6 +739,174 @@ app.delete('/api/machines/:id', async (req: Request, res: Response) => {
   }
 });
 
+// Machine Graph & Perceptual Space Simulation endpoints
+
+// Get machine graph visualization data
+app.get('/api/machine-graph', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machine-graph`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error getting machine graph:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Configure perceptual simulation
+app.post('/api/perceptual-simulation/configure', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/configure`, req.body);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error configuring perceptual simulation:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Start perceptual simulation
+app.post('/api/perceptual-simulation/start', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/start`);
+
+    // Start polling for updates
+    startPerceptualSimulationPolling();
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error starting perceptual simulation:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Stop perceptual simulation
+app.post('/api/perceptual-simulation/stop', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/stop`);
+
+    // Stop polling
+    stopPerceptualSimulationPolling();
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error stopping perceptual simulation:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Step perceptual simulation
+app.post('/api/perceptual-simulation/step', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/step`);
+
+    // Broadcast the step result
+    if (response.data.success && response.data.step) {
+      broadcast({
+        type: 'perceptual-simulation-stepped',
+        step: response.data.step,
+        timestamp: Date.now()
+      });
+    }
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error stepping perceptual simulation:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Reset perceptual simulation
+app.post('/api/perceptual-simulation/reset', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/reset`);
+
+    // Stop polling
+    stopPerceptualSimulationPolling();
+
+    // Broadcast reset
+    broadcast({
+      type: 'perceptual-simulation-reset',
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error resetting perceptual simulation:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Get perceptual simulation state
+app.get('/api/perceptual-simulation/state', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/perceptual-simulation/state`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error getting perceptual simulation state:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Get perceptual simulation history
+app.get('/api/perceptual-simulation/history', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/perceptual-simulation/history`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error getting perceptual simulation history:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Perceptual simulation polling (similar to regular simulation)
+let perceptualSimulationPollInterval: NodeJS.Timeout | null = null;
+let lastPerceptualStep = -1;
+
+function startPerceptualSimulationPolling() {
+  if (perceptualSimulationPollInterval) return; // Already polling
+
+  perceptualSimulationPollInterval = setInterval(async () => {
+    try {
+      const response = await axios.get(`${REALITY_ENGINE_URL}/api/perceptual-simulation/state`);
+      const state = response.data.state;
+
+      // Check if simulation is still running
+      if (!state.isRunning) {
+        stopPerceptualSimulationPolling();
+        return;
+      }
+
+      // Check if step changed
+      if (state.currentStep !== lastPerceptualStep) {
+        lastPerceptualStep = state.currentStep;
+
+        // Get the latest step from history
+        const historyResponse = await axios.get(`${REALITY_ENGINE_URL}/api/perceptual-simulation/history`);
+        const history = historyResponse.data.history;
+        const latestStep = history[history.length - 1];
+
+        if (latestStep) {
+          broadcast({
+            type: 'perceptual-simulation-stepped',
+            step: latestStep,
+            state: state,
+            timestamp: Date.now()
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error('Error polling perceptual simulation state:', error.message);
+    }
+  }, 200); // Poll every 200ms
+}
+
+function stopPerceptualSimulationPolling() {
+  if (perceptualSimulationPollInterval) {
+    clearInterval(perceptualSimulationPollInterval);
+    perceptualSimulationPollInterval = null;
+    lastPerceptualStep = -1;
+  }
+}
+
 // Start server
 server.listen(PORT, () => {
   console.log(`Reality Engine Visualizer Backend running on port ${PORT}`);

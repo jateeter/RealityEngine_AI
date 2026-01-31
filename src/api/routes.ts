@@ -8,6 +8,7 @@ import type { VectorElement } from '../models/types.js';
 import { PreceptionOfReality } from '../engine/PreceptionOfReality.js';
 import { RealitySampler, SamplingStrategy } from '../engine/RealitySampler.js';
 import { SimulationController } from '../engine/SimulationController.js';
+import { PerceptualSpaceSimulator } from '../engine/PerceptualSpaceSimulator.js';
 import config from '../config/config.js';
 
 /**
@@ -19,11 +20,13 @@ export class RealityEngineAPI {
   private perception: PreceptionOfReality;
   private sampler: RealitySampler | null = null;
   private simulationController: SimulationController | null = null;
+  private perceptualSimulator: PerceptualSpaceSimulator;
 
   constructor(engine: RealityEngine) {
     this.router = express.Router();
     this.engine = engine;
     this.perception = new PreceptionOfReality(config.getVectorDimension());
+    this.perceptualSimulator = new PerceptualSpaceSimulator(256);
     this.setupRoutes();
     this.initializeDefaultSequences();
   }
@@ -153,6 +156,16 @@ export class RealityEngineAPI {
     this.router.put('/machines/:id', this.updateMachine.bind(this));
     this.router.delete('/machines/:id', this.deleteMachine.bind(this));
     this.router.post('/machines/:id/process', this.processMachineInput.bind(this));
+
+    // Machine Graph & Perceptual Space Simulation endpoints
+    this.router.get('/machine-graph', this.getMachineGraph.bind(this));
+    this.router.post('/perceptual-simulation/configure', this.configurePerceptualSimulation.bind(this));
+    this.router.post('/perceptual-simulation/start', this.startPerceptualSimulation.bind(this));
+    this.router.post('/perceptual-simulation/stop', this.stopPerceptualSimulation.bind(this));
+    this.router.post('/perceptual-simulation/step', this.stepPerceptualSimulation.bind(this));
+    this.router.post('/perceptual-simulation/reset', this.resetPerceptualSimulation.bind(this));
+    this.router.get('/perceptual-simulation/state', this.getPerceptualSimulationState.bind(this));
+    this.router.get('/perceptual-simulation/history', this.getPerceptualSimulationHistory.bind(this));
 
     // Demo endpoints
     this.router.get('/demo/load', this.loadDemo.bind(this));
@@ -1176,6 +1189,258 @@ export class RealityEngineAPI {
       res.status(500).json({
         success: false,
         error: 'Failed to load Kleene star example',
+        message: error.message
+      });
+    }
+  }
+
+  // Machine Graph & Perceptual Space Simulation endpoints
+
+  /**
+   * Get machine graph visualization data
+   */
+  private async getMachineGraph(_req: Request, res: Response): Promise<void> {
+    try {
+      // Sync machines from engine to perceptual simulator
+      const machines = this.engine.getAllMachines();
+
+      // Clear and re-add all machines to simulator
+      const currentMachines = this.perceptualSimulator.getMachines();
+      for (const m of currentMachines) {
+        this.perceptualSimulator.removeMachine(m.id);
+      }
+
+      for (const machine of machines) {
+        if (machine.perceptualMapping) {
+          this.perceptualSimulator.addMachine(machine);
+        }
+      }
+
+      const graphData = this.perceptualSimulator.getMachineGraphData();
+
+      res.json({
+        success: true,
+        data: graphData,
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get machine graph',
+        message: error.message
+      });
+    }
+  }
+
+  /**
+   * Configure perceptual space simulation
+   */
+  private async configurePerceptualSimulation(req: Request, res: Response): Promise<void> {
+    try {
+      const { inputSequence, inputRegion, stepDelayMs, maxSteps } = req.body;
+
+      if (!inputSequence || !Array.isArray(inputSequence)) {
+        res.status(400).json({
+          success: false,
+          error: 'inputSequence is required and must be an array'
+        });
+        return;
+      }
+
+      if (!inputRegion || typeof inputRegion.offset !== 'number' || typeof inputRegion.length !== 'number') {
+        res.status(400).json({
+          success: false,
+          error: 'inputRegion is required with offset and length'
+        });
+        return;
+      }
+
+      this.perceptualSimulator.configure({
+        inputSequence,
+        inputRegion,
+        stepDelayMs: stepDelayMs || 1000,
+        maxSteps
+      });
+
+      res.json({
+        success: true,
+        message: 'Simulation configured',
+        config: this.perceptualSimulator.getConfig(),
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to configure simulation',
+        message: error.message
+      });
+    }
+  }
+
+  /**
+   * Start perceptual space simulation
+   */
+  private async startPerceptualSimulation(_req: Request, res: Response): Promise<void> {
+    try {
+      this.perceptualSimulator.start();
+
+      res.json({
+        success: true,
+        message: 'Simulation started',
+        isRunning: this.perceptualSimulator.getIsRunning(),
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to start simulation',
+        message: error.message
+      });
+    }
+  }
+
+  /**
+   * Stop perceptual space simulation
+   */
+  private async stopPerceptualSimulation(_req: Request, res: Response): Promise<void> {
+    try {
+      this.perceptualSimulator.stop();
+
+      res.json({
+        success: true,
+        message: 'Simulation stopped',
+        isRunning: this.perceptualSimulator.getIsRunning(),
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to stop simulation',
+        message: error.message
+      });
+    }
+  }
+
+  /**
+   * Execute one simulation step
+   */
+  private async stepPerceptualSimulation(_req: Request, res: Response): Promise<void> {
+    try {
+      const step = this.perceptualSimulator.step();
+
+      if (!step) {
+        res.json({
+          success: true,
+          message: 'Simulation complete',
+          step: null,
+          timestamp: Date.now()
+        });
+        return;
+      }
+
+      // Convert Map to plain object for JSON serialization
+      const machineResults: Record<string, any> = {};
+      for (const [key, value] of step.machineResults) {
+        machineResults[key] = value;
+      }
+
+      res.json({
+        success: true,
+        step: {
+          ...step,
+          machineResults
+        },
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to execute simulation step',
+        message: error.message
+      });
+    }
+  }
+
+  /**
+   * Reset perceptual space simulation
+   */
+  private async resetPerceptualSimulation(_req: Request, res: Response): Promise<void> {
+    try {
+      this.perceptualSimulator.reset();
+
+      res.json({
+        success: true,
+        message: 'Simulation reset',
+        currentStep: this.perceptualSimulator.getCurrentStep(),
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to reset simulation',
+        message: error.message
+      });
+    }
+  }
+
+  /**
+   * Get perceptual space simulation state
+   */
+  private async getPerceptualSimulationState(_req: Request, res: Response): Promise<void> {
+    try {
+      const state = {
+        isRunning: this.perceptualSimulator.getIsRunning(),
+        currentStep: this.perceptualSimulator.getCurrentStep(),
+        config: this.perceptualSimulator.getConfig(),
+        perceptualSpace: this.perceptualSimulator.getPerceptualSpace().getPerceptualVector(),
+        machines: this.perceptualSimulator.getMachines().map(m => ({
+          id: m.id,
+          name: m.name,
+          perceptualMapping: m.perceptualMapping
+        }))
+      };
+
+      res.json({
+        success: true,
+        state,
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get simulation state',
+        message: error.message
+      });
+    }
+  }
+
+  /**
+   * Get perceptual space simulation history
+   */
+  private async getPerceptualSimulationHistory(_req: Request, res: Response): Promise<void> {
+    try {
+      const history = this.perceptualSimulator.getHistory().map(step => {
+        // Convert Map to plain object
+        const machineResults: Record<string, any> = {};
+        for (const [key, value] of step.machineResults) {
+          machineResults[key] = value;
+        }
+        return {
+          ...step,
+          machineResults
+        };
+      });
+
+      res.json({
+        success: true,
+        history,
+        count: history.length,
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get simulation history',
         message: error.message
       });
     }

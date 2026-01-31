@@ -16,7 +16,7 @@ import { api } from './api';
 
 interface VisualizerState {
   // View state
-  currentView: 'selection' | 'administration';
+  currentView: 'selection' | 'administration' | 'interconnection';
 
   // Machine management
   machines: Machine[];
@@ -54,7 +54,7 @@ interface VisualizerState {
   highlightedOutputId: string | null;
 
   // View actions
-  setCurrentView: (view: 'selection' | 'administration') => void;
+  setCurrentView: (view: 'selection' | 'administration' | 'interconnection') => void;
 
   // Machine management actions
   setMachines: (machines: Machine[]) => void;

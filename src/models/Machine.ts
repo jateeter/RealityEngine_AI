@@ -1,6 +1,7 @@
 import { CriticalEventSequence } from './CriticalEventSequence.js';
 import { OutputArbiter, ArbiterRule } from './OutputArbiter.js';
-import type { MachineTransitionResult, OutputVector } from './types.js';
+import { PerceptualSpace } from './PerceptualSpace.js';
+import type { MachineTransitionResult, OutputVector, PerceptualMapping } from './types.js';
 
 /**
  * Machine - A collection of critical event sequences that work together
@@ -20,12 +21,14 @@ export class Machine {
   private sequences: Map<string, CriticalEventSequence>;
   private arbiter: OutputArbiter;
   public readonly metadata: Record<string, any>;
+  public perceptualMapping?: PerceptualMapping;
 
   constructor(
     name: string,
     description: string = '',
     metadata: Record<string, any> = {},
-    arbiterRule: ArbiterRule = ArbiterRule.PASSTHROUGH
+    arbiterRule: ArbiterRule = ArbiterRule.PASSTHROUGH,
+    perceptualMapping?: PerceptualMapping
   ) {
     this.id = `machine-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     this.name = name;
@@ -33,6 +36,9 @@ export class Machine {
     this.sequences = new Map();
     this.arbiter = new OutputArbiter(arbiterRule);
     this.metadata = metadata;
+    if (perceptualMapping) {
+      this.perceptualMapping = perceptualMapping;
+    }
   }
 
   /**
@@ -154,6 +160,52 @@ export class Machine {
   }
 
   /**
+   * Process input from perceptual space
+   *
+   * Uses the machine's perceptual mapping to:
+   * 1. Extract input from the shared perceptual space (En -> Em)
+   * 2. Process through the machine
+   * 3. Merge output back into perceptual space (Ox -> En)
+   *
+   * @param perceptualSpace - The shared perceptual space
+   * @returns MachineTransitionResult
+   */
+  public processInputFromPerceptualSpace(perceptualSpace: PerceptualSpace): MachineTransitionResult {
+    if (!this.perceptualMapping) {
+      throw new Error(`Machine ${this.name} does not have a perceptual mapping configured`);
+    }
+
+    // Phase 1: Extract machine input (Em) from perceptual space (En)
+    const machineInput = perceptualSpace.extractMachineInput(this.perceptualMapping);
+
+    // Phase 2 & 3: Process through machine's standard workflow
+    const result = this.processInput(machineInput);
+
+    // Phase 4: Merge machine output (Ox) back into perceptual space (En)
+    if (result.machineOutput && result.machineOutput.vector) {
+      perceptualSpace.mergeMachineOutput(result.machineOutput.vector, this.perceptualMapping);
+    }
+
+    return result;
+  }
+
+  /**
+   * Set the perceptual mapping for this machine
+   */
+  public setPerceptualMapping(mapping: PerceptualMapping): void {
+    // Validate the mapping if perceptual space dimension is known
+    // For now, we'll just set it
+    this.perceptualMapping = mapping;
+  }
+
+  /**
+   * Get the perceptual mapping for this machine
+   */
+  public getPerceptualMapping(): PerceptualMapping | undefined {
+    return this.perceptualMapping;
+  }
+
+  /**
    * Reset all sequences to initial state
    */
   public reset(): void {
@@ -191,7 +243,8 @@ export class Machine {
         id: seq.id,
         name: seq.name
       })),
-      metadata: this.metadata
+      metadata: this.metadata,
+      perceptualMapping: this.perceptualMapping
     };
   }
 }

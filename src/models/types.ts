@@ -69,6 +69,21 @@ export interface OutputVector {
 }
 
 /**
+ * Perceptual mapping for machine interconnection
+ * Maps machine input/output to positions in the shared perceptual space
+ */
+export interface PerceptualMapping {
+  input: {
+    offset: number;  // Starting index in perceptual space for input
+    length: number;  // Number of dimensions for input
+  };
+  output: {
+    offset: number;  // Starting index in perceptual space for output
+    length: number;  // Number of dimensions for output
+  };
+}
+
+/**
  * Machine transition result - Result of processing input through a machine
  */
 export interface MachineTransitionResult {

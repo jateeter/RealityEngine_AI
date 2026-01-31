@@ -10,7 +10,8 @@ const MachineSelectionView: React.FC = () => {
     machines,
     setMachines,
     loadMachine,
-    deleteMachine
+    deleteMachine,
+    setCurrentView
   } = useVisualizerStore();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -141,6 +142,34 @@ const MachineSelectionView: React.FC = () => {
               outline: 'none'
             }}
           />
+
+          {/* Interconnection View Button */}
+          <button
+            onClick={() => setCurrentView('interconnection')}
+            style={{
+              background: '#10b981',
+              border: 'none',
+              borderRadius: '8px',
+              color: '#fff',
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#059669';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#10b981';
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>⚡</span>
+            Interconnection View
+          </button>
 
           {/* Create New Button */}
           <button
