@@ -96,10 +96,15 @@ export class CriticalEventSequence {
    * Process a transition for all active vectors in this sequence
    * Returns all output vectors that should be asserted
    *
-   * CORRECTED WORKFLOW:
+   * CORRECTED WORKFLOW (v2):
    * - Propagates activation through all matching vectors in a single input cycle
    * - Ensures final events become active when their predecessors match
    * - Continues matching until no more vectors can be activated by current input
+   * - Re-processes active vectors that were activated in previous inputs
+   *
+   * CRITICAL FIX: Vectors that are already active from previous inputs
+   * are now properly added to the processing queue, ensuring they can
+   * match against the current input and activate their successors.
    */
   public transition(inputVector: number[]): {
     matchedVectors: string[];
@@ -157,11 +162,18 @@ export class CriticalEventSequence {
           transitionResult.nextVectorIds.forEach(id => {
             if (this.vectors.has(id)) {
               const nextVector = this.vectors.get(id);
-              if (nextVector && !nextVector.isActive()) {
-                // Activate the vector immediately
-                nextVector.setActive();
-                activatedVectors.push(id);
-                newVectorsToActivate.add(id);
+              if (nextVector) {
+                // Activate the vector if it's not already active
+                if (!nextVector.isActive()) {
+                  nextVector.setActive();
+                  activatedVectors.push(id);
+                }
+
+                // Add to processing queue if not yet processed in this cycle
+                // This ensures vectors that are already active still get matched
+                if (!processedVectorIds.has(id)) {
+                  newVectorsToActivate.add(id);
+                }
               }
             }
           });
