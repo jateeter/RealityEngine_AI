@@ -330,13 +330,14 @@ export class RealityEngine {
 
   /**
    * Add result to history with size management
+   * Newest results are added to the front of the array (index 0)
    */
   private addToHistory(result: TransitionResult): void {
-    this.transitionHistory.push(result);
+    this.transitionHistory.unshift(result); // Add to front (newest first)
 
-    // Maintain max history size
+    // Maintain max history size - trim from the end (oldest entries)
     if (this.transitionHistory.length > this.maxHistorySize) {
-      this.transitionHistory = this.transitionHistory.slice(-this.maxHistorySize);
+      this.transitionHistory = this.transitionHistory.slice(0, this.maxHistorySize);
     }
   }
 

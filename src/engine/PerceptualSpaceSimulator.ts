@@ -219,7 +219,7 @@ export class PerceptualSpaceSimulator {
       activeRegions
     };
 
-    this.history.push(step);
+    this.history.unshift(step); // Add to front (newest first)
     this.currentStep++;
 
     return step;

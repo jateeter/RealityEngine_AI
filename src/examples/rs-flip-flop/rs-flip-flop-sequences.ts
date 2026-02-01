@@ -221,6 +221,23 @@ export function createRSFlipFlopMachine(): Machine {
             [0, 1],  // Reset → [0]
             [0, 0]   // Hold (final)
           ]
+        },
+        {
+          name: 'COMPREHENSIVE VALIDATION SEQUENCE',
+          pattern: '13-step validation of all events and outputs',
+          description: 'Validates: (1) All event activations (2) All output generation (3) Repeated operations (4) State transitions (5) Visualization correctness. Tests 3x SET, 3x RESET with HOLD states between.',
+          vectors: generateRSValidationVectors().map(v => v.vector),
+          metadata: {
+            validationType: 'comprehensive',
+            totalSteps: 13,
+            expectedOutputs: 6,
+            expectedOutputSequence: '[1,0], [1,0], [0,1], [0,1], [1,0], [0,1]',
+            validatesEventActivation: true,
+            validatesOutputGeneration: true,
+            validatesVisualization: true,
+            validatesRepeatedOperations: true,
+            validatesStateTransitions: true
+          }
         }
       ]
     },
@@ -262,5 +279,103 @@ export function generateRSTestVectors(): Array<{ vector: number[]; description: 
     { vector: [1, 0], description: 'Vector 7: 10 - SET', expectedOutput: '1' },
     { vector: [0, 1], description: 'Vector 8: 01 - RESET', expectedOutput: '0' },
     { vector: [0, 0], description: 'Vector 9: 00 - Hold state (final)' }
+  ];
+}
+
+/**
+ * Generate comprehensive validation test vectors
+ * This validates ALL event activations and outputs
+ */
+export function generateRSValidationVectors(): Array<{
+  vector: number[];
+  description: string;
+  expectedOutput?: string;
+  expectedActiveEvents: number;
+}> {
+  return [
+    // Step 1: Initial HOLD
+    {
+      vector: [0, 0],
+      description: 'Step 1: [0,0] HOLD - Initial state, both event 00s active',
+      expectedActiveEvents: 2 // Both sequence event 00s
+    },
+    // Step 2: First SET
+    {
+      vector: [1, 0],
+      description: 'Step 2: [1,0] SET - Activates event 10, generates output [1,0]',
+      expectedOutput: '[1,0]',
+      expectedActiveEvents: 3 // Both event 00s + event 10
+    },
+    // Step 3: HOLD
+    {
+      vector: [0, 0],
+      description: 'Step 3: [0,0] HOLD - Event 10 stays active',
+      expectedActiveEvents: 3
+    },
+    // Step 4: Second SET
+    {
+      vector: [1, 0],
+      description: 'Step 4: [1,0] SET - Event 10 matched again, output [1,0] again',
+      expectedOutput: '[1,0]',
+      expectedActiveEvents: 3
+    },
+    // Step 5: HOLD
+    {
+      vector: [0, 0],
+      description: 'Step 5: [0,0] HOLD - Stable state',
+      expectedActiveEvents: 3
+    },
+    // Step 6: First RESET
+    {
+      vector: [0, 1],
+      description: 'Step 6: [0,1] RESET - Activates event 01, generates output [0,1]',
+      expectedOutput: '[0,1]',
+      expectedActiveEvents: 4 // Both event 00s + event 10 + event 01
+    },
+    // Step 7: HOLD
+    {
+      vector: [0, 0],
+      description: 'Step 7: [0,0] HOLD - Event 01 stays active',
+      expectedActiveEvents: 4
+    },
+    // Step 8: Second RESET
+    {
+      vector: [0, 1],
+      description: 'Step 8: [0,1] RESET - Event 01 matched again, output [0,1] again',
+      expectedOutput: '[0,1]',
+      expectedActiveEvents: 4
+    },
+    // Step 9: HOLD
+    {
+      vector: [0, 0],
+      description: 'Step 9: [0,0] HOLD - Stable state',
+      expectedActiveEvents: 4
+    },
+    // Step 10: SET after RESET
+    {
+      vector: [1, 0],
+      description: 'Step 10: [1,0] SET - After RESET, validates state transitions',
+      expectedOutput: '[1,0]',
+      expectedActiveEvents: 4
+    },
+    // Step 11: HOLD
+    {
+      vector: [0, 0],
+      description: 'Step 11: [0,0] HOLD - All events stable',
+      expectedActiveEvents: 4
+    },
+    // Step 12: RESET after SET
+    {
+      vector: [0, 1],
+      description: 'Step 12: [0,1] RESET - After SET, validates alternating',
+      expectedOutput: '[0,1]',
+      expectedActiveEvents: 4
+    },
+    // Step 13: Final HOLD
+    {
+      vector: [0, 0],
+      description: 'Step 13: [0,0] HOLD - Final state, validation complete',
+      expectedActiveEvents: 4
+    }
   ];
 }
