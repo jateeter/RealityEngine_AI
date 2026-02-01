@@ -91,7 +91,7 @@ interface VisualizerState {
   refreshHeatmap: () => Promise<void>;
   loadDemo: () => Promise<void>;
   loadDataCenterExample: () => Promise<void>;
-  loadNANDGateExample: () => Promise<void>;
+  // loadNANDGateExample: () => Promise<void>; // DISABLED: NAND gate example removed
   loadMultiStepExample: () => Promise<void>;
   loadKleeneStarExample: () => Promise<void>;
   connectWebSocket: () => void;
@@ -180,13 +180,15 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
           // Load the appropriate example based on machine ID
           if (machineId === 'multi-step-example') {
             await get().loadMultiStepExample();
-          } else if (machineId === 'nand-gate-example') {
-            await get().loadNANDGateExample();
           } else if (machineId === 'data-center-example') {
             await get().loadDataCenterExample();
           } else if (machineId === 'kleene-star-example') {
             await get().loadKleeneStarExample();
           }
+          // NAND gate example disabled
+          // else if (machineId === 'nand-gate-example') {
+          //   await get().loadNANDGateExample();
+          // }
         } catch (error) {
           console.log('Could not load example data for machine:', error);
         }
@@ -615,37 +617,11 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
-  loadNANDGateExample: async () => {
-    try {
-      const result = await api.loadNANDGateExample();
-      set({
-        isDemoLoaded: true,
-        demoMetadata: result.metadata
-      });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: 'NAND Gate Example loaded',
-        timestamp: Date.now(),
-        severity: 'success',
-        metadata: result.metadata
-      });
-
-      // Refresh sequences after loading example
-      const sequences = await api.getSequences();
-      set({ sequences });
-    } catch (error) {
-      console.error('Error loading NAND gate example:', error);
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to load NAND gate example',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
-    }
-  },
+  // DISABLED: NAND gate example removed
+  // loadNANDGateExample: async () => {
+  //   const result = await api.loadNANDGateExample();
+  //   ...
+  // },
 
   loadMultiStepExample: async () => {
     try {
