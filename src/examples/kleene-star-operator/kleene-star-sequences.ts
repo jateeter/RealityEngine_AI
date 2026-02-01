@@ -1,8 +1,9 @@
 import { CriticalEventSequence } from '../../models/CriticalEventSequence.js';
 import { RealityVector } from '../../models/RealityVector.js';
 import { Machine } from '../../models/Machine.js';
+import { ArbiterRule } from '../../models/OutputArbiter.js';
 import { ComparatorType } from '../../models/types.js';
-import type { OutputVector } from '../../models/types.js';
+import type { OutputVector, PerceptualMapping } from '../../models/types.js';
 
 /**
  * Kleene Star (*) Operator Test Machine
@@ -209,8 +210,14 @@ export function createKleeneStarSequences(): CriticalEventSequence[] {
 export function createKleeneStarMachine(): Machine {
   const testVectors = generateKleeneStarTestVectors();
 
+  // Define perceptual mapping for machine interconnection
+  const perceptualMapping: PerceptualMapping = {
+    input: { offset: 8, length: 3 },   // Reads En[8:11]
+    output: { offset: 11, length: 2 }  // Writes to En[11:13]
+  };
+
   const machine = new Machine(
-    '* Operator Test',
+    'Kleene Star Operator',
     'Demonstrates Kleene star (*) operator in critical event sequences - zero or more repetitions with alternation',
     {
       eventSpace: '3D binary vectors: 000-111',
@@ -218,6 +225,7 @@ export function createKleeneStarMachine(): Machine {
       sequenceCount: 2,
       operator: 'Kleene star (*)',
       description: 'Two sequences demonstrating repetition patterns',
+      category: 'pattern-matching',
       sequences: [
         {
           name: 'Sequence 1',
@@ -285,7 +293,9 @@ export function createKleeneStarMachine(): Machine {
           ]
         }
       ]
-    }
+    },
+    ArbiterRule.PASSTHROUGH,
+    perceptualMapping
   );
 
   // Add both sequences to the machine

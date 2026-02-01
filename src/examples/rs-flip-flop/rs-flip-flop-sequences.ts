@@ -1,8 +1,9 @@
 import { CriticalEventSequence } from '../../models/CriticalEventSequence.js';
 import { RealityVector } from '../../models/RealityVector.js';
 import { Machine } from '../../models/Machine.js';
+import { ArbiterRule } from '../../models/OutputArbiter.js';
 import { ComparatorType } from '../../models/types.js';
-import type { OutputVector } from '../../models/types.js';
+import type { OutputVector, PerceptualMapping } from '../../models/types.js';
 
 /**
  * RS Flip Flop Example
@@ -25,16 +26,19 @@ import type { OutputVector } from '../../models/types.js';
 
 /**
  * Create output vector for flip flop state
+ * Output is 2D: [Q, Q̄] where Q is the state and Q̄ is the complement
  */
 function createOutput(state: number, description: string): OutputVector {
   return {
     id: `rs-output-${state}`,
-    vector: [state],
+    vector: state === 1 ? [1, 0] : [0, 1],  // [Q, Q̄]
     timestamp: Date.now(),
     metadata: {
       description,
       state: state === 1 ? 'SET' : 'RESET',
-      logicValue: state === 1 ? 'HIGH' : 'LOW'
+      logicValue: state === 1 ? 'HIGH' : 'LOW',
+      qOutput: state === 1 ? 1 : 0,
+      qBarOutput: state === 1 ? 0 : 1
     }
   };
 }
@@ -145,15 +149,23 @@ export function createRSFlipFlopSequences(): CriticalEventSequence[] {
 export function createRSFlipFlopMachine(): Machine {
   const testVectors = generateRSTestVectors();
 
+  // Define perceptual mapping for machine interconnection
+  // Reads from En[3:5] (Multi-Step machine's output) and writes to En[6:8]
+  const perceptualMapping: PerceptualMapping = {
+    input: { offset: 3, length: 2 },   // Reads En[3:5] (connects to Multi-Step output)
+    output: { offset: 6, length: 2 }   // Writes to En[6:8]
+  };
+
   const machine = new Machine(
     'RS Flip Flop',
     'Bistable multivibrator with Set and Reset critical event sequences',
     {
       eventSpace: '2D binary vectors: [S, R] inputs (00, 01, 10, 11)',
-      outputSpace: '1D binary: {0=RESET/LOW, 1=SET/HIGH}',
+      outputSpace: '2D binary: {[0,1]=RESET/LOW, [1,0]=SET/HIGH}',
       sequenceCount: 2,
       inputVectorCount: testVectors.length,
       description: 'Two sequences: SET (00→10) and RESET (00→01)',
+      category: 'digital-logic',
       sequences: [
         { name: 'SET Sequence', path: '00→10', output: '[1]', description: 'Sets flip flop to HIGH' },
         { name: 'RESET Sequence', path: '00→01', output: '[0]', description: 'Resets flip flop to LOW' }
@@ -211,7 +223,9 @@ export function createRSFlipFlopMachine(): Machine {
           ]
         }
       ]
-    }
+    },
+    ArbiterRule.PASSTHROUGH,
+    perceptualMapping
   );
 
   // Add both sequences to the machine

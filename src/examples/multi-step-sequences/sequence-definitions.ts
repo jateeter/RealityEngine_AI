@@ -1,8 +1,9 @@
 import { CriticalEventSequence } from '../../models/CriticalEventSequence.js';
 import { RealityVector } from '../../models/RealityVector.js';
 import { Machine } from '../../models/Machine.js';
+import { ArbiterRule } from '../../models/OutputArbiter.js';
 import { ComparatorType } from '../../models/types.js';
-import type { OutputVector } from '../../models/types.js';
+import type { OutputVector, PerceptualMapping } from '../../models/types.js';
 
 /**
  * Multi-Step Sequence Example
@@ -128,6 +129,12 @@ export function createMultiStepSequences(): CriticalEventSequence[] {
 export function createMultiStepMachine(): Machine {
   const testVectors = generateTestVectors();
 
+  // Define perceptual mapping for machine interconnection
+  const perceptualMapping: PerceptualMapping = {
+    input: { offset: 0, length: 3 },   // Reads En[0:3]
+    output: { offset: 3, length: 2 }   // Writes to En[3:5]
+  };
+
   const machine = new Machine(
     'Multi-Step State Machine',
     'Demonstrates 3-step critical event sequences with state transitions and binary outputs',
@@ -137,6 +144,7 @@ export function createMultiStepMachine(): Machine {
       sequenceCount: 2,
       inputVectorCount: 11,
       description: 'Two independent sequences with distinct outputs',
+      category: 'state-machine',
       sequences: [
         { name: 'Sequence 1', path: '000→001→011', output: '[0,1]' },
         { name: 'Sequence 2', path: '100→101→111', output: '[1,0]' }
@@ -182,7 +190,9 @@ export function createMultiStepMachine(): Machine {
           ]
         }
       ]
-    }
+    },
+    ArbiterRule.PASSTHROUGH,
+    perceptualMapping
   );
 
   // Add both sequences to the machine
