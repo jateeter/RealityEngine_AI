@@ -837,6 +837,27 @@ export function createDataCenterSequences(): CriticalEventSequence[] {
 }
 
 /**
+ * Generate initial baseline events (one per sequence)
+ * Returns the first input vector that activates initial states
+ */
+export function generateInitialEvents(): number[][] {
+  return [
+    // Initial baseline vector - all systems healthy
+    [0.25, 0.30, 0.28, 0.38, 0.35, 0.45, 0.38, 0.05]
+  ];
+}
+
+/**
+ * Generate progression vectors that escalate through sequences
+ * Returns vectors that cause state transitions and outputs
+ */
+export function generateProgressionVectors(): number[][] {
+  const allVectors = generateComplexTestVectors();
+  // Return all vectors except the first (which is the initial baseline)
+  return allVectors.slice(1).map(tv => tv.vector);
+}
+
+/**
  * Create a Data Center Monitoring Machine with comprehensive metadata
  */
 export function createDataCenterMachine(): Machine {
