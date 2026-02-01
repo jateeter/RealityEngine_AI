@@ -432,11 +432,11 @@ export function createToolChangeSequence(): CriticalEventSequence {
   for (let i = 0; i < 8; i++) {
     const event = new RealityVector(
       [
-        { value: positions[i], comparatorType: ComparatorType.THRESHOLD, threshold },
+        { value: positions[i]!, comparatorType: ComparatorType.THRESHOLD, threshold },
         { value: 0.0, comparatorType: ComparatorType.THRESHOLD, threshold },
         { value: 0.0, comparatorType: ComparatorType.THRESHOLD, threshold },
         { value: 0.0, comparatorType: ComparatorType.PATTERN, threshold: 0.0 },
-        { value: temps[i], comparatorType: ComparatorType.THRESHOLD, threshold }
+        { value: temps[i]!, comparatorType: ComparatorType.THRESHOLD, threshold }
       ],
       false
     );
@@ -501,10 +501,10 @@ export function createEmergencyStopSequence(): CriticalEventSequence {
     const event = new RealityVector(
       [
         { value: 0.0, comparatorType: ComparatorType.PATTERN, threshold: 0.0 },
-        { value: forces[i], comparatorType: ComparatorType.THRESHOLD, threshold },
+        { value: forces[i]!, comparatorType: ComparatorType.THRESHOLD, threshold },
         { value: 0.0, comparatorType: ComparatorType.PATTERN, threshold: 0.0 },
         { value: 0.0, comparatorType: ComparatorType.PATTERN, threshold: 0.0 },
-        { value: temps[i], comparatorType: ComparatorType.THRESHOLD, threshold }
+        { value: temps[i]!, comparatorType: ComparatorType.THRESHOLD, threshold }
       ],
       false
     );
@@ -568,10 +568,10 @@ export function createCalibrationSequence(): CriticalEventSequence {
   for (let i = 0; i < 8; i++) {
     const event = new RealityVector(
       [
-        { value: positions[i], comparatorType: ComparatorType.THRESHOLD, threshold },
+        { value: positions[i]!, comparatorType: ComparatorType.THRESHOLD, threshold },
         { value: 0.0, comparatorType: ComparatorType.THRESHOLD, threshold },
         { value: 0.0, comparatorType: ComparatorType.THRESHOLD, threshold },
-        { value: visions[i], comparatorType: ComparatorType.THRESHOLD, threshold },
+        { value: visions[i]!, comparatorType: ComparatorType.THRESHOLD, threshold },
         { value: 0.2, comparatorType: ComparatorType.THRESHOLD, threshold }
       ],
       false
@@ -579,7 +579,7 @@ export function createCalibrationSequence(): CriticalEventSequence {
     event.metadata = {
       step: i + 2,
       name: `Calibration Point ${i + 2}`,
-      description: `Calibrating at position ${positions[i].toFixed(2)}`
+      description: `Calibrating at position ${positions[i]!.toFixed(2)}`
     };
     prevEvent.addNextVector(event.id);
     seq.addVector(event);

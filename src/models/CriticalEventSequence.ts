@@ -95,6 +95,11 @@ export class CriticalEventSequence {
   /**
    * Process a transition for all active vectors in this sequence
    * Returns all output vectors that should be asserted
+   *
+   * CORRECTED WORKFLOW:
+   * - Propagates activation through all matching vectors in a single input cycle
+   * - Ensures final events become active when their predecessors match
+   * - Continues matching until no more vectors can be activated by current input
    */
   public transition(inputVector: number[]): {
     matchedVectors: string[];
@@ -103,7 +108,7 @@ export class CriticalEventSequence {
     results: Map<string, MatchResult>;
   } {
     const matchedVectors: string[] = [];
-    const vectorsToActivate = new Set<string>();
+    const activatedVectors: string[] = [];
     const assertedOutputs: OutputVector[] = [];
     const results = new Map<string, MatchResult>();
 
@@ -113,46 +118,63 @@ export class CriticalEventSequence {
       vector.clearLastOutputVector();
     }
 
-    // Process all active vectors
-    const activeVectors = this.getActiveVectors();
+    // Track which vectors we've already processed to prevent infinite loops
+    const processedVectorIds = new Set<string>();
 
-    for (const vector of activeVectors) {
-      const transitionResult = vector.transition(inputVector);
-      results.set(vector.id, transitionResult.matchResult);
+    // Get initially active vectors
+    let vectorsToProcess = this.getActiveVectors();
 
-      if (transitionResult.matched) {
-        matchedVectors.push(vector.id);
+    // Propagation loop: continue until no new vectors can be activated
+    while (vectorsToProcess.length > 0) {
+      const newVectorsToActivate = new Set<string>();
 
-        // If this vector has outputs and was matched, mark it as just matched
-        // and store the output vector for visualization
-        if (vector.getOutputVectors().length > 0) {
-          vector.setWasJustMatched();
-
-          // Store the first output vector for visualization
-          if (transitionResult.outputVectors.length > 0) {
-            vector.setLastOutputVector(transitionResult.outputVectors[0] || null);
-          }
+      for (const vector of vectorsToProcess) {
+        // Skip if already processed this vector in this input cycle
+        if (processedVectorIds.has(vector.id)) {
+          continue;
         }
 
-        // Add next vectors to activation list
-        transitionResult.nextVectorIds.forEach(id => {
-          if (this.vectors.has(id)) {
-            vectorsToActivate.add(id);
+        processedVectorIds.add(vector.id);
+
+        const transitionResult = vector.transition(inputVector);
+        results.set(vector.id, transitionResult.matchResult);
+
+        if (transitionResult.matched) {
+          matchedVectors.push(vector.id);
+
+          // If this vector has outputs and was matched, mark it as just matched
+          // and store the output vector for visualization
+          if (vector.getOutputVectors().length > 0) {
+            vector.setWasJustMatched();
+
+            // Store the first output vector for visualization
+            if (transitionResult.outputVectors.length > 0) {
+              vector.setLastOutputVector(transitionResult.outputVectors[0] || null);
+            }
           }
-        });
 
-        // Collect output vectors
-        assertedOutputs.push(...transitionResult.outputVectors);
-      }
-    }
+          // Add next vectors to activation list for immediate processing
+          transitionResult.nextVectorIds.forEach(id => {
+            if (this.vectors.has(id)) {
+              const nextVector = this.vectors.get(id);
+              if (nextVector && !nextVector.isActive()) {
+                // Activate the vector immediately
+                nextVector.setActive();
+                activatedVectors.push(id);
+                newVectorsToActivate.add(id);
+              }
+            }
+          });
 
-    // Activate next vectors
-    const activatedVectors = Array.from(vectorsToActivate);
-    for (const vectorId of activatedVectors) {
-      const vector = this.vectors.get(vectorId);
-      if (vector) {
-        vector.setActive();
+          // Collect output vectors
+          assertedOutputs.push(...transitionResult.outputVectors);
+        }
       }
+
+      // Prepare next batch: newly activated vectors that haven't been processed
+      vectorsToProcess = Array.from(newVectorsToActivate)
+        .map(id => this.vectors.get(id))
+        .filter((v): v is RealityVector => v !== undefined && !processedVectorIds.has(v.id));
     }
 
     return {
