@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import InputSequenceSelector from './InputSequenceSelector';
 
 interface InputStreamVisualizationProps {
   inputVectors: number[][];
@@ -101,6 +102,9 @@ const InputStreamVisualization: React.FC<InputStreamVisualizationProps> = ({
           )}
         </div>
       </div>
+
+      {/* Input Sequence Selector */}
+      <InputSequenceSelector />
 
       {/* Vector Queue */}
       <div style={{
