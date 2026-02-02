@@ -800,6 +800,74 @@ app.delete('/api/machines/:id', async (req: Request, res: Response) => {
   }
 });
 
+// Machine JSON endpoints - proxy to Reality Engine
+
+// List available machine JSON files
+app.get('/api/machines/json/list', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/json/list`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error listing machine JSON files:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Load machine from JSON file
+app.get('/api/machines/json/:name', async (req: Request, res: Response) => {
+  try {
+    const { name } = req.params;
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/json/${name}`);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'machine-loaded',
+      machine: response.data.machine,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error loading machine from JSON:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Import machine from JSON
+app.post('/api/machines/json/import', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/machines/json/import`, req.body);
+
+    // Broadcast update to connected clients
+    broadcast({
+      type: 'machine-imported',
+      machine: response.data.machine,
+      timestamp: Date.now()
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error importing machine JSON:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Export machine to JSON
+app.get('/api/machines/:id/export', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const pretty = req.query.pretty || 'true';
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/${id}/export?pretty=${pretty}`);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', response.headers['content-disposition'] || 'attachment; filename="machine.json"');
+    res.send(response.data);
+  } catch (error: any) {
+    console.error('Error exporting machine to JSON:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
 // Machine Graph & Perceptual Space Simulation endpoints
 
 // Get machine graph visualization data

@@ -1,0 +1,23 @@
+pragmatics: define an overall deminsion to our preception of reality. Call it n. So anb input vector space of n, En, is the event space of our reality. Any machine views that pportion fo reality they are interested in. For now, we will make that a continueous index, m, into En yeilding the actual input space of the machine (Em).  the machine will produce an output event stream of lenth x (Ox) that must be integrated back into En. Thus each machine produced output event will be merged back into our overall preception of reality, thus providing a temporally new view, or preception, of overall reality.
+
+
+Create a new example machine that has the following characteristics:
+
+Critical Event Sequences:
+Set = {(0.0)(1,0)->(1,0)
+Reset = (0,0)(0,1)->(0,1)
+
+Provide mappings
+inputMapping: offset 4, lentgh 2
+OutputMapping: offest 8, lenth 2
+
+Provide test input event sequences of:
+
+{(0,0)(1,0)(0,0)(0,1)(0,0)(1,0)(1,1)(0,1)}
+
+the input sequence provides an output sequence of:
+{(0,1)(1,0)(1,0)(0,0)(0,0)(1,0)(1,0)(1,0)}
+
+Connect this input space to the universial reality vector.
+
+

@@ -1,5 +1,8 @@
 import express, { Router } from 'express';
 import type { Request, Response } from 'express';
+import { readFileSync, readdirSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { RealityEngine } from '../engine/RealityEngine.js';
 import { RealityVector } from '../models/RealityVector.js';
 import { CriticalEventSequence } from '../models/CriticalEventSequence.js';
@@ -9,7 +12,11 @@ import { PreceptionOfReality } from '../engine/PreceptionOfReality.js';
 import { RealitySampler, SamplingStrategy } from '../engine/RealitySampler.js';
 import { SimulationController } from '../engine/SimulationController.js';
 import { PerceptualSpaceSimulator } from '../engine/PerceptualSpaceSimulator.js';
+import { MachineLoader } from '../services/MachineLoader.js';
 import config from '../config/config.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * API Routes for Reality Engine
@@ -32,68 +39,72 @@ export class RealityEngineAPI {
   }
 
   /**
-   * Initialize default machines and sequences on startup
+   * Initialize default machines from JSON files on startup
    */
   private async initializeDefaultSequences(): Promise<void> {
     try {
-      console.log('Loading example machines on startup...');
+      console.log('Loading example machines from JSON files on startup...');
 
-      // Load Multi-Step Machine
-      try {
-        const { createMultiStepMachine } = await import('../examples/multi-step-sequences/sequence-definitions.js');
-        const multiStepMachine = createMultiStepMachine();
-        this.engine.addMachine(multiStepMachine);
-        console.log('  ✓ Multi-Step Sequences machine loaded');
-      } catch (err) {
-        console.error('  ✗ Failed to load Multi-Step machine:', err);
+      const machinesDir = join(__dirname, '../../examples/machines');
+
+      if (!existsSync(machinesDir)) {
+        console.warn('  ⚠ Machines directory not found:', machinesDir);
+        return;
       }
 
-      // Load Kleene Star Machine
-      try {
-        const { createKleeneStarMachine } = await import('../examples/kleene-star-operator/kleene-star-sequences.js');
-        const kleeneMachine = createKleeneStarMachine();
-        this.engine.addMachine(kleeneMachine);
-        console.log('  ✓ Kleene Star Operator machine loaded');
-      } catch (err) {
-        console.error('  ✗ Failed to load Kleene Star machine:', err);
+      // List of machines to load on startup
+      const machinesToLoad = [
+        'RSFlipFlop.json',
+        'RS2.json',
+        'MultiStep.json',
+        'DataCenterMonitoring.json',
+        'KleeneStar.json'
+      ];
+
+      let loadedCount = 0;
+      let failedCount = 0;
+
+      for (const filename of machinesToLoad) {
+        try {
+          const filepath = join(machinesDir, filename);
+
+          if (!existsSync(filepath)) {
+            console.warn(`  ⚠ JSON file not found: ${filename}`);
+            failedCount++;
+            continue;
+          }
+
+          const jsonString = readFileSync(filepath, 'utf8');
+          const machine = MachineLoader.loadFromJSON(jsonString);
+          this.engine.addMachine(machine);
+
+          console.log(`  ✓ ${machine.name} loaded from ${filename}`);
+          loadedCount++;
+
+          // Initialize simulation controller with the first machine's test vectors
+          if (!this.simulationController && machine.metadata.inputSequences) {
+            const inputSequences = machine.metadata.inputSequences as any[];
+            if (inputSequences.length > 0) {
+              const firstSequence = inputSequences[0];
+              if (firstSequence.vectors && Array.isArray(firstSequence.vectors)) {
+                this.simulationController = new SimulationController(this.engine, {
+                  autoPlayDelayMs: 2000,
+                  inputVectors: firstSequence.vectors,
+                  loop: true
+                });
+                console.log(`  ✓ Simulation controller initialized with ${firstSequence.name}`);
+              }
+            }
+          }
+        } catch (err: any) {
+          console.error(`  ✗ Failed to load ${filename}:`, err.message);
+          failedCount++;
+        }
       }
 
-      // Load NAND Gate Machine
-      try {
-        const { createNANDGateMachine, generateNANDTestVectors } =
-          await import('../examples/nand-gate/nand-gate-sequences.js');
-        const nandMachine = createNANDGateMachine();
-        this.engine.addMachine(nandMachine);
-
-        const testVectors = generateNANDTestVectors();
-        const allInputVectors = testVectors.map(t => t.vector);
-
-        console.log('  ✓ NAND Gate machine loaded');
-
-        // Initialize simulation controller with NAND test vectors
-        this.simulationController = new SimulationController(this.engine, {
-          autoPlayDelayMs: 2000,
-          inputVectors: allInputVectors,
-          loop: true
-        });
-      } catch (err) {
-        console.error('  ✗ Failed to load NAND Gate machine:', err);
-      }
-
-      // Load Data Center Monitoring Machine
-      try {
-        const { createDataCenterMachine } =
-          await import('../examples/data-center-monitoring/data-center-sequences.js');
-        const dataCenterMachine = createDataCenterMachine();
-        this.engine.addMachine(dataCenterMachine);
-        console.log('  ✓ Data Center Monitoring machine loaded');
-      } catch (err) {
-        console.error('  ✗ Failed to load Data Center Monitoring machine:', err);
-      }
-
-      console.log('Example machines and sequences loaded successfully');
-    } catch (error) {
-      console.error('Error loading default machines:', error);
+      console.log(`\nMachine loading complete: ${loadedCount} loaded, ${failedCount} failed`);
+    } catch (error: any) {
+      console.error('Error loading machines from JSON:', error.message);
     }
   }
 
@@ -156,6 +167,12 @@ export class RealityEngineAPI {
     this.router.put('/machines/:id', this.updateMachine.bind(this));
     this.router.delete('/machines/:id', this.deleteMachine.bind(this));
     this.router.post('/machines/:id/process', this.processMachineInput.bind(this));
+
+    // Machine JSON endpoints (load/save)
+    this.router.get('/machines/json/list', this.listMachineJSONFiles.bind(this));
+    this.router.get('/machines/json/:name', this.loadMachineFromJSON.bind(this));
+    this.router.post('/machines/json/import', this.importMachineJSON.bind(this));
+    this.router.get('/machines/:id/export', this.exportMachineToJSON.bind(this));
 
     // Machine Graph & Perceptual Space Simulation endpoints
     this.router.get('/machine-graph', this.getMachineGraph.bind(this));
@@ -910,6 +927,179 @@ export class RealityEngineAPI {
       console.error('Error processing machine input:', error);
       res.status(500).json({
         error: 'Failed to process machine input',
+        details: error.message
+      });
+    }
+  }
+
+  // Machine JSON endpoints
+
+  /**
+   * List all available machine JSON files
+   */
+  private listMachineJSONFiles(_req: Request, res: Response): void {
+    try {
+      const machinesDir = join(__dirname, '../../examples/machines');
+
+      if (!existsSync(machinesDir)) {
+        res.json({ machines: [] });
+        return;
+      }
+
+      const files = readdirSync(machinesDir)
+        .filter(file => file.endsWith('.json'))
+        .map(file => {
+          const filepath = join(machinesDir, file);
+          const jsonString = readFileSync(filepath, 'utf8');
+          const machineJSON = JSON.parse(jsonString);
+
+          return {
+            filename: file,
+            name: machineJSON.machine.name,
+            description: machineJSON.machine.description,
+            version: machineJSON.version,
+            metadata: machineJSON.machine.metadata,
+            sequenceCount: machineJSON.machine.sequences.length
+          };
+        });
+
+      res.json({ machines: files });
+    } catch (error: any) {
+      console.error('Error listing machine JSON files:', error);
+      res.status(500).json({
+        error: 'Failed to list machine JSON files',
+        details: error.message
+      });
+    }
+  }
+
+  /**
+   * Load a machine from JSON file and add it to the engine
+   */
+  private loadMachineFromJSON(req: Request, res: Response): void {
+    try {
+      const { name } = req.params;
+
+      if (!name) {
+        res.status(400).json({ error: 'Machine name required' });
+        return;
+      }
+
+      // Construct the file path
+      const machinesDir = join(__dirname, '../../examples/machines');
+      const filename = name.endsWith('.json') ? name : `${name}.json`;
+      const filepath = join(machinesDir, filename);
+
+      if (!existsSync(filepath)) {
+        res.status(404).json({ error: `Machine JSON file not found: ${filename}` });
+        return;
+      }
+
+      // Read and load the machine
+      const jsonString = readFileSync(filepath, 'utf8');
+      const machine = MachineLoader.loadFromJSON(jsonString);
+
+      // Add machine to engine
+      this.engine.addMachine(machine);
+
+      res.json({
+        success: true,
+        machine: {
+          ...machine.toJSON(),
+          isExample: true,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          lastAccessedAt: null
+        },
+        message: `Machine "${machine.name}" loaded successfully from ${filename}`
+      });
+    } catch (error: any) {
+      console.error('Error loading machine from JSON:', error);
+      res.status(500).json({
+        error: 'Failed to load machine from JSON',
+        details: error.message
+      });
+    }
+  }
+
+  /**
+   * Import a machine from JSON string (uploaded by user)
+   */
+  private importMachineJSON(req: Request, res: Response): void {
+    try {
+      const { json } = req.body;
+
+      if (!json) {
+        res.status(400).json({ error: 'JSON string required' });
+        return;
+      }
+
+      // Validate the JSON
+      const validation = MachineLoader.validate(json);
+      if (!validation.valid) {
+        res.status(400).json({
+          error: 'Invalid machine JSON',
+          details: validation.errors
+        });
+        return;
+      }
+
+      // Load the machine
+      const machine = MachineLoader.loadFromJSON(json);
+
+      // Add machine to engine
+      this.engine.addMachine(machine);
+
+      res.json({
+        success: true,
+        machine: {
+          ...machine.toJSON(),
+          isExample: false,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          lastAccessedAt: null
+        },
+        message: `Machine "${machine.name}" imported successfully`
+      });
+    } catch (error: any) {
+      console.error('Error importing machine JSON:', error);
+      res.status(500).json({
+        error: 'Failed to import machine JSON',
+        details: error.message
+      });
+    }
+  }
+
+  /**
+   * Export a machine to JSON format
+   */
+  private exportMachineToJSON(req: Request, res: Response): void {
+    try {
+      const { id } = req.params;
+      const pretty = req.query.pretty === 'true';
+
+      if (!id) {
+        res.status(400).json({ error: 'Machine ID required' });
+        return;
+      }
+
+      const machine = this.engine.getMachine(id);
+
+      if (!machine) {
+        res.status(404).json({ error: 'Machine not found' });
+        return;
+      }
+
+      // Export machine to JSON
+      const jsonString = MachineLoader.saveToJSON(machine, pretty);
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${machine.name}.json"`);
+      res.send(jsonString);
+    } catch (error: any) {
+      console.error('Error exporting machine to JSON:', error);
+      res.status(500).json({
+        error: 'Failed to export machine to JSON',
         details: error.message
       });
     }

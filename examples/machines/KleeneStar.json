@@ -1,0 +1,320 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Kleene Star Operator",
+    "description": "Demonstrates Kleene star (*) operator in critical event sequences - zero or more repetitions with alternation",
+    "metadata": {
+      "category": "pattern-matching",
+      "author": "Reality Engine",
+      "created": "2026-02-02T00:00:00Z",
+      "eventSpace": "3D binary vectors: 000-111",
+      "outputSpace": "2D binary vectors: {01, 10}",
+      "tags": ["kleene-star", "pattern-matching", "repetition", "self-loop"],
+      "sequenceCount": 2,
+      "operator": "Kleene star (*)",
+      "description": "Two sequences demonstrating repetition patterns"
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 8,
+        "length": 3
+      },
+      "output": {
+        "offset": 11,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "kleene-seq1",
+        "name": "Sequence 1: 001+000*+010→[01]",
+        "metadata": {
+          "description": "001, then zero or more 000, then 010",
+          "pattern": "001+000*+010",
+          "output": "[0,1]",
+          "examples": [
+            "001, 010 → [0,1] (zero occurrences of 000)",
+            "001, 000, 010 → [0,1] (one occurrence)",
+            "001, 000, 000, 010 → [0,1] (two occurrences)"
+          ]
+        },
+        "vectors": [
+          {
+            "id": "kleene-seq1-001",
+            "elements": [
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 1,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "001",
+              "description": "Initial state: start of pattern",
+              "role": "initial"
+            },
+            "nextVectorIds": ["kleene-seq1-000", "kleene-seq1-010"]
+          },
+          {
+            "id": "kleene-seq1-000",
+            "elements": [
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "000",
+              "description": "Kleene star loop: can repeat 0 or more times",
+              "role": "kleene-loop"
+            },
+            "nextVectorIds": ["kleene-seq1-000", "kleene-seq1-010"]
+          },
+          {
+            "id": "kleene-seq1-010",
+            "elements": [
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 1,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "010",
+              "description": "Terminal state: pattern complete",
+              "role": "terminal"
+            },
+            "outputVectors": [
+              {
+                "id": "kleene-seq1-output",
+                "vector": [0, 1],
+                "metadata": {
+                  "description": "Sequence 1 complete: 001+000*+010 matched",
+                  "pattern": "001+000*+010",
+                  "operator": "kleene-star"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "kleene-seq2",
+        "name": "Sequence 2: 010+(000+001)*+001→[10]",
+        "metadata": {
+          "description": "010, then zero or more (000 or 001), then 001",
+          "pattern": "010+(000+001)*+001",
+          "output": "[1,0]",
+          "examples": [
+            "010, 001 → [1,0] (zero occurrences)",
+            "010, 000, 001 → [1,0] (one 000)",
+            "010, 001, 001 → [1,0] (one 001)",
+            "010, 000, 001, 000, 001 → [1,0] (mixed)"
+          ]
+        },
+        "vectors": [
+          {
+            "id": "kleene-seq2-010",
+            "elements": [
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 1,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "010",
+              "description": "Initial state: start of pattern",
+              "role": "initial"
+            },
+            "nextVectorIds": ["kleene-seq2-000", "kleene-seq2-001-loop", "kleene-seq2-001-final"]
+          },
+          {
+            "id": "kleene-seq2-000",
+            "elements": [
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "000",
+              "description": "Kleene star loop alternative A",
+              "role": "kleene-loop-a"
+            },
+            "nextVectorIds": ["kleene-seq2-000", "kleene-seq2-001-loop", "kleene-seq2-001-final"]
+          },
+          {
+            "id": "kleene-seq2-001-loop",
+            "elements": [
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 1,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "001-loop",
+              "description": "Kleene star loop alternative B",
+              "role": "kleene-loop-b"
+            },
+            "nextVectorIds": ["kleene-seq2-000", "kleene-seq2-001-loop", "kleene-seq2-001-final"]
+          },
+          {
+            "id": "kleene-seq2-001-final",
+            "elements": [
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 1,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "001-final",
+              "description": "Terminal state: pattern complete",
+              "role": "terminal"
+            },
+            "outputVectors": [
+              {
+                "id": "kleene-seq2-output",
+                "vector": [1, 0],
+                "metadata": {
+                  "description": "Sequence 2 complete: 010+(000+001)*+001 matched",
+                  "pattern": "010+(000+001)*+001",
+                  "operator": "kleene-star"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Sequence 1: Zero Repetitions",
+        "pattern": "001+010",
+        "description": "Minimal path: 001 → 010 (no 000 loops)",
+        "vectors": [
+          [0, 0, 1],
+          [0, 1, 0]
+        ]
+      },
+      {
+        "name": "Sequence 1: Two Repetitions",
+        "pattern": "001+000+000+010",
+        "description": "Path with 2 loops: 001 → 000 → 000 → 010",
+        "vectors": [
+          [0, 0, 1],
+          [0, 0, 0],
+          [0, 0, 0],
+          [0, 1, 0]
+        ]
+      },
+      {
+        "name": "Sequence 2: Alternation Pattern",
+        "pattern": "010+(000+001)+001",
+        "description": "Path with alternation: 010 → 000 → 001 → 001",
+        "vectors": [
+          [0, 1, 0],
+          [0, 0, 0],
+          [0, 0, 1],
+          [0, 0, 1]
+        ]
+      },
+      {
+        "name": "Both Sequences Combined",
+        "pattern": "001+000*+010...010+(000+001)*+001",
+        "description": "Execute both Kleene star sequences",
+        "vectors": [
+          [0, 0, 1],
+          [0, 0, 0],
+          [0, 1, 0],
+          [0, 1, 0],
+          [0, 0, 0],
+          [0, 0, 1],
+          [0, 0, 1]
+        ]
+      }
+    ]
+  }
+}

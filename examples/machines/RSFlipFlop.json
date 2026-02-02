@@ -1,0 +1,171 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "RS Flip Flop",
+    "description": "Bistable multivibrator with Set and Reset critical event sequences",
+    "metadata": {
+      "category": "digital-logic",
+      "author": "Reality Engine",
+      "created": "2026-02-02T00:00:00Z",
+      "eventSpace": "2D binary vectors: [S, R] inputs (00, 01, 10, 11)",
+      "outputSpace": "2D binary: {[0,1]=RESET/LOW, [1,0]=SET/HIGH}",
+      "tags": ["flip-flop", "digital-logic", "immediate-response"],
+      "sequenceCount": 2,
+      "description": "Two always-active events: SET (10→[1,0]) and RESET (01→[0,1])"
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 3,
+        "length": 2
+      },
+      "output": {
+        "offset": 6,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "rs-set-sequence",
+        "name": "SET Sequence: 10→[1,0]",
+        "metadata": {
+          "description": "Outputs HIGH when S=1, R=0",
+          "path": "10→[1,0]",
+          "output": "[1,0]"
+        },
+        "vectors": [
+          {
+            "id": "rs-event-10",
+            "elements": [
+              {
+                "value": 1,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "10",
+              "description": "Set state (S=1, R=0) - outputs when input matches [1,0]",
+              "state": "SET"
+            },
+            "outputVectors": [
+              {
+                "id": "rs-output-set",
+                "vector": [1, 0],
+                "metadata": {
+                  "description": "Flip flop SET to HIGH (1)",
+                  "state": "SET",
+                  "logicValue": "HIGH",
+                  "qOutput": 1,
+                  "qBarOutput": 0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rs-reset-sequence",
+        "name": "RESET Sequence: 01→[0,1]",
+        "metadata": {
+          "description": "Outputs LOW when S=0, R=1",
+          "path": "01→[0,1]",
+          "output": "[0,1]"
+        },
+        "vectors": [
+          {
+            "id": "rs-event-01",
+            "elements": [
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              },
+              {
+                "value": 1,
+                "comparatorType": "equals",
+                "threshold": 0.05
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "01",
+              "description": "Reset state (S=0, R=1) - outputs when input matches [0,1]",
+              "state": "RESET"
+            },
+            "outputVectors": [
+              {
+                "id": "rs-output-reset",
+                "vector": [0, 1],
+                "metadata": {
+                  "description": "Flip flop RESET to LOW (0)",
+                  "state": "RESET",
+                  "logicValue": "LOW",
+                  "qOutput": 0,
+                  "qBarOutput": 1
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "SET Operation",
+        "pattern": "00→10",
+        "description": "Transition from hold to set state",
+        "vectors": [
+          [0, 0],
+          [1, 0]
+        ]
+      },
+      {
+        "name": "RESET Operation",
+        "pattern": "00→01",
+        "description": "Transition from hold to reset state",
+        "vectors": [
+          [0, 0],
+          [0, 1]
+        ]
+      },
+      {
+        "name": "COMPREHENSIVE VALIDATION SEQUENCE",
+        "pattern": "13-step validation of all events and outputs",
+        "description": "Validates: (1) All event activations (2) All output generation (3) Repeated operations (4) State transitions (5) Visualization correctness. Tests 3x SET, 3x RESET with HOLD states between.",
+        "vectors": [
+          [0, 0],
+          [1, 0],
+          [0, 0],
+          [1, 0],
+          [0, 0],
+          [0, 1],
+          [0, 0],
+          [0, 1],
+          [0, 0],
+          [1, 0],
+          [0, 0],
+          [0, 1],
+          [0, 0]
+        ],
+        "metadata": {
+          "validationType": "comprehensive",
+          "totalSteps": 13,
+          "expectedOutputs": 6,
+          "expectedOutputSequence": "[1,0], [1,0], [0,1], [0,1], [1,0], [0,1]",
+          "validatesEventActivation": true,
+          "validatesOutputGeneration": true,
+          "validatesVisualization": true,
+          "validatesRepeatedOperations": true,
+          "validatesStateTransitions": true
+        }
+      }
+    ]
+  }
+}
