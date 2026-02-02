@@ -17,11 +17,11 @@ import type { OutputVector, PerceptualMapping } from '../../models/types.js';
  * Output Space: {0, 1} - single bit representing flip flop state
  *
  * Critical Event Sequences:
- * 1. SET Sequence:   00 → 10 (outputs 1)
- * 2. RESET Sequence: 00 → 01 (outputs 0)
+ * 1. SET Sequence:   10 → [1,0] (when S=1, R=0, output [1,0])
+ * 2. RESET Sequence: 01 → [0,1] (when S=0, R=1, output [0,1])
  *
- * The flip flop starts in a stable state (00) and transitions to
- * either Set (10) or Reset (01) to change its output state.
+ * Both events are always active and respond immediately to their input patterns.
+ * This implements a proper RS flip-flop where outputs are generated when inputs match.
  */
 
 /**
@@ -64,70 +64,48 @@ function createRSVector(s: number, r: number, isInitial: boolean = false): Reali
 }
 
 /**
- * SET Sequence: 00 → 10 (outputs 1)
+ * SET Sequence: 10 (outputs 1)
  *
- * Starting from stable state (S=0, R=0), when Set input goes high (S=1, R=0),
- * the flip flop outputs 1 (HIGH/SET state)
+ * When Set input goes high (S=1, R=0), the flip flop outputs 1 (HIGH/SET state)
+ *
+ * SIMPLIFIED: Single event that is always active and responds to [1,0] input
  */
 export function createSetSequence(): CriticalEventSequence {
-  const seq = new CriticalEventSequence('SET Sequence: 00→10→[1]');
+  const seq = new CriticalEventSequence('SET Sequence: 10→[1,0]');
 
-  // Event 00 (Initial - Hold state)
-  const event00 = createRSVector(0, 0, true);
-  event00.metadata = {
-    name: '00',
-    description: 'Stable state (S=0, R=0)',
-    state: 'HOLD'
-  };
-
-  // Event 10 (Set - Output HIGH)
-  const event10 = createRSVector(1, 0, false);
+  // Event 10 (Set - Output HIGH) - Made INITIAL so it's always active
+  const event10 = createRSVector(1, 0, true);  // Changed to isInitial=true
   event10.metadata = {
     name: '10',
-    description: 'Set state (S=1, R=0)',
+    description: 'Set state (S=1, R=0) - outputs when input matches [1,0]',
     state: 'SET'
   };
   event10.addOutputVector(createOutput(1, 'Flip flop SET to HIGH (1)'));
 
-  // Build chain: 00 → 10
-  event00.addNextVector(event10.id);
-
-  seq.addVector(event00);
   seq.addVector(event10);
 
   return seq;
 }
 
 /**
- * RESET Sequence: 00 → 01 (outputs 0)
+ * RESET Sequence: 01 (outputs 0)
  *
- * Starting from stable state (S=0, R=0), when Reset input goes high (S=0, R=1),
- * the flip flop outputs 0 (LOW/RESET state)
+ * When Reset input goes high (S=0, R=1), the flip flop outputs 0 (LOW/RESET state)
+ *
+ * SIMPLIFIED: Single event that is always active and responds to [0,1] input
  */
 export function createResetSequence(): CriticalEventSequence {
-  const seq = new CriticalEventSequence('RESET Sequence: 00→01→[0]');
+  const seq = new CriticalEventSequence('RESET Sequence: 01→[0,1]');
 
-  // Event 00 (Initial - Hold state)
-  const event00 = createRSVector(0, 0, true);
-  event00.metadata = {
-    name: '00',
-    description: 'Stable state (S=0, R=0)',
-    state: 'HOLD'
-  };
-
-  // Event 01 (Reset - Output LOW)
-  const event01 = createRSVector(0, 1, false);
+  // Event 01 (Reset - Output LOW) - Made INITIAL so it's always active
+  const event01 = createRSVector(0, 1, true);  // Changed to isInitial=true
   event01.metadata = {
     name: '01',
-    description: 'Reset state (S=0, R=1)',
+    description: 'Reset state (S=0, R=1) - outputs when input matches [0,1]',
     state: 'RESET'
   };
   event01.addOutputVector(createOutput(0, 'Flip flop RESET to LOW (0)'));
 
-  // Build chain: 00 → 01
-  event00.addNextVector(event01.id);
-
-  seq.addVector(event00);
   seq.addVector(event01);
 
   return seq;
@@ -164,11 +142,11 @@ export function createRSFlipFlopMachine(): Machine {
       outputSpace: '2D binary: {[0,1]=RESET/LOW, [1,0]=SET/HIGH}',
       sequenceCount: 2,
       inputVectorCount: testVectors.length,
-      description: 'Two sequences: SET (00→10) and RESET (00→01)',
+      description: 'Two always-active events: SET (10→[1,0]) and RESET (01→[0,1])',
       category: 'digital-logic',
       sequences: [
-        { name: 'SET Sequence', path: '00→10', output: '[1]', description: 'Sets flip flop to HIGH' },
-        { name: 'RESET Sequence', path: '00→01', output: '[0]', description: 'Resets flip flop to LOW' }
+        { name: 'SET Event', path: '10→[1,0]', output: '[1,0]', description: 'Outputs HIGH when S=1, R=0' },
+        { name: 'RESET Event', path: '01→[0,1]', output: '[0,1]', description: 'Outputs LOW when S=0, R=1' }
       ],
       sampleVectors: testVectors.map(tv => ({
         vector: tv.vector,
@@ -296,86 +274,86 @@ export function generateRSValidationVectors(): Array<{
     // Step 1: Initial HOLD
     {
       vector: [0, 0],
-      description: 'Step 1: [0,0] HOLD - Initial state, both event 00s active',
-      expectedActiveEvents: 2 // Both sequence event 00s
+      description: 'Step 1: [0,0] HOLD - Both events active, no match',
+      expectedActiveEvents: 2 // Both events: 10 and 01 (always active)
     },
     // Step 2: First SET
     {
       vector: [1, 0],
-      description: 'Step 2: [1,0] SET - Activates event 10, generates output [1,0]',
+      description: 'Step 2: [1,0] SET - Event 10 matches, generates output [1,0]',
       expectedOutput: '[1,0]',
-      expectedActiveEvents: 3 // Both event 00s + event 10
+      expectedActiveEvents: 2 // Both events always active
     },
     // Step 3: HOLD
     {
       vector: [0, 0],
-      description: 'Step 3: [0,0] HOLD - Event 10 stays active',
-      expectedActiveEvents: 3
+      description: 'Step 3: [0,0] HOLD - No match, no output',
+      expectedActiveEvents: 2
     },
     // Step 4: Second SET
     {
       vector: [1, 0],
       description: 'Step 4: [1,0] SET - Event 10 matched again, output [1,0] again',
       expectedOutput: '[1,0]',
-      expectedActiveEvents: 3
+      expectedActiveEvents: 2
     },
     // Step 5: HOLD
     {
       vector: [0, 0],
       description: 'Step 5: [0,0] HOLD - Stable state',
-      expectedActiveEvents: 3
+      expectedActiveEvents: 2
     },
     // Step 6: First RESET
     {
       vector: [0, 1],
-      description: 'Step 6: [0,1] RESET - Activates event 01, generates output [0,1]',
+      description: 'Step 6: [0,1] RESET - Event 01 matches, generates output [0,1]',
       expectedOutput: '[0,1]',
-      expectedActiveEvents: 4 // Both event 00s + event 10 + event 01
+      expectedActiveEvents: 2 // Both events always active
     },
     // Step 7: HOLD
     {
       vector: [0, 0],
-      description: 'Step 7: [0,0] HOLD - Event 01 stays active',
-      expectedActiveEvents: 4
+      description: 'Step 7: [0,0] HOLD - No match, no output',
+      expectedActiveEvents: 2
     },
     // Step 8: Second RESET
     {
       vector: [0, 1],
       description: 'Step 8: [0,1] RESET - Event 01 matched again, output [0,1] again',
       expectedOutput: '[0,1]',
-      expectedActiveEvents: 4
+      expectedActiveEvents: 2
     },
     // Step 9: HOLD
     {
       vector: [0, 0],
       description: 'Step 9: [0,0] HOLD - Stable state',
-      expectedActiveEvents: 4
+      expectedActiveEvents: 2
     },
     // Step 10: SET after RESET
     {
       vector: [1, 0],
       description: 'Step 10: [1,0] SET - After RESET, validates state transitions',
       expectedOutput: '[1,0]',
-      expectedActiveEvents: 4
+      expectedActiveEvents: 2
     },
     // Step 11: HOLD
     {
       vector: [0, 0],
       description: 'Step 11: [0,0] HOLD - All events stable',
-      expectedActiveEvents: 4
+      expectedActiveEvents: 2
     },
     // Step 12: RESET after SET
     {
       vector: [0, 1],
       description: 'Step 12: [0,1] RESET - After SET, validates alternating',
       expectedOutput: '[0,1]',
-      expectedActiveEvents: 4
+      expectedActiveEvents: 2
     },
     // Step 13: Final HOLD
     {
       vector: [0, 0],
       description: 'Step 13: [0,0] HOLD - Final state, validation complete',
-      expectedActiveEvents: 4
+      expectedActiveEvents: 2
     }
   ];
 }
