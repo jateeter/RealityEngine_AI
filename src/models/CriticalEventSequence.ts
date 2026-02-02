@@ -159,29 +159,21 @@ export class CriticalEventSequence {
           }
 
           // Add next vectors to activation list
-          // CRITICAL FIX: Only activate next vectors if they can match the current input
-          // This prevents premature activation and immediate deactivation
+          // CRITICAL: Activate next vectors and let them wait for future inputs
+          // They will be processed on subsequent input cycles, not immediately
           transitionResult.nextVectorIds.forEach(id => {
             if (this.vectors.has(id)) {
               const nextVector = this.vectors.get(id);
               if (nextVector) {
-                // Check if this next vector can match the current input
-                const canMatch = nextVector.match(inputVector).matched;
-
-                // Only activate if the vector can match the current input
-                // This implements "lookahead" activation
-                if (canMatch) {
-                  // Activate the vector if it's not already active
-                  if (!nextVector.isActive()) {
-                    nextVector.setActive();
-                    activatedVectors.push(id);
-                  }
-
-                  // Add to processing queue to match and generate output immediately
-                  if (!processedVectorIds.has(id)) {
-                    newVectorsToActivate.add(id);
-                  }
+                // Activate the vector if it's not already active
+                if (!nextVector.isActive()) {
+                  nextVector.setActive();
+                  activatedVectors.push(id);
                 }
+
+                // NOTE: Do NOT add to processing queue (newVectorsToActivate)
+                // Newly activated vectors should NOT be processed in the same input cycle
+                // They will be processed when the NEXT input arrives
               }
             }
           });
