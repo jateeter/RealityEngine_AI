@@ -186,10 +186,12 @@ export class RealityEngineAPI {
 
     // Demo endpoints
     this.router.get('/demo/load', this.loadDemo.bind(this));
-    this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
-    this.router.get('/demo/nand-gate', this.loadNANDGateExample.bind(this));
+    this.router.get('/demo/rs-flip-flop', this.loadRSFlipFlopExample.bind(this));
+    this.router.get('/demo/rs2', this.loadRS2Example.bind(this));
     this.router.get('/demo/multi-step', this.loadMultiStepExample.bind(this));
+    this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
     this.router.get('/demo/kleene-star', this.loadKleeneStarExample.bind(this));
+    this.router.get('/demo/nand-gate', this.loadNANDGateExample.bind(this)); // Deprecated
   }
 
   // Health check
@@ -1108,32 +1110,50 @@ export class RealityEngineAPI {
   // Demo endpoints
   private async loadDemo(_req: Request, res: Response): Promise<void> {
     try {
-      const { generateDemoDataset } = await import('../demo/data-generator.js');
-      const dataset = generateDemoDataset();
+      // Load the first available machine from JSON
+      const machines = this.engine.getAllMachines();
 
-      // Clear existing sequences
-      const existingSequences = this.engine.getAllSequences();
-      for (const seq of existingSequences) {
-        this.engine.removeSequence(seq.id);
+      if (machines.length === 0) {
+        res.status(404).json({
+          error: 'No machines loaded. Please ensure machine JSON files are available in examples/machines/'
+        });
+        return;
       }
 
-      // Load new sequences
-      for (const sequence of dataset.sequences) {
-        this.engine.addSequence(sequence);
+      // Use the first machine
+      const machine = machines[0];
+
+      if (!machine) {
+        res.status(404).json({
+          error: 'No machines available'
+        });
+        return;
       }
+
+      // Get input vectors from machine metadata
+      const inputSequences = machine.metadata.inputSequences as any[] || [];
+      const allInputVectors = inputSequences.length > 0
+        ? inputSequences[0].vectors || []
+        : [];
 
       // Initialize simulation controller
       this.simulationController = new SimulationController(this.engine, {
         autoPlayDelayMs: 1000,
-        inputVectors: dataset.inputVectors,
+        inputVectors: allInputVectors,
         loop: true
       });
 
       res.json({
         success: true,
-        metadata: dataset.metadata,
-        sequencesLoaded: dataset.sequences.length,
-        inputVectorsLoaded: dataset.inputVectors.length
+        metadata: {
+          name: machine.name,
+          description: machine.description,
+          machineId: machine.id,
+          totalSequences: machine.getSequenceCount(),
+          totalMachines: machines.length
+        },
+        sequencesLoaded: machine.getSequenceCount(),
+        inputVectorsLoaded: allInputVectors.length
       });
     } catch (error: any) {
       console.error('Error loading demo:', error);
@@ -1144,29 +1164,123 @@ export class RealityEngineAPI {
     }
   }
 
+  private async loadRSFlipFlopExample(_req: Request, res: Response): Promise<void> {
+    try {
+      // Find the RS Flip Flop machine (should be loaded from JSON)
+      const machine = this.engine.getAllMachines().find(m => m.name === 'RS Flip Flop');
+
+      if (!machine) {
+        res.status(404).json({
+          error: 'RS Flip Flop machine not found. Please ensure RSFlipFlop.json is loaded.'
+        });
+        return;
+      }
+
+      // Get input vectors from machine metadata
+      const inputSequences = machine.metadata.inputSequences as any[] || [];
+      const allInputVectors = inputSequences.length > 0
+        ? inputSequences[0].vectors || []
+        : [];
+
+      // Initialize simulation controller
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: 1000,
+        inputVectors: allInputVectors,
+        loop: true
+      });
+
+      res.json({
+        success: true,
+        machine: machine.toJSON(),
+        metadata: {
+          name: machine.name,
+          description: machine.description,
+          machineId: machine.id,
+          totalSequences: machine.getSequenceCount(),
+          sequenceNames: machine.getAllSequences().map(s => s.name),
+          totalInputVectors: allInputVectors.length,
+          ...machine.metadata
+        },
+        sequencesLoaded: machine.getSequenceCount(),
+        inputVectorsLoaded: allInputVectors.length
+      });
+    } catch (error: any) {
+      console.error('Error loading RS Flip Flop example:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to load RS Flip Flop example',
+        message: error.message
+      });
+    }
+  }
+
+  private async loadRS2Example(_req: Request, res: Response): Promise<void> {
+    try {
+      // Find the RS2 machine (should be loaded from JSON)
+      const machine = this.engine.getAllMachines().find(m => m.name === 'RS2');
+
+      if (!machine) {
+        res.status(404).json({
+          error: 'RS2 machine not found. Please ensure RS2.json is loaded.'
+        });
+        return;
+      }
+
+      // Get input vectors from machine metadata
+      const inputSequences = machine.metadata.inputSequences as any[] || [];
+      const allInputVectors = inputSequences.length > 0
+        ? inputSequences[0].vectors || []
+        : [];
+
+      // Initialize simulation controller
+      this.simulationController = new SimulationController(this.engine, {
+        autoPlayDelayMs: 1000,
+        inputVectors: allInputVectors,
+        loop: true
+      });
+
+      res.json({
+        success: true,
+        machine: machine.toJSON(),
+        metadata: {
+          name: machine.name,
+          description: machine.description,
+          machineId: machine.id,
+          totalSequences: machine.getSequenceCount(),
+          sequenceNames: machine.getAllSequences().map(s => s.name),
+          totalInputVectors: allInputVectors.length,
+          ...machine.metadata
+        },
+        sequencesLoaded: machine.getSequenceCount(),
+        inputVectorsLoaded: allInputVectors.length
+      });
+    } catch (error: any) {
+      console.error('Error loading RS2 example:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to load RS2 example',
+        message: error.message
+      });
+    }
+  }
+
   private async loadDataCenterExample(_req: Request, res: Response): Promise<void> {
     try {
-      const module = await import('../examples/data-center-monitoring/data-center-sequences.js');
-      const createDataCenterSequences = module.createDataCenterSequences;
-      const generateInitialEvents = module.generateInitialEvents;
-      const generateProgressionVectors = module.generateProgressionVectors;
+      // Find the Data Center Monitoring machine (should be loaded from JSON)
+      const machine = this.engine.getAllMachines().find(m => m.name === 'Data Center Monitoring');
 
-      // Generate sequences and input vectors
-      const sequences = createDataCenterSequences();
-      const initialEvents = generateInitialEvents();
-      const progressionVectors = generateProgressionVectors();
-      const allInputVectors = [...initialEvents, ...progressionVectors];
-
-      // Clear existing sequences
-      const existingSequences = this.engine.getAllSequences();
-      for (const seq of existingSequences) {
-        this.engine.removeSequence(seq.id);
+      if (!machine) {
+        res.status(404).json({
+          error: 'Data Center Monitoring machine not found. Please ensure DataCenterMonitoring.json is loaded.'
+        });
+        return;
       }
 
-      // Load new sequences
-      for (const sequence of sequences) {
-        this.engine.addSequence(sequence);
-      }
+      // Get input vectors from machine metadata
+      const inputSequences = machine.metadata.inputSequences as any[] || [];
+      const allInputVectors = inputSequences.length > 0
+        ? inputSequences[0].vectors || []
+        : [];
 
       // Initialize simulation controller
       this.simulationController = new SimulationController(this.engine, {
@@ -1177,16 +1291,17 @@ export class RealityEngineAPI {
 
       res.json({
         success: true,
+        machine: machine.toJSON(),
         metadata: {
-          name: 'Data Center Monitoring - 5 Critical Event Sequences',
-          description: 'Demonstrates 5 critical event sequences with depth of 5 each',
-          totalSequences: sequences.length,
-          sequenceNames: sequences.map(s => s.name),
+          name: machine.name,
+          description: machine.description,
+          machineId: machine.id,
+          totalSequences: machine.getSequenceCount(),
+          sequenceNames: machine.getAllSequences().map(s => s.name),
           totalInputVectors: allInputVectors.length,
-          initialEvents: initialEvents.length,
-          progressionVectors: progressionVectors.length
+          ...machine.metadata
         },
-        sequencesLoaded: sequences.length,
+        sequencesLoaded: machine.getSequenceCount(),
         inputVectorsLoaded: allInputVectors.length
       });
     } catch (error: any) {
@@ -1200,20 +1315,21 @@ export class RealityEngineAPI {
 
   private async loadMultiStepExample(_req: Request, res: Response): Promise<void> {
     try {
-      const { createMultiStepMachine, generateTestVectors } =
-        await import('../examples/multi-step-sequences/sequence-definitions.js');
+      // Find the Multi-Step State Machine (should be loaded from JSON)
+      const machine = this.engine.getAllMachines().find(m => m.name === 'Multi-Step State Machine');
 
-      const testVectors = generateTestVectors();
-      const allInputVectors = testVectors.map(t => t.vector);
-
-      // Find the machine by name (should already be loaded from startup)
-      let machine = this.engine.getAllMachines().find(m => m.name === 'Multi-Step Sequences');
-
-      // If not loaded, create and add it
       if (!machine) {
-        machine = createMultiStepMachine();
-        this.engine.addMachine(machine);
+        res.status(404).json({
+          error: 'Multi-Step State Machine not found. Please ensure MultiStep.json is loaded.'
+        });
+        return;
       }
+
+      // Get input vectors from machine metadata
+      const inputSequences = machine.metadata.inputSequences as any[] || [];
+      const allInputVectors = inputSequences.length > 0
+        ? inputSequences[0].vectors || []
+        : [];
 
       // Initialize simulation controller
       this.simulationController = new SimulationController(this.engine, {
@@ -1232,23 +1348,7 @@ export class RealityEngineAPI {
           totalSequences: machine.getSequenceCount(),
           sequenceNames: machine.getAllSequences().map(s => s.name),
           totalInputVectors: allInputVectors.length,
-          eventSpace: '3D binary vectors: 000-111',
-          outputSpace: '2D binary vectors: {00, 01, 10, 11}',
-          sequences: [
-            {
-              name: 'Sequence 1',
-              path: '000 → 001 → 011',
-              output: '01',
-              depth: 3
-            },
-            {
-              name: 'Sequence 2',
-              path: '100 → 101 → 111',
-              output: '10',
-              depth: 3
-            }
-          ],
-          note: 'All sequences in the machine are visualized together and process the same input sequence'
+          ...machine.metadata
         },
         sequencesLoaded: machine.getSequenceCount(),
         inputVectorsLoaded: allInputVectors.length
@@ -1265,52 +1365,16 @@ export class RealityEngineAPI {
 
   private async loadNANDGateExample(_req: Request, res: Response): Promise<void> {
     try {
-      const {
-        createNANDGateSequences,
-        generateNANDTestVectors
-      } = await import('../examples/nand-gate/nand-gate-sequences.js');
-
-      // Generate sequences and test vectors
-      const sequences = createNANDGateSequences();
-      const testVectors = generateNANDTestVectors();
-      const allInputVectors = testVectors.map(t => t.vector);
-
-      // Clear existing sequences
-      const existingSequences = this.engine.getAllSequences();
-      for (const seq of existingSequences) {
-        this.engine.removeSequence(seq.id);
-      }
-
-      // Load new sequences
-      for (const sequence of sequences) {
-        this.engine.addSequence(sequence);
-      }
-
-      // Initialize simulation controller
-      this.simulationController = new SimulationController(this.engine, {
-        autoPlayDelayMs: 2000,
-        inputVectors: allInputVectors,
-        loop: true
-      });
-
-      res.json({
-        success: true,
-        metadata: {
-          name: 'NAND Gate Implementation - Universal Logic Gate',
-          description: 'Demonstrates 4 NAND gate sequences implementing complete truth table',
-          totalSequences: sequences.length,
-          sequenceNames: sequences.map(s => s.name),
-          totalInputVectors: allInputVectors.length,
-          truthTable: [
-            'NAND(0, 0) = 1',
-            'NAND(0, 1) = 1',
-            'NAND(1, 0) = 1',
-            'NAND(1, 1) = 0'
-          ],
-          note: 'All sequences have initial events that activate on matching input patterns'
-        },
-        sequencesLoaded: sequences.length,
-        inputVectorsLoaded: allInputVectors.length
+      res.status(410).json({
+        error: 'NAND Gate example has been deprecated',
+        message: 'NAND Gate machine is no longer available. Please use one of the other example machines.',
+        alternatives: [
+          'RS Flip Flop',
+          'RS2',
+          'Multi-Step State Machine',
+          'Data Center Monitoring',
+          'Kleene Star Operator'
+        ]
       });
     } catch (error: any) {
       console.error('Error loading NAND gate example:', error);
@@ -1323,22 +1387,21 @@ export class RealityEngineAPI {
 
   private async loadKleeneStarExample(_req: Request, res: Response): Promise<void> {
     try {
-      const {
-        createKleeneStarMachine,
-        generateKleeneStarTestVectors
-      } = await import('../examples/kleene-star-operator/kleene-star-sequences.js');
+      // Find the Kleene Star Operator machine (should be loaded from JSON)
+      const machine = this.engine.getAllMachines().find(m => m.name === 'Kleene Star Operator');
 
-      const testVectors = generateKleeneStarTestVectors();
-      const allInputVectors = testVectors.map(t => t.vector);
-
-      // Find the machine by name (should already be loaded from startup)
-      let machine = this.engine.getAllMachines().find(m => m.name === '* Operator Test');
-
-      // If not loaded, create and add it
       if (!machine) {
-        machine = createKleeneStarMachine();
-        this.engine.addMachine(machine);
+        res.status(404).json({
+          error: 'Kleene Star Operator machine not found. Please ensure KleeneStar.json is loaded.'
+        });
+        return;
       }
+
+      // Get input vectors from machine metadata
+      const inputSequences = machine.metadata.inputSequences as any[] || [];
+      const allInputVectors = inputSequences.length > 0
+        ? inputSequences[0].vectors || []
+        : [];
 
       // Initialize simulation controller with faster speed for better UX
       this.simulationController = new SimulationController(this.engine, {
@@ -1357,19 +1420,7 @@ export class RealityEngineAPI {
           totalSequences: machine.getSequenceCount(),
           sequenceNames: machine.getAllSequences().map(s => s.name),
           totalInputVectors: allInputVectors.length,
-          eventSpace: '3D binary vectors: 000-111',
-          outputSpace: '2D binary vectors: {01, 10}',
-          patterns: [
-            {
-              pattern: '001+000*+010 -> [01]',
-              description: '001, then zero or more 000, then 010, outputs [0,1]'
-            },
-            {
-              pattern: '010+(000+001)*+001 -> [10]',
-              description: '010, then zero or more (000 or 001), then 001, outputs [1,0]'
-            }
-          ],
-          note: 'Kleene star implemented via self-loops with exit paths'
+          ...machine.metadata
         },
         sequencesLoaded: machine.getSequenceCount(),
         inputVectorsLoaded: allInputVectors.length

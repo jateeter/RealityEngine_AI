@@ -635,10 +635,10 @@ app.get('/api/demo/rs-flip-flop', async (req: Request, res: Response) => {
   }
 });
 
-// Proxy endpoint: Load Robotics Assembly example
-app.get('/api/demo/robotics-assembly', async (req: Request, res: Response) => {
+// Proxy endpoint: Load RS2 example
+app.get('/api/demo/rs2', async (req: Request, res: Response) => {
   try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/robotics-assembly`);
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/rs2`);
 
     // Broadcast update to connected clients
     broadcast({
@@ -650,7 +650,7 @@ app.get('/api/demo/robotics-assembly', async (req: Request, res: Response) => {
 
     res.json(response.data);
   } catch (error: any) {
-    console.error('Error loading Robotics Assembly example:', error.message);
+    console.error('Error loading RS2 example:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
