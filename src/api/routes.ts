@@ -1,8 +1,7 @@
 import express, { Router } from 'express';
 import type { Request, Response } from 'express';
 import { readFileSync, readdirSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { join } from 'path';
 import { RealityEngine } from '../engine/RealityEngine.js';
 import { RealityVector } from '../models/RealityVector.js';
 import { CriticalEventSequence } from '../models/CriticalEventSequence.js';
@@ -14,9 +13,6 @@ import { SimulationController } from '../engine/SimulationController.js';
 import { PerceptualSpaceSimulator } from '../engine/PerceptualSpaceSimulator.js';
 import { MachineLoader } from '../services/MachineLoader.js';
 import config from '../config/config.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 /**
  * API Routes for Reality Engine
@@ -45,7 +41,10 @@ export class RealityEngineAPI {
     try {
       console.log('Loading example machines from JSON files on startup...');
 
-      const machinesDir = join(__dirname, '../../examples/machines');
+      // Use process.cwd() for reliable path to project root
+      const machinesDir = join(process.cwd(), 'examples/machines');
+
+      console.log('Looking for machines in:', machinesDir);
 
       if (!existsSync(machinesDir)) {
         console.warn('  ⚠ Machines directory not found:', machinesDir);
@@ -941,9 +940,14 @@ export class RealityEngineAPI {
    */
   private listMachineJSONFiles(_req: Request, res: Response): void {
     try {
-      const machinesDir = join(__dirname, '../../examples/machines');
+      // Use process.cwd() for reliable path to project root
+      const machinesDir = join(process.cwd(), 'examples/machines');
+
+      console.log('Looking for machines in:', machinesDir);
+      console.log('Directory exists:', existsSync(machinesDir));
 
       if (!existsSync(machinesDir)) {
+        console.warn('Machines directory not found at:', machinesDir);
         res.json({ machines: [] });
         return;
       }
@@ -987,12 +991,15 @@ export class RealityEngineAPI {
         return;
       }
 
-      // Construct the file path
-      const machinesDir = join(__dirname, '../../examples/machines');
+      // Construct the file path - use process.cwd() for reliable path to project root
+      const machinesDir = join(process.cwd(), 'examples/machines');
       const filename = name.endsWith('.json') ? name : `${name}.json`;
       const filepath = join(machinesDir, filename);
 
+      console.log('Loading machine from:', filepath);
+
       if (!existsSync(filepath)) {
+        console.warn('Machine file not found:', filepath);
         res.status(404).json({ error: `Machine JSON file not found: ${filename}` });
         return;
       }
