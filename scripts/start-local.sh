@@ -42,15 +42,60 @@ fi
 
 # Check if Docker containers are running and stop them
 print_info "Checking for running Docker containers..."
-if docker ps --format "{{.Names}}" 2>/dev/null | grep -q "reality-engine"; then
-    print_info "Found running Docker containers from docker-compose"
-    print_info "Stopping Docker containers to free ports..."
-    docker-compose down > /dev/null 2>&1
-    print_success "Docker containers stopped"
-    echo ""
-    sleep 2
+
+# First check if docker is available
+if ! command -v docker &> /dev/null; then
+    print_info "Docker not available, skipping container check"
+elif ! docker info > /dev/null 2>&1; then
+    print_info "Docker daemon not running, skipping container check"
 else
-    print_success "No conflicting Docker containers found"
+    # Check for running containers
+    RUNNING_CONTAINERS=$(docker ps --format "{{.Names}}" 2>/dev/null | grep "reality-engine" || true)
+
+    if [ -n "$RUNNING_CONTAINERS" ]; then
+        print_info "Found running Docker containers:"
+        echo "$RUNNING_CONTAINERS" | while read name; do
+            echo "  - $name"
+        done
+        print_info "Stopping Docker containers to free ports..."
+        docker-compose down
+        if [ $? -eq 0 ]; then
+            print_success "Docker containers stopped"
+        else
+            print_error "Failed to stop Docker containers"
+            echo "Manually stop with: docker-compose down"
+            exit 1
+        fi
+        echo ""
+        sleep 3
+    else
+        print_success "No conflicting Docker containers found"
+    fi
+fi
+echo ""
+
+# Double-check: Verify critical ports are free
+print_info "Verifying ports are available..."
+PORTS_IN_USE=""
+
+if lsof -i :3000 > /dev/null 2>&1; then
+    PORTS_IN_USE="$PORTS_IN_USE 3000"
+fi
+if lsof -i :3001 > /dev/null 2>&1; then
+    PORTS_IN_USE="$PORTS_IN_USE 3001"
+fi
+if lsof -i :5173 > /dev/null 2>&1; then
+    PORTS_IN_USE="$PORTS_IN_USE 5173"
+fi
+
+if [ -n "$PORTS_IN_USE" ]; then
+    print_error "Ports still in use:$PORTS_IN_USE"
+    echo ""
+    echo "Run diagnostic: ./scripts/fix-port-conflict.sh"
+    echo "Or force cleanup: ./scripts/stop-local.sh"
+    exit 1
+else
+    print_success "All required ports are available"
 fi
 echo ""
 
@@ -322,7 +367,7 @@ print_step "Step 8: Validating All Services"
 VALIDATION_FAILED=0
 
 # Test Qdrant
-if curl -s -f http://localhost:6333/health > /dev/null 2>&1; then
+if curl -s -f http://localhost:6333/ > /dev/null 2>&1; then
     print_success "Qdrant: OK"
 else
     print_error "Qdrant: FAILED"

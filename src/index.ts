@@ -64,12 +64,33 @@ app.get('/', (_req, res) => {
 
 // Start server
 const port = parseInt(process.env.PORT || '3000', 10);
+
+// Add error handler for port conflicts
 const server = app.listen(port, () => {
   console.log(`\n✅ Reality Engine running on port ${port}`);
   console.log(`📊 Vector dimension: ${config.getVectorDimension()}`);
   console.log(`🎯 Match threshold: ${config.getDefaultMatchThreshold()}`);
   console.log(`🗄️  Qdrant URL: ${config.getQdrantUrl()}`);
   console.log(`🚀 Node.js: ${process.version}\n`);
+});
+
+// Handle server startup errors
+server.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\n❌ Error: Port ${port} is already in use`);
+    console.error('\nThis usually means:');
+    console.error('  1. Another Reality Engine instance is running');
+    console.error('  2. Docker containers are using the port');
+    console.error('  3. Another application is using the port\n');
+    console.error('Solutions:');
+    console.error('  • Stop services:    ./scripts/stop-local.sh');
+    console.error('  • Check conflicts:  ./scripts/fix-port-conflict.sh');
+    console.error('  • Kill process:     lsof -ti:3000 | xargs kill -9\n');
+    process.exit(1);
+  } else {
+    console.error(`\n❌ Server error:`, err);
+    process.exit(1);
+  }
 });
 
 // Graceful shutdown handler
