@@ -40,6 +40,20 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
+# Check if Docker containers are running and stop them
+print_info "Checking for running Docker containers..."
+if docker ps --format "{{.Names}}" 2>/dev/null | grep -q "reality-engine"; then
+    print_info "Found running Docker containers from docker-compose"
+    print_info "Stopping Docker containers to free ports..."
+    docker-compose down > /dev/null 2>&1
+    print_success "Docker containers stopped"
+    echo ""
+    sleep 2
+else
+    print_success "No conflicting Docker containers found"
+fi
+echo ""
+
 # Function to check if port is in use
 check_port() {
     local port=$1
@@ -126,7 +140,7 @@ else
 fi
 
 # Wait for Qdrant to be ready
-if ! wait_for_service "http://localhost:6333/health" "Qdrant" 30; then
+if ! wait_for_service "http://localhost:6333/" "Qdrant" 30; then
     print_error "Qdrant health check failed"
     echo "Check logs: docker logs reality-engine-qdrant"
     exit 1
@@ -136,21 +150,42 @@ echo ""
 # Step 4: Start Reality Engine Backend
 print_step "Step 4: Starting Reality Engine Backend"
 
+# Clean up stale PID file first
 if [ -f .api.pid ]; then
     OLD_PID=$(cat .api.pid)
     if ps -p $OLD_PID > /dev/null 2>&1; then
-        print_info "Reality Engine Backend already running (PID: $OLD_PID)"
+        print_success "Reality Engine Backend already running (PID: $OLD_PID)"
+        echo ""
+        # Skip to next step
     else
+        print_info "Removing stale PID file..."
         rm .api.pid
-        print_info "Stale PID file removed, starting fresh..."
     fi
 fi
 
+# Only start if not already running
 if [ ! -f .api.pid ]; then
     # Check if port 3000 is available
     if check_port 3000; then
         print_error "Port 3000 already in use"
-        echo "Stop the process using: lsof -ti:3000 | xargs kill -9"
+
+        # Show what's using the port
+        echo ""
+        echo "Process using port 3000:"
+        lsof -i :3000 | grep LISTEN || echo "  (Could not identify process)"
+        echo ""
+
+        # Provide helpful guidance
+        echo "Common causes:"
+        echo "  1. Docker Desktop using port 3000"
+        echo "     Fix: Restart Docker Desktop or change its port in preferences"
+        echo ""
+        echo "  2. Previous Reality Engine instance still running"
+        echo "     Fix: ./scripts/stop-local.sh"
+        echo ""
+        echo "  3. Another application using port 3000"
+        echo "     Fix: lsof -ti:3000 | xargs kill -9"
+        echo ""
         exit 1
     fi
 

@@ -37,14 +37,14 @@ WARNINGS=0
 
 # Test 1: Check Qdrant
 print_test "Qdrant Vector Database"
-if curl -s -f http://localhost:6333/health > /dev/null 2>&1; then
-    RESPONSE=$(curl -s http://localhost:6333/health)
+if curl -s -f http://localhost:6333/ > /dev/null 2>&1; then
+    RESPONSE=$(curl -s http://localhost:6333/)
     print_success "Qdrant is running and healthy"
     echo "  Response: $RESPONSE"
     PASSED=$((PASSED + 1))
 else
     print_error "Qdrant is not responding"
-    echo "  Expected: http://localhost:6333/health"
+    echo "  Expected: http://localhost:6333/"
     echo "  Fix: docker-compose up -d qdrant"
     FAILED=$((FAILED + 1))
 fi

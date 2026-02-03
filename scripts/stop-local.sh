@@ -119,11 +119,19 @@ print_info "Checking for stray processes..."
 
 CLEANED=0
 
-# Port 3000 (Backend)
+# Port 3000 (Backend) - Be more careful here
 if lsof -ti:3000 > /dev/null 2>&1; then
-    print_info "Killing stray process on port 3000..."
-    lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-    CLEANED=$((CLEANED + 1))
+    # Check if it's a Node process before killing
+    PORT_PROCESS=$(lsof -i :3000 | grep LISTEN | awk '{print $1}')
+
+    if [ "$PORT_PROCESS" = "node" ]; then
+        print_info "Killing Node.js process on port 3000..."
+        lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+        CLEANED=$((CLEANED + 1))
+    else
+        print_info "Port 3000 in use by: $PORT_PROCESS (skipping)"
+        echo "  If this is Docker Desktop, restart it or change its port"
+    fi
 fi
 
 # Port 3001 (Visualizer Backend)
