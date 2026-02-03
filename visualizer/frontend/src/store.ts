@@ -63,6 +63,12 @@ interface VisualizerState {
   updateMachine: (machineId: string, request: MachineUpdateRequest) => Promise<void>;
   deleteMachine: (machineId: string) => Promise<void>;
 
+  // Machine JSON actions
+  listMachineJSONFiles: () => Promise<any[]>;
+  loadMachineFromJSON: (name: string) => Promise<void>;
+  importMachineJSON: (jsonString: string) => Promise<void>;
+  exportMachineToJSON: (machineId: string, pretty?: boolean) => Promise<string>;
+
   // UI actions
   toggleFloatingPanel: () => void;
   setFloatingPanelTab: (tab: 'overview' | 'simulation' | 'sequences' | 'settings') => void;
@@ -248,6 +254,70 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
       }
     } catch (error) {
       console.error('Error deleting machine:', error);
+      throw error;
+    }
+  },
+
+  // Machine JSON actions implementation
+  listMachineJSONFiles: async () => {
+    try {
+      const response = await api.listMachineJSONFiles();
+      return response.machines;
+    } catch (error) {
+      console.error('Error listing machine JSON files:', error);
+      throw error;
+    }
+  },
+
+  loadMachineFromJSON: async (name: string) => {
+    try {
+      const response = await api.loadMachineFromJSON(name);
+      const machine = response.machine;
+
+      // Add to machines list
+      const machines = get().machines;
+      const existingIndex = machines.findIndex(m => m.id === machine.id);
+
+      if (existingIndex >= 0) {
+        // Update existing machine
+        machines[existingIndex] = machine;
+        set({ machines: [...machines] });
+      } else {
+        // Add new machine
+        set({ machines: [...machines, machine] });
+      }
+
+      // Automatically load the machine
+      await get().loadMachine(machine.id);
+    } catch (error) {
+      console.error('Error loading machine from JSON:', error);
+      throw error;
+    }
+  },
+
+  importMachineJSON: async (jsonString: string) => {
+    try {
+      const response = await api.importMachineJSON(jsonString);
+      const machine = response.machine;
+
+      // Add to machines list
+      const machines = get().machines;
+      set({ machines: [...machines, machine] });
+
+      // Automatically load the imported machine
+      await get().loadMachine(machine.id);
+    } catch (error) {
+      console.error('Error importing machine JSON:', error);
+      throw error;
+    }
+  },
+
+  exportMachineToJSON: async (machineId: string, pretty: boolean = true) => {
+    try {
+      const jsonString = await api.exportMachineToJSON(machineId, pretty);
+      return jsonString;
+    } catch (error) {
+      console.error('Error exporting machine to JSON:', error);
       throw error;
     }
   },

@@ -103,6 +103,51 @@ export const api = {
     return response.data;
   },
 
+  // ===== Machine JSON Methods =====
+
+  // List available machine JSON files
+  async listMachineJSONFiles(): Promise<{
+    machines: Array<{
+      filename: string;
+      name: string;
+      description: string;
+      version: string;
+      metadata: any;
+      sequenceCount: number;
+    }>;
+  }> {
+    const response = await axios.get('/api/machines/json/list');
+    return response.data;
+  },
+
+  // Load machine from JSON file
+  async loadMachineFromJSON(name: string): Promise<{
+    success: boolean;
+    machine: Machine;
+    message: string;
+  }> {
+    const response = await axios.get(`/api/machines/json/${name}`);
+    return response.data;
+  },
+
+  // Import machine from JSON string
+  async importMachineJSON(jsonString: string): Promise<{
+    success: boolean;
+    machine: Machine;
+    message: string;
+  }> {
+    const response = await axios.post('/api/machines/json/import', { json: jsonString });
+    return response.data;
+  },
+
+  // Export machine to JSON
+  async exportMachineToJSON(id: string, pretty: boolean = true): Promise<string> {
+    const response = await axios.get(`/api/machines/${id}/export?pretty=${pretty}`, {
+      responseType: 'text'
+    });
+    return response.data;
+  },
+
   // ===== Simulation Methods =====
 
   // Load simulation vectors
@@ -215,9 +260,9 @@ export const api = {
     return response.data;
   },
 
-  // Load Robotics Assembly example
-  async loadRoboticsAssemblyExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
-    const response = await axios.get('/api/demo/robotics-assembly');
+  // Load RS2 example
+  async loadRS2Example(): Promise<{ success: boolean; metadata: any; machine?: any }> {
+    const response = await axios.get('/api/demo/rs2');
     return response.data;
   }
 };

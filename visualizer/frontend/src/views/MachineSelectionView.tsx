@@ -4,6 +4,7 @@ import { Machine } from '../types';
 import MachineCard from '../components/MachineCard';
 import MachineCreateDialog from '../components/MachineCreateDialog';
 import MachineEditDialog from '../components/MachineEditDialog';
+import MachineManagementModal from '../components/MachineManagementModal';
 
 const MachineSelectionView: React.FC = () => {
   const {
@@ -20,6 +21,7 @@ const MachineSelectionView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showManagementModal, setShowManagementModal] = useState(false);
   const [editingMachine, setEditingMachine] = useState<Machine | null>(null);
 
   // Load machines on mount
@@ -169,6 +171,34 @@ const MachineSelectionView: React.FC = () => {
           >
             <span style={{ fontSize: '18px' }}>⚡</span>
             Interconnection View
+          </button>
+
+          {/* Machine Management Button */}
+          <button
+            onClick={() => setShowManagementModal(true)}
+            style={{
+              background: '#8b5cf6',
+              border: 'none',
+              borderRadius: '8px',
+              color: '#fff',
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#7c3aed';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#8b5cf6';
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>📦</span>
+            Machine Files
           </button>
 
           {/* Create New Button */}
@@ -361,6 +391,19 @@ const MachineSelectionView: React.FC = () => {
           const { api } = await import('../api');
           const machinesData = await api.getMachines();
           setMachines(machinesData);
+        }}
+      />
+
+      <MachineManagementModal
+        isOpen={showManagementModal}
+        onClose={() => {
+          setShowManagementModal(false);
+          // Reload machines after management operations
+          (async () => {
+            const { api } = await import('../api');
+            const machinesData = await api.getMachines();
+            setMachines(machinesData);
+          })();
         }}
       />
     </div>
