@@ -44,6 +44,49 @@ print_info "Phase 2: Waiting for graceful shutdown..."
 echo "=================================================="
 echo ""
 sleep 5
+
+# Verify critical ports are free before starting
+print_info "Verifying ports are free..."
+PORTS_IN_USE=""
+if lsof -ti:3000 > /dev/null 2>&1; then
+    PORTS_IN_USE="$PORTS_IN_USE 3000"
+fi
+if lsof -ti:3001 > /dev/null 2>&1; then
+    PORTS_IN_USE="$PORTS_IN_USE 3001"
+fi
+if lsof -ti:5173 > /dev/null 2>&1; then
+    PORTS_IN_USE="$PORTS_IN_USE 5173"
+fi
+
+if [ -n "$PORTS_IN_USE" ]; then
+    echo ""
+    echo "Error: Ports still in use:$PORTS_IN_USE"
+    echo "Waiting additional 3 seconds for ports to be released..."
+    sleep 3
+
+    # Check again
+    PORTS_IN_USE=""
+    if lsof -ti:3000 > /dev/null 2>&1; then
+        PORTS_IN_USE="$PORTS_IN_USE 3000"
+    fi
+    if lsof -ti:3001 > /dev/null 2>&1; then
+        PORTS_IN_USE="$PORTS_IN_USE 3001"
+    fi
+    if lsof -ti:5173 > /dev/null 2>&1; then
+        PORTS_IN_USE="$PORTS_IN_USE 5173"
+    fi
+
+    if [ -n "$PORTS_IN_USE" ]; then
+        echo ""
+        echo "Error: Ports still in use after waiting:$PORTS_IN_USE"
+        echo "Cannot safely restart. Please run:"
+        echo "  ./scripts/stop-local.sh"
+        echo "Then wait 10 seconds and try again."
+        exit 1
+    fi
+fi
+
+print_success "All ports are free"
 print_success "Ready to restart"
 echo ""
 

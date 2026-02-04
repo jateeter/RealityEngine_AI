@@ -150,6 +150,30 @@ fi
 
 if [ $CLEANED -gt 0 ]; then
     print_success "Cleaned up $CLEANED stray process(es)"
+
+    # Give the OS time to release ports after force kill
+    print_info "Waiting for ports to be released..."
+    sleep 2
+
+    # Verify ports are actually free now
+    STILL_IN_USE=""
+    if lsof -ti:3000 > /dev/null 2>&1; then
+        STILL_IN_USE="$STILL_IN_USE 3000"
+    fi
+    if lsof -ti:3001 > /dev/null 2>&1; then
+        STILL_IN_USE="$STILL_IN_USE 3001"
+    fi
+    if lsof -ti:5173 > /dev/null 2>&1; then
+        STILL_IN_USE="$STILL_IN_USE 5173"
+    fi
+
+    if [ -n "$STILL_IN_USE" ]; then
+        echo ""
+        print_error "Warning: Ports still in use after cleanup:$STILL_IN_USE"
+        echo "You may need to wait longer or manually kill processes"
+    else
+        print_success "All ports successfully released"
+    fi
 else
     print_info "No stray processes found"
 fi
