@@ -182,6 +182,16 @@ else
         print_error "Failed to start Qdrant"
         exit 1
     fi
+
+    # Ensure ONLY Qdrant is running (stop any other containers that may have started)
+    print_info "Ensuring only Qdrant container is running..."
+    docker stop reality-engine-app 2>/dev/null || true
+    docker stop reality-engine-visualizer-backend 2>/dev/null || true
+    docker stop reality-engine-visualizer-frontend 2>/dev/null || true
+    docker rm reality-engine-app 2>/dev/null || true
+    docker rm reality-engine-visualizer-backend 2>/dev/null || true
+    docker rm reality-engine-visualizer-frontend 2>/dev/null || true
+    print_success "Only Qdrant is running in Docker"
 fi
 
 # Wait for Qdrant to be ready
