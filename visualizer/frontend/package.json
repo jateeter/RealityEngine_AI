@@ -3,6 +3,7 @@
   "version": "1.1.0",
   "description": "React frontend for Reality Engine Visualizer with D3.js force-directed graphs",
   "private": true,
+  "type": "module",
   "engines": {
     "node": ">=22.0.0",
     "npm": ">=10.0.0"
