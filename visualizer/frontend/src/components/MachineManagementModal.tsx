@@ -331,9 +331,9 @@ const MachineManagementModal: React.FC<MachineManagementModalProps> = ({ isOpen,
             {/* Browse Tab */}
             {activeTab === 'browse' && (
               <div>
-                <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ margin: 0, fontSize: '16px', color: '#e2e8f0' }}>
-                    Available Machine Files
+                    Server Machine Files
                   </h3>
                   <button
                     onClick={loadJsonFiles}
@@ -352,6 +352,9 @@ const MachineManagementModal: React.FC<MachineManagementModalProps> = ({ isOpen,
                     {loading ? 'Refreshing...' : 'Refresh'}
                   </button>
                 </div>
+                <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: '#94a3b8' }}>
+                  Browse and load machine definitions from the server (examples/machines directory)
+                </p>
 
                 {loading && jsonFiles.length === 0 && (
                   <div style={{ textAlign: 'center', padding: '40px 0', color: '#94a3b8' }}>
@@ -431,8 +434,61 @@ const MachineManagementModal: React.FC<MachineManagementModalProps> = ({ isOpen,
                   Import Machine JSON
                 </h3>
                 <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: '#94a3b8' }}>
-                  Paste your machine JSON definition below:
+                  Upload a JSON file or paste your machine JSON definition below:
                 </p>
+
+                {/* File Upload Button */}
+                <div style={{ marginBottom: '16px' }}>
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    id="json-file-upload"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const content = event.target?.result as string;
+                          setImportJson(content);
+                          setImportError(null);
+                        };
+                        reader.onerror = () => {
+                          setImportError('Failed to read file');
+                        };
+                        reader.readAsText(file);
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="json-file-upload"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 16px',
+                      backgroundColor: '#1e293b',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      color: '#e2e8f0',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                      fontSize: '14px',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#334155';
+                      e.currentTarget.style.borderColor = '#475569';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#1e293b';
+                      e.currentTarget.style.borderColor = '#334155';
+                    }}
+                  >
+                    <Upload size={16} />
+                    Choose JSON File from Computer
+                  </label>
+                </div>
 
                 <textarea
                   value={importJson}

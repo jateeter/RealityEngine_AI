@@ -952,10 +952,16 @@ export class RealityEngineAPI {
         return;
       }
 
-      const files = readdirSync(machinesDir)
-        .filter(file => file.endsWith('.json'))
-        .map(file => {
+      const allFiles = readdirSync(machinesDir);
+      console.log('Files in directory:', allFiles);
+
+      const jsonFiles = allFiles.filter(file => file.endsWith('.json'));
+      console.log('JSON files found:', jsonFiles);
+
+      const files = jsonFiles.map(file => {
+        try {
           const filepath = join(machinesDir, file);
+          console.log('Reading file:', filepath);
           const jsonString = readFileSync(filepath, 'utf8');
           const machineJSON = JSON.parse(jsonString);
 
@@ -967,8 +973,13 @@ export class RealityEngineAPI {
             metadata: machineJSON.machine.metadata,
             sequenceCount: machineJSON.machine.sequences.length
           };
-        });
+        } catch (error: any) {
+          console.error(`Error reading file ${file}:`, error.message);
+          return null;
+        }
+      }).filter(f => f !== null);
 
+      console.log('Successfully parsed files:', files.length);
       res.json({ machines: files });
     } catch (error: any) {
       console.error('Error listing machine JSON files:', error);
