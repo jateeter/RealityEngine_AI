@@ -39,7 +39,7 @@ app.use('/api', api.getRouter());
 app.get('/', (_req, res) => {
   res.json({
     name: 'Reality Engine',
-    version: '1.0.1',
+    version: '1.1.1',
     node: process.version,
     description: 'A reality engine system with vector-based state machines',
     endpoints: {

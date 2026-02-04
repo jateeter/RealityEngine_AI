@@ -1,6 +1,6 @@
 {
   "name": "reality-engine-visualizer-frontend",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "React frontend for Reality Engine Visualizer with D3.js force-directed graphs",
   "private": true,
   "type": "module",
