@@ -33,6 +33,53 @@ fi
 # Load environment variables
 source .env
 
+# Check if ports are in use by local services
+print_info "Checking for port conflicts with local services..."
+
+PORTS_IN_USE=""
+if lsof -i :3000 > /dev/null 2>&1; then
+    PORT_PROCESS=$(lsof -i :3000 | grep LISTEN | awk '{print $1}' | head -1)
+    if [ "$PORT_PROCESS" = "node" ]; then
+        PORTS_IN_USE="$PORTS_IN_USE 3000(node)"
+    fi
+fi
+
+if lsof -i :3001 > /dev/null 2>&1; then
+    PORT_PROCESS=$(lsof -i :3001 | grep LISTEN | awk '{print $1}' | head -1)
+    if [ "$PORT_PROCESS" = "node" ]; then
+        PORTS_IN_USE="$PORTS_IN_USE 3001(node)"
+    fi
+fi
+
+if lsof -i :5173 > /dev/null 2>&1; then
+    PORT_PROCESS=$(lsof -i :5173 | grep LISTEN | awk '{print $1}' | head -1)
+    if [ "$PORT_PROCESS" = "node" ]; then
+        PORTS_IN_USE="$PORTS_IN_USE 5173(node)"
+    fi
+fi
+
+if [ -n "$PORTS_IN_USE" ]; then
+    echo ""
+    echo "=================================================="
+    echo "Error: Local services are running on ports:$PORTS_IN_USE"
+    echo "=================================================="
+    echo ""
+    echo "You are trying to start Docker mode, but local services are running."
+    echo "You cannot run both modes simultaneously."
+    echo ""
+    echo "To switch to Docker mode:"
+    echo "  1. Stop local services:  ./scripts/stop-local.sh"
+    echo "  2. Start Docker mode:    ./scripts/start.sh"
+    echo ""
+    echo "Or to continue with local mode:"
+    echo "  - Use: ./scripts/start-local.sh"
+    echo ""
+    exit 1
+fi
+
+print_success "No port conflicts detected"
+echo ""
+
 # Clean up any existing containers with the same name
 print_info "Checking for existing containers..."
 
