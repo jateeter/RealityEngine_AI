@@ -46,6 +46,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
+      - ./examples/machines:/app/examples/machines
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/engine/stats"]
       interval: 15s

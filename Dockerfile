@@ -31,6 +31,9 @@ COPY --from=build /app/dist ./dist
 # Copy necessary configuration files
 COPY --from=build /app/tsconfig.json ./
 
+# Copy examples directory for machine JSON files
+COPY --from=build /app/examples ./examples
+
 EXPOSE 3000
 
 CMD ["npm", "start"]
