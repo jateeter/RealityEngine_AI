@@ -3,6 +3,7 @@ import { RealityVector } from '../models/RealityVector.js';
 import { Machine } from '../models/Machine.js';
 import type { OutputVector, MachineTransitionResult } from '../models/types.js';
 import { VectorStore } from '../services/VectorStore.js';
+import { PreceptionEngine } from './PreceptionEngine.js';
 
 /**
  * TransitionResult: Result of processing an input through the engine
@@ -34,13 +35,15 @@ export class RealityEngine {
   private vectorStore: VectorStore;
   private transitionHistory: TransitionResult[];
   private maxHistorySize: number;
+  private preceptionEngine: PreceptionEngine;
 
-  constructor(vectorStore: VectorStore, maxHistorySize: number = 1000) {
+  constructor(vectorStore: VectorStore, maxHistorySize: number = 1000, universalDimension: number = 256) {
     this.sequences = new Map();
     this.machines = new Map();
     this.vectorStore = vectorStore;
     this.transitionHistory = [];
     this.maxHistorySize = maxHistorySize;
+    this.preceptionEngine = new PreceptionEngine(universalDimension);
   }
 
   /**
@@ -166,9 +169,120 @@ export class RealityEngine {
   }
 
   /**
+   * Process universal input space through a specific machine (with Preception)
+   *
+   * This is the PRIMARY method for processing inputs through the Reality Engine.
+   * It demonstrates "preception" - the engine perceives its context by resolving
+   * the universal input space to machine-specific event vectors.
+   *
+   * Flow:
+   * 1. PreceptionEngine.resolveInputEventVector() extracts machine-specific input
+   * 2. Machine processes the resolved input through its sequences
+   * 3. Machine arbiter resolves final output
+   *
+   * @param universalInputSpace - The 256-byte universal input vector
+   * @param machineId - ID of the machine to process through
+   * @returns MachineTransitionResult with resolved inputs and outputs
+   */
+  processUniversalInput(universalInputSpace: number[], machineId: string): MachineTransitionResult {
+    const machine = this.machines.get(machineId);
+    if (!machine) {
+      throw new Error(`Machine not found: ${machineId}`);
+    }
+
+    // PRECEPTION: Resolve universal space to machine-specific input
+    const machineInput = this.preceptionEngine.resolveInputEventVectorForMachine(
+      universalInputSpace,
+      machine
+    );
+
+    // Process the resolved input through the machine
+    const result = machine.processInput(machineInput);
+
+    // Tag with machine metadata
+    if (result.machineOutput) {
+      result.machineOutput.metadata = {
+        ...result.machineOutput.metadata,
+        machineId,
+        machineName: machine.name,
+        preceptionUsed: true,
+        universalSpaceDimension: universalInputSpace.length
+      };
+    }
+
+    return result;
+  }
+
+  /**
+   * Process universal input space through ALL machines (with Preception)
+   *
+   * Efficiently processes the universal input space through all machines.
+   * Each machine "perceives" its relevant portion of the universal reality.
+   *
+   * @param universalInputSpace - The 256-byte universal input vector
+   * @returns Map of machine ID to MachineTransitionResult
+   */
+  processUniversalInputForAllMachines(
+    universalInputSpace: number[]
+  ): Map<string, MachineTransitionResult> {
+    const results = new Map<string, MachineTransitionResult>();
+
+    // Batch resolve inputs for all machines
+    const resolvedInputs = this.preceptionEngine.resolveInputsForMachines(
+      universalInputSpace,
+      this.machines
+    );
+
+    // Process each machine with its resolved input
+    for (const [machineId, machineInput] of resolvedInputs) {
+      const machine = this.machines.get(machineId);
+      if (!machine) continue;
+
+      try {
+        const result = machine.processInput(machineInput);
+
+        // Tag with machine metadata
+        if (result.machineOutput) {
+          result.machineOutput.metadata = {
+            ...result.machineOutput.metadata,
+            machineId,
+            machineName: machine.name,
+            preceptionUsed: true,
+            universalSpaceDimension: universalInputSpace.length
+          };
+        }
+
+        results.set(machineId, result);
+      } catch (error: any) {
+        console.error(`Error processing machine ${machineId}: ${error.message}`);
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Get diagnostic information about universal input mapping
+   * Shows how the universal input space maps to each machine
+   *
+   * @param universalInputSpace - The 256-byte universal input vector
+   * @returns Diagnostic information for visualization and debugging
+   */
+  getDiagnosticMapping(universalInputSpace: number[]): any {
+    return this.preceptionEngine.getDiagnosticMapping(universalInputSpace, this.machines);
+  }
+
+  /**
+   * Get the PreceptionEngine instance
+   */
+  getPreceptionEngine(): PreceptionEngine {
+    return this.preceptionEngine;
+  }
+
+  /**
    * Process an InputRealityVector through all sequences (LEGACY)
    * This is the legacy entry point for backward compatibility
-   * Consider using processMachineInput() for new code
+   * Consider using processUniversalInput() for new code with preception
    */
   processInput(inputVector: number[]): TransitionResult {
     const result: TransitionResult = {

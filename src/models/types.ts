@@ -102,3 +102,36 @@ export interface MachineTransitionResult {
     shouldOutput: boolean;
   };
 }
+
+/**
+ * Universal Input Space Processing Types
+ * Types for PreceptionEngine and universal input space handling
+ */
+
+/**
+ * UniversalInputSpace: The complete 256-byte input vector representing observable reality
+ */
+export type UniversalInputSpace = number[]; // Fixed length: 256
+
+/**
+ * PreceptionResult: Result of resolving universal input to machine-specific input
+ */
+export interface PreceptionResult {
+  universalInputSpace: number[];
+  machineId: string;
+  machineName: string;
+  perceptualMapping: PerceptualMapping;
+  resolvedInput: number[];
+  timestamp: number;
+}
+
+/**
+ * UniversalInputProcessingResult: Result of processing universal input through machines
+ */
+export interface UniversalInputProcessingResult {
+  universalInputSpace: number[];
+  timestamp: number;
+  machineResults: Map<string, MachineTransitionResult>;
+  totalMachinesProcessed: number;
+  preceptionUsed: boolean;
+}

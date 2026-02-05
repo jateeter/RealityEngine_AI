@@ -167,6 +167,11 @@ export class RealityEngineAPI {
     this.router.delete('/machines/:id', this.deleteMachine.bind(this));
     this.router.post('/machines/:id/process', this.processMachineInput.bind(this));
 
+    // Universal Input Space (Preception) endpoints
+    this.router.post('/machines/:id/process-universal', this.processUniversalInput.bind(this));
+    this.router.post('/machines/process-universal/all', this.processUniversalInputForAllMachines.bind(this));
+    this.router.post('/preception/diagnostic', this.getPreceptionDiagnostic.bind(this));
+
     // Machine JSON endpoints (load/save)
     this.router.get('/machines/json/list', this.listMachineJSONFiles.bind(this));
     this.router.get('/machines/json/:name', this.loadMachineFromJSON.bind(this));
@@ -928,6 +933,176 @@ export class RealityEngineAPI {
       console.error('Error processing machine input:', error);
       res.status(500).json({
         error: 'Failed to process machine input',
+        details: error.message
+      });
+    }
+  }
+
+  /**
+   * Process universal input space through a specific machine (with Preception)
+   * POST /api/machines/:id/process-universal
+   *
+   * Body:
+   * {
+   *   "universalInputSpace": number[] // 256-byte universal input vector
+   * }
+   */
+  private processUniversalInput(req: Request, res: Response): void {
+    try {
+      const { id } = req.params;
+      const { universalInputSpace } = req.body;
+
+      if (!id) {
+        res.status(400).json({ error: 'Machine ID required' });
+        return;
+      }
+
+      if (!Array.isArray(universalInputSpace)) {
+        res.status(400).json({ error: 'universalInputSpace must be an array' });
+        return;
+      }
+
+      if (universalInputSpace.length !== 256) {
+        res.status(400).json({
+          error: 'universalInputSpace must be 256 bytes',
+          provided: universalInputSpace.length
+        });
+        return;
+      }
+
+      // Process through PreceptionEngine → Machine
+      const result = this.engine.processUniversalInput(universalInputSpace, id);
+
+      // Convert Map to object for JSON serialization
+      const sequenceResults: Record<string, any> = {};
+      result.sequenceResults.forEach((value, key) => {
+        sequenceResults[key] = value;
+      });
+
+      res.json({
+        result: {
+          inputVector: result.inputVector,
+          timestamp: result.timestamp,
+          sequenceResults,
+          machineOutput: result.machineOutput,
+          arbiterMetadata: result.arbiterMetadata
+        },
+        preception: {
+          universalSpaceDimension: universalInputSpace.length,
+          resolvedInputDimension: result.inputVector.length,
+          preceptionUsed: true
+        }
+      });
+    } catch (error: any) {
+      console.error('Error processing universal input:', error);
+      res.status(500).json({
+        error: 'Failed to process universal input',
+        details: error.message
+      });
+    }
+  }
+
+  /**
+   * Process universal input space through ALL machines (with Preception)
+   * POST /api/machines/process-universal/all
+   *
+   * Body:
+   * {
+   *   "universalInputSpace": number[] // 256-byte universal input vector
+   * }
+   */
+  private processUniversalInputForAllMachines(req: Request, res: Response): void {
+    try {
+      const { universalInputSpace } = req.body;
+
+      if (!Array.isArray(universalInputSpace)) {
+        res.status(400).json({ error: 'universalInputSpace must be an array' });
+        return;
+      }
+
+      if (universalInputSpace.length !== 256) {
+        res.status(400).json({
+          error: 'universalInputSpace must be 256 bytes',
+          provided: universalInputSpace.length
+        });
+        return;
+      }
+
+      // Process through PreceptionEngine → All Machines
+      const resultsMap = this.engine.processUniversalInputForAllMachines(universalInputSpace);
+
+      // Convert Map to object for JSON serialization
+      const results: Record<string, any> = {};
+      resultsMap.forEach((result, machineId) => {
+        const sequenceResults: Record<string, any> = {};
+        result.sequenceResults.forEach((value, key) => {
+          sequenceResults[key] = value;
+        });
+
+        results[machineId] = {
+          inputVector: result.inputVector,
+          timestamp: result.timestamp,
+          sequenceResults,
+          machineOutput: result.machineOutput,
+          arbiterMetadata: result.arbiterMetadata
+        };
+      });
+
+      res.json({
+        results,
+        summary: {
+          totalMachines: resultsMap.size,
+          universalSpaceDimension: universalInputSpace.length,
+          timestamp: Date.now(),
+          preceptionUsed: true
+        }
+      });
+    } catch (error: any) {
+      console.error('Error processing universal input for all machines:', error);
+      res.status(500).json({
+        error: 'Failed to process universal input for all machines',
+        details: error.message
+      });
+    }
+  }
+
+  /**
+   * Get diagnostic information about universal input space mapping
+   * POST /api/preception/diagnostic
+   *
+   * Body:
+   * {
+   *   "universalInputSpace": number[] // 256-byte universal input vector
+   * }
+   */
+  private getPreceptionDiagnostic(req: Request, res: Response): void {
+    try {
+      const { universalInputSpace } = req.body;
+
+      if (!Array.isArray(universalInputSpace)) {
+        res.status(400).json({ error: 'universalInputSpace must be an array' });
+        return;
+      }
+
+      if (universalInputSpace.length !== 256) {
+        res.status(400).json({
+          error: 'universalInputSpace must be 256 bytes',
+          provided: universalInputSpace.length
+        });
+        return;
+      }
+
+      // Get diagnostic mapping
+      const diagnostic = this.engine.getDiagnosticMapping(universalInputSpace);
+
+      res.json({
+        diagnostic,
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      console.error('Error getting preception diagnostic:', error);
+      res.status(500).json({
+        error: 'Failed to get preception diagnostic',
         details: error.message
       });
     }

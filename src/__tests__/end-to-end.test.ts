@@ -515,9 +515,10 @@ describe('End-to-End Reality Engine Pipeline', () => {
       console.log('History entries:', history.length);
       expect(history.length).toBe(inputs.length);
 
-      // Verify each entry
+      // Verify each entry (history is newest first, so reverse comparison)
       history.forEach((entry, index) => {
-        expect(entry.inputVector).toEqual(inputs[index]);
+        const inputIndex = inputs.length - 1 - index; // Map to correct input
+        expect(entry.inputVector).toEqual(inputs[inputIndex]);
         expect(entry.timestamp).toBeDefined();
         console.log(`Entry ${index + 1}:`, entry.inputVector, '→', entry.totalOutputs.length, 'outputs');
       });
