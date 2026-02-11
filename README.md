@@ -71,6 +71,34 @@ The Reality Engine Visualizer provides a production-ready web interface for mana
 
 The visualizer automatically loads your last viewed machine on startup for seamless workflow continuity.
 
+### Universal Perceptual Space Visualization ⭐ **NEW**
+
+The Reality Engine now includes a **Universal Input Vector Display** that visualizes the complete 256-byte perceptual space (En) where all machines perceive and interact with reality.
+
+**Key Features:**
+- **256-byte grid visualization** of the complete perceptual space
+- **Machine interconnection graph** showing data flow between machines
+- **Random stream generator** for testing perceptual scenarios
+- **Real-time updates** showing machine outputs overwriting inputs
+- **Color-coded regions** (blue for inputs, pink for outputs)
+- **Interactive controls** for generating and simulating perceptual streams
+
+**Quick Access:**
+1. Start the system: `./scripts/start.sh`
+2. Open: http://localhost:5173
+3. Load a machine (e.g., "RS Flip Flop")
+4. Switch to "🔗 Interconnections" view
+5. Scroll down to see the Universal Input Vector Display
+6. Click "🎲 Random Stream Generator" to generate test data
+
+**Documentation:**
+- Quick Start Guide: [QUICKSTART_VISUALIZATION.md](./QUICKSTART_VISUALIZATION.md)
+- Complete Architecture: [PERCEPTUAL_SPACE_ARCHITECTURE.md](./PERCEPTUAL_SPACE_ARCHITECTURE.md)
+- Visualization Details: [UNIVERSAL_INPUT_VECTOR_VISUALIZATION.md](./UNIVERSAL_INPUT_VECTOR_VISUALIZATION.md)
+- Startup Verification: [STARTUP_VERIFICATION.md](./STARTUP_VERIFICATION.md)
+
+This visualization makes the perceptual space architecture fully transparent, enabling you to understand exactly how machines perceive reality and how their outputs propagate through the shared universal space.
+
 ## Core Concepts
 
 ### RealityVector

@@ -56,6 +56,10 @@ export interface Machine {
     name: string;
   }>;
   metadata: Record<string, any>;
+  perceptualMapping?: {
+    input: { offset: number; length: number };
+    output: { offset: number; length: number };
+  };
   isExample: boolean;
   createdAt: number;
   updatedAt: number;
@@ -159,4 +163,14 @@ export interface TransitionResult {
     outputsAsserted: OutputVector[];
   }>;
   totalOutputs: OutputVector[];
+}
+
+// ===== Perceptual Input Sequence Types =====
+
+export interface VectorSequenceItem {
+  id: string;
+  vector: number[];
+  timestamp: number;
+  source: 'algorithmic' | 'random' | 'manual' | 'override';
+  metadata?: any;
 }

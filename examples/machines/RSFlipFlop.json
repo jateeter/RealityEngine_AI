@@ -40,12 +40,12 @@
               {
                 "value": 1,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               },
               {
                 "value": 0,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               }
             ],
             "isInitial": true,
@@ -85,12 +85,12 @@
               {
                 "value": 0,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               },
               {
                 "value": 1,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               }
             ],
             "isInitial": true,

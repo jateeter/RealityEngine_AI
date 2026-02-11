@@ -4,6 +4,11 @@ import CriticalEventGraphView from './CriticalEventGraphView';
 import InputStreamVisualization from './InputStreamVisualization';
 import OutputStreamVisualization from './OutputStreamVisualization';
 import { MachineInterconnectionGraph } from './MachineInterconnectionGraph';
+import { UniversalInputVectorDisplay } from './UniversalInputVectorDisplay';
+import { MachineInputFlowDisplay } from './MachineInputFlowDisplay';
+import { GlobalCurrentVectorDisplay } from './GlobalCurrentVectorDisplay';
+import { SequenceManagerModal } from './SequenceManagerModal';
+import { PerceptualLogViewer } from './PerceptualLogViewer';
 import { api } from '../api';
 
 interface MachineContainerViewProps {
@@ -24,12 +29,34 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
     resetSimulation,
     stepSimulation,
     setSimulationSpeed,
-    loadRandomVectors
+    inputQueue,
+    outputQueue,
+    generateAlgorithmicSequence,
+    generateRandomSequence,
+    clearInputQueue,
+    clearOutputQueue,
+    removeFromInputQueue,
+    removeFromOutputQueue
   } = useVisualizerStore();
 
   // View toggle state - default to 'graph'
   const [viewMode, setViewMode] = useState<'graph' | 'sequences'>('graph');
   const [allMachines, setAllMachines] = useState(machines);
+
+  // Universal Perceptual Space state
+  const [currentUniversalVector, setCurrentUniversalVector] = useState<number[]>(new Array(256).fill(0));
+  const [isGeneratingRandom, setIsGeneratingRandom] = useState(false);
+
+  // Machine-specific input/output state
+  const [machineInput, setMachineInput] = useState<number[] | null>(null);
+  const [machineOutput, setMachineOutput] = useState<number[] | null>(null);
+  const [activeSequenceName, setActiveSequenceName] = useState<string | null>(null);
+
+  // Sequence manager modal state
+  const [isSequenceModalOpen, setIsSequenceModalOpen] = useState(false);
+
+  // Log viewer modal state
+  const [isLogViewerOpen, setIsLogViewerOpen] = useState(false);
 
   // Fetch all machines for interconnection graph
   useEffect(() => {
@@ -45,6 +72,54 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
 
     fetchMachines();
   }, [machines]);
+
+  // Listen for perceptual space updates via WebSocket
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'perceptual-simulation-stepped') {
+          const step = data.step;
+          if (step && step.perceptualSpace) {
+            setCurrentUniversalVector(step.perceptualSpace);
+
+            // Extract machine-specific input and output for current machine
+            if (currentMachine && currentMachine.perceptualMapping) {
+              const { input } = currentMachine.perceptualMapping;
+
+              // Extract machine input from universal vector
+              const extractedInput = step.perceptualSpace.slice(input.offset, input.offset + input.length);
+              setMachineInput(extractedInput);
+
+              // Get machine output from step data if available
+              if (step.machineOutputs && step.machineOutputs[currentMachine.id]) {
+                setMachineOutput(step.machineOutputs[currentMachine.id]);
+              }
+
+              // Set active sequence if available
+              if (step.activeSequences && step.activeSequences[currentMachine.id]) {
+                setActiveSequenceName(step.activeSequences[currentMachine.id]);
+              }
+            }
+          }
+        } else if (data.type === 'perceptual-simulation-reset') {
+          setCurrentUniversalVector(new Array(256).fill(0));
+          setMachineInput(null);
+          setMachineOutput(null);
+          setActiveSequenceName(null);
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    const ws = (window as any).realityEngineWS;
+    if (ws) {
+      ws.addEventListener('message', handleMessage);
+      return () => ws.removeEventListener('message', handleMessage);
+    }
+  }, [currentMachine]);
 
   // Determine current input vector index and state
   const currentIndex = simulationState?.currentIndex ?? 0;
@@ -87,8 +162,44 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
     await setSimulationSpeed(delayMs);
   };
 
-  const handleGenerateRandom = async (dimension: number, count: number, binaryThreshold: boolean) => {
-    await loadRandomVectors(dimension, count, binaryThreshold);
+  // Handler for generating random universal perceptual space vectors
+  const handleGenerateUniversalRandom = async (
+    vectorCount: number,
+    inputRegion: { offset: number; length: number }
+  ) => {
+    try {
+      setIsGeneratingRandom(true);
+
+      // Generate random universal vectors (256 bytes each)
+      const randomVectors: number[][] = [];
+      for (let i = 0; i < vectorCount; i++) {
+        const vector = new Array(256).fill(0);
+        // Fill only the specified input region with random values
+        for (let j = inputRegion.offset; j < Math.min(inputRegion.offset + inputRegion.length, 256); j++) {
+          vector[j] = Math.random();
+        }
+        randomVectors.push(vector);
+      }
+
+      // Configure the perceptual simulator with these vectors
+      await api.configurePerceptualSimulation({
+        inputSequence: randomVectors,
+        inputRegion: inputRegion,
+        stepDelayMs: 1000,
+        maxSteps: vectorCount
+      });
+
+      // Set the first vector as current
+      if (randomVectors.length > 0) {
+        setCurrentUniversalVector(randomVectors[0]);
+      }
+
+      console.log(`Generated ${vectorCount} random universal vectors in region [${inputRegion.offset}:${inputRegion.offset + inputRegion.length}]`);
+    } catch (error) {
+      console.error('Error generating random universal vectors:', error);
+    } finally {
+      setIsGeneratingRandom(false);
+    }
   };
 
   return (
@@ -96,12 +207,31 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
       width: '100%',
       height: '100%',
       display: 'flex',
-      flexDirection: 'row',
+      flexDirection: 'column',
       background: '#0a0a0a',
       position: 'relative'
     }}>
-      {/* Input Stream - Left Side */}
-      <InputStreamVisualization
+      {/* Global Current Vector Display - Top */}
+      <div style={{ padding: '10px 10px 0 10px' }}>
+        <GlobalCurrentVectorDisplay
+          currentVector={currentUniversalVector}
+          currentStep={simulationState?.currentIndex || 0}
+          totalSteps={inputVectors.length}
+          isPlaying={isPlaying}
+          onOpenSequenceManager={() => setIsSequenceModalOpen(true)}
+          onOpenLogViewer={() => setIsLogViewerOpen(true)}
+        />
+      </div>
+
+      {/* Main Content Row */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'row',
+        overflow: 'hidden'
+      }}>
+        {/* Input Stream - Left Side */}
+        <InputStreamVisualization
         inputVectors={inputVectors}
         currentIndex={currentIndex}
         isPlaying={isPlaying}
@@ -111,7 +241,6 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         onReset={handleReset}
         onStep={handleStep}
         onSpeedChange={handleSpeedChange}
-        onGenerateRandom={handleGenerateRandom}
         currentSpeed={500}
       />
 
@@ -283,17 +412,65 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
             position: 'relative',
             width: '100%',
             height: '100%',
-            zIndex: 1
+            zIndex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            padding: '20px',
+            overflowY: 'auto'
           }}>
             {viewMode === 'graph' ? (
-              currentMachine && (
-                <MachineInterconnectionGraph
-                  currentMachineId={currentMachine.id}
-                  machines={allMachines}
-                  width={1200}
-                  height={700}
+              <>
+                {/* Machine Interconnection Graph */}
+                {currentMachine && (
+                  <div style={{ flex: 1, minHeight: '500px' }}>
+                    <MachineInterconnectionGraph
+                      currentMachineId={currentMachine.id}
+                      machines={allMachines}
+                    />
+                  </div>
+                )}
+
+                {/* Machine Input Flow Display */}
+                {currentMachine && currentMachine.perceptualMapping && (
+                  <MachineInputFlowDisplay
+                    universalVector={currentUniversalVector}
+                    inputMapping={currentMachine.perceptualMapping.input}
+                    outputMapping={currentMachine.perceptualMapping.output}
+                    machineInput={machineInput}
+                    machineOutput={machineOutput}
+                    activeSequence={activeSequenceName}
+                    machineName={currentMachine.name}
+                  />
+                )}
+
+                {/* Universal Input Vector Display */}
+                <UniversalInputVectorDisplay
+                  currentVector={currentUniversalVector}
+                  vectorRegions={allMachines
+                    .filter(m => m.perceptualMapping)
+                    .flatMap(m => [
+                      {
+                        offset: m.perceptualMapping!.input.offset,
+                        length: m.perceptualMapping!.input.length,
+                        machineId: m.id,
+                        machineName: m.name,
+                        type: 'input' as const,
+                        color: '#3b82f6'
+                      },
+                      {
+                        offset: m.perceptualMapping!.output.offset,
+                        length: m.perceptualMapping!.output.length,
+                        machineId: m.id,
+                        machineName: m.name,
+                        type: 'output' as const,
+                        color: '#f472b6'
+                      }
+                    ])}
+                  onGenerateRandom={handleGenerateUniversalRandom}
+                  isGenerating={isGeneratingRandom}
                 />
-              )
+              </>
             ) : (
               <CriticalEventGraphView selectedSequenceId={selectedSequenceId} />
             )}
@@ -301,11 +478,44 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         </div>
       </div>
 
-      {/* Output Stream - Right Side */}
-      <OutputStreamVisualization
-        outputVectors={filteredOutputs}
-        maxVisible={10}
-        highlightedOutputId={highlightedOutputId}
+        {/* Output Stream - Right Side */}
+        <OutputStreamVisualization
+          outputVectors={filteredOutputs}
+          maxVisible={10}
+          highlightedOutputId={highlightedOutputId}
+        />
+      </div>
+
+      {/* Sequence Manager Modal */}
+      <SequenceManagerModal
+        isOpen={isSequenceModalOpen}
+        onClose={() => setIsSequenceModalOpen(false)}
+        inputSequence={inputQueue}
+        outputSequence={outputQueue}
+        onGenerateAlgorithmic={(count, pattern) => {
+          generateAlgorithmicSequence(pattern, count);
+        }}
+        onGenerateRandom={(count, region) => {
+          generateRandomSequence(count, region);
+        }}
+        onClearInputQueue={() => {
+          clearInputQueue();
+        }}
+        onClearOutputQueue={() => {
+          clearOutputQueue();
+        }}
+        onRemoveInputItem={(id) => {
+          removeFromInputQueue(id);
+        }}
+        onRemoveOutputItem={(id) => {
+          removeFromOutputQueue(id);
+        }}
+      />
+
+      {/* Perceptual Log Viewer */}
+      <PerceptualLogViewer
+        isOpen={isLogViewerOpen}
+        onClose={() => setIsLogViewerOpen(false)}
       />
 
       {/* Animations */}

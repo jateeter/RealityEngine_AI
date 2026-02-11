@@ -10,9 +10,11 @@ import {
   Machine,
   OutputVector,
   MachineCreateRequest,
-  MachineUpdateRequest
+  MachineUpdateRequest,
+  VectorSequenceItem
 } from './types';
 import { api } from './api';
+import { perceptualLogger, calculateVectorStats } from './utils/perceptualSequenceLogger';
 
 interface VisualizerState {
   // View state
@@ -47,6 +49,11 @@ interface VisualizerState {
   demoMetadata: any | null;
   ws: WebSocket | null;
   isHeatmapEnabled: boolean;
+
+  // Perceptual Input/Output Sequences (FIFO queues)
+  inputQueue: VectorSequenceItem[];
+  outputQueue: VectorSequenceItem[];
+  currentInputVector: number[] | null;
 
   // Machine View state
   expandedSequenceIds: Set<string>;
@@ -84,7 +91,7 @@ interface VisualizerState {
   setZoomLevel: (zoom: number) => void;
 
   // Simulation methods
-  loadSimulation: (vectors: number[][], options?: { autoPlayDelayMs?: number; loop?: boolean }) => Promise<void>;
+  loadSimulation: (vectors: number[][], options?: { autoPlayDelayMs?: number; loop?: boolean; machineId?: string; usePerceptualSpace?: boolean }) => Promise<void>;
   startSimulation: () => Promise<void>;
   pauseSimulation: () => Promise<void>;
   resumeSimulation: () => Promise<void>;
@@ -112,6 +119,19 @@ interface VisualizerState {
   collapseAllSequences: () => void;
   setCurrentOutputVectors: (outputs: OutputVector[]) => void;
   setHighlightedOutputId: (outputId: string | null) => void;
+
+  // Perceptual Input/Output Queue actions
+  addToInputQueue: (item: VectorSequenceItem) => void;
+  addMultipleToInputQueue: (items: VectorSequenceItem[]) => void;
+  popFromInputQueue: () => VectorSequenceItem | null;
+  removeFromInputQueue: (id: string) => void;
+  clearInputQueue: () => void;
+  addToOutputQueue: (item: VectorSequenceItem) => void;
+  removeFromOutputQueue: (id: string) => void;
+  clearOutputQueue: () => void;
+  setCurrentInputVector: (vector: number[] | null) => void;
+  generateAlgorithmicSequence: (pattern: string, count: number) => Promise<void>;
+  generateRandomSequence: (count: number, region: { offset: number; length: number }) => Promise<void>;
 }
 
 export const useVisualizerStore = create<VisualizerState>((set, get) => ({
@@ -147,6 +167,11 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   demoMetadata: null,
   ws: null,
   isHeatmapEnabled: false,
+
+  // Perceptual Input/Output Queue initialization
+  inputQueue: [],
+  outputQueue: [],
+  currentInputVector: null,
 
   // Machine View state initialization
   expandedSequenceIds: new Set<string>(),
@@ -352,10 +377,13 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         activityEvents: []
       });
 
+      const modeMsg = result.mode ? ` [${result.mode.toUpperCase()} MODE]` : '';
+      const machineMsg = options?.machineId ? ` for machine ${options.machineId}` : '';
+
       get().addActivityEvent({
         id: `event-${Date.now()}`,
         type: 'info',
-        message: `Loaded ${vectors.length} input vectors`,
+        message: `Loaded ${vectors.length} input vectors${machineMsg}${modeMsg}`,
         timestamp: Date.now(),
         severity: 'info'
       });
@@ -522,73 +550,135 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   loadRandomVectors: async (dimension: number, count: number, binaryThreshold: boolean) => {
     try {
       const state = get();
-      const sampleVectors = state.currentMachine?.metadata?.sampleVectors || [];
-      const inputSequences = state.currentMachine?.metadata?.inputSequences || [];
+      const currentMachine = state.currentMachine;
 
-      // Generate random vectors with input sequence injection
-      let vectors: number[][] = [];
-      let sampleCount = 0;
-      let sequencesInjected = 0;
+      if (!currentMachine) {
+        throw new Error('No machine loaded');
+      }
 
-      let i = 0;
-      while (i < count) {
-        // 25% chance to inject a complete input sequence if available
-        if (inputSequences.length > 0 && Math.random() < 0.25 && (count - i) >= 2) {
-          const sequence = inputSequences[Math.floor(Math.random() * inputSequences.length)];
-          const seqVectors = sequence.vectors || [];
+      // PERCEPTUAL SPACE MODE: Always generate universal 256-byte vectors
+      const perceptualMapping = currentMachine.perceptualMapping;
 
-          // Inject entire sequence
-          for (const vec of seqVectors) {
-            if (i >= count) break;
-            vectors.push([...vec]);
+      if (perceptualMapping) {
+        // Generate universal 256-byte vectors with random values in machine's input region
+        const { input } = perceptualMapping;
+        const vectors: number[][] = [];
+
+        for (let i = 0; i < count; i++) {
+          const vector = new Array(256).fill(0);
+
+          // Fill machine's input region with random values
+          for (let j = input.offset; j < input.offset + input.length; j++) {
+            vector[j] = Math.random();
+          }
+
+          // Apply binary threshold if enabled
+          if (binaryThreshold) {
+            for (let j = 0; j < vector.length; j++) {
+              vector[j] = vector[j] >= 0.5 ? 1.0 : 0.0;
+            }
+          }
+
+          vectors.push(vector);
+        }
+
+        // Load into simulation with PERCEPTUAL SPACE MODE
+        const result = await api.loadSimulation(vectors, {
+          autoPlayDelayMs: 500,
+          loop: true,
+          machineId: currentMachine.id,
+          usePerceptualSpace: true
+        });
+
+        // Update state
+        set({
+          inputVectors: vectors,
+          simulationState: result.state
+        });
+
+        // Add activity event
+        const thresholdMsg = binaryThreshold ? ' (binary threshold)' : '';
+        const regionMsg = `[${input.offset}:${input.offset + input.length}]`;
+        get().addActivityEvent({
+          id: `event-${Date.now()}`,
+          type: 'info',
+          message: `Generated ${count} universal vectors (256 bytes) with random input region ${regionMsg}${thresholdMsg} [PERCEPTUAL MODE]`,
+          timestamp: Date.now(),
+          severity: 'success'
+        });
+      } else {
+        // LEGACY MODE: Machine doesn't have perceptual mapping
+        // Generate machine-specific vectors (old behavior)
+        console.warn('Machine lacks perceptual mapping, using legacy mode');
+
+        const sampleVectors = currentMachine.metadata?.sampleVectors || [];
+        const inputSequences = currentMachine.metadata?.inputSequences || [];
+
+        let vectors: number[][] = [];
+        let sampleCount = 0;
+        let sequencesInjected = 0;
+
+        let i = 0;
+        while (i < count) {
+          // 25% chance to inject a complete input sequence if available
+          if (inputSequences.length > 0 && Math.random() < 0.25 && (count - i) >= 2) {
+            const sequence = inputSequences[Math.floor(Math.random() * inputSequences.length)];
+            const seqVectors = sequence.vectors || [];
+
+            for (const vec of seqVectors) {
+              if (i >= count) break;
+              vectors.push([...vec]);
+              i++;
+            }
+            sequencesInjected++;
+          }
+          // 20% chance to inject a single sample vector if available
+          else if (sampleVectors.length > 0 && Math.random() < 0.2) {
+            const sample = sampleVectors[Math.floor(Math.random() * sampleVectors.length)];
+            vectors.push([...sample.vector]);
+            sampleCount++;
             i++;
           }
-          sequencesInjected++;
+          // Otherwise generate random vector
+          else {
+            vectors.push(Array.from({ length: dimension }, () => Math.random()));
+            i++;
+          }
         }
-        // 20% chance to inject a single sample vector if available
-        else if (sampleVectors.length > 0 && Math.random() < 0.2) {
-          const sample = sampleVectors[Math.floor(Math.random() * sampleVectors.length)];
-          vectors.push([...sample.vector]);
-          sampleCount++;
-          i++;
+
+        // Trim to exact count
+        vectors = vectors.slice(0, count);
+
+        // Apply binary threshold if enabled
+        if (binaryThreshold) {
+          vectors = vectors.map(vector =>
+            vector.map(value => value >= 0.5 ? 1.0 : 0.0)
+          );
         }
-        // Otherwise generate random vector
-        else {
-          vectors.push(Array.from({ length: dimension }, () => Math.random()));
-          i++;
-        }
+
+        // Load into simulation WITHOUT perceptual space mode
+        const result = await api.loadSimulation(vectors, {
+          autoPlayDelayMs: 500,
+          loop: true,
+          usePerceptualSpace: false
+        });
+
+        set({
+          inputVectors: vectors,
+          simulationState: result.state
+        });
+
+        const thresholdMsg = binaryThreshold ? ' (binary threshold)' : '';
+        const seqMsg = sequencesInjected > 0 ? `, ${sequencesInjected} sequence${sequencesInjected !== 1 ? 's' : ''}` : '';
+        const sampleMsg = sampleCount > 0 ? `, ${sampleCount} sample${sampleCount !== 1 ? 's' : ''}` : '';
+        get().addActivityEvent({
+          id: `event-${Date.now()}`,
+          type: 'info',
+          message: `Generated ${count} random ${dimension}D vectors${thresholdMsg}${seqMsg}${sampleMsg} [LEGACY MODE]`,
+          timestamp: Date.now(),
+          severity: 'warning'
+        });
       }
-
-      // Trim to exact count if sequences caused overflow
-      vectors = vectors.slice(0, count);
-
-      // Apply binary threshold if enabled (round to 0.00 or 1.00)
-      if (binaryThreshold) {
-        vectors = vectors.map(vector =>
-          vector.map(value => value >= 0.5 ? 1.0 : 0.0)
-        );
-      }
-
-      // Load into simulation
-      const result = await api.loadSimulation(vectors, { autoPlayDelayMs: 500, loop: true });
-
-      // Update state
-      set({
-        inputVectors: vectors,
-        simulationState: result.state
-      });
-
-      // Add activity event
-      const thresholdMsg = binaryThreshold ? ' (binary threshold)' : '';
-      const seqMsg = sequencesInjected > 0 ? `, ${sequencesInjected} critical event sequence${sequencesInjected !== 1 ? 's' : ''} injected` : '';
-      const sampleMsg = sampleCount > 0 ? `, ${sampleCount} sample vector${sampleCount !== 1 ? 's' : ''}` : '';
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: `Generated ${count} random ${dimension}D vectors${thresholdMsg}${seqMsg}${sampleMsg}`,
-        timestamp: Date.now(),
-        severity: 'success'
-      });
     } catch (error) {
       console.error('Error generating random vectors:', error);
       get().addActivityEvent({
@@ -893,5 +983,257 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
   setHighlightedOutputId: (outputId: string | null) => {
     set({ highlightedOutputId: outputId });
+  },
+
+  // Perceptual Input/Output Queue actions implementation
+  addToInputQueue: (item: VectorSequenceItem) => {
+    const stats = calculateVectorStats(item.vector);
+
+    perceptualLogger.info('input-queue-add', `Added vector to input queue: ${item.id}`, {
+      queueType: 'input',
+      itemId: item.id,
+      vectorDimension: item.vector.length,
+      vectorSource: item.source,
+      vectorNonZeroCount: stats.nonZeroCount,
+      vectorMean: stats.mean,
+      vectorStdDev: stats.stdDev,
+      queueLength: get().inputQueue.length + 1
+    });
+
+    set((state) => ({
+      inputQueue: [...state.inputQueue, item]
+    }));
+  },
+
+  addMultipleToInputQueue: (items: VectorSequenceItem[]) => {
+    perceptualLogger.info('input-queue-add-bulk', `Added ${items.length} vectors to input queue`, {
+      queueType: 'input',
+      itemsAdded: items.length,
+      queueLength: get().inputQueue.length + items.length,
+      vectorSources: items.map(item => item.source),
+      vectorIds: items.map(item => item.id)
+    });
+
+    set((state) => ({
+      inputQueue: [...state.inputQueue, ...items]
+    }));
+  },
+
+  popFromInputQueue: () => {
+    const state = get();
+    if (state.inputQueue.length === 0) {
+      perceptualLogger.debug('input-queue-pop', 'Attempted to pop from empty input queue', {
+        queueType: 'input',
+        queueLength: 0
+      });
+      return null;
+    }
+
+    const [firstItem, ...rest] = state.inputQueue;
+    const stats = calculateVectorStats(firstItem.vector);
+
+    perceptualLogger.info('input-queue-pop', `Popped vector from input queue: ${firstItem.id}`, {
+      queueType: 'input',
+      itemId: firstItem.id,
+      vectorDimension: firstItem.vector.length,
+      vectorSource: firstItem.source,
+      vectorNonZeroCount: stats.nonZeroCount,
+      queueLength: rest.length
+    });
+
+    set({ inputQueue: rest });
+    return firstItem;
+  },
+
+  removeFromInputQueue: (id: string) => {
+    const removedItem = get().inputQueue.find(item => item.id === id);
+
+    perceptualLogger.info('input-queue-remove', `Removed vector from input queue: ${id}`, {
+      queueType: 'input',
+      itemId: id,
+      queueLength: get().inputQueue.length - 1,
+      itemFound: !!removedItem
+    });
+
+    set((state) => ({
+      inputQueue: state.inputQueue.filter(item => item.id !== id)
+    }));
+  },
+
+  clearInputQueue: () => {
+    const clearedCount = get().inputQueue.length;
+
+    perceptualLogger.info('input-queue-clear', `Cleared input queue (${clearedCount} items)`, {
+      queueType: 'input',
+      itemsRemoved: clearedCount,
+      queueLength: 0
+    });
+
+    set({ inputQueue: [] });
+    get().addActivityEvent({
+      id: `event-${Date.now()}`,
+      type: 'info',
+      message: 'Input queue cleared',
+      timestamp: Date.now(),
+      severity: 'info'
+    });
+  },
+
+  addToOutputQueue: (item: VectorSequenceItem) => {
+    const stats = calculateVectorStats(item.vector);
+
+    perceptualLogger.info('output-queue-add', `Added vector to output queue: ${item.id}`, {
+      queueType: 'output',
+      itemId: item.id,
+      vectorDimension: item.vector.length,
+      vectorSource: item.source,
+      vectorNonZeroCount: stats.nonZeroCount,
+      vectorMean: stats.mean,
+      vectorStdDev: stats.stdDev,
+      queueLength: get().outputQueue.length + 1,
+      machineName: item.metadata?.machineName
+    });
+
+    set((state) => ({
+      outputQueue: [...state.outputQueue, item]
+    }));
+  },
+
+  removeFromOutputQueue: (id: string) => {
+    const removedItem = get().outputQueue.find(item => item.id === id);
+
+    perceptualLogger.info('output-queue-remove', `Removed vector from output queue: ${id}`, {
+      queueType: 'output',
+      itemId: id,
+      queueLength: get().outputQueue.length - 1,
+      itemFound: !!removedItem,
+      machineName: removedItem?.metadata?.machineName
+    });
+
+    set((state) => ({
+      outputQueue: state.outputQueue.filter(item => item.id !== id)
+    }));
+  },
+
+  clearOutputQueue: () => {
+    const clearedCount = get().outputQueue.length;
+
+    perceptualLogger.info('output-queue-clear', `Cleared output queue (${clearedCount} items)`, {
+      queueType: 'output',
+      itemsRemoved: clearedCount,
+      queueLength: 0
+    });
+
+    set({ outputQueue: [] });
+    get().addActivityEvent({
+      id: `event-${Date.now()}`,
+      type: 'info',
+      message: 'Output queue cleared',
+      timestamp: Date.now(),
+      severity: 'info'
+    });
+  },
+
+  setCurrentInputVector: (vector: number[] | null) => {
+    set({ currentInputVector: vector });
+  },
+
+  generateAlgorithmicSequence: async (pattern: string, count: number) => {
+    try {
+      perceptualLogger.info('vector-generate-algorithmic', `Generating ${count} algorithmic vectors (${pattern})`, {
+        vectorPattern: pattern,
+        itemsAdded: count,
+        vectorDimension: 256
+      });
+
+      const { generateAlgorithmicVectors } = await import('./utils/algorithmicVectorGeneration');
+
+      const vectors = generateAlgorithmicVectors(pattern, count, 256);
+
+      const items: VectorSequenceItem[] = vectors.map((vector, index) => ({
+        id: `alg-${pattern}-${Date.now()}-${index}`,
+        vector,
+        timestamp: Date.now() + index,
+        source: 'algorithmic' as const,
+        metadata: { pattern, index }
+      }));
+
+      get().addMultipleToInputQueue(items);
+
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'info',
+        message: `Generated ${count} algorithmic vectors (${pattern}) and added to input queue`,
+        timestamp: Date.now(),
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error generating algorithmic sequence:', error);
+      perceptualLogger.error('vector-generate-algorithmic', `Failed to generate algorithmic sequence: ${error}`, {
+        vectorPattern: pattern,
+        itemsAdded: 0
+      });
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to generate algorithmic sequence',
+        timestamp: Date.now(),
+        severity: 'error'
+      });
+    }
+  },
+
+  generateRandomSequence: async (count: number, region: { offset: number; length: number }) => {
+    try {
+      perceptualLogger.info('vector-generate-random', `Generating ${count} random vectors in region [${region.offset}:${region.offset + region.length}]`, {
+        itemsAdded: count,
+        vectorDimension: 256,
+        vectorRegion: region
+      });
+
+      const items: VectorSequenceItem[] = [];
+
+      for (let i = 0; i < count; i++) {
+        const vector = new Array(256).fill(0);
+
+        // Fill specified region with random values
+        for (let j = region.offset; j < region.offset + region.length; j++) {
+          if (j < vector.length) {
+            vector[j] = Math.random();
+          }
+        }
+
+        items.push({
+          id: `rand-${Date.now()}-${i}`,
+          vector,
+          timestamp: Date.now() + i,
+          source: 'random' as const,
+          metadata: { region }
+        });
+      }
+
+      get().addMultipleToInputQueue(items);
+
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'info',
+        message: `Generated ${count} random vectors in region [${region.offset}:${region.offset + region.length}] and added to input queue`,
+        timestamp: Date.now(),
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error generating random sequence:', error);
+      perceptualLogger.error('vector-generate-random', `Failed to generate random sequence: ${error}`, {
+        itemsAdded: 0,
+        vectorRegion: region
+      });
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to generate random sequence',
+        timestamp: Date.now(),
+        severity: 'error'
+      });
+    }
   }
 }));

@@ -5,6 +5,7 @@ import { join } from 'path';
 import { RealityEngine } from '../engine/RealityEngine.js';
 import { RealityVector } from '../models/RealityVector.js';
 import { CriticalEventSequence } from '../models/CriticalEventSequence.js';
+import { Machine } from '../models/Machine.js';
 import { ComparatorType } from '../models/types.js';
 import type { VectorElement } from '../models/types.js';
 import { PreceptionOfReality } from '../engine/PreceptionOfReality.js';
@@ -32,6 +33,62 @@ export class RealityEngineAPI {
     this.perceptualSimulator = new PerceptualSpaceSimulator(256);
     this.setupRoutes();
     this.initializeDefaultSequences();
+  }
+
+  /**
+   * Helper: Add machine to both RealityEngine and PerceptualSpaceSimulator
+   * Ensures machines are properly synchronized across both systems
+   */
+  private addMachineToSystem(machine: Machine): void {
+    // Add to RealityEngine (always)
+    this.engine.addMachine(machine);
+
+    // Add to PerceptualSpaceSimulator (only if it has perceptual mapping)
+    if (machine.perceptualMapping) {
+      this.perceptualSimulator.addMachine(machine);
+      console.log(`  ✓ Machine "${machine.name}" registered with perceptual simulator`);
+      console.log(`    Input region: [${machine.perceptualMapping.input.offset}:${machine.perceptualMapping.input.offset + machine.perceptualMapping.input.length}]`);
+      console.log(`    Output region: [${machine.perceptualMapping.output.offset}:${machine.perceptualMapping.output.offset + machine.perceptualMapping.output.length}]`);
+    } else {
+      console.log(`  ⚠ Machine "${machine.name}" has no perceptual mapping - not added to perceptual simulator`);
+    }
+  }
+
+  /**
+   * Helper: Convert machine-specific input vectors to universal perceptual space vectors
+   * Embeds machine inputs at their designated offset in 256-byte universal vectors
+   */
+  private convertToUniversalInputs(
+    machineInputs: number[][],
+    machine: Machine,
+    universalDimension: number = 256
+  ): number[][] {
+    if (!machine.perceptualMapping) {
+      throw new Error(`Machine "${machine.name}" has no perceptual mapping - cannot convert to universal inputs`);
+    }
+
+    const { input: { offset, length } } = machine.perceptualMapping;
+
+    return machineInputs.map(machineInput => {
+      // Create zero-filled universal vector
+      const universalVector = new Array(universalDimension).fill(0);
+
+      // Validate machine input length
+      if (machineInput.length !== length) {
+        console.warn(
+          `Machine input length (${machineInput.length}) doesn't match mapping length (${length}). Adjusting...`
+        );
+      }
+
+      // Embed machine input at the designated offset
+      for (let i = 0; i < Math.min(machineInput.length, length); i++) {
+        if (offset + i < universalDimension) {
+          universalVector[offset + i] = machineInput[i] || 0;
+        }
+      }
+
+      return universalVector;
+    });
   }
 
   /**
@@ -75,23 +132,31 @@ export class RealityEngineAPI {
 
           const jsonString = readFileSync(filepath, 'utf8');
           const machine = MachineLoader.loadFromJSON(jsonString);
-          this.engine.addMachine(machine);
+          this.addMachineToSystem(machine);
 
           console.log(`  ✓ ${machine.name} loaded from ${filename}`);
           loadedCount++;
 
           // Initialize simulation controller with the first machine's test vectors
-          if (!this.simulationController && machine.metadata.inputSequences) {
+          if (!this.simulationController && machine.metadata.inputSequences && machine.perceptualMapping) {
             const inputSequences = machine.metadata.inputSequences as any[];
             if (inputSequences.length > 0) {
               const firstSequence = inputSequences[0];
               if (firstSequence.vectors && Array.isArray(firstSequence.vectors)) {
+                // Convert machine-specific inputs to universal perceptual space inputs
+                const universalInputs = this.convertToUniversalInputs(
+                  firstSequence.vectors,
+                  machine
+                );
+
                 this.simulationController = new SimulationController(this.engine, {
                   autoPlayDelayMs: 2000,
-                  inputVectors: firstSequence.vectors,
-                  loop: true
+                  inputVectors: universalInputs,
+                  loop: true,
+                  machineId: machine.id,
+                  usePerceptualSpace: true
                 });
-                console.log(`  ✓ Simulation controller initialized with ${firstSequence.name}`);
+                console.log(`  ✓ Simulation controller initialized with ${firstSequence.name} (universal perceptual space mode)`);
               }
             }
           }
@@ -670,23 +735,38 @@ export class RealityEngineAPI {
 
   private loadSimulationVectors(req: Request, res: Response): void {
     try {
-      const { vectors, autoPlayDelayMs, loop } = req.body;
+      const { vectors, autoPlayDelayMs, loop, machineId, usePerceptualSpace } = req.body;
 
       if (!Array.isArray(vectors)) {
         res.status(400).json({ error: 'Vectors must be an array' });
         return;
       }
 
+      // Determine if we should use perceptual space mode
+      // Default to perceptual mode if machineId is provided
+      const shouldUsePerceptualSpace = usePerceptualSpace !== undefined
+        ? usePerceptualSpace
+        : (machineId !== undefined);
+
       // Create or reinitialize simulation controller
       this.simulationController = new SimulationController(this.engine, {
         autoPlayDelayMs: autoPlayDelayMs || 1000,
         inputVectors: vectors,
-        loop: loop !== undefined ? loop : true
+        loop: loop !== undefined ? loop : true,
+        machineId: machineId,
+        usePerceptualSpace: shouldUsePerceptualSpace
       });
+
+      console.log(`Loaded simulation with ${vectors.length} vectors`);
+      console.log(`  Perceptual space mode: ${shouldUsePerceptualSpace ? 'ENABLED' : 'DISABLED (legacy)'}`);
+      if (machineId) {
+        console.log(`  Machine ID: ${machineId}`);
+      }
 
       res.json({
         success: true,
-        state: this.simulationController.getState()
+        state: this.simulationController.getState(),
+        mode: shouldUsePerceptualSpace ? 'perceptual' : 'legacy'
       });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -809,7 +889,7 @@ export class RealityEngineAPI {
         }
       }
 
-      this.engine.addMachine(machine);
+      this.addMachineToSystem(machine);
 
       res.json({
         machine: {
@@ -1194,8 +1274,8 @@ export class RealityEngineAPI {
       const jsonString = readFileSync(filepath, 'utf8');
       const machine = MachineLoader.loadFromJSON(jsonString);
 
-      // Add machine to engine
-      this.engine.addMachine(machine);
+      // Add machine to system (engine + perceptual simulator)
+      this.addMachineToSystem(machine);
 
       res.json({
         success: true,
@@ -1242,8 +1322,8 @@ export class RealityEngineAPI {
       // Load the machine
       const machine = MachineLoader.loadFromJSON(json);
 
-      // Add machine to engine
-      this.engine.addMachine(machine);
+      // Add machine to system (engine + perceptual simulator)
+      this.addMachineToSystem(machine);
 
       res.json({
         success: true,

@@ -5,6 +5,8 @@ export interface SimulationConfig {
   autoPlayDelayMs: number;
   inputVectors: number[][];
   loop: boolean;
+  machineId?: string;  // If set, process inputs as universal vectors through this machine
+  usePerceptualSpace?: boolean;  // If true, inputVectors are universal 256-byte vectors
 }
 
 export interface SimulationState {
@@ -173,7 +175,24 @@ export class SimulationController {
     if (!inputVector) {
       return null;
     }
-    const result = this.engine.processInput(inputVector);
+
+    // Process using perceptual space if configured
+    let result: TransitionResult;
+    if (this.config.usePerceptualSpace && this.config.machineId) {
+      // Process as universal input through specified machine
+      const machineResult = this.engine.processUniversalInput(inputVector, this.config.machineId);
+
+      // Convert MachineTransitionResult to TransitionResult for compatibility
+      result = {
+        inputVector,
+        timestamp: Date.now(),
+        sequenceResults: machineResult.sequenceResults,
+        totalOutputs: machineResult.machineOutput ? [machineResult.machineOutput] : []
+      };
+    } else {
+      // Legacy mode: process directly through engine sequences
+      result = this.engine.processInput(inputVector);
+    }
 
     // Store last result for polling access
     this.lastResult = result;

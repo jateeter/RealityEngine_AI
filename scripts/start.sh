@@ -150,32 +150,12 @@ fi
 echo ""
 echo ""
 
-# Start Reality Engine API
-print_info "Starting Reality Engine API..."
-
-# Check if already running
-if [ -f .api.pid ]; then
-    OLD_PID=$(cat .api.pid)
-    if ps -p $OLD_PID > /dev/null 2>&1; then
-        echo "Reality Engine API is already running (PID: $OLD_PID)"
-        echo "Use ./scripts/restart.sh to restart"
-        exit 0
-    else
-        rm .api.pid
-    fi
-fi
-
-# Start the API in background
-nohup npm start > logs/api.log 2>&1 &
-API_PID=$!
-echo $API_PID > .api.pid
-
-echo ""
-print_info "Waiting for Reality Engine API to be ready..."
+# Wait for Reality Engine API (running in Docker)
+print_info "Waiting for Reality Engine API (Docker) to be ready..."
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if curl -s http://localhost:${PORT:-3000}/api/health > /dev/null 2>&1; then
+    if curl -s http://localhost:3000/api/health > /dev/null 2>&1; then
         print_success "Reality Engine API is ready"
         break
     fi
@@ -187,36 +167,90 @@ done
 if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     echo ""
     echo "Error: Reality Engine API failed to start"
-    echo "Check logs with: ./scripts/logs.sh"
-    kill $API_PID 2>/dev/null || true
-    rm .api.pid
+    echo "Check Docker logs with: docker logs reality-engine-app"
+    exit 1
+fi
+
+echo ""
+
+# Wait for Visualizer Backend
+print_info "Waiting for Visualizer Backend to be ready..."
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if curl -s http://localhost:3001/health > /dev/null 2>&1; then
+        print_success "Visualizer Backend is ready"
+        break
+    fi
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    echo -n "."
+    sleep 2
+done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    echo ""
+    echo "Error: Visualizer Backend failed to start"
+    echo "Check Docker logs with: docker logs reality-engine-visualizer-backend"
+    exit 1
+fi
+
+echo ""
+
+# Wait for Visualizer Frontend
+print_info "Waiting for Visualizer Frontend to be ready..."
+RETRY_COUNT=0
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if curl -s http://localhost:5173/ > /dev/null 2>&1; then
+        print_success "Visualizer Frontend is ready"
+        break
+    fi
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    echo -n "."
+    sleep 2
+done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    echo ""
+    echo "Error: Visualizer Frontend failed to start"
+    echo "Check Docker logs with: docker logs reality-engine-visualizer-frontend"
     exit 1
 fi
 
 echo ""
 echo ""
 echo "=================================================="
-echo "Reality Engine Started Successfully!"
+echo "Reality Engine Started Successfully! (Docker Mode)"
 echo "=================================================="
 echo ""
-echo "Services:"
+echo "All Services Running in Docker:"
 echo "  - Qdrant Vector DB:      http://localhost:6333"
 echo "  - Qdrant Dashboard:      http://localhost:6333/dashboard"
-echo "  - Reality Engine API:    http://localhost:${PORT:-3000}"
-echo "  - API Health:            http://localhost:${PORT:-3000}/api/health"
+echo "  - Reality Engine API:    http://localhost:3000"
+echo "  - API Health:            http://localhost:3000/api/health"
 echo "  - Visualizer Backend:    http://localhost:3001"
 echo "  - Visualizer Frontend:   http://localhost:5173"
 echo ""
-echo "API PID: $API_PID (saved to .api.pid)"
+echo "Quick Start Guide:"
+echo "  1. Open Visualizer:         http://localhost:5173"
+echo "  2. Load machine from list (e.g., RSFlipFlop, DataCenterMonitoring)"
+echo "  3. View Machine Graph:      Shows interconnected machines in perceptual space"
+echo "  4. Generate Random Stream:  Use Random Generator in Universal Input Vector Display"
+echo "  5. Run Simulation:          Observe perceptual space propagation in real-time"
 echo ""
-echo "Quick Start:"
-echo "  1. Open Visualizer:  http://localhost:5173"
-echo "  2. Click 'Load Demo' to load the 30-sequence demonstration"
-echo "  3. Select a sequence and use simulation controls"
+echo "New Features:"
+echo "  - Universal Input Vector Display (256-byte perceptual space)"
+echo "  - Machine interconnection visualization with perceptual mappings"
+echo "  - Random stream generator for universal perceptual space"
+echo "  - Real-time visualization of machine output overwrites"
 echo ""
-echo "Useful commands:"
-echo "  Status:   ./scripts/status.sh"
-echo "  Logs:     ./scripts/logs.sh"
-echo "  Stop:     ./scripts/stop.sh"
-echo "  Restart:  ./scripts/restart.sh"
+echo "Useful Commands:"
+echo "  Status:          ./scripts/status.sh"
+echo "  Docker Logs:     docker logs reality-engine-app"
+echo "                   docker logs reality-engine-visualizer-frontend"
+echo "  Stop All:        ./scripts/stop.sh"
+echo "  Restart:         ./scripts/restart.sh"
+echo ""
+echo "Note: All services are containerized. Check container status with:"
+echo "      docker ps"
 echo ""

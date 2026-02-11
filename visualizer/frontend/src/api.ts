@@ -154,7 +154,9 @@ export const api = {
   async loadSimulation(vectors: number[][], options?: {
     autoPlayDelayMs?: number;
     loop?: boolean;
-  }): Promise<{ success: boolean; state: SimulationState }> {
+    machineId?: string;  // Machine ID for perceptual space mode
+    usePerceptualSpace?: boolean;  // Explicit flag for perceptual space mode
+  }): Promise<{ success: boolean; state: SimulationState; mode?: string }> {
     const response = await axios.post(SIMULATION_API_BASE + '/load', {
       vectors,
       ...options
@@ -221,6 +223,64 @@ export const api = {
   // Get activation heatmap
   async getSimulationHeatmap(): Promise<{ heatmap: VectorActivation[] }> {
     const response = await axios.get(SIMULATION_API_BASE + '/heatmap');
+    return response.data;
+  },
+
+  // ===== Perceptual Space Simulation Methods =====
+
+  // Configure perceptual space simulation
+  async configurePerceptualSimulation(config: {
+    inputSequence: number[][];
+    inputRegion: { offset: number; length: number };
+    stepDelayMs: number;
+    maxSteps?: number;
+  }): Promise<{ success: boolean; config: any }> {
+    const response = await axios.post('/api/perceptual-simulation/configure', config);
+    return response.data;
+  },
+
+  // Start perceptual simulation
+  async startPerceptualSimulation(): Promise<{ success: boolean; state: any }> {
+    const response = await axios.post('/api/perceptual-simulation/start');
+    return response.data;
+  },
+
+  // Stop perceptual simulation
+  async stopPerceptualSimulation(): Promise<{ success: boolean }> {
+    const response = await axios.post('/api/perceptual-simulation/stop');
+    return response.data;
+  },
+
+  // Step perceptual simulation
+  async stepPerceptualSimulation(): Promise<{
+    success: boolean;
+    step: any;
+    isComplete: boolean;
+  }> {
+    const response = await axios.post('/api/perceptual-simulation/step');
+    return response.data;
+  },
+
+  // Reset perceptual simulation
+  async resetPerceptualSimulation(): Promise<{ success: boolean }> {
+    const response = await axios.post('/api/perceptual-simulation/reset');
+    return response.data;
+  },
+
+  // Get perceptual simulation state
+  async getPerceptualSimulationState(): Promise<{
+    isRunning: boolean;
+    currentStep: number;
+    config: any;
+    perceptualSpaceDimension: number;
+  }> {
+    const response = await axios.get('/api/perceptual-simulation/state');
+    return response.data;
+  },
+
+  // Get perceptual simulation history
+  async getPerceptualSimulationHistory(): Promise<{ history: any[] }> {
+    const response = await axios.get('/api/perceptual-simulation/history');
     return response.data;
   },
 

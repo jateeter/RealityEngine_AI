@@ -16,7 +16,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 4,
+        "offset": 3,
         "length": 2
       },
       "output": {
@@ -40,12 +40,12 @@
               {
                 "value": 0,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               },
               {
                 "value": 0,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               }
             ],
             "isInitial": true,
@@ -63,12 +63,12 @@
               {
                 "value": 1,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               },
               {
                 "value": 0,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               }
             ],
             "isInitial": false,
@@ -105,12 +105,12 @@
               {
                 "value": 0,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               },
               {
                 "value": 0,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               }
             ],
             "isInitial": true,
@@ -128,12 +128,12 @@
               {
                 "value": 0,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               },
               {
                 "value": 1,
                 "comparatorType": "equals",
-                "threshold": 0.05
+                "threshold": 0.50
               }
             ],
             "isInitial": false,
