@@ -110,6 +110,49 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
+// Log ingestion endpoint - receives frontend logs and forwards to Loki
+app.post('/api/logs/ingest', async (req: Request, res: Response) => {
+  try {
+    const { logs } = req.body;
+
+    if (!logs || !Array.isArray(logs)) {
+      return res.status(400).json({ error: 'Invalid logs format. Expected { logs: [...] }' });
+    }
+
+    // Convert logs to Loki format
+    const streams = logs.map((log: any) => ({
+      stream: {
+        app: 'reality-engine',
+        service: 'visualizer-frontend',
+        environment: 'production',
+        log_type: log.type || 'perceptual-sequence',
+        log_level: log.level || 'info',
+        queue_type: log.data?.queueType || 'unknown'
+      },
+      values: [
+        [
+          `${log.timestamp * 1000000}`, // Convert to nanoseconds
+          JSON.stringify({
+            message: log.message,
+            level: log.level,
+            type: log.type,
+            ...log.data
+          })
+        ]
+      ]
+    }));
+
+    // Send to Loki
+    const lokiUrl = process.env.LOKI_URL || 'http://loki:3100';
+    await axios.post(`${lokiUrl}/loki/api/v1/push`, { streams });
+
+    res.json({ success: true, logsIngested: logs.length });
+  } catch (error: any) {
+    console.error('Error ingesting logs to Loki:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Proxy endpoint: Get all sequences with graph data
 app.get('/api/viz/sequences', async (req: Request, res: Response) => {
   try {

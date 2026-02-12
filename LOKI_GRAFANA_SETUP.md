@@ -123,6 +123,10 @@ The "Reality Engine Overview" dashboard includes:
 - **Reality Engine Logs** - Live log stream with filtering
 - **Logs by Service (1h)** - Distribution pie chart
 - **Error Logs** - Filtered view of errors only
+- **Input Stream Logs** - Perceptual sequence input queue operations
+- **Output Stream Logs** - Perceptual sequence output queue operations
+- **Perceptual Sequence Operations Rate** - Real-time rate of sequence operations
+- **Perceptual Operations Distribution** - Pie chart of operation types
 
 ---
 
@@ -166,9 +170,70 @@ rate({app="reality-engine"}[1m])
 
 ---
 
+### Perceptual Sequence Queries
+
+#### All Input Queue Operations
+```logql
+{app="reality-engine", queue_type="input"}
+```
+
+#### All Output Queue Operations
+```logql
+{app="reality-engine", queue_type="output"}
+```
+
+#### Vector Generation Logs
+```logql
+{app="reality-engine", log_type=~"vector-generate-.*"}
+```
+
+#### Queue Add Operations
+```logql
+{app="reality-engine", log_type=~".*-queue-add"}
+```
+
+#### Queue Remove Operations
+```logql
+{app="reality-engine", log_type=~".*-queue-remove|.*-queue-pop"}
+```
+
+#### Simulation Step Logs
+```logql
+{app="reality-engine", log_type="simulation-step"}
+```
+
+#### Perceptual Space Updates
+```logql
+{app="reality-engine", log_type="perceptual-space-update"}
+```
+
+#### Machine Input/Output Operations
+```logql
+{app="reality-engine", log_type=~"vector-extract-machine-input|vector-merge-machine-output"}
+```
+
+#### Rate of Input Queue Operations
+```logql
+sum(rate({app="reality-engine", queue_type="input"}[1m]))
+```
+
+#### Rate of Output Queue Operations
+```logql
+sum(rate({app="reality-engine", queue_type="output"}[1m]))
+```
+
+#### Operations by Type
+```logql
+sum by (log_type) (count_over_time({app="reality-engine", service="visualizer-frontend"}[5m]))
+```
+
+---
+
 ## Log Labels
 
 All logs are automatically tagged with the following labels:
+
+### Backend Service Labels (Docker Log Driver)
 
 - **app:** `reality-engine` (all services)
 - **service:** Service name (qdrant, reality-engine, visualizer-backend, visualizer-frontend)
@@ -178,6 +243,46 @@ Additional Docker labels:
 - **container_name:** Docker container name
 - **image_name:** Docker image name
 - **compose_service:** Service name from docker-compose.yml
+
+### Frontend Perceptual Sequence Labels (API Ingestion)
+
+Frontend logs from the perceptual sequence logger include:
+
+- **app:** `reality-engine`
+- **service:** `visualizer-frontend`
+- **environment:** `production`
+- **log_type:** Operation type (see below)
+- **log_level:** Log level (debug, info, warn, error)
+- **queue_type:** Queue type (input, output, unknown)
+
+#### Log Types
+
+The perceptual sequence logger generates these log types:
+
+**Input Queue Operations:**
+- `input-queue-add` - Single vector added to input queue
+- `input-queue-add-bulk` - Multiple vectors added to input queue
+- `input-queue-pop` - Vector popped from input queue
+- `input-queue-remove` - Vector removed from input queue
+- `input-queue-clear` - Input queue cleared
+
+**Output Queue Operations:**
+- `output-queue-add` - Vector added to output queue
+- `output-queue-remove` - Vector removed from output queue
+- `output-queue-clear` - Output queue cleared
+
+**Vector Operations:**
+- `vector-generate-algorithmic` - Algorithmic vector sequence generated
+- `vector-generate-random` - Random vector sequence generated
+- `vector-process-start` - Vector processing started
+- `vector-process-complete` - Vector processing completed
+- `vector-extract-machine-input` - Machine input extracted from universal vector
+- `vector-merge-machine-output` - Machine output merged into universal vector
+
+**Simulation Operations:**
+- `perceptual-space-update` - Perceptual space updated
+- `simulation-step` - Simulation step executed
+- `queue-state-snapshot` - Queue state snapshot captured
 
 ---
 

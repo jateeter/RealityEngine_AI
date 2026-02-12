@@ -81,9 +81,71 @@ export class PerceptualSequenceLogger {
   private maxLogs: number = 1000; // Keep last 1000 logs
   private listeners: Array<(entry: PerceptualLogEntry) => void> = [];
   private enabled: boolean = true;
+  private lokiBuffer: PerceptualLogEntry[] = [];
+  private lokiFlushInterval: number | null = null;
+  private lokiFlushSize: number = 10; // Send to Loki every 10 logs
+  private lokiFlushDelay: number = 5000; // Or every 5 seconds
+  private lokiEnabled: boolean = true; // Enable Loki forwarding
 
   constructor(maxLogs: number = 1000) {
     this.maxLogs = maxLogs;
+    this.startLokiFlushTimer();
+  }
+
+  /**
+   * Start periodic Loki flush timer
+   */
+  private startLokiFlushTimer(): void {
+    if (this.lokiFlushInterval) return;
+
+    this.lokiFlushInterval = window.setInterval(() => {
+      this.flushToLoki();
+    }, this.lokiFlushDelay);
+  }
+
+  /**
+   * Flush buffered logs to Loki
+   */
+  private async flushToLoki(): Promise<void> {
+    if (!this.lokiEnabled || this.lokiBuffer.length === 0) return;
+
+    const logsToSend = [...this.lokiBuffer];
+    this.lokiBuffer = [];
+
+    try {
+      // Use window.location to determine backend URL
+      const backendUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:3001'
+        : `${window.location.protocol}//${window.location.hostname}:3001`;
+
+      const response = await fetch(`${backendUrl}/api/logs/ingest`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ logs: logsToSend }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to send logs to Loki:', response.statusText);
+        // Re-add failed logs to buffer (up to buffer limit)
+        this.lokiBuffer.unshift(...logsToSend.slice(-50));
+      }
+    } catch (error) {
+      console.error('Error sending logs to Loki:', error);
+      // Re-add failed logs to buffer (up to buffer limit)
+      this.lokiBuffer.unshift(...logsToSend.slice(-50));
+    }
+  }
+
+  /**
+   * Enable or disable Loki forwarding
+   */
+  setLokiEnabled(enabled: boolean): void {
+    this.lokiEnabled = enabled;
+    if (!enabled) {
+      this.lokiBuffer = [];
+    }
   }
 
   /**
@@ -137,6 +199,16 @@ export class PerceptualSequenceLogger {
         console.error('Error in log listener:', error);
       }
     });
+
+    // Add to Loki buffer
+    if (this.lokiEnabled) {
+      this.lokiBuffer.push(entry);
+
+      // Flush if buffer reaches threshold
+      if (this.lokiBuffer.length >= this.lokiFlushSize) {
+        this.flushToLoki();
+      }
+    }
 
     // Console output based on level
     if (level === 'error') {
