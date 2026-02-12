@@ -33,6 +33,16 @@ fi
 # Load environment variables
 source .env
 
+# Setup Loki Docker driver if needed
+print_info "Checking Loki Docker driver..."
+if [ -f "./scripts/setup-loki-driver.sh" ]; then
+    ./scripts/setup-loki-driver.sh
+    echo ""
+else
+    print_info "Loki driver setup script not found, skipping..."
+    echo ""
+fi
+
 # Check if ports are in use by local services
 print_info "Checking for port conflicts with local services..."
 
@@ -230,6 +240,8 @@ echo "  - Reality Engine API:    http://localhost:3000"
 echo "  - API Health:            http://localhost:3000/api/health"
 echo "  - Visualizer Backend:    http://localhost:3001"
 echo "  - Visualizer Frontend:   http://localhost:5173"
+echo "  - Grafana (Logs):        http://localhost:3002"
+echo "  - Loki (Log API):        http://localhost:3100"
 echo ""
 echo "Quick Start Guide:"
 echo "  1. Open Visualizer:         http://localhost:5173"
@@ -237,12 +249,15 @@ echo "  2. Load machine from list (e.g., RSFlipFlop, DataCenterMonitoring)"
 echo "  3. View Machine Graph:      Shows interconnected machines in perceptual space"
 echo "  4. Generate Random Stream:  Use Random Generator in Universal Input Vector Display"
 echo "  5. Run Simulation:          Observe perceptual space propagation in real-time"
+echo "  6. View Logs in Grafana:    http://localhost:3002 (admin/admin)"
 echo ""
 echo "New Features:"
 echo "  - Universal Input Vector Display (256-byte perceptual space)"
 echo "  - Machine interconnection visualization with perceptual mappings"
 echo "  - Random stream generator for universal perceptual space"
 echo "  - Real-time visualization of machine output overwrites"
+echo "  - Centralized logging with Grafana Loki (auto-configured)"
+echo "  - Perceptual sequence logging with detailed operation tracking"
 echo ""
 echo "Useful Commands:"
 echo "  Status:          ./scripts/status.sh"

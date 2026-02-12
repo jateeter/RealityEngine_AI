@@ -59,24 +59,38 @@ Reality Engine now includes centralized logging with Grafana Loki and visualizat
 
 ## Installation
 
-### Option 1: Docker Daemon Configuration (Recommended)
+### Automated Setup (Recommended)
 
-Install the Loki Docker plugin and configure the daemon:
+The Loki Docker driver is automatically installed when you start the services:
+
+```bash
+./scripts/start.sh
+```
+
+The start script will:
+1. Check if the Loki Docker plugin is installed
+2. Install it automatically if not present
+3. Verify the plugin is enabled
+4. Start all services with Loki logging configured
+
+### Manual Setup (Advanced)
+
+If you prefer to install the plugin manually:
 
 ```bash
 # Install Loki Docker plugin
-docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
-
-# Copy daemon configuration
-sudo cp config/docker-daemon.json /etc/docker/daemon.json
-
-# Restart Docker daemon
-sudo systemctl restart docker
+./scripts/setup-loki-driver.sh
 ```
 
-### Option 2: Per-Container Configuration (Already Configured)
+Or install directly:
 
-The docker-compose.yml already includes Loki log driver configuration for each service. No additional setup needed if using docker-compose.
+```bash
+docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+```
+
+### Per-Container Configuration
+
+The docker-compose.yml already includes Loki log driver configuration for each service. No additional setup needed.
 
 ---
 
