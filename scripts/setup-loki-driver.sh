@@ -20,12 +20,12 @@ fi
 echo "✓ Docker is running"
 echo ""
 
-# Check if Loki plugin is already installed
-if docker plugin ls | grep -q "grafana/loki-docker-driver"; then
+# Check if Loki plugin is already installed (by alias or full name)
+if docker plugin ls | grep -q "loki"; then
     echo "✓ Loki Docker driver plugin is already installed"
 
     # Check if it's enabled
-    if docker plugin ls | grep "grafana/loki-docker-driver" | grep -q "true"; then
+    if docker plugin ls | grep "loki" | grep -q "true"; then
         echo "✓ Loki Docker driver plugin is enabled"
     else
         echo "⚠ Loki Docker driver plugin is disabled, enabling..."
