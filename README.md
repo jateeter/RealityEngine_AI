@@ -8,12 +8,14 @@ Claude Code generated seed version of the Reality Engine (with incremental promp
 
 After starting with `./docker-start.sh` or `docker-compose up -d`:
 
-| Service | URL |
-|---------|-----|
-| **Visualizer Frontend** | http://localhost:5173 |
-| **Reality Engine API** | http://localhost:3000 |
-| **Visualizer Backend** | http://localhost:3001 |
-| **Qdrant Dashboard** | http://localhost:6333/dashboard |
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Visualizer Frontend** | http://localhost:5173 | Main web interface |
+| **Grafana Logs** | http://localhost:3002 | Centralized logging dashboard |
+| **Reality Engine API** | http://localhost:3000 | Core API server |
+| **Visualizer Backend** | http://localhost:3001 | WebSocket proxy |
+| **Qdrant Dashboard** | http://localhost:6333/dashboard | Vector database UI |
+| **Loki API** | http://localhost:3100 | Log aggregation service |
 
 ## Table of Contents
 
@@ -98,6 +100,42 @@ The Reality Engine now includes a **Universal Input Vector Display** that visual
 - Startup Verification: [STARTUP_VERIFICATION.md](./STARTUP_VERIFICATION.md)
 
 This visualization makes the perceptual space architecture fully transparent, enabling you to understand exactly how machines perceive reality and how their outputs propagate through the shared universal space.
+
+### Centralized Logging with Loki and Grafana ⭐ **NEW**
+
+The Reality Engine now includes **Grafana Loki** for centralized log aggregation and **Grafana** for visualization. All Docker containers automatically forward logs using the Loki log driver.
+
+**Key Features:**
+- **Centralized log collection** from all services (Reality Engine, Qdrant, Visualizer)
+- **Real-time log streaming** with powerful LogQL query language
+- **Pre-configured dashboard** with service metrics and error tracking
+- **30-day log retention** with automatic compaction
+- **Low resource overhead** (~256MB RAM for Loki)
+
+**Quick Access:**
+1. Start the system: `./scripts/start.sh`
+2. Open Grafana: http://localhost:3002
+3. Login: `admin` / `admin` (change on first login)
+4. View "Reality Engine Overview" dashboard
+
+**Common Queries:**
+```logql
+# All logs
+{app="reality-engine"}
+
+# Specific service
+{app="reality-engine", service="reality-engine"}
+
+# Error logs only
+{app="reality-engine"} |~ "error|Error|ERROR"
+
+# Log rate by service
+sum(count_over_time({app="reality-engine"}[5m])) by (service)
+```
+
+**Documentation:**
+- Complete Setup Guide: [LOKI_GRAFANA_SETUP.md](./LOKI_GRAFANA_SETUP.md)
+- Includes troubleshooting, advanced queries, and alerting configuration
 
 ## Core Concepts
 
