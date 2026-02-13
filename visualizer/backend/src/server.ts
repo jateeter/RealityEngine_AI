@@ -25,12 +25,24 @@ const server = http.createServer(app);
 // Create WebSocket server
 const wss = new WebSocketServer({ server, path: '/ws' });
 
-// Store connected clients
+// Store connected clients with heartbeat tracking
 const clients = new Set<any>();
+
+// Heartbeat interval to detect stale connections
+const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+const HEARTBEAT_TIMEOUT = 35000; // 35 seconds
 
 wss.on('connection', (ws) => {
   console.log('WebSocket client connected');
   clients.add(ws);
+
+  // Mark connection as alive
+  (ws as any).isAlive = true;
+
+  // Setup pong handler to detect alive connections
+  ws.on('pong', () => {
+    (ws as any).isAlive = true;
+  });
 
   ws.on('close', () => {
     console.log('WebSocket client disconnected');
@@ -42,6 +54,20 @@ wss.on('connection', (ws) => {
     clients.delete(ws);
   });
 });
+
+// Heartbeat check - ping all clients periodically
+const heartbeatInterval = setInterval(() => {
+  clients.forEach((ws) => {
+    if ((ws as any).isAlive === false) {
+      console.log('Terminating stale WebSocket connection');
+      clients.delete(ws);
+      return ws.terminate();
+    }
+
+    (ws as any).isAlive = false;
+    ws.ping();
+  });
+}, HEARTBEAT_INTERVAL);
 
 // Broadcast function to all connected clients
 function broadcast(data: any) {
@@ -62,6 +88,13 @@ function startSimulationPolling() {
 
   simulationPollInterval = setInterval(async () => {
     try {
+      // Stop polling if no clients are connected
+      if (clients.size === 0) {
+        console.log('No clients connected, stopping simulation polling');
+        stopSimulationPolling();
+        return;
+      }
+
       const response = await axios.get(`${REALITY_ENGINE_URL}/api/simulation/state`);
       const state = response.data.state;
       const lastResult = response.data.lastResult;
@@ -1038,6 +1071,13 @@ function startPerceptualSimulationPolling() {
 
   perceptualSimulationPollInterval = setInterval(async () => {
     try {
+      // Stop polling if no clients are connected
+      if (clients.size === 0) {
+        console.log('No clients connected, stopping perceptual simulation polling');
+        stopPerceptualSimulationPolling();
+        return;
+      }
+
       const response = await axios.get(`${REALITY_ENGINE_URL}/api/perceptual-simulation/state`);
       const state = response.data.state;
 
@@ -1089,6 +1129,9 @@ server.listen(PORT, () => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully...');
+  clearInterval(heartbeatInterval);
+  stopSimulationPolling();
+  stopPerceptualSimulationPolling();
   server.close(() => {
     process.exit(0);
   });
@@ -1096,6 +1139,9 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   console.log('SIGINT received, shutting down gracefully...');
+  clearInterval(heartbeatInterval);
+  stopSimulationPolling();
+  stopPerceptualSimulationPolling();
   server.close(() => {
     process.exit(0);
   });

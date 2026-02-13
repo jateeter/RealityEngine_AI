@@ -253,6 +253,10 @@ export const MachineGraphView: React.FC = () => {
       event.subject.fy = null;
     }
 
+    // Cleanup: stop simulation on unmount or when dependencies change
+    return () => {
+      simulation.stop();
+    };
   }, [graphData, currentStep]);
 
   if (error) {

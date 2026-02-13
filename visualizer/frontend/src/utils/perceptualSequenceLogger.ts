@@ -361,6 +361,25 @@ export class PerceptualSequenceLogger {
       ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
     ].join('\n');
   }
+
+  /**
+   * Clean up resources (stop timers, flush remaining logs)
+   */
+  destroy(): void {
+    // Stop Loki flush timer
+    if (this.lokiFlushInterval !== null) {
+      clearInterval(this.lokiFlushInterval);
+      this.lokiFlushInterval = null;
+    }
+
+    // Flush any remaining logs
+    this.flushToLoki();
+
+    // Clear listeners
+    this.listeners = [];
+
+    console.log('[Perceptual Logger] Destroyed and cleaned up');
+  }
 }
 
 /**

@@ -3,6 +3,7 @@ import { useVisualizerStore } from './store';
 import MachineSelectionView from './views/MachineSelectionView';
 import MachineAdministrationView from './views/MachineAdministrationView';
 import { MachineInterconnectionView } from './pages/MachineInterconnectionView';
+import { perceptualLogger } from './utils/perceptualSequenceLogger';
 
 function App() {
   const {
@@ -16,6 +17,13 @@ function App() {
   // Expose store to window for E2E testing
   useEffect(() => {
     (window as any).useVisualizerStore = useVisualizerStore;
+  }, []);
+
+  // Cleanup perceptual logger on unmount
+  useEffect(() => {
+    return () => {
+      perceptualLogger.destroy();
+    };
   }, []);
 
   // Initialize app - check for last viewed machine
