@@ -28,6 +28,9 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      - name: Install Loki Docker logging plugin
+        run: docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+
       - name: Start Docker services
         run: |
           docker-compose up -d
