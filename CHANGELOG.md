@@ -5,6 +5,40 @@ All notable changes to the Reality Engine AI project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0-rc.1] - 2026-02-04
+
+### Added
+
+#### Local File System Support
+- **File Upload Feature**: Users can now load machine JSON files from their local filesystem
+  - Added file upload button in the Import tab of Machine Management Modal
+  - Automatic file reading and loading into textarea using FileReader API
+  - Support for .json and application/json MIME types
+  - Client-side file processing with no server-side changes required
+- **Enhanced UI/UX**: Improved clarity and user guidance
+  - Updated "Browse" tab header to "Server Machine Files" for clarity
+  - Added subtitle explaining files are from `examples/machines` directory
+  - Updated Import tab description to include file upload option
+  - Better distinction between three machine loading sources:
+    1. Browse server files (examples/machines directory)
+    2. Upload local JSON files from computer
+    3. Paste JSON directly into textarea
+
+#### Backend Improvements
+- **Enhanced Debug Logging**: Added detailed logging for machine file loading process
+  - Logs directory contents and JSON files found
+  - Individual file parsing success/failure reporting
+  - Better error visibility for troubleshooting
+- **Robust Error Handling**: Individual file try-catch blocks prevent single bad file from breaking entire list
+
+### Technical Details
+- Uses HTML5 FileReader API for client-side file reading
+- Error handling for file read failures
+- Maintains backward compatibility with existing server-based loading
+- No changes to API endpoints or data formats
+
+---
+
 ## [1.1.0] - 2026-01-31
 
 ### Added
