@@ -30,7 +30,7 @@ jobs:
 
       - name: Start Docker services
         run: |
-          docker-compose up -d
+          docker compose up -d
           echo "Waiting for services to be healthy..."
           sleep 20
 
@@ -70,15 +70,15 @@ jobs:
         if: failure()
         run: |
           echo "=== Reality Engine Logs ==="
-          docker-compose logs reality-engine
+          docker compose logs reality-engine
           echo "=== Visualizer Backend Logs ==="
-          docker-compose logs visualizer-backend
+          docker compose logs visualizer-backend
           echo "=== Visualizer Frontend Logs ==="
-          docker-compose logs visualizer-frontend
+          docker compose logs visualizer-frontend
 
       - name: Stop Docker services
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   test-summary:
     runs-on: ubuntu-latest
