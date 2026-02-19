@@ -3,6 +3,7 @@ import { useVisualizerStore } from './store';
 import MachineSelectionView from './views/MachineSelectionView';
 import MachineAdministrationView from './views/MachineAdministrationView';
 import { MachineInterconnectionView } from './pages/MachineInterconnectionView';
+import TobiasView from './pages/TobiasView';
 import { perceptualLogger } from './utils/perceptualSequenceLogger';
 
 function App() {
@@ -67,6 +68,10 @@ function App() {
 
   if (currentView === 'interconnection') {
     return <MachineInterconnectionView />;
+  }
+
+  if (currentView === 'tobias') {
+    return <TobiasView />;
   }
 
   return <MachineSelectionView />;

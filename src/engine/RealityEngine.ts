@@ -29,6 +29,15 @@ export interface TransitionResult {
  * - Collect and assert OutputVectors
  * - Interface with VectorStore for persistence
  */
+interface MachineCheckpoint {
+  id: string;
+  machineId: string;
+  machineName: string;
+  label?: string;
+  timestamp: number;
+  snapshot: Machine;  // deep clone of the machine at checkpoint time
+}
+
 export class RealityEngine {
   private sequences: Map<string, CriticalEventSequence>;
   private machines: Map<string, Machine>;
@@ -36,14 +45,31 @@ export class RealityEngine {
   private transitionHistory: TransitionResult[];
   private maxHistorySize: number;
   private preceptionEngine: PreceptionEngine;
+  private universalDimension: number;
+  /** checkpoints keyed by machineId → checkpointId → MachineCheckpoint */
+  private checkpoints: Map<string, Map<string, MachineCheckpoint>>;
+  /**
+   * When true, a debug log entry is emitted after each machine completes its
+   * processing cycle.  Callers assume fire-and-forget completion; this flag
+   * provides an optional observability point without changing the async contract.
+   */
+  private verboseLogging: boolean;
 
-  constructor(vectorStore: VectorStore, maxHistorySize: number = 1000, universalDimension: number = 256) {
+  constructor(
+    vectorStore: VectorStore,
+    maxHistorySize: number = 1000,
+    universalDimension: number = 256,
+    verboseLogging: boolean = false
+  ) {
     this.sequences = new Map();
     this.machines = new Map();
     this.vectorStore = vectorStore;
     this.transitionHistory = [];
     this.maxHistorySize = maxHistorySize;
+    this.universalDimension = universalDimension;
     this.preceptionEngine = new PreceptionEngine(universalDimension);
+    this.checkpoints = new Map();
+    this.verboseLogging = verboseLogging;
   }
 
   /**
@@ -153,19 +179,30 @@ export class RealityEngine {
       throw new Error(`Machine not found: ${machineId}`);
     }
 
-    // The machine handles the full 3-phase workflow
-    const result = machine.processInput(inputVector);
-
-    // Tag the machine output with machine metadata
-    if (result.machineOutput) {
-      result.machineOutput.metadata = {
-        ...result.machineOutput.metadata,
-        machineId,
-        machineName: machine.name
-      };
+    const mapping = machine.perceptualMapping;
+    if (!mapping) {
+      throw new Error(
+        `Machine "${machine.name}" has no perceptual mapping — cannot route through PreceptionEngine. ` +
+        `Configure a perceptual mapping for this machine or supply the full universal input space ` +
+        `via POST /machines/${machineId}/process-universal.`
+      );
     }
 
-    return result;
+    if (inputVector.length !== mapping.input.length) {
+      throw new Error(
+        `Input vector length ${inputVector.length} does not match machine input region length ${mapping.input.length}`
+      );
+    }
+
+    // Embed the machine-specific input vector into a zero-padded universal space
+    // at the machine's registered input offset, then route through the PreceptionEngine
+    // so every input participates in the unified perceptual resolution flow.
+    const universalSpace = new Array(this.universalDimension).fill(0);
+    for (let i = 0; i < inputVector.length; i++) {
+      universalSpace[mapping.input.offset + i] = inputVector[i];
+    }
+
+    return this.processUniversalInput(universalSpace, machineId);
   }
 
   /**
@@ -199,6 +236,19 @@ export class RealityEngine {
     // Process the resolved input through the machine
     const result = machine.processInput(machineInput);
 
+    // Merge each sequence's assertedOutputs individually into the authoritative
+    // perceptual space, guarded by the arbiter's yes/no decision.
+    // mergeMachineOutput constrains every write to [offset, offset+length) via
+    // the output mapping, so no overflow is architecturally possible.
+    const mapping = machine.perceptualMapping;
+    if (result.arbiterMetadata.shouldOutput && mapping) {
+      for (const seqResult of result.sequenceResults.values()) {
+        for (const assertedOutput of seqResult.assertedOutputs) {
+          this.preceptionEngine.mergeOutputIntoPerceptualSpace(assertedOutput.vector, mapping);
+        }
+      }
+    }
+
     // Tag with machine metadata
     if (result.machineOutput) {
       result.machineOutput.metadata = {
@@ -206,8 +256,18 @@ export class RealityEngine {
         machineId,
         machineName: machine.name,
         preceptionUsed: true,
-        universalSpaceDimension: universalInputSpace.length
+        universalSpaceDimension: universalInputSpace.length,
+        outputMergedToPerceptualSpace: !!(result.arbiterMetadata.shouldOutput && mapping)
       };
+    }
+
+    if (this.verboseLogging) {
+      console.debug(
+        `[RealityEngine] machine=${machine.name} id=${machineId} ` +
+        `sequencesWithOutput=${result.arbiterMetadata.sequencesWithOutput} ` +
+        `shouldOutput=${result.arbiterMetadata.shouldOutput} ` +
+        `ts=${result.timestamp}`
+      );
     }
 
     return result;
@@ -227,7 +287,10 @@ export class RealityEngine {
   ): Map<string, MachineTransitionResult> {
     const results = new Map<string, MachineTransitionResult>();
 
-    // Batch resolve inputs for all machines
+    // Batch resolve inputs for all machines from the same universal space snapshot.
+    // All machine inputs are captured before any machine runs, preserving
+    // input-atomicity: no machine observes another machine's output as its input
+    // within the same processing round.
     const resolvedInputs = this.preceptionEngine.resolveInputsForMachines(
       universalInputSpace,
       this.machines
@@ -253,8 +316,44 @@ export class RealityEngine {
         }
 
         results.set(machineId, result);
+
+        if (this.verboseLogging) {
+          console.debug(
+            `[RealityEngine] machine=${machine.name} id=${machineId} ` +
+            `sequencesWithOutput=${result.arbiterMetadata.sequencesWithOutput} ` +
+            `shouldOutput=${result.arbiterMetadata.shouldOutput} ` +
+            `ts=${result.timestamp}`
+          );
+        }
       } catch (error: any) {
         console.error(`Error processing machine ${machineId}: ${error.message}`);
+      }
+    }
+
+    // Merge all machine outputs back into the authoritative perceptual space
+    // after ALL machines have finished (not during) to preserve input-atomicity.
+    // Each assertedOutput from every qualifying sequence is written individually
+    // via mergeMachineOutput, which constrains the write to the machine's
+    // registered output region — overflow is architecturally impossible.
+    for (const [machineId, result] of results) {
+      const machine = this.machines.get(machineId);
+      if (!machine?.perceptualMapping || !result.arbiterMetadata.shouldOutput) continue;
+
+      const mapping = machine.perceptualMapping;
+      try {
+        for (const seqResult of result.sequenceResults.values()) {
+          for (const assertedOutput of seqResult.assertedOutputs) {
+            this.preceptionEngine.mergeOutputIntoPerceptualSpace(assertedOutput.vector, mapping);
+          }
+        }
+        if (result.machineOutput) {
+          result.machineOutput.metadata = {
+            ...result.machineOutput.metadata,
+            outputMergedToPerceptualSpace: true
+          };
+        }
+      } catch (error: any) {
+        console.error(`Failed to merge output for machine ${machineId}: ${error.message}`);
       }
     }
 
@@ -277,6 +376,144 @@ export class RealityEngine {
    */
   getPreceptionEngine(): PreceptionEngine {
     return this.preceptionEngine;
+  }
+
+  // ── What-if Analytic Workflow ──────────────────────────────────────────────
+
+  /**
+   * Run a hypothetical input through a cloned copy of the machine without
+   * mutating the machine's live event-sequence state.
+   *
+   * The clone becomes the head of the what-if workflow: the match algorithm
+   * advances its internal state in exactly the same way it would advance the
+   * live machine, but all mutations are confined to the clone.  The live
+   * machine is completely unaffected.
+   *
+   * For a machine with a perceptual mapping use processUniversalWhatIf()
+   * instead so the input is resolved through the PreceptionEngine first.
+   *
+   * @param machineId - ID of the machine to hypothesize against
+   * @param inputVector - Machine-dimension input to apply to the clone
+   */
+  processWhatIf(machineId: string, inputVector: number[]): MachineTransitionResult {
+    const machine = this.machines.get(machineId);
+    if (!machine) {
+      throw new Error(`Machine not found: ${machineId}`);
+    }
+    return machine.clone().processInput(inputVector);
+  }
+
+  /**
+   * Run a hypothetical universal-space input through a cloned machine via the
+   * PreceptionEngine, without mutating the live machine's state.
+   *
+   * @param universalInputSpace - Full universal input vector (length == universalDimension)
+   * @param machineId - ID of the machine to hypothesize against
+   */
+  processUniversalWhatIf(
+    universalInputSpace: number[],
+    machineId: string
+  ): MachineTransitionResult {
+    const machine = this.machines.get(machineId);
+    if (!machine) {
+      throw new Error(`Machine not found: ${machineId}`);
+    }
+    const machineInput = this.preceptionEngine.resolveInputEventVectorForMachine(
+      universalInputSpace,
+      machine
+    );
+    return machine.clone().processInput(machineInput);
+  }
+
+  // ── Checkpoint / Rewind ────────────────────────────────────────────────────
+
+  /**
+   * Capture a named checkpoint of the machine's current event-sequence state.
+   *
+   * The checkpoint stores a full deep clone of the machine (all sequences and
+   * their active-vector state) at the moment of the call.  Multiple checkpoints
+   * can be taken per machine; each is retained until explicitly deleted or the
+   * engine is restarted.
+   *
+   * Checkpoints are the foundation for temporal-rewind analytics: by restoring
+   * a checkpoint you roll the machine's active-event progression back to any
+   * previously captured moment, enabling branching "what happened after X?"
+   * analysis without re-running the full input history.
+   *
+   * @param machineId - ID of the machine to checkpoint
+   * @param label     - Optional human-readable label (e.g. "before fault injection")
+   * @returns         - The generated checkpoint ID
+   */
+  createCheckpoint(machineId: string, label?: string): string {
+    const machine = this.machines.get(machineId);
+    if (!machine) {
+      throw new Error(`Machine not found: ${machineId}`);
+    }
+    const checkpointId = `cp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    if (!this.checkpoints.has(machineId)) {
+      this.checkpoints.set(machineId, new Map());
+    }
+    this.checkpoints.get(machineId)!.set(checkpointId, {
+      id: checkpointId,
+      machineId,
+      machineName: machine.name,
+      ...(label !== undefined ? { label } : {}),
+      timestamp: Date.now(),
+      snapshot: machine.clone()
+    });
+    return checkpointId;
+  }
+
+  /**
+   * List all checkpoints recorded for a machine.
+   */
+  listCheckpoints(machineId: string): Array<{
+    id: string;
+    machineId: string;
+    machineName: string;
+    label?: string;
+    timestamp: number;
+  }> {
+    const bucket = this.checkpoints.get(machineId);
+    if (!bucket) return [];
+    return Array.from(bucket.values()).map(({ id, machineId, machineName, label, timestamp }) => ({
+      id,
+      machineId,
+      machineName,
+      ...(label !== undefined ? { label } : {}),
+      timestamp
+    }));
+  }
+
+  /**
+   * Restore a machine to a previously captured checkpoint state.
+   *
+   * The checkpoint snapshot is re-cloned before restoration so the stored
+   * checkpoint remains intact and can be restored again later (supporting
+   * multi-branch rewind scenarios).
+   *
+   * The machine's entry in both this.machines and this.sequences is replaced
+   * with the restored clone, ensuring the engine's sequence map stays coherent.
+   *
+   * @param machineId    - ID of the machine to restore
+   * @param checkpointId - ID of the checkpoint to restore from
+   */
+  restoreCheckpoint(machineId: string, checkpointId: string): void {
+    const checkpoint = this.checkpoints.get(machineId)?.get(checkpointId);
+    if (!checkpoint) {
+      throw new Error(`Checkpoint ${checkpointId} not found for machine ${machineId}`);
+    }
+    // Remove the live machine (and its sequences) from the engine
+    this.removeMachine(machineId);
+    // Re-clone the snapshot so the stored checkpoint is preserved for future restores
+    this.addMachine(checkpoint.snapshot.clone());
+  }
+
+  /**
+   * Delete a specific checkpoint.
+   */
+  deleteCheckpoint(machineId: string, checkpointId: string): boolean {
+    return this.checkpoints.get(machineId)?.delete(checkpointId) ?? false;
   }
 
   /**

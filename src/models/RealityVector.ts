@@ -298,6 +298,24 @@ export class RealityVector {
   }
 
   /**
+   * Create an independent deep copy of this vector.
+   * The clone shares the same id and structural configuration (elements,
+   * nextVectorIds, outputVectors) but has its own mutable state fields
+   * (state, wasJustMatched, lastOutputVector) so that transitions applied
+   * to the clone do not affect the original.
+   */
+  public clone(): RealityVector {
+    const cloned = new RealityVector([...this.elements], this.isInitial, this.id);
+    cloned.state = this.state;
+    cloned.nextVectorIds = [...this.nextVectorIds];
+    cloned.outputVectors = [...this.outputVectors];
+    cloned.wasJustMatched = this.wasJustMatched;
+    cloned.lastOutputVector = this.lastOutputVector;
+    cloned.metadata = { ...this.metadata };
+    return cloned;
+  }
+
+  /**
    * Serialize to JSON
    */
   public toJSON(): any {

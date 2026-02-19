@@ -13,7 +13,8 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ machine }) => {
     isHeatmapEnabled,
     setAutoRefresh,
     setRefreshInterval,
-    toggleHeatmap
+    toggleHeatmap,
+    deleteMachine,
   } = useVisualizerStore();
 
   if (!machine) {
@@ -246,8 +247,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ machine }) => {
             <button
               onClick={() => {
                 if (window.confirm(`Are you sure you want to delete "${machine.name}"? This action cannot be undone.`)) {
-                  // TODO: Implement delete functionality
-                  console.log('Delete machine:', machine.id);
+                  deleteMachine(machine.id);
                 }
               }}
               style={{

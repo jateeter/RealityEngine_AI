@@ -1,0 +1,309 @@
+/* ============================================================
+   TobiasView — 3-zone layout
+   header / (canvas-area + gutter + sidebar) / perceptual-space-bar
+   ============================================================ */
+
+.tobias-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0b0e14;
+  color: #e0e0e0;
+  overflow: hidden;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.tobias-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 24px;
+  background: #0f131a;
+  border-bottom: 1px solid #1e2535;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.tobias-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tobias-back-button {
+  background: transparent;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #94a3b8;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.tobias-back-button:hover {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+.tobias-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tobias-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.tobias-subtitle {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.tobias-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Step button in header */
+.tobias-step-btn {
+  background: transparent;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #94a3b8;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.tobias-step-btn:hover:not(:disabled) {
+  background: #1e293b;
+  color: #c084fc;
+  border-color: #7c3aed;
+}
+.tobias-step-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tobias-selected-label {
+  font-size: 12px;
+  color: #94a3b8;
+  background: #1e293b;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid #334155;
+}
+.tobias-selected-label strong {
+  color: #c084fc;
+}
+
+.tobias-machine-count {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ── Body (row) ─────────────────────────────────────────────── */
+.tobias-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Canvas area (left column) ──────────────────────────────── */
+.tobias-canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* TobiasCanvas fills the canvas-area flex space */
+.tobias-canvas-area > .tobias-canvas-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Perceptual space bar ────────────────────────────────────── */
+.tobias-space-bar {
+  height: 140px;
+  flex-shrink: 0;
+  border-top: 1px solid #1e2535;
+  background: #0d1017;
+  overflow: hidden;
+}
+
+/* ── Sidebar gutter — holds the collapse toggle ─────────────── */
+/* Lives between canvas-area and sidebar; never clipped.        */
+.tobias-sidebar-gutter {
+  width: 22px;
+  flex-shrink: 0;
+  position: relative;
+  background: #0f131a;
+  border-left: 1px solid #1e2535;
+}
+
+.tobias-sidebar-toggle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  background: #1e2535;
+  border: 1px solid #334155;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  color: #94a3b8;
+  width: 22px;
+  height: 48px;
+  cursor: pointer;
+  font-size: 18px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+.tobias-sidebar-toggle:hover {
+  background: #263348;
+  color: #e2e8f0;
+}
+
+/* ── Sidebar (right) ────────────────────────────────────────── */
+.tobias-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: #0f131a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s ease;
+}
+
+.tobias-sidebar.collapsed {
+  width: 0;
+}
+
+.tobias-sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+}
+.tobias-sidebar-content::-webkit-scrollbar { width: 4px; }
+.tobias-sidebar-content::-webkit-scrollbar-track { background: transparent; }
+.tobias-sidebar-content::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+
+/* ── Sidebar sections ───────────────────────────────────────── */
+.tbs-section {
+  padding: 12px;
+  border-bottom: 1px solid #1e2535;
+}
+
+.tbs-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+
+/* Loading state */
+.tobias-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 16px;
+  color: #64748b;
+}
+
+/* ── Sidebar control buttons ─────────────────────────────────── */
+.tbs-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 4px 0;
+}
+
+.tbs-ctrl-btn {
+  background: rgba(100, 200, 255, 0.1);
+  border: 1px solid rgba(100, 200, 255, 0.3);
+  border-radius: 8px;
+  color: #64c8ff;
+  font-size: 1.1rem;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tbs-ctrl-btn:hover:not(:disabled) {
+  background: rgba(100, 200, 255, 0.25);
+  border-color: rgba(100, 200, 255, 0.6);
+}
+.tbs-ctrl-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.tbs-ctrl-reset {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.3);
+  background: rgba(248, 113, 113, 0.08);
+}
+.tbs-ctrl-reset:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: rgba(248, 113, 113, 0.6);
+}
+
+/* ── Machine filter button group ─────────────────────────────── */
+.tbs-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tbs-filter-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #94a3b8;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+.tbs-filter-btn:hover {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+.tbs-filter-btn.active {
+  background: #1e293b;
+  border-color: #7c3aed;
+  color: #c084fc;
+}

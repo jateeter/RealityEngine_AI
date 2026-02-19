@@ -1005,9 +1005,11 @@ app.post('/api/perceptual-simulation/step', async (req: Request, res: Response) 
 
     // Broadcast the step result
     if (response.data.success && response.data.step) {
+      const step = response.data.step;
       broadcast({
         type: 'perceptual-simulation-stepped',
-        step: response.data.step,
+        step,
+        data: { activeMachineIds: Object.keys(step.machineResults ?? {}) },
         timestamp: Date.now()
       });
     }
@@ -1100,7 +1102,8 @@ function startPerceptualSimulationPolling() {
           broadcast({
             type: 'perceptual-simulation-stepped',
             step: latestStep,
-            state: state,
+            state,
+            data: { activeMachineIds: Object.keys(latestStep.machineResults ?? {}) },
             timestamp: Date.now()
           });
         }

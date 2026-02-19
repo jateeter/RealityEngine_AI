@@ -194,7 +194,6 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         setCurrentUniversalVector(randomVectors[0]);
       }
 
-      console.log(`Generated ${vectorCount} random universal vectors in region [${inputRegion.offset}:${inputRegion.offset + inputRegion.length}]`);
     } catch (error) {
       console.error('Error generating random universal vectors:', error);
     } finally {

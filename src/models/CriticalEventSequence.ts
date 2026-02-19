@@ -93,18 +93,20 @@ export class CriticalEventSequence {
   }
 
   /**
-   * Process a transition for all active vectors in this sequence
-   * Returns all output vectors that should be asserted
+   * Process a transition for all active vectors in this sequence.
    *
-   * CORRECTED WORKFLOW (v2):
-   * - Propagates activation through all matching vectors in a single input cycle
-   * - Ensures final events become active when their predecessors match
-   * - Continues matching until no more vectors can be activated by current input
-   * - Re-processes active vectors that were activated in previous inputs
+   * Each input cycle the match algorithm runs once over every currently active
+   * vector (fully parallelisable — order is irrelevant).  A match:
+   *   1. Records the vector ID in matchedVectors.
+   *   2. Marks output vectors as just-matched for visualisation.
+   *   3. Activates each successor listed in nextVectorIds (if not already active)
+   *      — those successors are NOT matched against the current input; they wait
+   *      for the NEXT input cycle.
+   *   4. Collects any asserted OutputVectors.
+   *   5. Deactivates the matched vector (unless it is an initial vector).
    *
-   * CRITICAL FIX: Vectors that are already active from previous inputs
-   * are now properly added to the processing queue, ensuring they can
-   * match against the current input and activate their successors.
+   * Activation of successors is deliberately deferred to the next cycle, making
+   * the transition atomic with respect to the input — no same-cycle cascade.
    */
   public transition(inputVector: number[]): {
     matchedVectors: string[];
@@ -117,76 +119,40 @@ export class CriticalEventSequence {
     const assertedOutputs: OutputVector[] = [];
     const results = new Map<string, MatchResult>();
 
-    // Clear wasJustMatched and lastOutputVector flags on all vectors
+    // Clear per-cycle visualisation flags on all vectors.
     for (const vector of this.vectors.values()) {
       vector.clearWasJustMatched();
       vector.clearLastOutputVector();
     }
 
-    // Track which vectors we've already processed to prevent infinite loops
-    const processedVectorIds = new Set<string>();
+    // Match every currently active vector against the input.
+    for (const vector of this.getActiveVectors()) {
+      const transitionResult = vector.transition(inputVector);
+      results.set(vector.id, transitionResult.matchResult);
 
-    // Get initially active vectors
-    let vectorsToProcess = this.getActiveVectors();
+      if (transitionResult.matched) {
+        matchedVectors.push(vector.id);
 
-    // Propagation loop: continue until no new vectors can be activated
-    while (vectorsToProcess.length > 0) {
-      const newVectorsToActivate = new Set<string>();
-
-      for (const vector of vectorsToProcess) {
-        // Skip if already processed this vector in this input cycle
-        if (processedVectorIds.has(vector.id)) {
-          continue;
-        }
-
-        processedVectorIds.add(vector.id);
-
-        const transitionResult = vector.transition(inputVector);
-        results.set(vector.id, transitionResult.matchResult);
-
-        if (transitionResult.matched) {
-          matchedVectors.push(vector.id);
-
-          // If this vector has outputs and was matched, mark it as just matched
-          // and store the output vector for visualization
-          if (vector.getOutputVectors().length > 0) {
-            vector.setWasJustMatched();
-
-            // Store the first output vector for visualization
-            if (transitionResult.outputVectors.length > 0) {
-              vector.setLastOutputVector(transitionResult.outputVectors[0] || null);
-            }
+        // Mark output vectors for visualisation.
+        if (vector.getOutputVectors().length > 0) {
+          vector.setWasJustMatched();
+          if (transitionResult.outputVectors.length > 0) {
+            vector.setLastOutputVector(transitionResult.outputVectors[0] || null);
           }
-
-          // Add next vectors to activation list
-          // CRITICAL: Activate next vectors and let them wait for future inputs
-          // They will be processed on subsequent input cycles, not immediately
-          transitionResult.nextVectorIds.forEach(id => {
-            if (this.vectors.has(id)) {
-              const nextVector = this.vectors.get(id);
-              if (nextVector) {
-                // Activate the vector if it's not already active
-                if (!nextVector.isActive()) {
-                  nextVector.setActive();
-                  activatedVectors.push(id);
-                }
-
-                // NOTE: Do NOT add to processing queue (newVectorsToActivate)
-                // Newly activated vectors should NOT be processed in the same input cycle
-                // They will be processed when the NEXT input arrives
-              }
-            }
-          });
-
-          // Collect output vectors
-          assertedOutputs.push(...transitionResult.outputVectors);
         }
-      }
 
-      // Prepare next batch: newly activated vectors that haven't been processed
-      vectorsToProcess = Array.from(newVectorsToActivate)
-        .map(id => this.vectors.get(id))
-        .filter((v): v is RealityVector => v !== undefined && !processedVectorIds.has(v.id));
+        // Activate successors — they will be matched on the NEXT input cycle.
+        for (const id of transitionResult.nextVectorIds) {
+          const nextVector = this.vectors.get(id);
+          if (nextVector && !nextVector.isActive()) {
+            nextVector.setActive();
+            activatedVectors.push(id);
+          }
+        }
+
+        // Collect asserted outputs for this cycle.
+        assertedOutputs.push(...transitionResult.outputVectors);
+      }
     }
 
     return {
@@ -225,6 +191,20 @@ export class CriticalEventSequence {
       initialVectors: this.initialVectorIds.size,
       outputVectors: this.outputVectorIds.size
     };
+  }
+
+  /**
+   * Create an independent deep copy of this sequence.
+   * Every RealityVector is cloned so that transitions applied to the clone
+   * do not affect the original sequence's active-vector progression.
+   */
+  public clone(): CriticalEventSequence {
+    const cloned = new CriticalEventSequence(this.name, this.id);
+    for (const vector of this.vectors.values()) {
+      cloned.addVector(vector.clone());
+    }
+    cloned.metadata = { ...this.metadata };
+    return cloned;
   }
 
   /**

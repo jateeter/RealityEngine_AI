@@ -31,6 +31,15 @@ export class RealityEngineAPI {
     this.engine = engine;
     this.perception = new PreceptionOfReality(config.getVectorDimension());
     this.perceptualSimulator = new PerceptualSpaceSimulator(256);
+
+    // Sync the simulator's evolved perceptual space back into the PreceptionEngine
+    // after every simulation step (manual or auto-play).  This ensures the engine's
+    // authoritative perceptual state always reflects the output-integrated result of
+    // the most recent simulation step, completing the input→process→output→space loop.
+    this.perceptualSimulator.setOnStepComplete((_step, spaceVector) => {
+      this.engine.getPreceptionEngine().getPerceptualSpace().setPerceptualVector(spaceVector);
+    });
+
     this.setupRoutes();
     this.initializeDefaultSequences();
   }
@@ -236,6 +245,16 @@ export class RealityEngineAPI {
     this.router.post('/machines/:id/process-universal', this.processUniversalInput.bind(this));
     this.router.post('/machines/process-universal/all', this.processUniversalInputForAllMachines.bind(this));
     this.router.post('/preception/diagnostic', this.getPreceptionDiagnostic.bind(this));
+
+    // What-if analytic workflow endpoints
+    this.router.post('/machines/:id/whatif', this.processMachineWhatIf.bind(this));
+    this.router.post('/machines/:id/whatif-universal', this.processMachineUniversalWhatIf.bind(this));
+
+    // Checkpoint / rewind endpoints
+    this.router.post('/machines/:id/checkpoints', this.createCheckpoint.bind(this));
+    this.router.get('/machines/:id/checkpoints', this.listCheckpoints.bind(this));
+    this.router.post('/machines/:id/checkpoints/:checkpointId/restore', this.restoreCheckpoint.bind(this));
+    this.router.delete('/machines/:id/checkpoints/:checkpointId', this.deleteCheckpoint.bind(this));
 
     // Machine JSON endpoints (load/save)
     this.router.get('/machines/json/list', this.listMachineJSONFiles.bind(this));
@@ -1070,7 +1089,10 @@ export class RealityEngineAPI {
         preception: {
           universalSpaceDimension: universalInputSpace.length,
           resolvedInputDimension: result.inputVector.length,
-          preceptionUsed: true
+          preceptionUsed: true,
+          // Return the perceptual space state AFTER the machine output has been
+          // merged back, so callers can observe the integrated perceptual reality.
+          perceptualSpaceAfter: this.engine.getPreceptionEngine().getPerceptualSpace().getPerceptualVector()
         }
       });
     } catch (error: any) {
@@ -1134,7 +1156,11 @@ export class RealityEngineAPI {
           totalMachines: resultsMap.size,
           universalSpaceDimension: universalInputSpace.length,
           timestamp: Date.now(),
-          preceptionUsed: true
+          preceptionUsed: true,
+          // Return the perceptual space state AFTER all machine outputs have been
+          // merged back (input-atomically).  Callers can use this to observe the
+          // fully integrated perceptual reality produced by this processing round.
+          perceptualSpaceAfter: this.engine.getPreceptionEngine().getPerceptualSpace().getPerceptualVector()
         }
       });
     } catch (error: any) {
@@ -1143,6 +1169,171 @@ export class RealityEngineAPI {
         error: 'Failed to process universal input for all machines',
         details: error.message
       });
+    }
+  }
+
+  // ── What-if Analytic Workflow ──────────────────────────────────────────────
+
+  /**
+   * Run a hypothetical input against a clone of the machine.
+   * POST /api/machines/:id/whatif
+   *
+   * Body: { "vector": number[] }
+   *
+   * The live machine's event-sequence state is never touched.
+   * Returns the same result shape as /machines/:id/process.
+   */
+  private processMachineWhatIf(req: Request, res: Response): void {
+    try {
+      const { id } = req.params;
+      const { vector } = req.body;
+      if (!id) { res.status(400).json({ error: 'Machine ID required' }); return; }
+      if (!Array.isArray(vector)) { res.status(400).json({ error: 'vector must be an array' }); return; }
+
+      const result = this.engine.processWhatIf(id, vector);
+      const sequenceResults: Record<string, any> = {};
+      result.sequenceResults.forEach((v, k) => { sequenceResults[k] = v; });
+
+      res.json({
+        whatIf: true,
+        result: {
+          inputVector: result.inputVector,
+          timestamp: result.timestamp,
+          sequenceResults,
+          machineOutput: result.machineOutput,
+          arbiterMetadata: result.arbiterMetadata
+        }
+      });
+    } catch (error: any) {
+      console.error('Error in what-if processing:', error);
+      res.status(500).json({ error: 'What-if processing failed', details: error.message });
+    }
+  }
+
+  /**
+   * Run a hypothetical universal-space input against a clone of the machine
+   * via the PreceptionEngine, without mutating live state.
+   * POST /api/machines/:id/whatif-universal
+   *
+   * Body: { "universalInputSpace": number[] }
+   */
+  private processMachineUniversalWhatIf(req: Request, res: Response): void {
+    try {
+      const { id } = req.params;
+      const { universalInputSpace } = req.body;
+      if (!id) { res.status(400).json({ error: 'Machine ID required' }); return; }
+      if (!Array.isArray(universalInputSpace)) {
+        res.status(400).json({ error: 'universalInputSpace must be an array' }); return;
+      }
+
+      const result = this.engine.processUniversalWhatIf(universalInputSpace, id);
+      const sequenceResults: Record<string, any> = {};
+      result.sequenceResults.forEach((v, k) => { sequenceResults[k] = v; });
+
+      res.json({
+        whatIf: true,
+        result: {
+          inputVector: result.inputVector,
+          timestamp: result.timestamp,
+          sequenceResults,
+          machineOutput: result.machineOutput,
+          arbiterMetadata: result.arbiterMetadata
+        },
+        preception: {
+          universalSpaceDimension: universalInputSpace.length,
+          resolvedInputDimension: result.inputVector.length,
+          preceptionUsed: true
+        }
+      });
+    } catch (error: any) {
+      console.error('Error in universal what-if processing:', error);
+      res.status(500).json({ error: 'Universal what-if processing failed', details: error.message });
+    }
+  }
+
+  // ── Checkpoint / Rewind ────────────────────────────────────────────────────
+
+  /**
+   * Capture a checkpoint of the machine's current event-sequence state.
+   * POST /api/machines/:id/checkpoints
+   *
+   * Body: { "label": string } (optional)
+   */
+  private createCheckpoint(req: Request, res: Response): void {
+    try {
+      const { id } = req.params;
+      const { label } = req.body ?? {};
+      if (!id) { res.status(400).json({ error: 'Machine ID required' }); return; }
+
+      const checkpointId = this.engine.createCheckpoint(id, label);
+      const checkpoints = this.engine.listCheckpoints(id);
+      const checkpoint = checkpoints.find(c => c.id === checkpointId)!;
+
+      res.json({ success: true, checkpoint });
+    } catch (error: any) {
+      console.error('Error creating checkpoint:', error);
+      res.status(500).json({ error: 'Failed to create checkpoint', details: error.message });
+    }
+  }
+
+  /**
+   * List all checkpoints for a machine.
+   * GET /api/machines/:id/checkpoints
+   */
+  private listCheckpoints(req: Request, res: Response): void {
+    try {
+      const { id } = req.params;
+      if (!id) { res.status(400).json({ error: 'Machine ID required' }); return; }
+
+      const checkpoints = this.engine.listCheckpoints(id);
+      res.json({ checkpoints });
+    } catch (error: any) {
+      console.error('Error listing checkpoints:', error);
+      res.status(500).json({ error: 'Failed to list checkpoints', details: error.message });
+    }
+  }
+
+  /**
+   * Restore a machine to a checkpoint state.
+   * POST /api/machines/:id/checkpoints/:checkpointId/restore
+   *
+   * The stored checkpoint is preserved; the machine's live sequences are
+   * replaced with a fresh clone of the snapshot.
+   */
+  private restoreCheckpoint(req: Request, res: Response): void {
+    try {
+      const { id, checkpointId } = req.params;
+      if (!id || !checkpointId) {
+        res.status(400).json({ error: 'Machine ID and checkpoint ID required' }); return;
+      }
+
+      this.engine.restoreCheckpoint(id, checkpointId);
+      res.json({ success: true, machineId: id, restoredFrom: checkpointId, timestamp: Date.now() });
+    } catch (error: any) {
+      console.error('Error restoring checkpoint:', error);
+      res.status(500).json({ error: 'Failed to restore checkpoint', details: error.message });
+    }
+  }
+
+  /**
+   * Delete a checkpoint.
+   * DELETE /api/machines/:id/checkpoints/:checkpointId
+   */
+  private deleteCheckpoint(req: Request, res: Response): void {
+    try {
+      const { id, checkpointId } = req.params;
+      if (!id || !checkpointId) {
+        res.status(400).json({ error: 'Machine ID and checkpoint ID required' }); return;
+      }
+
+      const deleted = this.engine.deleteCheckpoint(id, checkpointId);
+      if (!deleted) {
+        res.status(404).json({ error: 'Checkpoint not found' }); return;
+      }
+      res.json({ success: true, deleted: checkpointId });
+    } catch (error: any) {
+      console.error('Error deleting checkpoint:', error);
+      res.status(500).json({ error: 'Failed to delete checkpoint', details: error.message });
     }
   }
 

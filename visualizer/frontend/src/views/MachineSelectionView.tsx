@@ -173,6 +173,34 @@ const MachineSelectionView: React.FC = () => {
             Interconnection View
           </button>
 
+          {/* Tobias Canvas Button */}
+          <button
+            onClick={() => setCurrentView('tobias')}
+            style={{
+              background: '#7c3aed',
+              border: 'none',
+              borderRadius: '8px',
+              color: '#fff',
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'background 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#6d28d9';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#7c3aed';
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>🔮</span>
+            Tobias
+          </button>
+
           {/* Machine Management Button */}
           <button
             onClick={() => setShowManagementModal(true)}

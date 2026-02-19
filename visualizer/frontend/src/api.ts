@@ -296,12 +296,6 @@ export const api = {
     return response.data;
   },
 
-  // DISABLED: NAND gate example removed
-  // async loadNANDGateExample(): Promise<{ success: boolean; metadata: any }> {
-  //   const response = await axios.get('/api/demo/nand-gate');
-  //   return response.data;
-  // },
-
   // Load multi-step sequences example
   async loadMultiStepExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
     const response = await axios.get('/api/demo/multi-step');
@@ -314,15 +308,4 @@ export const api = {
     return response.data;
   },
 
-  // Load RS Flip Flop example
-  async loadRSFlipFlopExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
-    const response = await axios.get('/api/demo/rs-flip-flop');
-    return response.data;
-  },
-
-  // Load RS2 example
-  async loadRS2Example(): Promise<{ success: boolean; metadata: any; machine?: any }> {
-    const response = await axios.get('/api/demo/rs2');
-    return response.data;
-  }
 };

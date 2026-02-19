@@ -45,6 +45,7 @@ export class PerceptualSpaceSimulator {
   private isRunning: boolean;
   private autoPlayTimer: NodeJS.Timeout | undefined;
   private config?: SimulationConfig;
+  private onStepCompleteCallback?: (step: SimulationStep, perceptualSpaceVector: number[]) => void;
 
   constructor(dimension: number = 256) {
     this.perceptualSpace = new PerceptualSpace(dimension);
@@ -55,7 +56,26 @@ export class PerceptualSpaceSimulator {
   }
 
   /**
-   * Add a machine to the simulation
+   * Register a callback invoked after every completed step (manual or auto-play).
+   * The callback receives the completed step and the full perceptual space vector
+   * AFTER all machine outputs for that step have been merged into it.
+   * Use this to propagate the evolved perceptual state to external systems
+   * (e.g. the PreceptionEngine's authoritative space).
+   */
+  public setOnStepComplete(
+    callback: (step: SimulationStep, perceptualSpaceVector: number[]) => void
+  ): void {
+    this.onStepCompleteCallback = callback;
+  }
+
+  /**
+   * Add a machine to the simulation.
+   *
+   * Machines are deterministic and atomic — applying the match algorithm to
+   * active events and advancing their state is fully reproducible given the
+   * same input sequence.  The simulator therefore shares the same Machine
+   * instance as the RealityEngine; no cloning is needed for normal operation.
+   * Use Machine.clone() explicitly when starting a what-if analytic workflow.
    */
   public addMachine(machine: Machine): void {
     if (!machine.perceptualMapping) {
@@ -140,14 +160,75 @@ export class PerceptualSpaceSimulator {
       inputVector
     );
 
-    // Process through all machines in order (sorted by input offset)
-    const sortedMachines = Array.from(this.machines.values()).sort((a, b) => {
-      const offsetA = a.perceptualMapping?.input.offset ?? 0;
-      const offsetB = b.perceptualMapping?.input.offset ?? 0;
-      return offsetA - offsetB;
-    });
+    const mappedMachines = Array.from(this.machines.values()).filter(
+      (m) => m.perceptualMapping !== undefined
+    );
 
+    // ── Phase 1: Snapshot ────────────────────────────────────────────────────
+    // Extract every machine's input from the current perceptual space BEFORE
+    // any machine runs.  This guarantees that all active event-match operations
+    // observe the same perceptual state; no machine can observe another machine's
+    // output as its input within the same step (input-atomicity).
+    const inputSnapshots = new Map<string, number[]>();
+    for (const machine of mappedMachines) {
+      inputSnapshots.set(
+        machine.id,
+        this.perceptualSpace.extractMachineInput(machine.perceptualMapping!)
+      );
+    }
+
+    // ── Phase 2: Process ─────────────────────────────────────────────────────
+    // Run each machine with its snapshot input.  Collect transition results
+    // and pending assertedOutputs without touching the perceptual space yet.
     const machineResults = new Map<string, any>();
+    const pendingOutputs: Array<{ machine: Machine; vector: number[] }> = [];
+
+    for (const machine of mappedMachines) {
+      const snapshotInput = inputSnapshots.get(machine.id)!;
+      const transitionResult = machine.processInput(snapshotInput);
+
+      // Representative output for display purposes only.
+      const outputVector = transitionResult.machineOutput?.vector ?? null;
+
+      // Collect each sequence's individual assertedOutputs for Phase 3.
+      // The arbiter's shouldOutput flag gates all writes for this machine.
+      if (transitionResult.arbiterMetadata.shouldOutput) {
+        for (const seqResult of transitionResult.sequenceResults.values()) {
+          for (const assertedOutput of seqResult.assertedOutputs) {
+            pendingOutputs.push({ machine, vector: assertedOutput.vector });
+          }
+        }
+      }
+
+      machineResults.set(machine.id, {
+        machineId: machine.id,
+        machineName: machine.name,
+        inputVector: snapshotInput,
+        outputVector,
+        inputRegion: {
+          offset: machine.perceptualMapping!.input.offset,
+          length: machine.perceptualMapping!.input.length
+        },
+        outputRegion: outputVector
+          ? {
+              offset: machine.perceptualMapping!.output.offset,
+              length: machine.perceptualMapping!.output.length
+            }
+          : null,
+        transitionResult
+      });
+    }
+
+    // ── Phase 3: Merge ───────────────────────────────────────────────────────
+    // Write all pending assertedOutputs into the perceptual space after every
+    // machine has finished processing.  Each write is constrained by the
+    // machine's output mapping, making overflow architecturally impossible.
+    // The merged outputs become visible only on the NEXT step (input-atomicity).
+    for (const { machine, vector } of pendingOutputs) {
+      this.perceptualSpace.mergeMachineOutput(vector, machine.perceptualMapping!);
+    }
+
+    // Build active region list from the final machineResults
     const activeRegions: Array<{
       offset: number;
       length: number;
@@ -155,59 +236,21 @@ export class PerceptualSpaceSimulator {
       type: 'input' | 'output';
     }> = [];
 
-    for (const machine of sortedMachines) {
-      if (!machine.perceptualMapping) continue;
-
-      // Extract input for this machine
-      const machineInput = this.perceptualSpace.extractMachineInput(machine.perceptualMapping);
-
-      // Process through machine
-      const transitionResult = machine.processInput(machineInput);
-
-      // Record active input region
+    for (const [, entry] of machineResults) {
       activeRegions.push({
-        offset: machine.perceptualMapping.input.offset,
-        length: machine.perceptualMapping.input.length,
-        machineId: machine.id,
+        offset: entry.inputRegion.offset,
+        length: entry.inputRegion.length,
+        machineId: entry.machineId,
         type: 'input'
       });
-
-      // Merge output back if present
-      let outputVector: number[] | null = null;
-      let outputRegion: { offset: number; length: number } | null = null;
-
-      if (transitionResult.machineOutput && transitionResult.machineOutput.vector) {
-        outputVector = transitionResult.machineOutput.vector;
-        this.perceptualSpace.mergeMachineOutput(
-          outputVector,
-          machine.perceptualMapping
-        );
-
-        // Record active output region
-        outputRegion = {
-          offset: machine.perceptualMapping.output.offset,
-          length: machine.perceptualMapping.output.length
-        };
+      if (entry.outputRegion) {
         activeRegions.push({
-          offset: machine.perceptualMapping.output.offset,
-          length: machine.perceptualMapping.output.length,
-          machineId: machine.id,
+          offset: entry.outputRegion.offset,
+          length: entry.outputRegion.length,
+          machineId: entry.machineId,
           type: 'output'
         });
       }
-
-      machineResults.set(machine.id, {
-        machineId: machine.id,
-        machineName: machine.name,
-        inputVector: machineInput,
-        outputVector,
-        inputRegion: {
-          offset: machine.perceptualMapping.input.offset,
-          length: machine.perceptualMapping.input.length
-        },
-        outputRegion,
-        transitionResult
-      });
     }
 
     // Create simulation step record
@@ -221,6 +264,13 @@ export class PerceptualSpaceSimulator {
 
     this.history.unshift(step); // Add to front (newest first)
     this.currentStep++;
+
+    // Notify any registered listener with the completed step and the full
+    // post-merge perceptual space vector so external systems (e.g. PreceptionEngine)
+    // can stay in sync with the simulator's evolved perceptual state.
+    if (this.onStepCompleteCallback) {
+      this.onStepCompleteCallback(step, this.perceptualSpace.getPerceptualVector());
+    }
 
     return step;
   }

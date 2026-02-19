@@ -107,51 +107,38 @@ export class OutputArbiter {
   }
 
   /**
-   * Combine multiple outputs into a single machine output
+   * Return a representative OutputVector for API display purposes.
    *
-   * For now, uses simple concatenation strategy:
-   * - Concatenates all output vectors
-   * - Aggregates metadata
-   *
-   * Future: Could implement various combination strategies:
-   * - Bitwise AND/OR for binary vectors
-   * - Weighted averaging
-   * - Custom combinatorial functions
+   * The first output is used as the representative value stored in
+   * MachineTransitionResult.machineOutput.  Its vector is NOT written to the
+   * perceptual space here — that responsibility belongs entirely to the merge
+   * sites (RealityEngine, PerceptualSpaceSimulator) which call
+   * mergeMachineOutput once per assertedOutput.  The output mapping enforces
+   * the region boundary there, so no N×M size blowup is possible.
    */
   private combineOutputs(outputs: OutputVector[]): OutputVector {
-    // Concatenate all vectors
-    const combinedVector: number[] = [];
-    const combinedMetadata: Record<string, any> = {
-      arbiter: true,
-      combinedFrom: outputs.length,
-      sources: [] as string[]
-    };
+    const sources = outputs.map(o => o.id);
+    const descriptions: string[] = [];
 
     for (const output of outputs) {
-      combinedVector.push(...output.vector);
-
-      // Track source output IDs
-      combinedMetadata.sources.push(output.id);
-
-      // Aggregate metadata descriptions
       if (output.metadata) {
         const desc = typeof output.metadata === 'object'
           ? output.metadata.description
           : output.metadata;
-        if (desc && !combinedMetadata.descriptions) {
-          combinedMetadata.descriptions = [];
-        }
-        if (desc) {
-          combinedMetadata.descriptions.push(desc);
-        }
+        if (desc) descriptions.push(desc as string);
       }
     }
 
     return {
       id: `machine-output-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      vector: combinedVector,
+      vector: outputs[0]!.vector,
       timestamp: Date.now(),
-      metadata: combinedMetadata
+      metadata: {
+        arbiter: true,
+        combinedFrom: outputs.length,
+        sources,
+        ...(descriptions.length > 0 ? { descriptions } : {})
+      }
     };
   }
 

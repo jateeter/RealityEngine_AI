@@ -28,9 +28,10 @@ export class Machine {
     description: string = '',
     metadata: Record<string, any> = {},
     arbiterRule: ArbiterRule = ArbiterRule.PASSTHROUGH,
-    perceptualMapping?: PerceptualMapping
+    perceptualMapping?: PerceptualMapping,
+    id?: string
   ) {
-    this.id = `machine-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.id = id ?? `machine-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     this.name = name;
     this.description = description;
     this.sequences = new Map();
@@ -226,6 +227,43 @@ export class Machine {
    */
   public setArbiterRule(rule: ArbiterRule): void {
     this.arbiter.setRule(rule);
+  }
+
+  /**
+   * Create an independent deep copy of this machine.
+   *
+   * The clone preserves the original id so that external systems (visualizer,
+   * route handlers) can continue to correlate the clone with the source.
+   * Every CriticalEventSequence — and within it every RealityVector — is
+   * independently cloned, so mutable state (active vectors, wasJustMatched,
+   * lastOutputVector) is fully isolated between original and clone.
+   *
+   * Use this when the same logical machine must participate in two independent
+   * processing contexts (e.g. live RealityEngine and PerceptualSpaceSimulator)
+   * without state contamination between them.
+   */
+  public clone(): Machine {
+    const mapping = this.perceptualMapping
+      ? {
+          input:  { ...this.perceptualMapping.input },
+          output: { ...this.perceptualMapping.output }
+        }
+      : undefined;
+
+    const cloned = new Machine(
+      this.name,
+      this.description,
+      { ...this.metadata },
+      this.arbiter.getRule(),
+      mapping,
+      this.id
+    );
+
+    for (const sequence of this.sequences.values()) {
+      cloned.addSequence(sequence.clone());
+    }
+
+    return cloned;
   }
 
   /**

@@ -168,6 +168,22 @@ export class PreceptionEngine {
   }
 
   /**
+   * Merge a machine output vector back into the authoritative perceptual space.
+   *
+   * This is the output-integration half of the perceptual resolution cycle.
+   * After a machine processes its input and produces an output vector, that
+   * output must be written back into the perceptual space at the machine's
+   * registered output region so that it becomes visible to subsequent inputs
+   * and to other machines that share overlapping output/input regions.
+   *
+   * @param outputVector - The machine's output vector (length must equal mapping.output.length)
+   * @param mapping - The machine's perceptual mapping (supplies output offset + length)
+   */
+  public mergeOutputIntoPerceptualSpace(outputVector: number[], mapping: PerceptualMapping): void {
+    this.perceptualSpace.mergeMachineOutput(outputVector, mapping);
+  }
+
+  /**
    * Reset the perceptual space to zeros
    */
   public reset(): void {

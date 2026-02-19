@@ -18,7 +18,7 @@ import { perceptualLogger, calculateVectorStats } from './utils/perceptualSequen
 
 interface VisualizerState {
   // View state
-  currentView: 'selection' | 'administration' | 'interconnection';
+  currentView: 'selection' | 'administration' | 'interconnection' | 'tobias';
 
   // Machine management
   machines: Machine[];
@@ -61,7 +61,7 @@ interface VisualizerState {
   highlightedOutputId: string | null;
 
   // View actions
-  setCurrentView: (view: 'selection' | 'administration' | 'interconnection') => void;
+  setCurrentView: (view: 'selection' | 'administration' | 'interconnection' | 'tobias') => void;
 
   // Machine management actions
   setMachines: (machines: Machine[]) => void;
@@ -104,7 +104,6 @@ interface VisualizerState {
   refreshHeatmap: () => Promise<void>;
   loadDemo: () => Promise<void>;
   loadDataCenterExample: () => Promise<void>;
-  // loadNANDGateExample: () => Promise<void>; // DISABLED: NAND gate example removed
   loadMultiStepExample: () => Promise<void>;
   loadKleeneStarExample: () => Promise<void>;
   connectWebSocket: () => void;
@@ -216,12 +215,8 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
           } else if (machineId === 'kleene-star-example') {
             await get().loadKleeneStarExample();
           }
-          // NAND gate example disabled
-          // else if (machineId === 'nand-gate-example') {
-          //   await get().loadNANDGateExample();
-          // }
         } catch (error) {
-          console.log('Could not load example data for machine:', error);
+          console.error('Could not load example data for machine:', error);
         }
       }
     } catch (error) {
@@ -777,12 +772,6 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
-  // DISABLED: NAND gate example removed
-  // loadNANDGateExample: async () => {
-  //   const result = await api.loadNANDGateExample();
-  //   ...
-  // },
-
   loadMultiStepExample: async () => {
     try {
       const result = await api.loadMultiStepExample();
@@ -860,12 +849,10 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log('WebSocket connected');
       set({ isConnected: true });
     };
 
     ws.onclose = () => {
-      console.log('WebSocket disconnected');
       set({ isConnected: false });
     };
 
