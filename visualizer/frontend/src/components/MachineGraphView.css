@@ -49,6 +49,8 @@
   border-radius: 8px;
   border: 1px solid #3a3a3a;
   flex: 1;
+  width: 100%;
+  min-width: 0;
 }
 
 .machine-graph-svg .node {

@@ -54,9 +54,11 @@ interface SimulationStep {
 
 export const MachineGraphView: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [graphData, setGraphData] = useState<MachineGraphData | null>(null);
   const [currentStep, setCurrentStep] = useState<SimulationStep | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
 
   // Fetch machine graph data
   const fetchGraphData = useCallback(async () => {
@@ -79,6 +81,24 @@ export const MachineGraphView: React.FC = () => {
   useEffect(() => {
     fetchGraphData();
   }, [fetchGraphData]);
+
+  // Observe container size for responsive width
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setDimensions({ width, height: Math.max(height - 140, 400) }); // Account for header and legend
+        }
+      }
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Listen for WebSocket updates
   useEffect(() => {
@@ -109,8 +129,8 @@ export const MachineGraphView: React.FC = () => {
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove(); // Clear previous render
 
-    const width = 1200;
-    const height = 600;
+    const width = dimensions.width;
+    const height = dimensions.height;
     const margin = { top: 40, right: 40, bottom: 40, left: 40 };
 
     svg.attr('width', width).attr('height', height);
@@ -257,7 +277,7 @@ export const MachineGraphView: React.FC = () => {
     return () => {
       simulation.stop();
     };
-  }, [graphData, currentStep]);
+  }, [graphData, currentStep, dimensions]);
 
   if (error) {
     return (
@@ -278,7 +298,7 @@ export const MachineGraphView: React.FC = () => {
   }
 
   return (
-    <div className="machine-graph-view">
+    <div className="machine-graph-view" ref={containerRef}>
       <div className="graph-header">
         <h2>Machine Graph View</h2>
         <div className="graph-info">
