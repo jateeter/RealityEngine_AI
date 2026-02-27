@@ -11,7 +11,24 @@
       "outputSpace": "2D binary: {[0,1]=RESET/LOW, [1,0]=SET/HIGH}",
       "tags": ["flip-flop", "digital-logic", "immediate-response"],
       "sequenceCount": 2,
-      "description": "Two always-active events: SET (10→[1,0]) and RESET (01→[0,1])"
+      "description": "Two always-active events: SET (10→[1,0]) and RESET (01→[0,1])",
+      "singleTransitionAssumption": {
+        "required": false,
+        "scope": "not applicable",
+        "compliant": true,
+        "notes": "STA is NOT required. Both event vectors are isInitial — they respond combinatorially on every cycle without any sequential dependency. Multi-bit transitions between valid inputs work correctly: [1,0]→[0,1] (HD=2) correctly produces RESET output; [0,1]→[1,0] (HD=2) correctly produces SET output. The defined sequences pass through [0,0] HOLD between SET and RESET by convention (physical realism), not by mechanical necessity. The [1,1] input (S=R=1, the classical RS forbidden state) is reachable via single-bit transitions but produces no output (undefined behavior preserved).",
+        "maxHammingDistanceInDefinedSequences": 1,
+        "forbiddenState": {
+          "input": "[1,1]",
+          "reachableViaSingleTransition": true,
+          "behavior": "No output — matches neither rs-event-10 nor rs-event-01. Classical undefined RS state preserved."
+        },
+        "multiTransitionBehavior": {
+          "[1,0]→[0,1]": "RESET output [0,1] — correct",
+          "[0,1]→[1,0]": "SET output [1,0] — correct",
+          "[0,0]→[1,1]": "No output — forbidden state"
+        }
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

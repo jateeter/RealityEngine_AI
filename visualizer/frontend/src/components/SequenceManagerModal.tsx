@@ -16,6 +16,7 @@ interface SequenceManagerModalProps {
   onClearOutputQueue: () => void;
   onRemoveInputItem: (id: string) => void;
   onRemoveOutputItem: (id: string) => void;
+  onLoadIntoSimulation: () => void;
 }
 
 export const SequenceManagerModal: React.FC<SequenceManagerModalProps> = ({
@@ -28,7 +29,8 @@ export const SequenceManagerModal: React.FC<SequenceManagerModalProps> = ({
   onClearInputQueue,
   onClearOutputQueue,
   onRemoveInputItem,
-  onRemoveOutputItem
+  onRemoveOutputItem,
+  onLoadIntoSimulation
 }) => {
   const [activeTab, setActiveTab] = useState<'input' | 'output' | 'generate'>('input');
   const [generateMode, setGenerateMode] = useState<'algorithmic' | 'random'>('algorithmic');
@@ -121,13 +123,23 @@ export const SequenceManagerModal: React.FC<SequenceManagerModalProps> = ({
                   <h3>Input Queue (FIFO)</h3>
                   <p>Vectors waiting to be processed by the simulation. First in, first out.</p>
                 </div>
-                <button
-                  className="action-button danger"
-                  onClick={onClearInputQueue}
-                  disabled={inputSequence.length === 0}
-                >
-                  🗑️ Clear Queue
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    className="action-button primary"
+                    onClick={() => { onLoadIntoSimulation(); onClose(); }}
+                    disabled={inputSequence.length === 0}
+                    title="Load all queued vectors into the simulation"
+                  >
+                    ▶ Load into Simulation
+                  </button>
+                  <button
+                    className="action-button danger"
+                    onClick={onClearInputQueue}
+                    disabled={inputSequence.length === 0}
+                  >
+                    🗑️ Clear Queue
+                  </button>
+                </div>
               </div>
 
               <div className="queue-list">

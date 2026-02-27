@@ -7,6 +7,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as d3 from 'd3';
+import { useVisualizerStore } from '../store';
 import './MachineGraphView.css';
 
 interface MachineNode {
@@ -59,6 +60,7 @@ export const MachineGraphView: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<SimulationStep | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 600 });
+  const ws = useVisualizerStore(state => state.ws);
 
   // Fetch machine graph data
   const fetchGraphData = useCallback(async () => {
@@ -100,8 +102,10 @@ export const MachineGraphView: React.FC = () => {
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Listen for WebSocket updates
+  // Listen for WebSocket updates from the store's shared connection
   useEffect(() => {
+    if (!ws) return;
+
     const handleMessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
 
@@ -112,15 +116,11 @@ export const MachineGraphView: React.FC = () => {
       }
     };
 
-    // Access WebSocket from window context (set by App.tsx)
-    const ws = (window as any).realityEngineWS;
-    if (ws) {
-      ws.addEventListener('message', handleMessage);
-      return () => {
-        ws.removeEventListener('message', handleMessage);
-      };
-    }
-  }, []);
+    ws.addEventListener('message', handleMessage);
+    return () => {
+      ws.removeEventListener('message', handleMessage);
+    };
+  }, [ws]);
 
   // Render the graph
   useEffect(() => {

@@ -17,7 +17,7 @@ const REALITY_ENGINE_URL = process.env.REALITY_ENGINE_URL || 'http://localhost:3
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -77,61 +77,6 @@ function broadcast(data: any) {
       client.send(message);
     }
   });
-}
-
-// Simulation state polling for auto-play updates
-let simulationPollInterval: NodeJS.Timeout | null = null;
-let lastSimulationIndex = -1;
-
-function startSimulationPolling() {
-  if (simulationPollInterval) return; // Already polling
-
-  simulationPollInterval = setInterval(async () => {
-    try {
-      // Stop polling if no clients are connected
-      if (clients.size === 0) {
-        console.log('No clients connected, stopping simulation polling');
-        stopSimulationPolling();
-        return;
-      }
-
-      const response = await axios.get(`${REALITY_ENGINE_URL}/api/simulation/state`);
-      const state = response.data.state;
-      const lastResult = response.data.lastResult;
-
-      // Check if simulation is still playing
-      if (state.status !== 'playing') {
-        stopSimulationPolling();
-        return;
-      }
-
-      // Check if index changed (new step occurred)
-      if (state.currentIndex !== lastSimulationIndex) {
-        lastSimulationIndex = state.currentIndex;
-
-        // Fetch sequences in graph format to get active node states
-        const seqResponse = await axios.get(`http://localhost:3001/api/viz/sequences`);
-
-        broadcast({
-          type: 'simulation-stepped',
-          state: state,
-          sequences: seqResponse.data.sequences,
-          result: lastResult, // Include last result for output stream updates
-          timestamp: Date.now()
-        });
-      }
-    } catch (error: any) {
-      console.error('Error polling simulation state:', error.message);
-    }
-  }, 200); // Poll every 200ms for responsive updates
-}
-
-function stopSimulationPolling() {
-  if (simulationPollInterval) {
-    clearInterval(simulationPollInterval);
-    simulationPollInterval = null;
-    lastSimulationIndex = -1;
-  }
 }
 
 // Health check
@@ -304,329 +249,6 @@ app.get('/api/viz/sequences/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Proxy endpoint: Get engine stats
-app.get('/api/viz/stats', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/engine/stats`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error fetching stats:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Get active vectors
-app.get('/api/viz/active', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/engine/active`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error fetching active vectors:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Get history
-app.get('/api/viz/history', async (req: Request, res: Response) => {
-  try {
-    const limit = req.query.limit ? `?limit=${req.query.limit}` : '';
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/engine/history${limit}`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error fetching history:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Reset sequence
-app.post('/api/viz/sequences/:id/reset', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/sequences/${id}/reset`);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'sequence-reset',
-      sequenceId: id,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error resetting sequence:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Process input (with WebSocket broadcast)
-app.post('/api/viz/process', async (req: Request, res: Response) => {
-  try {
-    const { vector } = req.body;
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/engine/process`, { vector });
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'input-processed',
-      data: response.data,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error processing input:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Polling endpoint to check for updates (alternative to WebSocket)
-let lastUpdateTime = Date.now();
-let cachedSequences: any = null;
-
-app.get('/api/viz/poll', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences`);
-    const sequences = response.data.sequences;
-
-    // Simple change detection based on active vectors
-    const currentState = JSON.stringify(sequences.map((s: any) =>
-      s.vectors.map((v: any) => ({ id: v.id, state: v.state }))
-    ));
-
-    const previousState = cachedSequences
-      ? JSON.stringify(cachedSequences.map((s: any) =>
-          s.vectors.map((v: any) => ({ id: v.id, state: v.state }))
-        ))
-      : null;
-
-    const hasChanges = currentState !== previousState;
-
-    if (hasChanges) {
-      lastUpdateTime = Date.now();
-      cachedSequences = sequences;
-    }
-
-    res.json({
-      hasChanges,
-      lastUpdateTime,
-      timestamp: Date.now()
-    });
-  } catch (error: any) {
-    console.error('Error polling for updates:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ===== Simulation Proxy Endpoints (with WebSocket Broadcasting) =====
-
-// Proxy endpoint: Load simulation vectors
-app.post('/api/simulation/load', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/load`, req.body);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'simulation-loaded',
-      data: response.data,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error loading simulation:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Start simulation
-app.post('/api/simulation/start', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/start`);
-
-    // Start polling for simulation updates
-    startSimulationPolling();
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'simulation-started',
-      state: response.data.state,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error starting simulation:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Pause simulation
-app.post('/api/simulation/pause', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/pause`);
-
-    // Stop polling when paused
-    stopSimulationPolling();
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'simulation-paused',
-      state: response.data.state,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error pausing simulation:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Resume simulation
-app.post('/api/simulation/resume', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/resume`);
-
-    // Resume polling when resumed
-    startSimulationPolling();
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'simulation-resumed',
-      state: response.data.state,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error resuming simulation:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Stop simulation
-app.post('/api/simulation/stop', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/stop`);
-
-    // Stop polling when stopped
-    stopSimulationPolling();
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'simulation-stopped',
-      state: response.data.state,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error stopping simulation:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Reset simulation
-app.post('/api/simulation/reset', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/reset`);
-
-    // Stop polling when reset
-    stopSimulationPolling();
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'simulation-reset',
-      state: response.data.state,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error resetting simulation:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Step simulation
-app.post('/api/simulation/step', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/simulation/step`);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'simulation-stepped',
-      state: response.data.state,
-      result: response.data.result,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error stepping simulation:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Set simulation speed
-app.put('/api/simulation/speed', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.put(`${REALITY_ENGINE_URL}/api/simulation/speed`, req.body);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'simulation-speed-changed',
-      delayMs: response.data.delayMs,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error setting simulation speed:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Get simulation state
-app.get('/api/simulation/state', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/simulation/state`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error getting simulation state:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Get simulation heatmap
-app.get('/api/simulation/heatmap', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/simulation/heatmap`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error getting simulation heatmap:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Load demo data
-app.get('/api/demo/load', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/load`);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'demo-loaded',
-      metadata: response.data.metadata,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error loading demo:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Proxy endpoint: Load data center example
 app.get('/api/demo/data-center', async (req: Request, res: Response) => {
   try {
@@ -645,11 +267,6 @@ app.get('/api/demo/data-center', async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// DISABLED: NAND gate example removed
-// app.get('/api/demo/nand-gate', async (req: Request, res: Response) => {
-//   NAND gate example has been permanently disabled
-// });
 
 // Proxy endpoint: Load multi-step sequences example
 app.get('/api/demo/multi-step', async (req: Request, res: Response) => {
@@ -691,127 +308,7 @@ app.get('/api/demo/kleene-star', async (req: Request, res: Response) => {
   }
 });
 
-// Proxy endpoint: Load RS Flip Flop example
-app.get('/api/demo/rs-flip-flop', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/rs-flip-flop`);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'demo-loaded',
-      metadata: response.data.metadata,
-      machine: response.data.machine,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error loading RS Flip Flop example:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Load RS2 example
-app.get('/api/demo/rs2', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/rs2`);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'demo-loaded',
-      metadata: response.data.metadata,
-      machine: response.data.machine,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error loading RS2 example:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // ===== Machine Management Endpoints =====
-
-// In-memory machine storage (for demo purposes - would use a database in production)
-interface Machine {
-  id: string;
-  name: string;
-  description: string;
-  sequenceCount: number;
-  totalVectors: number;
-  sequenceIds: string[];
-  sequences: Array<{ id: string; name: string }>;
-  metadata: Record<string, any>;
-  isExample: boolean;
-  createdAt: number;
-  updatedAt: number;
-  lastAccessedAt: number | null;
-}
-
-const machines: Map<string, Machine> = new Map();
-
-// Initialize with example machines
-function initializeExampleMachines() {
-  const exampleMachines: Partial<Machine>[] = [
-    // NAND Gate example removed - no longer supported
-    {
-      id: 'data-center-example',
-      name: 'Data Center Monitoring',
-      description: 'Multi-step sequence tracking server health, load balancing, and failover events',
-      isExample: true,
-      metadata: { type: 'infrastructure', difficulty: 'intermediate' }
-    },
-    {
-      id: 'multi-step-example',
-      name: 'Multi-Step Workflow',
-      description: 'Complex sequence demonstrating cascading events and conditional transitions',
-      isExample: true,
-      metadata: { type: 'workflow', difficulty: 'advanced' }
-    },
-    {
-      id: 'kleene-star-example',
-      name: 'Kleene Star Operator',
-      description: 'Zero or more repetitions with alternation pattern demonstration',
-      isExample: true,
-      metadata: { type: 'pattern-matching', difficulty: 'advanced' }
-    },
-    {
-      id: 'rs-flip-flop-example',
-      name: 'RS Flip Flop',
-      description: 'Bistable multivibrator with Set and Reset critical event sequences',
-      isExample: true,
-      metadata: { type: 'digital-logic', difficulty: 'beginner' }
-    },
-    {
-      id: 'robotics-assembly-example',
-      name: 'Robotics Assembly System',
-      description: 'Automated assembly system with 5 sequences: pick-place, inspection, tool change, emergency stop, calibration',
-      isExample: true,
-      metadata: { type: 'robotics', difficulty: 'intermediate', specifications: '5D input, 3D output, 0.60 threshold' }
-    }
-  ];
-
-  exampleMachines.forEach((example) => {
-    const machine: Machine = {
-      id: example.id!,
-      name: example.name!,
-      description: example.description!,
-      sequenceCount: 0,
-      totalVectors: 0,
-      sequenceIds: [],
-      sequences: [],
-      metadata: example.metadata || {},
-      isExample: example.isExample!,
-      createdAt: Date.now() - 7 * 24 * 60 * 60 * 1000, // 7 days ago
-      updatedAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
-      lastAccessedAt: null
-    };
-    machines.set(machine.id, machine);
-  });
-}
-
-initializeExampleMachines();
 
 // Get all machines - proxy to Reality Engine
 app.get('/api/machines', async (req: Request, res: Response) => {
@@ -957,13 +454,28 @@ app.get('/api/machine-graph', async (req: Request, res: Response) => {
   }
 });
 
-// Configure perceptual simulation
-app.post('/api/perceptual-simulation/configure', async (req: Request, res: Response) => {
+// Append a chunk to the server-side staging buffer
+app.post('/api/perceptual-simulation/configure/chunk', async (req: Request, res: Response) => {
   try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/configure`, req.body);
+    const response = await axios.post(
+      `${REALITY_ENGINE_URL}/api/perceptual-simulation/configure/chunk`,
+      req.body,
+      { maxContentLength: Infinity, maxBodyLength: Infinity }
+    );
     res.json(response.data);
   } catch (error: any) {
-    console.error('Error configuring perceptual simulation:', error.message);
+    console.error('Error appending sequence chunk:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Commit the staged buffer into the PerceptualSpaceSimulator
+app.post('/api/perceptual-simulation/configure/commit', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/configure/commit`);
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error committing sequence config:', error.message);
     res.status(error.response?.status || 500).json({ error: error.message });
   }
 });
@@ -1133,7 +645,6 @@ server.listen(PORT, () => {
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully...');
   clearInterval(heartbeatInterval);
-  stopSimulationPolling();
   stopPerceptualSimulationPolling();
   server.close(() => {
     process.exit(0);
@@ -1143,7 +654,6 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   console.log('SIGINT received, shutting down gracefully...');
   clearInterval(heartbeatInterval);
-  stopSimulationPolling();
   stopPerceptualSimulationPolling();
   server.close(() => {
     process.exit(0);

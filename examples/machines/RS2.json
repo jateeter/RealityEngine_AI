@@ -11,7 +11,32 @@
       "outputSpace": "2D binary: {[1,0]=SET/HIGH, [0,1]=RESET/LOW, [0,0]=SPECIAL}",
       "tags": ["flip-flop", "digital-logic", "two-step", "stateful"],
       "sequenceCount": 2,
-      "description": "Two 2-step sequences: SET (00→10) and RESET (00→01)"
+      "description": "Two 2-step sequences: SET (00→10) and RESET (00→01)",
+      "singleTransitionAssumption": {
+        "required": true,
+        "scope": "full sequence",
+        "compliant": true,
+        "notes": "STA is required. SET and RESET are 2-step sequences: the HOLD state [0,0] must precede [1,0] or [0,1] for output to be produced. A direct [0,0]→[1,1] jump (HD=2) silently fails: [1,1] matches neither rs2-set-10 nor rs2-reset-01 and both deactivate. A direct [1,0]→[0,1] jump (HD=2) may inadvertently trigger RESET if rs2-reset-01 happens to be pre-seeded from a prior [0,0] step (since both successors are activated simultaneously after every [0,0] input). The [1,1] state (S=R=1 simultaneously) invalidates all active successors; recovery requires a subsequent [0,0] to re-seed them. All defined input sequences use HD≤1 transitions.",
+        "maxHammingDistanceInDefinedSequences": 1,
+        "forbiddenState": {
+          "input": "[1,1]",
+          "reachableViaSingleTransition": true,
+          "behavior": "Deactivates both rs2-set-10 and rs2-reset-01 (no-match). No output. Requires [0,0] to recover.",
+          "explicitlyTestedIn": "Complete Test Sequence step [1,0]→[1,1]→[0,1]: produces no output on final [0,1]"
+        },
+        "violations": [
+          {
+            "transition": "[0,0] → [1,1]",
+            "hammingDistance": 2,
+            "behavior": "No output — both successors deactivate on [1,1] mismatch"
+          },
+          {
+            "transition": "[1,0] → [0,1]",
+            "hammingDistance": 2,
+            "behavior": "May inadvertently RESET if rs2-reset-01 was pre-seeded by a prior [0,0] step; otherwise no output"
+          }
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

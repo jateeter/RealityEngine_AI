@@ -19,7 +19,16 @@
         "Complex pattern detection (power efficiency = power/load ratio)",
         "Correlated failure sequences (memory thrashing causes disk I/O surge)",
         "Multiple outputs per critical event (emergency triggers multiple actions)"
-      ]
+      ],
+      "singleTransitionAssumption": {
+        "required": "N/A — continuous space",
+        "scope": "continuous 8D sensor space; Hamming distance is not defined",
+        "compliant": true,
+        "notes": "STA (Hamming distance ≤ 1) is a binary concept and does not apply directly to continuous-valued vectors. The analogous assumption in continuous space is 'gradual monotonic progression' — each sensor reading advances by a bounded amount per step. The defined 'Gradual Degradation Scenario' (12-step input sequence) satisfies this: all sensor values increase monotonically and smoothly. The THRESHOLD comparator (tolerance ±0.50) provides natural tolerance for small sensor jumps. Large abrupt jumps in sensor values could skip intermediate sequence states (e.g., jumping from Normal directly to Emergency values would miss the Warm, Hot, and Critical states, failing to trigger intermediate alerts). This machine assumes gradual environmental change, consistent with real-world data center sensor physics.",
+        "continuousSpaceAnalog": "Gradual monotonic progression — each step advances metrics by a bounded increment",
+        "thresholdTolerance": 0.50,
+        "definedSequenceProgression": "Monotonically increasing from 0.25-0.48 range (Normal) to 0.96-0.99 range (Emergency) across 12 steps"
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

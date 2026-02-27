@@ -45,16 +45,22 @@ async function configureSim(
   inputSequence: number[][],
   stepDelayMs = 500
 ) {
-  const resp = await page.request.post(`${PERCEPTUAL_API_URL}/api/perceptual-simulation/configure`, {
+  // Send all vectors in a single chunk with reset:true to initialise the buffer
+  const chunkResp = await page.request.post(`${PERCEPTUAL_API_URL}/api/perceptual-simulation/configure/chunk`, {
     data: {
-      inputSequence,
+      vectors: inputSequence,
+      reset: true,
       inputRegion: { offset: 0, length: 3 },
       stepDelayMs,
       maxSteps: inputSequence.length
     }
   });
-  expect(resp.ok()).toBeTruthy();
-  const body = await resp.json();
+  expect(chunkResp.ok()).toBeTruthy();
+
+  // Commit the staged buffer to activate the configuration
+  const commitResp = await page.request.post(`${PERCEPTUAL_API_URL}/api/perceptual-simulation/configure/commit`);
+  expect(commitResp.ok()).toBeTruthy();
+  const body = await commitResp.json();
   expect(body.success).toBeTruthy();
   return body;
 }

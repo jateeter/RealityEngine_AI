@@ -12,7 +12,7 @@ import config from './config/config.js';
 
 // Create Express app
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
 
 console.log('Starting Reality Engine...');
 

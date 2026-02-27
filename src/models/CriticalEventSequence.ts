@@ -125,6 +125,14 @@ export class CriticalEventSequence {
       vector.clearLastOutputVector();
     }
 
+    // Collect pending successor activations separately so they are applied
+    // AFTER all active vectors have been processed.  This prevents a race
+    // where a successor that happens to be currently active (e.g. a Kleene-star
+    // loop node) is seen as "already active" by one matched vector and then
+    // deactivated by its own no-match later in the same loop iteration —
+    // causing the activation to be silently dropped.
+    const pendingActivations = new Set<string>();
+
     // Match every currently active vector against the input.
     for (const vector of this.getActiveVectors()) {
       const transitionResult = vector.transition(inputVector);
@@ -141,17 +149,24 @@ export class CriticalEventSequence {
           }
         }
 
-        // Activate successors — they will be matched on the NEXT input cycle.
+        // Queue successors — applied after the full loop so the activation is
+        // never lost due to same-cycle deactivation of those successors.
         for (const id of transitionResult.nextVectorIds) {
-          const nextVector = this.vectors.get(id);
-          if (nextVector && !nextVector.isActive()) {
-            nextVector.setActive();
-            activatedVectors.push(id);
-          }
+          pendingActivations.add(id);
         }
 
         // Collect asserted outputs for this cycle.
         assertedOutputs.push(...transitionResult.outputVectors);
+      }
+    }
+
+    // Apply all queued successor activations now that the processing loop is
+    // complete and all deactivations have settled.
+    for (const id of pendingActivations) {
+      const nextVector = this.vectors.get(id);
+      if (nextVector && !nextVector.isActive()) {
+        nextVector.setActive();
+        activatedVectors.push(id);
       }
     }
 

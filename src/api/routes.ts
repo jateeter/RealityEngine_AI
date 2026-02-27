@@ -10,7 +10,6 @@ import { ComparatorType } from '../models/types.js';
 import type { VectorElement } from '../models/types.js';
 import { PreceptionOfReality } from '../engine/PreceptionOfReality.js';
 import { RealitySampler, SamplingStrategy } from '../engine/RealitySampler.js';
-import { SimulationController } from '../engine/SimulationController.js';
 import { PerceptualSpaceSimulator } from '../engine/PerceptualSpaceSimulator.js';
 import { MachineLoader } from '../services/MachineLoader.js';
 import config from '../config/config.js';
@@ -23,8 +22,10 @@ export class RealityEngineAPI {
   private engine: RealityEngine;
   private perception: PreceptionOfReality;
   private sampler: RealitySampler | null = null;
-  private simulationController: SimulationController | null = null;
   private perceptualSimulator: PerceptualSpaceSimulator;
+  // Staging buffer used by the chunk-based configuration protocol
+  private sequenceBuffer: number[][] = [];
+  private sequenceBufferConfig: { inputRegion: { offset: number; length: number }; stepDelayMs: number; maxSteps?: number } | null = null;
 
   constructor(engine: RealityEngine) {
     this.router = express.Router();
@@ -67,39 +68,6 @@ export class RealityEngineAPI {
    * Helper: Convert machine-specific input vectors to universal perceptual space vectors
    * Embeds machine inputs at their designated offset in 256-byte universal vectors
    */
-  private convertToUniversalInputs(
-    machineInputs: number[][],
-    machine: Machine,
-    universalDimension: number = 256
-  ): number[][] {
-    if (!machine.perceptualMapping) {
-      throw new Error(`Machine "${machine.name}" has no perceptual mapping - cannot convert to universal inputs`);
-    }
-
-    const { input: { offset, length } } = machine.perceptualMapping;
-
-    return machineInputs.map(machineInput => {
-      // Create zero-filled universal vector
-      const universalVector = new Array(universalDimension).fill(0);
-
-      // Validate machine input length
-      if (machineInput.length !== length) {
-        console.warn(
-          `Machine input length (${machineInput.length}) doesn't match mapping length (${length}). Adjusting...`
-        );
-      }
-
-      // Embed machine input at the designated offset
-      for (let i = 0; i < Math.min(machineInput.length, length); i++) {
-        if (offset + i < universalDimension) {
-          universalVector[offset + i] = machineInput[i] || 0;
-        }
-      }
-
-      return universalVector;
-    });
-  }
-
   /**
    * Initialize default machines from JSON files on startup
    */
@@ -140,35 +108,14 @@ export class RealityEngineAPI {
           }
 
           const jsonString = readFileSync(filepath, 'utf8');
-          const machine = MachineLoader.loadFromJSON(jsonString);
+          // Derive a stable ID from the filename so machine IDs remain
+          // consistent across server restarts and localStorage references stay valid.
+          const baseName = filename.replace(/\.json$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          const machine = MachineLoader.loadFromJSON(jsonString, `machine-${baseName}`);
           this.addMachineToSystem(machine);
 
           console.log(`  ✓ ${machine.name} loaded from ${filename}`);
           loadedCount++;
-
-          // Initialize simulation controller with the first machine's test vectors
-          if (!this.simulationController && machine.metadata.inputSequences && machine.perceptualMapping) {
-            const inputSequences = machine.metadata.inputSequences as any[];
-            if (inputSequences.length > 0) {
-              const firstSequence = inputSequences[0];
-              if (firstSequence.vectors && Array.isArray(firstSequence.vectors)) {
-                // Convert machine-specific inputs to universal perceptual space inputs
-                const universalInputs = this.convertToUniversalInputs(
-                  firstSequence.vectors,
-                  machine
-                );
-
-                this.simulationController = new SimulationController(this.engine, {
-                  autoPlayDelayMs: 2000,
-                  inputVectors: universalInputs,
-                  loop: true,
-                  machineId: machine.id,
-                  usePerceptualSpace: true
-                });
-                console.log(`  ✓ Simulation controller initialized with ${firstSequence.name} (universal perceptual space mode)`);
-              }
-            }
-          }
         } catch (err: any) {
           console.error(`  ✗ Failed to load ${filename}:`, err.message);
           failedCount++;
@@ -221,18 +168,6 @@ export class RealityEngineAPI {
     this.router.post('/sampler/sample', this.sampleReality.bind(this));
     this.router.get('/sampler/stats', this.getSamplerStats.bind(this));
 
-    // Simulation endpoints
-    this.router.post('/simulation/start', this.startSimulation.bind(this));
-    this.router.post('/simulation/pause', this.pauseSimulation.bind(this));
-    this.router.post('/simulation/resume', this.resumeSimulation.bind(this));
-    this.router.post('/simulation/stop', this.stopSimulation.bind(this));
-    this.router.post('/simulation/reset', this.resetSimulation.bind(this));
-    this.router.post('/simulation/step', this.stepSimulation.bind(this));
-    this.router.post('/simulation/load', this.loadSimulationVectors.bind(this));
-    this.router.put('/simulation/speed', this.setSimulationSpeed.bind(this));
-    this.router.get('/simulation/state', this.getSimulationState.bind(this));
-    this.router.get('/simulation/heatmap', this.getSimulationHeatmap.bind(this));
-
     // Machine endpoints
     this.router.get('/machines', this.getAllMachines.bind(this));
     this.router.get('/machines/:id', this.getMachine.bind(this));
@@ -264,7 +199,8 @@ export class RealityEngineAPI {
 
     // Machine Graph & Perceptual Space Simulation endpoints
     this.router.get('/machine-graph', this.getMachineGraph.bind(this));
-    this.router.post('/perceptual-simulation/configure', this.configurePerceptualSimulation.bind(this));
+    this.router.post('/perceptual-simulation/configure/chunk', this.appendSequenceChunk.bind(this));
+    this.router.post('/perceptual-simulation/configure/commit', this.commitSequenceConfig.bind(this));
     this.router.post('/perceptual-simulation/start', this.startPerceptualSimulation.bind(this));
     this.router.post('/perceptual-simulation/stop', this.stopPerceptualSimulation.bind(this));
     this.router.post('/perceptual-simulation/step', this.stepPerceptualSimulation.bind(this));
@@ -273,13 +209,9 @@ export class RealityEngineAPI {
     this.router.get('/perceptual-simulation/history', this.getPerceptualSimulationHistory.bind(this));
 
     // Demo endpoints
-    this.router.get('/demo/load', this.loadDemo.bind(this));
-    this.router.get('/demo/rs-flip-flop', this.loadRSFlipFlopExample.bind(this));
-    this.router.get('/demo/rs2', this.loadRS2Example.bind(this));
     this.router.get('/demo/multi-step', this.loadMultiStepExample.bind(this));
     this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
     this.router.get('/demo/kleene-star', this.loadKleeneStarExample.bind(this));
-    this.router.get('/demo/nand-gate', this.loadNANDGateExample.bind(this)); // Deprecated
   }
 
   // Health check
@@ -670,175 +602,6 @@ export class RealityEngineAPI {
     }
 
     res.json({ stats: this.sampler.getStats() });
-  }
-
-  // Simulation endpoints
-  private startSimulation(_req: Request, res: Response): void {
-    if (!this.simulationController) {
-      res.status(400).json({ error: 'Simulation not initialized. Load simulation vectors first.' });
-      return;
-    }
-
-    this.simulationController.start();
-    res.json({
-      success: true,
-      state: this.simulationController.getState()
-    });
-  }
-
-  private pauseSimulation(_req: Request, res: Response): void {
-    if (!this.simulationController) {
-      res.status(400).json({ error: 'Simulation not initialized' });
-      return;
-    }
-
-    this.simulationController.pause();
-    res.json({
-      success: true,
-      state: this.simulationController.getState()
-    });
-  }
-
-  private resumeSimulation(_req: Request, res: Response): void {
-    if (!this.simulationController) {
-      res.status(400).json({ error: 'Simulation not initialized' });
-      return;
-    }
-
-    this.simulationController.resume();
-    res.json({
-      success: true,
-      state: this.simulationController.getState()
-    });
-  }
-
-  private stopSimulation(_req: Request, res: Response): void {
-    if (!this.simulationController) {
-      res.status(400).json({ error: 'Simulation not initialized' });
-      return;
-    }
-
-    this.simulationController.stop();
-    res.json({
-      success: true,
-      state: this.simulationController.getState()
-    });
-  }
-
-  private resetSimulation(_req: Request, res: Response): void {
-    if (!this.simulationController) {
-      res.status(400).json({ error: 'Simulation not initialized' });
-      return;
-    }
-
-    this.simulationController.reset();
-    res.json({
-      success: true,
-      state: this.simulationController.getState()
-    });
-  }
-
-  private stepSimulation(_req: Request, res: Response): void {
-    if (!this.simulationController) {
-      res.status(400).json({ error: 'Simulation not initialized' });
-      return;
-    }
-
-    const result = this.simulationController.step();
-    res.json({
-      success: true,
-      state: this.simulationController.getState(),
-      result
-    });
-  }
-
-  private loadSimulationVectors(req: Request, res: Response): void {
-    try {
-      const { vectors, autoPlayDelayMs, loop, machineId, usePerceptualSpace } = req.body;
-
-      if (!Array.isArray(vectors)) {
-        res.status(400).json({ error: 'Vectors must be an array' });
-        return;
-      }
-
-      // Determine if we should use perceptual space mode
-      // Default to perceptual mode if machineId is provided
-      const shouldUsePerceptualSpace = usePerceptualSpace !== undefined
-        ? usePerceptualSpace
-        : (machineId !== undefined);
-
-      // Create or reinitialize simulation controller
-      this.simulationController = new SimulationController(this.engine, {
-        autoPlayDelayMs: autoPlayDelayMs || 1000,
-        inputVectors: vectors,
-        loop: loop !== undefined ? loop : true,
-        machineId: machineId,
-        usePerceptualSpace: shouldUsePerceptualSpace
-      });
-
-      console.log(`Loaded simulation with ${vectors.length} vectors`);
-      console.log(`  Perceptual space mode: ${shouldUsePerceptualSpace ? 'ENABLED' : 'DISABLED (legacy)'}`);
-      if (machineId) {
-        console.log(`  Machine ID: ${machineId}`);
-      }
-
-      res.json({
-        success: true,
-        state: this.simulationController.getState(),
-        mode: shouldUsePerceptualSpace ? 'perceptual' : 'legacy'
-      });
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
-    }
-  }
-
-  private setSimulationSpeed(req: Request, res: Response): void {
-    if (!this.simulationController) {
-      res.status(400).json({ error: 'Simulation not initialized' });
-      return;
-    }
-
-    const { delayMs } = req.body;
-
-    if (typeof delayMs !== 'number' || delayMs < 0) {
-      res.status(400).json({ error: 'Invalid delay value' });
-      return;
-    }
-
-    this.simulationController.setSpeed(delayMs);
-    res.json({
-      success: true,
-      delayMs
-    });
-  }
-
-  private getSimulationState(_req: Request, res: Response): void {
-    if (!this.simulationController) {
-      res.status(400).json({ error: 'Simulation not initialized' });
-      return;
-    }
-
-    res.json({
-      state: this.simulationController.getState(),
-      progress: this.simulationController.getProgress(),
-      inputVectors: this.simulationController.getInputVectors(),
-      lastResult: this.simulationController.getLastResult()
-    });
-  }
-
-  private getSimulationHeatmap(_req: Request, res: Response): void {
-    if (!this.simulationController) {
-      res.status(400).json({ error: 'Simulation not initialized' });
-      return;
-    }
-
-    const heatmap = this.simulationController.getHeatmap();
-    const heatmapArray = Array.from(heatmap.entries()).map(([key, activation]) => ({
-      key,
-      ...activation
-    }));
-
-    res.json({ heatmap: heatmapArray });
   }
 
   // Machine endpoints
@@ -1461,9 +1224,10 @@ export class RealityEngineAPI {
         return;
       }
 
-      // Read and load the machine
+      // Read and load the machine with a stable filename-derived ID
       const jsonString = readFileSync(filepath, 'utf8');
-      const machine = MachineLoader.loadFromJSON(jsonString);
+      const baseName = filename.replace(/\.json$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const machine = MachineLoader.loadFromJSON(jsonString, `machine-${baseName}`);
 
       // Add machine to system (engine + perceptual simulator)
       this.addMachineToSystem(machine);
@@ -1572,162 +1336,6 @@ export class RealityEngineAPI {
   }
 
   // Demo endpoints
-  private async loadDemo(_req: Request, res: Response): Promise<void> {
-    try {
-      // Load the first available machine from JSON
-      const machines = this.engine.getAllMachines();
-
-      if (machines.length === 0) {
-        res.status(404).json({
-          error: 'No machines loaded. Please ensure machine JSON files are available in examples/machines/'
-        });
-        return;
-      }
-
-      // Use the first machine
-      const machine = machines[0];
-
-      if (!machine) {
-        res.status(404).json({
-          error: 'No machines available'
-        });
-        return;
-      }
-
-      // Get input vectors from machine metadata
-      const inputSequences = machine.metadata.inputSequences as any[] || [];
-      const allInputVectors = inputSequences.length > 0
-        ? inputSequences[0].vectors || []
-        : [];
-
-      // Initialize simulation controller
-      this.simulationController = new SimulationController(this.engine, {
-        autoPlayDelayMs: 1000,
-        inputVectors: allInputVectors,
-        loop: true
-      });
-
-      res.json({
-        success: true,
-        metadata: {
-          name: machine.name,
-          description: machine.description,
-          machineId: machine.id,
-          totalSequences: machine.getSequenceCount(),
-          totalMachines: machines.length
-        },
-        sequencesLoaded: machine.getSequenceCount(),
-        inputVectorsLoaded: allInputVectors.length
-      });
-    } catch (error: any) {
-      console.error('Error loading demo:', error);
-      res.status(500).json({
-        error: 'Failed to load demo dataset',
-        details: error.message
-      });
-    }
-  }
-
-  private async loadRSFlipFlopExample(_req: Request, res: Response): Promise<void> {
-    try {
-      // Find the RS Flip Flop machine (should be loaded from JSON)
-      const machine = this.engine.getAllMachines().find(m => m.name === 'RS Flip Flop');
-
-      if (!machine) {
-        res.status(404).json({
-          error: 'RS Flip Flop machine not found. Please ensure RSFlipFlop.json is loaded.'
-        });
-        return;
-      }
-
-      // Get input vectors from machine metadata
-      const inputSequences = machine.metadata.inputSequences as any[] || [];
-      const allInputVectors = inputSequences.length > 0
-        ? inputSequences[0].vectors || []
-        : [];
-
-      // Initialize simulation controller
-      this.simulationController = new SimulationController(this.engine, {
-        autoPlayDelayMs: 1000,
-        inputVectors: allInputVectors,
-        loop: true
-      });
-
-      res.json({
-        success: true,
-        machine: machine.toJSON(),
-        metadata: {
-          name: machine.name,
-          description: machine.description,
-          machineId: machine.id,
-          totalSequences: machine.getSequenceCount(),
-          sequenceNames: machine.getAllSequences().map(s => s.name),
-          totalInputVectors: allInputVectors.length,
-          ...machine.metadata
-        },
-        sequencesLoaded: machine.getSequenceCount(),
-        inputVectorsLoaded: allInputVectors.length
-      });
-    } catch (error: any) {
-      console.error('Error loading RS Flip Flop example:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to load RS Flip Flop example',
-        message: error.message
-      });
-    }
-  }
-
-  private async loadRS2Example(_req: Request, res: Response): Promise<void> {
-    try {
-      // Find the RS2 machine (should be loaded from JSON)
-      const machine = this.engine.getAllMachines().find(m => m.name === 'RS2');
-
-      if (!machine) {
-        res.status(404).json({
-          error: 'RS2 machine not found. Please ensure RS2.json is loaded.'
-        });
-        return;
-      }
-
-      // Get input vectors from machine metadata
-      const inputSequences = machine.metadata.inputSequences as any[] || [];
-      const allInputVectors = inputSequences.length > 0
-        ? inputSequences[0].vectors || []
-        : [];
-
-      // Initialize simulation controller
-      this.simulationController = new SimulationController(this.engine, {
-        autoPlayDelayMs: 1000,
-        inputVectors: allInputVectors,
-        loop: true
-      });
-
-      res.json({
-        success: true,
-        machine: machine.toJSON(),
-        metadata: {
-          name: machine.name,
-          description: machine.description,
-          machineId: machine.id,
-          totalSequences: machine.getSequenceCount(),
-          sequenceNames: machine.getAllSequences().map(s => s.name),
-          totalInputVectors: allInputVectors.length,
-          ...machine.metadata
-        },
-        sequencesLoaded: machine.getSequenceCount(),
-        inputVectorsLoaded: allInputVectors.length
-      });
-    } catch (error: any) {
-      console.error('Error loading RS2 example:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to load RS2 example',
-        message: error.message
-      });
-    }
-  }
-
   private async loadDataCenterExample(_req: Request, res: Response): Promise<void> {
     try {
       // Find the Data Center Monitoring machine (should be loaded from JSON)
@@ -1745,13 +1353,6 @@ export class RealityEngineAPI {
       const allInputVectors = inputSequences.length > 0
         ? inputSequences[0].vectors || []
         : [];
-
-      // Initialize simulation controller
-      this.simulationController = new SimulationController(this.engine, {
-        autoPlayDelayMs: 1500,
-        inputVectors: allInputVectors,
-        loop: false
-      });
 
       res.json({
         success: true,
@@ -1795,13 +1396,6 @@ export class RealityEngineAPI {
         ? inputSequences[0].vectors || []
         : [];
 
-      // Initialize simulation controller
-      this.simulationController = new SimulationController(this.engine, {
-        autoPlayDelayMs: 1500,
-        inputVectors: allInputVectors,
-        loop: true
-      });
-
       res.json({
         success: true,
         machine: machine.toJSON(),
@@ -1827,28 +1421,6 @@ export class RealityEngineAPI {
     }
   }
 
-  private async loadNANDGateExample(_req: Request, res: Response): Promise<void> {
-    try {
-      res.status(410).json({
-        error: 'NAND Gate example has been deprecated',
-        message: 'NAND Gate machine is no longer available. Please use one of the other example machines.',
-        alternatives: [
-          'RS Flip Flop',
-          'RS2',
-          'Multi-Step State Machine',
-          'Data Center Monitoring',
-          'Kleene Star Operator'
-        ]
-      });
-    } catch (error: any) {
-      console.error('Error loading NAND gate example:', error);
-      res.status(500).json({
-        error: 'Failed to load NAND gate example',
-        details: error.message
-      });
-    }
-  }
-
   private async loadKleeneStarExample(_req: Request, res: Response): Promise<void> {
     try {
       // Find the Kleene Star Operator machine (should be loaded from JSON)
@@ -1866,13 +1438,6 @@ export class RealityEngineAPI {
       const allInputVectors = inputSequences.length > 0
         ? inputSequences[0].vectors || []
         : [];
-
-      // Initialize simulation controller with faster speed for better UX
-      this.simulationController = new SimulationController(this.engine, {
-        autoPlayDelayMs: 500,
-        inputVectors: allInputVectors,
-        loop: true
-      });
 
       res.json({
         success: true,
@@ -1938,47 +1503,74 @@ export class RealityEngineAPI {
   }
 
   /**
-   * Configure perceptual space simulation
+   * Append a chunk of vectors to the staging buffer.
+   * Send { reset: true, inputRegion, stepDelayMs, maxSteps? } on the first chunk
+   * to clear any previous buffer and record the configuration.
+   * Subsequent chunks only need { vectors }.
    */
-  private async configurePerceptualSimulation(req: Request, res: Response): Promise<void> {
+  private appendSequenceChunk(req: Request, res: Response): void {
     try {
-      const { inputSequence, inputRegion, stepDelayMs, maxSteps } = req.body;
+      const { vectors, reset, inputRegion, stepDelayMs, maxSteps } = req.body;
 
-      if (!inputSequence || !Array.isArray(inputSequence)) {
-        res.status(400).json({
-          success: false,
-          error: 'inputSequence is required and must be an array'
-        });
+      if (reset) {
+        this.sequenceBuffer = [];
+        this.sequenceBufferConfig = {
+          inputRegion: inputRegion || { offset: 0, length: 256 },
+          stepDelayMs: stepDelayMs || 1000,
+          maxSteps
+        };
+      }
+
+      if (!this.sequenceBufferConfig) {
+        res.status(400).json({ success: false, error: 'Send reset:true on the first chunk to initialise the buffer' });
         return;
       }
 
-      if (!inputRegion || typeof inputRegion.offset !== 'number' || typeof inputRegion.length !== 'number') {
-        res.status(400).json({
-          success: false,
-          error: 'inputRegion is required with offset and length'
-        });
+      if (!Array.isArray(vectors)) {
+        res.status(400).json({ success: false, error: 'vectors must be an array' });
+        return;
+      }
+
+      this.sequenceBuffer.push(...vectors);
+
+      res.json({ success: true, buffered: this.sequenceBuffer.length });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * Commit the staged buffer to the PerceptualSpaceSimulator and clear it.
+   */
+  private commitSequenceConfig(_req: Request, res: Response): void {
+    try {
+      if (!this.sequenceBufferConfig) {
+        res.status(400).json({ success: false, error: 'No staged configuration — send at least one chunk first' });
+        return;
+      }
+
+      if (this.sequenceBuffer.length === 0) {
+        res.status(400).json({ success: false, error: 'Staged buffer is empty' });
         return;
       }
 
       this.perceptualSimulator.configure({
-        inputSequence,
-        inputRegion,
-        stepDelayMs: stepDelayMs || 1000,
-        maxSteps
+        inputSequence: this.sequenceBuffer,
+        ...this.sequenceBufferConfig,
       });
+
+      const committed = this.sequenceBuffer.length;
+      this.sequenceBuffer = [];
+      this.sequenceBufferConfig = null;
 
       res.json({
         success: true,
-        message: 'Simulation configured',
+        committed,
         config: this.perceptualSimulator.getConfig(),
         timestamp: Date.now()
       });
     } catch (error: any) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to configure simulation',
-        message: error.message
-      });
+      res.status(500).json({ success: false, error: error.message });
     }
   }
 

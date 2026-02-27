@@ -5,6 +5,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useVisualizerStore } from '../store';
 import './PerceptualSpaceView.css';
 
 interface PerceptualSpaceState {
@@ -33,6 +34,7 @@ export const PerceptualSpaceView: React.FC = () => {
   const [state, setState] = useState<PerceptualSpaceState | null>(null);
   const [activeRegions, setActiveRegions] = useState<ActiveRegion[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const ws = useVisualizerStore(state => state.ws);
 
   // Fetch initial state
   useEffect(() => {
@@ -55,8 +57,10 @@ export const PerceptualSpaceView: React.FC = () => {
     }
   };
 
-  // Listen for WebSocket updates
+  // Listen for WebSocket updates from the store's shared connection
   useEffect(() => {
+    if (!ws) return;
+
     const handleMessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
 
@@ -74,14 +78,11 @@ export const PerceptualSpaceView: React.FC = () => {
       }
     };
 
-    const ws = (window as any).realityEngineWS;
-    if (ws) {
-      ws.addEventListener('message', handleMessage);
-      return () => {
-        ws.removeEventListener('message', handleMessage);
-      };
-    }
-  }, []);
+    ws.addEventListener('message', handleMessage);
+    return () => {
+      ws.removeEventListener('message', handleMessage);
+    };
+  }, [ws]);
 
   if (error) {
     return (

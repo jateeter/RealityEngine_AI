@@ -1,19 +1,26 @@
 /**
  * MachineInterconnectionView - Main page for machine interconnection visualization
  *
- * Combines machine graph, perceptual space view, and simulation controls
- * to provide a complete view of machine interconnection and reality flow
+ * Combines machine graph and perceptual space view to provide a complete view
+ * of machine interconnection and reality flow. Simulation is driven uniformly
+ * through the store's universal perception API.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useVisualizerStore } from '../store';
 import { MachineGraphView } from '../components/MachineGraphView';
 import { PerceptualSpaceView } from '../components/PerceptualSpaceView';
-import { PerceptualSimulationControls } from '../components/PerceptualSimulationControls';
 import './MachineInterconnectionView.css';
 
 export const MachineInterconnectionView: React.FC = () => {
-  const { setCurrentView } = useVisualizerStore();
+  const { setCurrentView, connectWebSocket, disconnectWebSocket } = useVisualizerStore();
+
+  useEffect(() => {
+    connectWebSocket();
+    return () => {
+      disconnectWebSocket();
+    };
+  }, [connectWebSocket, disconnectWebSocket]);
 
   return (
     <div className="machine-interconnection-view">
@@ -49,10 +56,6 @@ export const MachineInterconnectionView: React.FC = () => {
         </div>
 
         <div className="right-panel">
-          <div className="panel-section">
-            <PerceptualSimulationControls />
-          </div>
-
           <div className="panel-section info-panel">
             <h3>Architecture</h3>
             <div className="info-content">

@@ -241,6 +241,65 @@ describe('CriticalEventSequence', () => {
     });
   });
 
+  describe('Kleene-star loop ordering correctness', () => {
+    // Regression test for the ordering bug where successor activation was
+    // applied inline during the loop. When a loop node (000) activated a
+    // terminal node (010) as its successor but 010 happened to already be
+    // active, the activation was silently skipped — and 010 then deactivated
+    // on its own no-match in the same cycle, losing the token entirely.
+    //
+    // The sequence modelled here mirrors KleeneStar seq1: 001 + 000* + 010
+    //
+    //   initial(001) --next--> loop(000) --next--> terminal(010) [output]
+    //                   loop(000) --next--> loop(000)   (self-loop)
+    //                   initial(001) --next--> terminal(010)
+    //
+    // Input trace for "one occurrence" (minimum zero repetitions of 000):
+    //   Step 1: [0,0,1] — initial matches, activates {loop, terminal}
+    //   Step 2: [0,0,0] — loop matches (self-loop), terminal fails (deactivates)
+    //                      pendingActivations must re-activate terminal after loop
+    //   Step 3: [0,1,0] — terminal matches, output produced
+    test('should produce output for one-rep Kleene trace 001→000→010', () => {
+      const eq = (v: number) => ({ value: v, comparatorType: ComparatorType.EQUALS });
+
+      const initial  = new RealityVector([eq(0), eq(0), eq(1)], true,  'v-001');
+      const loop     = new RealityVector([eq(0), eq(0), eq(0)], false, 'v-000');
+      const terminal = new RealityVector([eq(0), eq(1), eq(0)], false, 'v-010');
+
+      const output: OutputVector = { id: 'kleene-out', vector: [0, 1], timestamp: 1 };
+      terminal.addOutputVector(output);
+
+      initial.addNextVector(loop.id);
+      initial.addNextVector(terminal.id);
+      loop.addNextVector(loop.id);      // self-loop
+      loop.addNextVector(terminal.id);  // advance to terminal
+
+      const seq = new CriticalEventSequence('KleeneSeq1-OneRep');
+      seq.addVector(initial);
+      seq.addVector(loop);
+      seq.addVector(terminal);
+
+      // Step 1: [0,0,1] — initial matches
+      const r1 = seq.transition([0, 0, 1]);
+      expect(r1.matchedVectors).toContain(initial.id);
+      expect(loop.isActive()).toBe(true);
+      expect(terminal.isActive()).toBe(true);
+
+      // Step 2: [0,0,0] — loop matches (token stays on loop AND re-activates terminal),
+      //                    terminal fails (deactivates mid-loop, must be restored by post-loop activation)
+      const r2 = seq.transition([0, 0, 0]);
+      expect(r2.matchedVectors).toContain(loop.id);
+      // terminal must be re-activated by the pending-activation post-loop pass
+      expect(terminal.isActive()).toBe(true);
+
+      // Step 3: [0,1,0] — terminal matches, output asserted
+      const r3 = seq.transition([0, 1, 0]);
+      expect(r3.matchedVectors).toContain(terminal.id);
+      expect(r3.assertedOutputs.length).toBe(1);
+      expect(r3.assertedOutputs[0].id).toBe('kleene-out');
+    });
+  });
+
   describe('Serialization', () => {
     test('should serialize and deserialize correctly', () => {
       const sequence = new CriticalEventSequence('Test Sequence');

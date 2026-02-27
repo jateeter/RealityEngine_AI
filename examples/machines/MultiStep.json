@@ -11,7 +11,24 @@
       "outputSpace": "2D binary vectors: {00, 01, 10, 11}",
       "tags": ["state-machine", "multi-step", "three-step"],
       "sequenceCount": 2,
-      "description": "Two independent sequences with distinct outputs"
+      "description": "Two independent sequences with distinct outputs",
+      "singleTransitionAssumption": {
+        "required": true,
+        "scope": "intra-sequence",
+        "compliant": true,
+        "notes": "STA is required within each sequence: intermediate transitional vectors (ms-seq1-001, ms-seq2-101) are only activated by their predecessors and will deactivate on any non-matching input. A multi-bit jump (e.g. [0,0,0]→[0,1,1], HD=2) would skip the intermediate step and silently abort the sequence. The defined intra-sequence paths all use HD=1. The 'Both Sequences Interleaved' input sequence contains a HD=3 inter-sequence jump ([0,1,1]→[1,0,0]) which is safe because Seq2's initial vector (ms-seq2-100) is always active and requires no predecessor.",
+        "maxHammingDistanceInDefinedSequences": 3,
+        "maxHammingDistanceIntraSequence": 1,
+        "violations": [
+          {
+            "sequence": "Both Sequences Interleaved",
+            "transition": "[0,1,1] → [1,0,0]",
+            "hammingDistance": 3,
+            "intent": "Inter-sequence jump: Seq1 final → Seq2 initial. Safe because initial vectors are always active.",
+            "behavior": "Correct — ms-seq2-100 matches immediately"
+          }
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

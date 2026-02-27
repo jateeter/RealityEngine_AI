@@ -1,10 +1,7 @@
 import { create } from 'zustand';
 import {
   SequenceGraph,
-  EngineStats,
-  HistoryEntry,
   SimulationState,
-  VectorActivation,
   ActivityEvent,
   WebSocketMessage,
   Machine,
@@ -25,30 +22,14 @@ interface VisualizerState {
   currentMachineId: string | null;
   lastViewedMachineId: string | null;
 
-  // UI state
-  isFloatingPanelExpanded: boolean;
-  floatingPanelActiveTab: 'overview' | 'simulation' | 'sequences' | 'settings';
-
   sequences: SequenceGraph[];
-  selectedSequenceId: string | null;
   currentMachine: Machine | null;
-  stats: EngineStats | null;
-  history: HistoryEntry[];
-  isConnected: boolean;
-  autoRefresh: boolean;
-  refreshInterval: number;
-  zoomLevel: number;
 
   // Simulation state
   simulationState: SimulationState | null;
-  simulationProgress: number;
   inputVectors: number[][];
-  heatmapData: VectorActivation[];
   activityEvents: ActivityEvent[];
-  isDemoLoaded: boolean;
-  demoMetadata: any | null;
   ws: WebSocket | null;
-  isHeatmapEnabled: boolean;
 
   // Perceptual Input/Output Sequences (FIFO queues)
   inputQueue: VectorSequenceItem[];
@@ -76,33 +57,14 @@ interface VisualizerState {
   importMachineJSON: (jsonString: string) => Promise<void>;
   exportMachineToJSON: (machineId: string, pretty?: boolean) => Promise<string>;
 
-  // UI actions
-  toggleFloatingPanel: () => void;
-  setFloatingPanelTab: (tab: 'overview' | 'simulation' | 'sequences' | 'settings') => void;
-
-  setSequences: (sequences: SequenceGraph[]) => void;
-  setSelectedSequence: (id: string | null) => void;
-  setCurrentMachine: (machine: Machine | null) => void;
-  setStats: (stats: EngineStats) => void;
-  setHistory: (history: HistoryEntry[]) => void;
-  setConnected: (connected: boolean) => void;
-  setAutoRefresh: (auto: boolean) => void;
-  setRefreshInterval: (interval: number) => void;
-  setZoomLevel: (zoom: number) => void;
-
   // Simulation methods
-  loadSimulation: (vectors: number[][], options?: { autoPlayDelayMs?: number; loop?: boolean; machineId?: string; usePerceptualSpace?: boolean }) => Promise<void>;
   startSimulation: () => Promise<void>;
   pauseSimulation: () => Promise<void>;
   resumeSimulation: () => Promise<void>;
-  stopSimulation: () => Promise<void>;
   resetSimulation: () => Promise<void>;
   stepSimulation: () => Promise<void>;
   setSimulationSpeed: (delayMs: number) => Promise<void>;
-  loadRandomVectors: (dimension: number, count: number, binaryThreshold: boolean) => Promise<void>;
   refreshSimulationState: () => Promise<void>;
-  refreshHeatmap: () => Promise<void>;
-  loadDemo: () => Promise<void>;
   loadDataCenterExample: () => Promise<void>;
   loadMultiStepExample: () => Promise<void>;
   loadKleeneStarExample: () => Promise<void>;
@@ -110,7 +72,6 @@ interface VisualizerState {
   disconnectWebSocket: () => void;
   addActivityEvent: (event: ActivityEvent) => void;
   clearActivityEvents: () => void;
-  toggleHeatmap: () => void;
 
   // Machine View actions
   toggleSequenceExpansion: (sequenceId: string) => void;
@@ -131,6 +92,7 @@ interface VisualizerState {
   setCurrentInputVector: (vector: number[] | null) => void;
   generateAlgorithmicSequence: (pattern: string, count: number) => Promise<void>;
   generateRandomSequence: (count: number, region: { offset: number; length: number }) => Promise<void>;
+  loadQueueIntoSimulation: () => Promise<void>;
 }
 
 export const useVisualizerStore = create<VisualizerState>((set, get) => ({
@@ -142,30 +104,14 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   currentMachineId: null,
   lastViewedMachineId: localStorage.getItem('lastViewedMachineId'),
 
-  // UI state initialization
-  isFloatingPanelExpanded: false,
-  floatingPanelActiveTab: 'overview',
-
   sequences: [],
-  selectedSequenceId: null,
   currentMachine: null,
-  stats: null,
-  history: [],
-  isConnected: false,
-  autoRefresh: true,
-  refreshInterval: 2000,
-  zoomLevel: 1,
 
   // Simulation state initialization
   simulationState: null,
-  simulationProgress: 0,
   inputVectors: [],
-  heatmapData: [],
   activityEvents: [],
-  isDemoLoaded: false,
-  demoMetadata: null,
   ws: null,
-  isHeatmapEnabled: false,
 
   // Perceptual Input/Output Queue initialization
   inputQueue: [],
@@ -342,62 +288,20 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
-  // UI actions implementation
-  toggleFloatingPanel: () => {
-    set((state) => ({ isFloatingPanelExpanded: !state.isFloatingPanelExpanded }));
-  },
-
-  setFloatingPanelTab: (tab) => {
-    set({ floatingPanelActiveTab: tab, isFloatingPanelExpanded: true });
-  },
-
-  setSequences: (sequences) => set({ sequences }),
-  setSelectedSequence: (id) => set({ selectedSequenceId: id }),
-  setCurrentMachine: (machine) => set({ currentMachine: machine }),
-  setStats: (stats) => set({ stats }),
-  setHistory: (history) => set({ history }),
-  setConnected: (connected) => set({ isConnected: connected }),
-  setAutoRefresh: (auto) => set({ autoRefresh: auto }),
-  setRefreshInterval: (interval) => set({ refreshInterval: interval }),
-  setZoomLevel: (zoom) => set({ zoomLevel: zoom }),
-
-  // Simulation methods implementation
-  loadSimulation: async (vectors, options) => {
-    try {
-      const result = await api.loadSimulation(vectors, options);
-      set({
-        inputVectors: vectors,
-        simulationState: result.state,
-        simulationProgress: 0,
-        activityEvents: []
-      });
-
-      const modeMsg = result.mode ? ` [${result.mode.toUpperCase()} MODE]` : '';
-      const machineMsg = options?.machineId ? ` for machine ${options.machineId}` : '';
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: `Loaded ${vectors.length} input vectors${machineMsg}${modeMsg}`,
-        timestamp: Date.now(),
-        severity: 'info'
-      });
-    } catch (error) {
-      console.error('Error loading simulation:', error);
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to load simulation',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
-    }
-  },
 
   startSimulation: async () => {
     try {
-      const result = await api.startSimulation();
-      set({ simulationState: result.state });
+      await api.startPerceptualSimulation();
+      const { inputVectors, simulationState } = get();
+      set({
+        simulationState: {
+          status: 'playing',
+          currentIndex: simulationState?.currentIndex ?? 0,
+          totalVectors: inputVectors.length,
+          startTime: Date.now(),
+          lastStepTime: simulationState?.lastStepTime ?? null
+        }
+      });
 
       get().addActivityEvent({
         id: `event-${Date.now()}`,
@@ -413,8 +317,11 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
   pauseSimulation: async () => {
     try {
-      const result = await api.pauseSimulation();
-      set({ simulationState: result.state });
+      await api.stopPerceptualSimulation();
+      const current = get().simulationState;
+      set({
+        simulationState: current ? { ...current, status: 'paused' } : null
+      });
 
       get().addActivityEvent({
         id: `event-${Date.now()}`,
@@ -430,8 +337,11 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
   resumeSimulation: async () => {
     try {
-      const result = await api.resumeSimulation();
-      set({ simulationState: result.state });
+      await api.startPerceptualSimulation();
+      const current = get().simulationState;
+      set({
+        simulationState: current ? { ...current, status: 'playing' } : null
+      });
 
       get().addActivityEvent({
         id: `event-${Date.now()}`,
@@ -445,29 +355,17 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
-  stopSimulation: async () => {
-    try {
-      const result = await api.stopSimulation();
-      set({ simulationState: result.state });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: 'Simulation stopped',
-        timestamp: Date.now(),
-        severity: 'warning'
-      });
-    } catch (error) {
-      console.error('Error stopping simulation:', error);
-    }
-  },
-
   resetSimulation: async () => {
     try {
-      const result = await api.resetSimulation();
+      await api.resetPerceptualSimulation();
       set({
-        simulationState: result.state,
-        simulationProgress: 0,
+        simulationState: {
+          status: 'stopped',
+          currentIndex: 0,
+          totalVectors: 0,
+          startTime: null,
+          lastStepTime: null
+        },
         activityEvents: [],
         currentOutputVectors: []
       });
@@ -486,42 +384,26 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
   stepSimulation: async () => {
     try {
-      const result = await api.stepSimulation();
-      set({ simulationState: result.state });
+      const result = await api.stepPerceptualSimulation();
+      const current = get().simulationState;
+      const stepNumber = result.step?.stepNumber ?? (current?.currentIndex ?? 0) + 1;
+      set({
+        simulationState: current ? {
+          ...current,
+          status: result.isComplete ? 'stopped' : current.status,
+          currentIndex: stepNumber,
+          lastStepTime: Date.now()
+        } : null
+      });
 
-      if (result.result) {
-        const { sequenceResults, totalOutputs } = result.result;
-        const matchedCount = Object.values(sequenceResults).filter((r: any) => r.matched).length;
-
-        // NOTE: Outputs are primarily added via WebSocket handler to avoid duplicates
-        // Only add outputs here if WebSocket is not connected (fallback)
-        const { isConnected } = get();
-        if (!isConnected && totalOutputs.length > 0) {
-          set({ currentOutputVectors: [...get().currentOutputVectors, ...totalOutputs] });
-        }
-
-        get().addActivityEvent({
-          id: `event-${Date.now()}`,
-          type: 'vector-processed',
-          message: `Vector #${result.state.currentIndex} processed → ${matchedCount} sequences matched`,
-          timestamp: Date.now(),
-          severity: 'info',
-          metadata: { result: result.result }
-        });
-
-        if (totalOutputs.length > 0) {
-          get().addActivityEvent({
-            id: `event-${Date.now()}-outputs`,
-            type: 'output-asserted',
-            message: `${totalOutputs.length} outputs asserted`,
-            timestamp: Date.now(),
-            severity: 'success',
-            metadata: { outputs: totalOutputs }
-          });
-        }
-      }
-
-      await get().refreshHeatmap();
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'vector-processed',
+        message: `Perceptual step #${stepNumber} processed${result.isComplete ? ' — sequence complete' : ''}`,
+        timestamp: Date.now(),
+        severity: 'info',
+        metadata: { step: result.step }
+      });
     } catch (error) {
       console.error('Error stepping simulation:', error);
     }
@@ -529,7 +411,6 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
   setSimulationSpeed: async (delayMs) => {
     try {
-      await api.setSimulationSpeed(delayMs);
       get().addActivityEvent({
         id: `event-${Date.now()}`,
         type: 'info',
@@ -542,211 +423,27 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
-  loadRandomVectors: async (dimension: number, count: number, binaryThreshold: boolean) => {
-    try {
-      const state = get();
-      const currentMachine = state.currentMachine;
-
-      if (!currentMachine) {
-        throw new Error('No machine loaded');
-      }
-
-      // PERCEPTUAL SPACE MODE: Always generate universal 256-byte vectors
-      const perceptualMapping = currentMachine.perceptualMapping;
-
-      if (perceptualMapping) {
-        // Generate universal 256-byte vectors with random values in machine's input region
-        const { input } = perceptualMapping;
-        const vectors: number[][] = [];
-
-        for (let i = 0; i < count; i++) {
-          const vector = new Array(256).fill(0);
-
-          // Fill machine's input region with random values
-          for (let j = input.offset; j < input.offset + input.length; j++) {
-            vector[j] = Math.random();
-          }
-
-          // Apply binary threshold if enabled
-          if (binaryThreshold) {
-            for (let j = 0; j < vector.length; j++) {
-              vector[j] = vector[j] >= 0.5 ? 1.0 : 0.0;
-            }
-          }
-
-          vectors.push(vector);
-        }
-
-        // Load into simulation with PERCEPTUAL SPACE MODE
-        const result = await api.loadSimulation(vectors, {
-          autoPlayDelayMs: 500,
-          loop: true,
-          machineId: currentMachine.id,
-          usePerceptualSpace: true
-        });
-
-        // Update state
-        set({
-          inputVectors: vectors,
-          simulationState: result.state
-        });
-
-        // Add activity event
-        const thresholdMsg = binaryThreshold ? ' (binary threshold)' : '';
-        const regionMsg = `[${input.offset}:${input.offset + input.length}]`;
-        get().addActivityEvent({
-          id: `event-${Date.now()}`,
-          type: 'info',
-          message: `Generated ${count} universal vectors (256 bytes) with random input region ${regionMsg}${thresholdMsg} [PERCEPTUAL MODE]`,
-          timestamp: Date.now(),
-          severity: 'success'
-        });
-      } else {
-        // LEGACY MODE: Machine doesn't have perceptual mapping
-        // Generate machine-specific vectors (old behavior)
-        console.warn('Machine lacks perceptual mapping, using legacy mode');
-
-        const sampleVectors = currentMachine.metadata?.sampleVectors || [];
-        const inputSequences = currentMachine.metadata?.inputSequences || [];
-
-        let vectors: number[][] = [];
-        let sampleCount = 0;
-        let sequencesInjected = 0;
-
-        let i = 0;
-        while (i < count) {
-          // 25% chance to inject a complete input sequence if available
-          if (inputSequences.length > 0 && Math.random() < 0.25 && (count - i) >= 2) {
-            const sequence = inputSequences[Math.floor(Math.random() * inputSequences.length)];
-            const seqVectors = sequence.vectors || [];
-
-            for (const vec of seqVectors) {
-              if (i >= count) break;
-              vectors.push([...vec]);
-              i++;
-            }
-            sequencesInjected++;
-          }
-          // 20% chance to inject a single sample vector if available
-          else if (sampleVectors.length > 0 && Math.random() < 0.2) {
-            const sample = sampleVectors[Math.floor(Math.random() * sampleVectors.length)];
-            vectors.push([...sample.vector]);
-            sampleCount++;
-            i++;
-          }
-          // Otherwise generate random vector
-          else {
-            vectors.push(Array.from({ length: dimension }, () => Math.random()));
-            i++;
-          }
-        }
-
-        // Trim to exact count
-        vectors = vectors.slice(0, count);
-
-        // Apply binary threshold if enabled
-        if (binaryThreshold) {
-          vectors = vectors.map(vector =>
-            vector.map(value => value >= 0.5 ? 1.0 : 0.0)
-          );
-        }
-
-        // Load into simulation WITHOUT perceptual space mode
-        const result = await api.loadSimulation(vectors, {
-          autoPlayDelayMs: 500,
-          loop: true,
-          usePerceptualSpace: false
-        });
-
-        set({
-          inputVectors: vectors,
-          simulationState: result.state
-        });
-
-        const thresholdMsg = binaryThreshold ? ' (binary threshold)' : '';
-        const seqMsg = sequencesInjected > 0 ? `, ${sequencesInjected} sequence${sequencesInjected !== 1 ? 's' : ''}` : '';
-        const sampleMsg = sampleCount > 0 ? `, ${sampleCount} sample${sampleCount !== 1 ? 's' : ''}` : '';
-        get().addActivityEvent({
-          id: `event-${Date.now()}`,
-          type: 'info',
-          message: `Generated ${count} random ${dimension}D vectors${thresholdMsg}${seqMsg}${sampleMsg} [LEGACY MODE]`,
-          timestamp: Date.now(),
-          severity: 'warning'
-        });
-      }
-    } catch (error) {
-      console.error('Error generating random vectors:', error);
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to generate random vectors',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
-    }
-  },
-
   refreshSimulationState: async () => {
     try {
-      const result = await api.getSimulationState();
+      const result = await api.getPerceptualSimulationState();
+      const { inputVectors } = get();
       set({
-        simulationState: result.state,
-        simulationProgress: result.progress,
-        inputVectors: result.inputVectors || []
+        simulationState: {
+          status: result.isRunning ? 'playing' : 'stopped',
+          currentIndex: result.currentStep ?? 0,
+          totalVectors: inputVectors.length,
+          startTime: result.isRunning ? Date.now() : null,
+          lastStepTime: null
+        }
       });
     } catch (error) {
       console.error('Error refreshing simulation state:', error);
     }
   },
 
-  refreshHeatmap: async () => {
-    try {
-      const result = await api.getSimulationHeatmap();
-      set({ heatmapData: result.heatmap });
-    } catch (error) {
-      console.error('Error refreshing heatmap:', error);
-    }
-  },
-
-  loadDemo: async () => {
-    try {
-      const result = await api.loadDemo();
-      set({
-        isDemoLoaded: true,
-        demoMetadata: result.metadata
-      });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: 'Demo dataset loaded',
-        timestamp: Date.now(),
-        severity: 'success',
-        metadata: result.metadata
-      });
-
-      // Refresh sequences after loading demo
-      const sequences = await api.getSequences();
-      set({ sequences });
-    } catch (error) {
-      console.error('Error loading demo:', error);
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to load demo dataset',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
-    }
-  },
-
   loadDataCenterExample: async () => {
     try {
       const result = await api.loadDataCenterExample();
-      set({
-        isDemoLoaded: true,
-        demoMetadata: result.metadata
-      });
 
       get().addActivityEvent({
         id: `event-${Date.now()}`,
@@ -775,11 +472,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   loadMultiStepExample: async () => {
     try {
       const result = await api.loadMultiStepExample();
-      set({
-        isDemoLoaded: true,
-        demoMetadata: result.metadata,
-        currentMachine: result.machine || null
-      });
+      set({ currentMachine: result.machine || null });
 
       get().addActivityEvent({
         id: `event-${Date.now()}`,
@@ -811,11 +504,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   loadKleeneStarExample: async () => {
     try {
       const result = await api.loadKleeneStarExample();
-      set({
-        isDemoLoaded: true,
-        demoMetadata: result.metadata,
-        currentMachine: result.machine || null
-      });
+      set({ currentMachine: result.machine || null });
 
       get().addActivityEvent({
         id: `event-${Date.now()}`,
@@ -848,13 +537,9 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     const wsUrl = `ws://${window.location.hostname}:3001/ws`;
     const ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => {
-      set({ isConnected: true });
-    };
+    ws.onopen = () => {};
 
-    ws.onclose = () => {
-      set({ isConnected: false });
-    };
+    ws.onclose = () => {};
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
@@ -866,42 +551,36 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
         // Handle different message types
         switch (message.type) {
-          case 'simulation-started':
-          case 'simulation-paused':
-          case 'simulation-resumed':
-          case 'simulation-stopped':
-          case 'simulation-reset':
-            if (message.state) {
-              set({ simulationState: message.state });
-            }
-            break;
-
-          case 'simulation-stepped':
-            if (message.state) {
-              set({ simulationState: message.state });
-            }
-            // Handle sequences from polling mechanism (auto-play updates)
-            if (message.sequences) {
-              set({ sequences: message.sequences });
-            }
-            if (message.result) {
-              // Refresh sequences to update active node states (manual step)
-              api.getSequences().then(sequences => {
-                set({ sequences });
-              });
-              get().refreshHeatmap();
-
-              // Append new output vectors to existing history
-              const outputs = message.result.totalOutputs || [];
-              if (outputs.length > 0) {
-                set({ currentOutputVectors: [...get().currentOutputVectors, ...outputs] });
-              }
-            }
-            break;
-
-          case 'simulation-loaded':
           case 'demo-loaded':
             get().refreshSimulationState();
+            break;
+
+          case 'perceptual-simulation-stepped': {
+            const step = (message as any).step;
+            if (step) {
+              const current = get().simulationState;
+              set({
+                simulationState: current ? {
+                  ...current,
+                  currentIndex: step.stepNumber ?? current.currentIndex,
+                  lastStepTime: Date.now()
+                } : null
+              });
+            }
+            break;
+          }
+
+          case 'perceptual-simulation-reset':
+            set({
+              simulationState: {
+                status: 'stopped',
+                currentIndex: 0,
+                totalVectors: 0,
+                startTime: null,
+                lastStepTime: null
+              },
+              currentOutputVectors: []
+            });
             break;
         }
       } catch (error) {
@@ -916,7 +595,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     const { ws } = get();
     if (ws) {
       ws.close();
-      set({ ws: null, isConnected: false });
+      set({ ws: null });
     }
   },
 
@@ -928,10 +607,6 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
   clearActivityEvents: () => {
     set({ activityEvents: [] });
-  },
-
-  toggleHeatmap: () => {
-    set((state) => ({ isHeatmapEnabled: !state.isHeatmapEnabled }));
   },
 
   // Machine View actions implementation
@@ -1146,11 +821,12 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
       }));
 
       get().addMultipleToInputQueue(items);
+      await get().loadQueueIntoSimulation();
 
       get().addActivityEvent({
         id: `event-${Date.now()}`,
         type: 'info',
-        message: `Generated ${count} algorithmic vectors (${pattern}) and added to input queue`,
+        message: `Generated ${count} algorithmic vectors (${pattern}) and loaded into simulation`,
         timestamp: Date.now(),
         severity: 'success'
       });
@@ -1200,11 +876,12 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
       }
 
       get().addMultipleToInputQueue(items);
+      await get().loadQueueIntoSimulation();
 
       get().addActivityEvent({
         id: `event-${Date.now()}`,
         type: 'info',
-        message: `Generated ${count} random vectors in region [${region.offset}:${region.offset + region.length}] and added to input queue`,
+        message: `Generated ${count} random vectors in region [${region.offset}:${region.offset + region.length}] and loaded into simulation`,
         timestamp: Date.now(),
         severity: 'success'
       });
@@ -1218,6 +895,61 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         id: `event-${Date.now()}`,
         type: 'error',
         message: 'Failed to generate random sequence',
+        timestamp: Date.now(),
+        severity: 'error'
+      });
+    }
+  },
+
+  loadQueueIntoSimulation: async () => {
+    const { inputQueue } = get();
+
+    if (inputQueue.length === 0) return;
+
+    const vectors = inputQueue.map(item => item.vector);
+
+    try {
+      // Update the store first so the UI reflects the vectors immediately,
+      // regardless of whether the backend configuration succeeds.
+      set({
+        inputVectors: vectors,
+        simulationState: {
+          status: 'stopped',
+          currentIndex: 0,
+          totalVectors: vectors.length,
+          startTime: null,
+          lastStepTime: null
+        }
+      });
+
+      // Stream vectors to the PerceptualSpaceSimulator in chunks to avoid
+      // HTTP body-size limits. Each 256-float vector is ~2-5 KB as JSON;
+      // sending them all at once easily exceeds the default parser limit.
+      const CHUNK_SIZE = 50;
+      for (let i = 0; i < vectors.length; i += CHUNK_SIZE) {
+        const chunk = vectors.slice(i, i + CHUNK_SIZE);
+        await api.appendSequenceChunk({
+          vectors: chunk,
+          ...(i === 0
+            ? { reset: true, inputRegion: { offset: 0, length: 256 }, stepDelayMs: 1000 }
+            : {})
+        });
+      }
+      await api.commitSequenceConfig();
+
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'info',
+        message: `Loaded ${vectors.length} vector${vectors.length !== 1 ? 's' : ''} from input queue into simulation`,
+        timestamp: Date.now(),
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error loading queue into simulation:', error);
+      get().addActivityEvent({
+        id: `event-${Date.now()}`,
+        type: 'error',
+        message: 'Failed to load input queue into simulation',
         timestamp: Date.now(),
         severity: 'error'
       });

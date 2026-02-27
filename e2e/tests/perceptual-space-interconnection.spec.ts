@@ -80,17 +80,20 @@ test.describe('Perceptual Space Interconnection - Multi-Step → RS2 + RSFlipFlo
         createPerceptualVector([1, 1, 1], 'Seq2 final: 111 → outputs [1,0]'),
       ];
 
-      const configResponse = await page.request.post(`${API_URL}/api/perceptual-simulation/configure`, {
+      const chunkResponse = await page.request.post(`${API_URL}/api/perceptual-simulation/configure/chunk`, {
         data: {
-          inputSequence: inputSequence,
+          vectors: inputSequence,
+          reset: true,
           inputRegion: { offset: 0, length: 3 }, // Multi-Step input region
           stepDelayMs: 1000,
           maxSteps: inputSequence.length
         }
       });
+      expect(chunkResponse.ok()).toBeTruthy();
 
-      expect(configResponse.ok()).toBeTruthy();
-      const configData = await configResponse.json();
+      const commitResponse = await page.request.post(`${API_URL}/api/perceptual-simulation/configure/commit`);
+      expect(commitResponse.ok()).toBeTruthy();
+      const configData = await commitResponse.json();
       expect(configData.success).toBeTruthy();
 
       console.log(`  ✓ Configured with ${inputSequence.length} input vectors`);
@@ -261,15 +264,18 @@ test.describe('Perceptual Space Interconnection - Multi-Step → RS2 + RSFlipFlo
       createPerceptualVector([1, 0, 1], 'Test vector 2'),
     ];
 
-    const configResponse = await page.request.post(`${API_URL}/api/perceptual-simulation/configure`, {
+    const chunkResponse = await page.request.post(`${API_URL}/api/perceptual-simulation/configure/chunk`, {
       data: {
-        inputSequence: inputSequence,
+        vectors: inputSequence,
+        reset: true,
         inputRegion: { offset: 0, length: 3 }, // Multi-Step input region
         stepDelayMs: 500,
         maxSteps: 2
       }
     });
-    expect(configResponse.ok()).toBeTruthy();
+    expect(chunkResponse.ok()).toBeTruthy();
+    const commitResponse = await page.request.post(`${API_URL}/api/perceptual-simulation/configure/commit`);
+    expect(commitResponse.ok()).toBeTruthy();
 
     // Get initial state
     const initialStateResponse = await page.request.get(`${API_URL}/api/perceptual-simulation/state`);

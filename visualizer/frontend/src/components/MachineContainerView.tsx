@@ -36,8 +36,15 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
     clearInputQueue,
     clearOutputQueue,
     removeFromInputQueue,
-    removeFromOutputQueue
+    removeFromOutputQueue,
+    loadQueueIntoSimulation
   } = useVisualizerStore();
+
+  // Use inputVectors when populated; fall back to inputQueue so the stream
+  // panel shows generated vectors even before they are loaded into the simulator.
+  const displayVectors: number[][] = inputVectors.length > 0
+    ? inputVectors
+    : inputQueue.map(item => item.vector);
 
   // View toggle state - default to 'graph'
   const [viewMode, setViewMode] = useState<'graph' | 'sequences'>('graph');
@@ -181,13 +188,19 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         randomVectors.push(vector);
       }
 
-      // Configure the perceptual simulator with these vectors
-      await api.configurePerceptualSimulation({
-        inputSequence: randomVectors,
-        inputRegion: inputRegion,
-        stepDelayMs: 1000,
-        maxSteps: vectorCount
-      });
+      // Stream vectors to the perceptual simulator in chunks to avoid
+      // HTTP body-size limits.
+      const CHUNK_SIZE = 50;
+      for (let i = 0; i < randomVectors.length; i += CHUNK_SIZE) {
+        const chunk = randomVectors.slice(i, i + CHUNK_SIZE);
+        await api.appendSequenceChunk({
+          vectors: chunk,
+          ...(i === 0
+            ? { reset: true, inputRegion, stepDelayMs: 1000, maxSteps: vectorCount }
+            : {})
+        });
+      }
+      await api.commitSequenceConfig();
 
       // Set the first vector as current
       if (randomVectors.length > 0) {
@@ -215,7 +228,7 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         <GlobalCurrentVectorDisplay
           currentVector={currentUniversalVector}
           currentStep={simulationState?.currentIndex || 0}
-          totalSteps={inputVectors.length}
+          totalSteps={displayVectors.length}
           isPlaying={isPlaying}
           onOpenSequenceManager={() => setIsSequenceModalOpen(true)}
           onOpenLogViewer={() => setIsLogViewerOpen(true)}
@@ -231,7 +244,7 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
       }}>
         {/* Input Stream - Left Side */}
         <InputStreamVisualization
-        inputVectors={inputVectors}
+        inputVectors={displayVectors}
         currentIndex={currentIndex}
         isPlaying={isPlaying}
         isPaused={isPaused}
@@ -508,6 +521,9 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         }}
         onRemoveOutputItem={(id) => {
           removeFromOutputQueue(id);
+        }}
+        onLoadIntoSimulation={() => {
+          loadQueueIntoSimulation();
         }}
       />
 

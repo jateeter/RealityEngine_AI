@@ -75,7 +75,7 @@ export class MachineLoader {
   /**
    * Load a machine from JSON string
    */
-  public static loadFromJSON(jsonString: string): Machine {
+  public static loadFromJSON(jsonString: string, id?: string): Machine {
     const machineJSON: MachineJSON = JSON.parse(jsonString);
 
     // Validate version
@@ -119,13 +119,14 @@ export class MachineLoader {
       inputSequences: machineData.inputSequences || []
     };
 
-    // Create machine
+    // Create machine (use provided id for stable identity across server restarts)
     const machine = new Machine(
       machineData.name,
       machineData.description,
       metadata,
       arbiterRule,
-      perceptualMapping
+      perceptualMapping,
+      id
     );
 
     // Load sequences

@@ -1,0 +1,162 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "DC Cooling Control Flip-Flop",
+    "description": "RS flip-flop that latches the thermal alarm state. SET by DCThermalEscalation [1,0], RESET by safe-recovery signal [0,1].",
+    "metadata": {
+      "category": "digital-logic",
+      "author": "Reality Engine",
+      "created": "2026-02-27T00:00:00Z",
+      "eventSpace": "2D binary control signal at [60:62]: [1,0]=ALARM, [0,1]=SAFE",
+      "outputSpace": "2D binary at [100:102]: [1,0]=COOLING_ACTIVE, [0,1]=COOLING_OFF",
+      "tags": ["flip-flop", "digital-logic", "data-center", "cooling"],
+      "sequenceCount": 2,
+      "role": "Latches thermal escalation alarm; downstream input to DCCriticalSynthesizer",
+      "upstreamMachine": "DCThermalEscalation (writes [60:62])",
+      "downstreamMachine": "DCCriticalSynthesizer (reads [100:102])",
+      "singleTransitionAssumption": {
+        "required": false,
+        "scope": "not applicable — all event vectors are isInitial (combinatorial)",
+        "compliant": true,
+        "notes": "Both SET and RESET events are isInitial. The FF responds combinatorially on every cycle. The 'state' persists through the perceptual space value retention: once SET writes [1,0] to [100:102], that value remains until RESET overwrites it with [0,1]. Multi-bit transitions between [1,0] and [0,1] (HD=2) work correctly since both events are always active."
+      }
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 60,
+        "length": 2
+      },
+      "output": {
+        "offset": 100,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "dc-cooling-set-sequence",
+        "name": "COOLING ALARM SET: [1,0] → [1,0]",
+        "metadata": {
+          "description": "Activates cooling alarm when thermal escalation fires [1,0] control signal",
+          "path": "[1,0] → [1,0]",
+          "output": "[1,0]",
+          "trigger": "DCThermalEscalation EMERGENCY state fires [1,0] to bytes [60:62]"
+        },
+        "vectors": [
+          {
+            "id": "dc-cooling-set-event",
+            "elements": [
+              {
+                "value": 1,
+                "comparatorType": "equals",
+                "threshold": 0.50
+              },
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.50
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "ALARM",
+              "description": "Control signal [1,0]: thermal alarm is active — activate cooling",
+              "state": "SET"
+            },
+            "outputVectors": [
+              {
+                "id": "dc-cooling-set-output",
+                "vector": [1, 0],
+                "metadata": {
+                  "description": "COOLING CONTROL ACTIVE: Emergency cooling engaged",
+                  "state": "SET",
+                  "logicValue": "HIGH"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dc-cooling-reset-sequence",
+        "name": "COOLING ALARM RESET: [0,1] → [0,1]",
+        "metadata": {
+          "description": "Deactivates cooling alarm when safe-recovery signal [0,1] is received",
+          "path": "[0,1] → [0,1]",
+          "output": "[0,1]",
+          "trigger": "DCThermalEscalation SAFE state fires [0,1] to bytes [60:62]"
+        },
+        "vectors": [
+          {
+            "id": "dc-cooling-reset-event",
+            "elements": [
+              {
+                "value": 0,
+                "comparatorType": "equals",
+                "threshold": 0.50
+              },
+              {
+                "value": 1,
+                "comparatorType": "equals",
+                "threshold": 0.50
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "SAFE",
+              "description": "Control signal [0,1]: thermal conditions safe — deactivate cooling alarm",
+              "state": "RESET"
+            },
+            "outputVectors": [
+              {
+                "id": "dc-cooling-reset-output",
+                "vector": [0, 1],
+                "metadata": {
+                  "description": "COOLING CONTROL INACTIVE: Normal cooling sufficient",
+                  "state": "RESET",
+                  "logicValue": "LOW"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Thermal Alarm Activation",
+        "pattern": "[0,1] → [1,0]",
+        "description": "Simulate DCThermalEscalation firing: safe → alarm",
+        "vectors": [
+          [0, 1],
+          [1, 0]
+        ]
+      },
+      {
+        "name": "Thermal Alarm Recovery",
+        "pattern": "[1,0] → [0,1]",
+        "description": "Simulate recovery: alarm → safe",
+        "vectors": [
+          [1, 0],
+          [0, 1]
+        ]
+      },
+      {
+        "name": "Alarm Latch Cycle",
+        "pattern": "[0,1] → [1,0] → [1,0] → [1,0] → [0,1]",
+        "description": "Full cycle: safe baseline, alarm triggers, persists, clears on recovery",
+        "vectors": [
+          [0, 1],
+          [1, 0],
+          [1, 0],
+          [1, 0],
+          [0, 1]
+        ],
+        "metadata": {
+          "expectedOutputSequence": "[0,1], [1,0], [1,0], [1,0], [0,1]",
+          "note": "FF reflects control signal each cycle; state persists via perceptual space retention"
+        }
+      }
+    ]
+  }
+}
