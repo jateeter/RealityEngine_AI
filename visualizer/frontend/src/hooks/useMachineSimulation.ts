@@ -1,20 +1,74 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api';
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface VectorNodeLite {
+  id: string;
+  isInitial: boolean;
+  hasOutput: boolean;
+  elements: { value: number; comparatorType: string; threshold?: number }[];
+}
+
+export interface VisMachineSequence {
+  sequenceId: string;
+  name: string;
+  vectors: VectorNodeLite[];
+  metadata?: Record<string, any>;
+}
+
 export interface VisMachine {
   id: string;
   name: string;
   isExample: boolean;
-  sequences: any[];
+  sequences: VisMachineSequence[];
   status: 'idle' | 'processing' | 'active';
   position?: { x: number; y: number };
+  // Perceptual mapping regions
+  inputRegion?: { offset: number; length: number };
+  outputRegion?: { offset: number; length: number };
+  // Latest step values
+  latestInputVector?: number[];
+  latestOutputVector?: number[] | null;
+  justFired: boolean;
 }
+
+export interface StepMachineResult {
+  machineId: string;
+  machineName: string;
+  inputVector: number[];
+  outputVector: number[] | null;
+  inputRegion: { offset: number; length: number };
+  outputRegion?: { offset: number; length: number } | null;
+}
+
+export interface StepRecord {
+  stepNumber: number;
+  timestamp: number;
+  perceptualSpace: number[];
+  machineResults: Record<string, StepMachineResult>;
+}
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
+const MAX_HISTORY = 24;
+const AUTO_PLAY_INTERVAL_MS = 600;
 
 export const useMachineSimulation = () => {
   const [machines, setMachines] = useState<VisMachine[]>([]);
   const [selectedMachineId, setSelectedMachineId] = useState<string | null>(null);
   const [isSimulationRunning, setIsSimulationRunning] = useState(false);
+  const [stepHistory, setStepHistory] = useState<StepRecord[]>([]);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
+
   const wsRef = useRef<WebSocket | null>(null);
+  const intervalRef = useRef<number | null>(null);
+
+  // ── Machine loading ────────────────────────────────────────────────────────
 
   const loadMachines = useCallback(async () => {
     try {
@@ -32,9 +86,14 @@ export const useMachineSimulation = () => {
                   return {
                     sequenceId: sequenceGraph.sequenceId,
                     name: sequenceGraph.sequenceName,
-                    vectors: sequenceGraph.nodes,
+                    vectors: (sequenceGraph.nodes || []).map((n: any): VectorNodeLite => ({
+                      id: n.id,
+                      isInitial: n.isInitial ?? false,
+                      hasOutput: n.hasOutput ?? (n.outputVectors?.length > 0 ? true : false),
+                      elements: n.elements ?? [],
+                    })),
                     metadata: sequenceGraph.metadata,
-                  };
+                  } as VisMachineSequence;
                 } catch {
                   return null;
                 }
@@ -45,9 +104,12 @@ export const useMachineSimulation = () => {
               id: machine.id,
               name: machine.name,
               isExample: machine.isExample || false,
-              sequences: fullSequences.filter(Boolean),
+              sequences: fullSequences.filter(Boolean) as VisMachineSequence[],
               status: 'idle' as const,
-            };
+              justFired: false,
+              inputRegion: details.perceptualMapping?.input,
+              outputRegion: details.perceptualMapping?.output,
+            } as VisMachine;
           } catch {
             return {
               id: machine.id,
@@ -55,7 +117,8 @@ export const useMachineSimulation = () => {
               isExample: false,
               sequences: [],
               status: 'idle' as const,
-            };
+              justFired: false,
+            } as VisMachine;
           }
         })
       );
@@ -66,24 +129,79 @@ export const useMachineSimulation = () => {
     }
   }, []);
 
-  // WebSocket for real-time machine status updates
+  // ── Demo loading ───────────────────────────────────────────────────────────
+
+  const loadDataCenterDemo = useCallback(async () => {
+    setIsDemoLoading(true);
+    try {
+      await api.loadDataCenterExample();
+      await loadMachines();
+    } catch (error) {
+      console.error('Failed to load data center demo:', error);
+    } finally {
+      setIsDemoLoading(false);
+    }
+  }, [loadMachines]);
+
+  // ── WebSocket ──────────────────────────────────────────────────────────────
+
   useEffect(() => {
     const connect = () => {
       const ws = new WebSocket('ws://localhost:3001/ws');
 
       ws.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'perceptual-simulation-stepped') {
-            const activeIds: string[] = data.data?.activeMachineIds ?? [];
+          const msg = JSON.parse(event.data);
+
+          if (msg.type === 'perceptual-simulation-stepped') {
+            const d = msg.data || {};
+            const activeIds: string[] = d.activeMachineIds ?? [];
+            const machineResults: Record<string, StepMachineResult> = d.machineResults ?? {};
+            const perceptualSpace: number[] = d.perceptualSpace ?? [];
+            const stepNumber: number = d.stepNumber ?? 0;
+
+            // Append step record to history (capped at MAX_HISTORY)
+            const record: StepRecord = {
+              stepNumber,
+              timestamp: d.timestamp ?? Date.now(),
+              perceptualSpace,
+              machineResults,
+            };
+            setStepHistory((prev) => {
+              const next = [...prev, record];
+              return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next;
+            });
+
+            // Update machine states
+            setMachines((prev) =>
+              prev.map((m) => {
+                const fired = activeIds.includes(m.id);
+                const result = machineResults[m.id];
+                return {
+                  ...m,
+                  status: fired ? ('processing' as const) : ('idle' as const),
+                  justFired: fired,
+                  latestInputVector: result?.inputVector ?? m.latestInputVector,
+                  latestOutputVector: fired
+                    ? (result?.outputVector ?? m.latestOutputVector)
+                    : m.latestOutputVector,
+                };
+              })
+            );
+          } else if (msg.type === 'perceptual-simulation-reset') {
+            setStepHistory([]);
             setMachines((prev) =>
               prev.map((m) => ({
                 ...m,
-                status: activeIds.includes(m.id) ? ('processing' as const) : ('idle' as const),
+                status: 'idle' as const,
+                justFired: false,
+                latestInputVector: undefined,
+                latestOutputVector: undefined,
               }))
             );
-          } else if (data.type === 'perceptual-simulation-reset') {
-            setMachines((prev) => prev.map((m) => ({ ...m, status: 'idle' as const })));
+          } else if (msg.type === 'demo-loaded') {
+            // Refresh machine list when a demo is loaded externally
+            loadMachines();
           }
         } catch {
           // ignore parse errors
@@ -96,13 +214,13 @@ export const useMachineSimulation = () => {
 
     connect();
     return () => wsRef.current?.close();
-  }, []);
+  }, [loadMachines]);
 
   useEffect(() => {
     loadMachines();
   }, [loadMachines]);
 
-  const selectMachine = useCallback((id: string | null) => setSelectedMachineId(id), []);
+  // ── Auto-play interval ─────────────────────────────────────────────────────
 
   const stepSimulation = useCallback(async () => {
     try {
@@ -112,6 +230,24 @@ export const useMachineSimulation = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (isSimulationRunning) {
+      intervalRef.current = window.setInterval(stepSimulation, AUTO_PLAY_INTERVAL_MS);
+    } else if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isSimulationRunning, stepSimulation]);
+
+  // ── Controls ───────────────────────────────────────────────────────────────
+
+  const selectMachine = useCallback((id: string | null) => setSelectedMachineId(id), []);
   const playSimulation = useCallback(() => setIsSimulationRunning(true), []);
   const pauseSimulation = useCallback(() => setIsSimulationRunning(false), []);
 
@@ -119,7 +255,16 @@ export const useMachineSimulation = () => {
     try {
       await api.resetPerceptualSimulation();
       setIsSimulationRunning(false);
-      setMachines((prev) => prev.map((m) => ({ ...m, status: 'idle' as const })));
+      setStepHistory([]);
+      setMachines((prev) =>
+        prev.map((m) => ({
+          ...m,
+          status: 'idle' as const,
+          justFired: false,
+          latestInputVector: undefined,
+          latestOutputVector: undefined,
+        }))
+      );
     } catch (error) {
       console.error('Failed to reset simulation:', error);
     }
@@ -129,11 +274,14 @@ export const useMachineSimulation = () => {
     machines,
     selectedMachineId,
     isSimulationRunning,
+    stepHistory,
+    isDemoLoading,
     selectMachine,
     stepSimulation,
     playSimulation,
     pauseSimulation,
     resetSimulation,
+    loadDataCenterDemo,
     refreshMachines: loadMachines,
   };
 };

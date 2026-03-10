@@ -1,6 +1,7 @@
 /* ============================================================
-   TobiasView — 3-zone layout
-   header / (canvas-area + gutter + sidebar) / perceptual-space-bar
+   TobiasView — layout:
+   header / (sidebar[LEFT] + gutter + canvas-area) body
+   canvas-area = [input-history-top] + [canvas-center] + [output-history-bottom]
    ============================================================ */
 
 .tobias-view {
@@ -78,7 +79,15 @@
   gap: 16px;
 }
 
-/* Step button in header */
+.tobias-step-indicator {
+  font-size: 12px;
+  color: #64748b;
+  font-family: monospace;
+}
+.tobias-step-indicator strong {
+  color: #a78bfa;
+}
+
 .tobias-step-btn {
   background: transparent;
   border: 1px solid #334155;
@@ -107,6 +116,10 @@
   padding: 4px 10px;
   border-radius: 4px;
   border: 1px solid #334155;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .tobias-selected-label strong {
   color: #c084fc;
@@ -125,51 +138,57 @@
   overflow: hidden;
 }
 
-/* ── Canvas area (left column) ──────────────────────────────── */
-.tobias-canvas-area {
-  flex: 1;
+/* ── Sidebar (LEFT) ─────────────────────────────────────────── */
+.tobias-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: #0f131a;
+  border-right: 1px solid #1e2535;
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  min-height: 0;
   overflow: hidden;
+  transition: width 0.2s ease;
+  order: 0;
 }
 
-/* TobiasCanvas fills the canvas-area flex space */
-.tobias-canvas-area > .tobias-canvas-wrapper {
+.tobias-sidebar.collapsed {
+  width: 0;
+  border-right: none;
+}
+
+.tobias-sidebar-content {
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
 }
-
-/* ── Perceptual space bar ────────────────────────────────────── */
-.tobias-space-bar {
-  height: 140px;
-  flex-shrink: 0;
-  border-top: 1px solid #1e2535;
-  background: #0d1017;
-  overflow: hidden;
-}
+.tobias-sidebar-content::-webkit-scrollbar        { width: 4px; }
+.tobias-sidebar-content::-webkit-scrollbar-track  { background: transparent; }
+.tobias-sidebar-content::-webkit-scrollbar-thumb  { background: #334155; border-radius: 2px; }
 
 /* ── Sidebar gutter — holds the collapse toggle ─────────────── */
-/* Lives between canvas-area and sidebar; never clipped.        */
+/* Lives between sidebar (left) and canvas-area (right).        */
 .tobias-sidebar-gutter {
   width: 22px;
   flex-shrink: 0;
   position: relative;
   background: #0f131a;
-  border-left: 1px solid #1e2535;
+  border-right: 1px solid #1e2535;
+  order: 1;
 }
 
+/* Toggle button sits on the RIGHT edge of the gutter            */
+/* so it visually extends into the canvas area.                  */
 .tobias-sidebar-toggle {
   position: absolute;
   top: 50%;
-  left: 0;
+  right: 0;
   transform: translateY(-50%);
   background: #1e2535;
   border: 1px solid #334155;
-  border-right: none;
-  border-radius: 4px 0 0 4px;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
   color: #94a3b8;
   width: 22px;
   height: 48px;
@@ -187,31 +206,23 @@
   color: #e2e8f0;
 }
 
-/* ── Sidebar (right) ────────────────────────────────────────── */
-.tobias-sidebar {
-  width: 280px;
-  flex-shrink: 0;
-  background: #0f131a;
+/* ── Canvas area (right, flex-1) ────────────────────────────── */
+.tobias-canvas-area {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
-  transition: width 0.2s ease;
+  order: 2;
 }
 
-.tobias-sidebar.collapsed {
-  width: 0;
-}
-
-.tobias-sidebar-content {
+/* Center canvas fills remaining vertical space */
+.tobias-canvas-center {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: #334155 transparent;
+  min-height: 0;
+  overflow: hidden;
 }
-.tobias-sidebar-content::-webkit-scrollbar { width: 4px; }
-.tobias-sidebar-content::-webkit-scrollbar-track { background: transparent; }
-.tobias-sidebar-content::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
 
 /* ── Sidebar sections ───────────────────────────────────────── */
 .tbs-section {
@@ -228,18 +239,7 @@
   margin-bottom: 8px;
 }
 
-
-/* Loading state */
-.tobias-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: 16px;
-  color: #64748b;
-}
-
-/* ── Sidebar control buttons ─────────────────────────────────── */
+/* ── Simulation control buttons ─────────────────────────────── */
 .tbs-controls {
   display: flex;
   gap: 8px;
@@ -279,6 +279,67 @@
   border-color: rgba(248, 113, 113, 0.6);
 }
 
+/* ── Demo / engine buttons ───────────────────────────────────── */
+.tbs-demo-btn {
+  width: 100%;
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: 6px;
+  color: #a78bfa;
+  padding: 7px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 6px;
+  transition: all 0.15s ease;
+}
+.tbs-demo-btn:last-child { margin-bottom: 0; }
+.tbs-demo-btn:hover:not(:disabled) {
+  background: rgba(167, 139, 250, 0.2);
+  border-color: rgba(167, 139, 250, 0.6);
+}
+.tbs-demo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.tbs-demo-refresh {
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.06);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+.tbs-demo-refresh:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.15);
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+/* ── Node legend ─────────────────────────────────────────────── */
+.tbs-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tbs-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.tbs-legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tbs-legend-ring {
+  background: transparent;
+  border: 2px solid;
+}
+
 /* ── Machine filter button group ─────────────────────────────── */
 .tbs-filter {
   display: flex;
@@ -306,4 +367,149 @@
   background: #1e293b;
   border-color: #7c3aed;
   color: #c084fc;
+}
+
+/* ── History strips (top + bottom of canvas area) ────────────── */
+.tobias-history-strip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+  background: #090c11;
+  overflow: hidden;
+}
+
+.tobias-history-input {
+  height: 88px;
+  border-bottom: 1px solid #1e2535;
+}
+
+.tobias-history-output {
+  height: 88px;
+  border-top: 1px solid #1e2535;
+}
+
+.tobias-history-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #334155;
+  text-transform: uppercase;
+  padding: 6px 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d1017;
+  border-right: 1px solid #1a2030;
+  min-width: 18px;
+}
+
+.tobias-history-scroll {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #1e2535 transparent;
+}
+.tobias-history-scroll::-webkit-scrollbar        { height: 3px; }
+.tobias-history-scroll::-webkit-scrollbar-track  { background: transparent; }
+.tobias-history-scroll::-webkit-scrollbar-thumb  { background: #1e2535; border-radius: 2px; }
+
+.tobias-history-grid {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  gap: 0;
+}
+
+/* Machine name labels column */
+.tobias-history-names {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 4px 4px;
+  flex-shrink: 0;
+  border-right: 1px solid #1a2030;
+  background: #0d1017;
+}
+
+.tobias-history-name {
+  font-size: 8px;
+  color: #475569;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 72px;
+  line-height: 1;
+}
+
+/* Per-step column */
+.tobias-history-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 1px;
+  border-right: 1px solid #0f1420;
+  min-width: 28px;
+  gap: 2px;
+}
+
+.tobias-history-step-num {
+  font-size: 7px;
+  color: #334155;
+  font-family: monospace;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+/* Per-machine cell within a step column */
+.tobias-history-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 1px 2px;
+  border-radius: 2px;
+  width: 100%;
+}
+
+.tobias-history-cell-empty {
+  background: #0d1017;
+}
+
+/* Individual element dot within a cell */
+.tobias-history-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+/* "No history yet" placeholder */
+.tobias-history-empty {
+  font-size: 10px;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  white-space: nowrap;
+  font-style: italic;
+}
+
+/* Loading state (if needed) */
+.tobias-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 16px;
+  color: #64748b;
 }

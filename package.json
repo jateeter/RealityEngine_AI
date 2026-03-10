@@ -1,6 +1,6 @@
 {
   "name": "reality-engine",
-  "version": "1.2.0-rc.1",
+  "version": "1.2.0-rc.2",
   "description": "A reality engine system with vector-based state machines and transitions",
   "type": "module",
   "main": "dist/index.js",

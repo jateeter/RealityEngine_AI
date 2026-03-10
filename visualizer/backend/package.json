@@ -1,6 +1,6 @@
 {
   "name": "reality-engine-visualizer-backend",
-  "version": "1.2.0-rc.1",
+  "version": "1.2.0-rc.2",
   "description": "Backend proxy server for Reality Engine Visualizer",
   "type": "module",
   "main": "dist/server.js",
