@@ -222,6 +222,90 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  position: relative;
+}
+
+/* ── Floating legend panel — anchored to canvas left margin ─── */
+.tobias-legend-panel {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: row;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.tobias-legend-tab {
+  background: #0f131a;
+  border: 1px solid #1e2535;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  color: #475569;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 14px 5px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.tobias-legend-tab:hover {
+  background: #141c2b;
+  color: #94a3b8;
+}
+.tobias-legend-panel.open .tobias-legend-tab {
+  background: #131820;
+  color: #94a3b8;
+  border-color: #2a3450;
+}
+
+.tobias-legend-content {
+  overflow: hidden;
+  max-width: 0;
+  background: #0f131a;
+  border-top: 1px solid #1e2535;
+  border-right: 1px solid #1e2535;
+  border-bottom: 1px solid #1e2535;
+  border-radius: 0 4px 4px 0;
+  transition: max-width 0.2s ease;
+  /* padding is set via inner element to avoid clipping during transition */
+}
+.tobias-legend-panel.open .tobias-legend-content {
+  max-width: 180px;
+}
+
+.tobias-legend-content .tbs-legend {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.tobias-legend-content .tbs-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.tobias-legend-content .tbs-legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tobias-legend-content .tbs-legend-ring {
+  background: transparent;
+  border: 2px solid;
 }
 
 /* ── Sidebar sections ───────────────────────────────────────── */
@@ -310,34 +394,6 @@
 .tbs-demo-refresh:hover:not(:disabled) {
   background: rgba(148, 163, 184, 0.15);
   border-color: rgba(148, 163, 184, 0.4);
-}
-
-/* ── Node legend ─────────────────────────────────────────────── */
-.tbs-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.tbs-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: #94a3b8;
-}
-
-.tbs-legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.tbs-legend-ring {
-  background: transparent;
-  border: 2px solid;
 }
 
 /* ── Machine filter button group ─────────────────────────────── */

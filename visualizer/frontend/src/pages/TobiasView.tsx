@@ -137,6 +137,7 @@ const TobiasView: React.FC = () => {
   } = useMachineSimulation();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [legendOpen, setLegendOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'idle' | 'processing' | 'active'>('all');
 
   const filteredMachines = useMemo(() => {
@@ -259,29 +260,6 @@ const TobiasView: React.FC = () => {
                 </button>
               </div>
 
-              {/* Section: Node Legend ─────────────────────────── */}
-              <div className="tbs-section">
-                <div className="tbs-section-title">Node Legend</div>
-                <div className="tbs-legend">
-                  <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot" style={{ background: '#3b82f6' }} />
-                    <span>Start (isInitial)</span>
-                  </div>
-                  <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot tbs-legend-ring" style={{ background: '#111827', borderColor: '#f59e0b' }} />
-                    <span>Terminal (end)</span>
-                  </div>
-                  <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot" style={{ background: '#f59e0b' }} />
-                    <span>Active (fired)</span>
-                  </div>
-                  <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot" style={{ background: '#64748b' }} />
-                    <span>Intermediate</span>
-                  </div>
-                </div>
-              </div>
-
               {/* Section: Machine Filter ──────────────────────── */}
               <div className="tbs-section">
                 <div className="tbs-section-title">Machine Filter</div>
@@ -327,8 +305,40 @@ const TobiasView: React.FC = () => {
             selectedMachineId={selectedMachineId}
           />
 
-          {/* CENTER: main Tobias canvas */}
+          {/* CENTER: main Tobias canvas + floating legend panel */}
           <div className="tobias-canvas-center">
+
+            {/* Floating legend — expands from left margin of canvas */}
+            <div className={`tobias-legend-panel${legendOpen ? ' open' : ''}`}>
+              <button
+                className="tobias-legend-tab"
+                onClick={() => setLegendOpen((o) => !o)}
+                title={legendOpen ? 'Hide legend' : 'Show legend'}
+              >
+                LEGEND
+              </button>
+              <div className="tobias-legend-content">
+                <div className="tbs-legend">
+                  <div className="tbs-legend-item">
+                    <span className="tbs-legend-dot" style={{ background: '#3b82f6' }} />
+                    <span>Start (isInitial)</span>
+                  </div>
+                  <div className="tbs-legend-item">
+                    <span className="tbs-legend-dot tbs-legend-ring" style={{ background: '#111827', borderColor: '#f59e0b' }} />
+                    <span>Terminal (end)</span>
+                  </div>
+                  <div className="tbs-legend-item">
+                    <span className="tbs-legend-dot" style={{ background: '#f59e0b' }} />
+                    <span>Active (fired)</span>
+                  </div>
+                  <div className="tbs-legend-item">
+                    <span className="tbs-legend-dot" style={{ background: '#64748b' }} />
+                    <span>Intermediate</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <TobiasCanvas
               machines={filteredMachines}
               selectedMachineId={selectedMachineId}

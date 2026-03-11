@@ -252,9 +252,41 @@ export class TobiasRenderer {
   }
 
   setData(machines: VisMachine[]): void {
+    const existingById = new Map(this._cards.map(c => [c.id, c]));
+
+    // ── Detect structural changes ──────────────────────────────────────────
+    // Only a full rebuild (+ simulation restart) is needed when the machine
+    // set or sequence topology changes.  Per-step state updates (justFired,
+    // latestInputVector, status) must NOT restart the simulation — doing so
+    // re-seeds D3's alpha every step and makes cards drift continuously.
+    const oldIdKey = this._cards.map(c => c.id).sort().join('|');
+    const newIdKey = machines.map(m => m.id).sort().join('|');
+    const idsChanged = oldIdKey !== newIdKey;
+
+    const seqsChanged = !idsChanged && machines.some(m => {
+      const ex = existingById.get(m.id);
+      if (!ex) return true;
+      const oldS = ex.machine.sequences.map(s => s.sequenceId).sort().join('|');
+      const newS = m.sequences.map(s => s.sequenceId).sort().join('|');
+      return oldS !== newS;
+    });
+
+    if (!idsChanged && !seqsChanged) {
+      // ── Fast path: state-only update — positions and D3 sim untouched ──
+      const machineById = new Map(machines.map(m => [m.id, m]));
+      for (const card of this._cards) {
+        const updated = machineById.get(card.id);
+        if (updated) {
+          card.machine = updated;
+          card.innerGraph = this._refreshNodeStates(card.innerGraph, updated);
+        }
+      }
+      return;
+    }
+
+    // ── Full rebuild: machine set or topology changed ──────────────────────
     if (this._simulation) { this._simulation.stop(); this._simulation = null; }
 
-    const existingById = new Map(this._cards.map(c => [c.id, c]));
     const cssW = this._canvas.width  / this._dpr;
     const cssH = this._canvas.height / this._dpr;
     const cx = cssW / 2 || 400, cy = cssH / 2 || 300;
@@ -262,14 +294,11 @@ export class TobiasRenderer {
     this._cards = machines.map((machine): CardNode => {
       const existing = existingById.get(machine.id);
 
-      // Only rebuild inner graph when sequence structure changes
       const existingSeqIds = existing?.machine.sequences.map(s => s.sequenceId).join('|') ?? '';
       const newSeqIds      = machine.sequences.map(s => s.sequenceId).join('|');
-      const structureChanged = !existing || existingSeqIds !== newSeqIds;
-
-      const innerGraph = structureChanged
+      const innerGraph = (!existing || existingSeqIds !== newSeqIds)
         ? this._buildInnerGraph(machine)
-        : this._refreshNodeStates(existing!.innerGraph, machine);
+        : this._refreshNodeStates(existing.innerGraph, machine);
 
       const spread = 280;
       return {
