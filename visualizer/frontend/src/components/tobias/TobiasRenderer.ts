@@ -17,10 +17,10 @@ const HIT_EXTRA  = 5;                 // extra px around node for hover hit test
 
 // Node state colours
 const COLOR_INITIAL  = '#3b82f6'; // blue   — isInitial (always armed, A+)
-const COLOR_FIRED    = '#a855f7'; // purple — terminal, just fired this step
-const COLOR_TERMINAL = '#f59e0b'; // amber  — terminal, not fired
+const COLOR_TERMINAL = '#f59e0b'; // amber  — terminal / active fill
 const COLOR_DEFAULT  = '#64748b'; // slate  — intermediate
 const COLOR_HOVER    = '#facc15'; // yellow — hover highlight
+const COLOR_NODE_BG  = '#111827'; // dark   — inactive terminal body (ring drawn separately)
 
 // ---------------------------------------------------------------------------
 // Internal types
@@ -146,10 +146,12 @@ function drawArrowHead(
 
 function nodeColor(node: InnerNode, isHovered: boolean): string {
   if (isHovered)      return COLOR_HOVER;
-  if (node.justFired) return COLOR_FIRED;
-  if (node.hasOutput) return COLOR_TERMINAL;
-  if (node.isInitial) return COLOR_INITIAL;
-  return COLOR_DEFAULT;
+  // Active state: fill with the node's type color
+  if (node.justFired) return COLOR_TERMINAL;  // amber fill — terminal just fired
+  // Inactive states
+  if (node.isInitial) return COLOR_INITIAL;   // blue fill — always armed
+  if (node.hasOutput) return COLOR_NODE_BG;   // dark fill — terminal ring drawn separately
+  return COLOR_DEFAULT;                        // slate — intermediate
 }
 
 // ---------------------------------------------------------------------------
@@ -712,7 +714,7 @@ export class TobiasRenderer {
       ctx.globalAlpha = isDimNode ? 0.18 : 1.0;
       const fill = nodeColor(node, isHovNode);
 
-      if (node.justFired) { ctx.shadowBlur = 8; ctx.shadowColor = COLOR_FIRED; }
+      if (node.justFired) { ctx.shadowBlur = 10; ctx.shadowColor = COLOR_TERMINAL; }
 
       ctx.beginPath();
       ctx.arc(node.ix, node.iy, NODE_R, 0, Math.PI * 2);
@@ -720,13 +722,14 @@ export class TobiasRenderer {
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      // Outer ring for terminal nodes (shows even when not fired)
-      if (node.hasOutput && !node.justFired) {
+      // Outer ring for all terminal nodes — amber ring is the permanent end-node marker.
+      // Inactive: ring visible on dark fill. Active (justFired): amber fill + ring + glow.
+      if (node.hasOutput) {
         ctx.beginPath();
         ctx.arc(node.ix, node.iy, NODE_R + 2.5, 0, Math.PI * 2);
         ctx.strokeStyle = COLOR_TERMINAL;
-        ctx.lineWidth   = 1;
-        ctx.globalAlpha = isDimNode ? 0.18 : 0.55;
+        ctx.lineWidth   = node.justFired ? 1.5 : 1;
+        ctx.globalAlpha = isDimNode ? 0.18 : (node.justFired ? 0.9 : 0.7);
         ctx.stroke();
       }
 
@@ -760,7 +763,7 @@ export class TobiasRenderer {
 
       // Small label always shown for terminal and initial nodes (when not hovering anything)
       if (!activeInnerNode && (node.isInitial || node.hasOutput)) {
-        ctx.fillStyle    = node.isInitial ? '#93c5fd' : node.justFired ? COLOR_FIRED : COLOR_TERMINAL;
+        ctx.fillStyle    = node.isInitial ? '#93c5fd' : COLOR_TERMINAL;
         ctx.font         = '6px monospace';
         ctx.textBaseline = 'bottom';
         ctx.textAlign    = 'center';

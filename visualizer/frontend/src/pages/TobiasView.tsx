@@ -265,19 +265,19 @@ const TobiasView: React.FC = () => {
                 <div className="tbs-legend">
                   <div className="tbs-legend-item">
                     <span className="tbs-legend-dot" style={{ background: '#3b82f6' }} />
-                    <span>isInitial (A+)</span>
+                    <span>Start (isInitial)</span>
                   </div>
                   <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot tbs-legend-ring" style={{ borderColor: '#f59e0b' }} />
-                    <span>terminal</span>
+                    <span className="tbs-legend-dot tbs-legend-ring" style={{ background: '#111827', borderColor: '#f59e0b' }} />
+                    <span>Terminal (end)</span>
                   </div>
                   <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot" style={{ background: '#a855f7' }} />
-                    <span>just fired</span>
+                    <span className="tbs-legend-dot" style={{ background: '#f59e0b' }} />
+                    <span>Active (fired)</span>
                   </div>
                   <div className="tbs-legend-item">
                     <span className="tbs-legend-dot" style={{ background: '#64748b' }} />
-                    <span>intermediate</span>
+                    <span>Intermediate</span>
                   </div>
                 </div>
               </div>
