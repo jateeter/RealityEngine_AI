@@ -7,15 +7,22 @@ import { api } from '../api';
 
 export interface VectorNodeLite {
   id: string;
+  label: string;
   isInitial: boolean;
   hasOutput: boolean;
   elements: { value: number; comparatorType: string; threshold?: number }[];
+}
+
+export interface VisMachineEdge {
+  source: string; // VectorNode id
+  target: string; // VectorNode id
 }
 
 export interface VisMachineSequence {
   sequenceId: string;
   name: string;
   vectors: VectorNodeLite[];
+  edges: VisMachineEdge[];
   metadata?: Record<string, any>;
 }
 
@@ -88,9 +95,16 @@ export const useMachineSimulation = () => {
                     name: sequenceGraph.sequenceName,
                     vectors: (sequenceGraph.nodes || []).map((n: any): VectorNodeLite => ({
                       id: n.id,
+                      // Prefer semantic name from metadata, fall back to truncated UUID
+                      label: n.metadata?.name || n.metadata?.role || (n.label && !n.label.startsWith('V-') ? n.label : '') || n.id.slice(-8),
                       isInitial: n.isInitial ?? false,
                       hasOutput: n.hasOutput ?? (n.outputVectors?.length > 0 ? true : false),
                       elements: n.elements ?? [],
+                    })),
+                    // Actual edges from nextVectorIds — drives the correct CES graph
+                    edges: (sequenceGraph.edges || []).map((e: any): VisMachineEdge => ({
+                      source: e.source,
+                      target: e.target,
                     })),
                     metadata: sequenceGraph.metadata,
                   } as VisMachineSequence;

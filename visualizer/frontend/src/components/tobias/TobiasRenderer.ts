@@ -1,25 +1,25 @@
 import * as d3 from 'd3';
-import type { VisMachine } from '../../hooks/useMachineSimulation';
+import type { VisMachine, VisMachineSequence } from '../../hooks/useMachineSimulation';
 
 // ---------------------------------------------------------------------------
-// Card layout constants
+// Layout constants
 // ---------------------------------------------------------------------------
-const CARD_W = 240;
-const CARD_H = 190;
+const CARD_W   = 240;
 const HEADER_H = 24;
-const FOOTER_H = 22;  // perceptual vector display bar
-const PAD = 10;
-const INNER_W = CARD_W - PAD * 2;  // 220
-const INNER_H = CARD_H - HEADER_H - FOOTER_H - PAD * 2; // 114
-const NODE_R = 5;
+const FOOTER_H = 22;
+const PAD      = 10;
+const INNER_W  = CARD_W - PAD * 2;   // 220 px available width per sequence band
+const BAND_H   = 74;                  // height of each sequence band
+const DIVIDER_H = 8;                  // vertical gap between bands
+const NODE_R   = 5;
 const ARROW_SIZE = 5;
-const HIT_EXTRA = 4; // extra px around node for hover detection
+const HIT_EXTRA  = 5;                 // extra px around node for hover hit testing
 
 // Node state colours
-const COLOR_INITIAL  = '#3b82f6'; // blue  — isInitial (always armed)
-const COLOR_FIRED    = '#a855f7'; // purple — terminal, just fired
-const COLOR_TERMINAL = '#f59e0b'; // amber  — terminal (not fired)
-const COLOR_DEFAULT  = '#64748b'; // slate  — inactive intermediate
+const COLOR_INITIAL  = '#3b82f6'; // blue   — isInitial (always armed, A+)
+const COLOR_FIRED    = '#a855f7'; // purple — terminal, just fired this step
+const COLOR_TERMINAL = '#f59e0b'; // amber  — terminal, not fired
+const COLOR_DEFAULT  = '#64748b'; // slate  — intermediate
 const COLOR_HOVER    = '#facc15'; // yellow — hover highlight
 
 // ---------------------------------------------------------------------------
@@ -28,27 +28,34 @@ const COLOR_HOVER    = '#facc15'; // yellow — hover highlight
 
 interface InnerNode {
   id: string;
-  ix: number;
-  iy: number;
-  // Vector state (static from machine definition)
+  label: string;
+  seqIdx: number;     // which sequence band this node belongs to
+  ix: number;         // x in inner-graph coordinate space (origin = inner-area top-left)
+  iy: number;         // y in inner-graph coordinate space
   isInitial: boolean;
   hasOutput: boolean;
-  // Dynamic per-step state
   justFired: boolean;
-  // Element values for display
   elements: { value: number; comparatorType: string; threshold?: number }[];
 }
 
 interface InnerEdge {
   source: InnerNode;
   target: InnerNode;
-  bend: number;
+  bend: number; // perpendicular offset for quadratic bezier
+}
+
+interface SeqBand {
+  yStart: number; // top of the band in inner-graph space
+  yEnd: number;   // bottom of the band
+  name: string;   // sequence name (truncated for display)
 }
 
 interface InnerGraphCache {
   nodes: InnerNode[];
   edges: InnerEdge[];
   neighbors: Map<string, Set<string>>;
+  seqBands: SeqBand[];
+  totalHeight: number; // sum of all bands + dividers
 }
 
 interface CardNode extends d3.SimulationNodeDatum {
@@ -56,7 +63,7 @@ interface CardNode extends d3.SimulationNodeDatum {
   name: string;
   machine: VisMachine;
   w: number;
-  h: number;
+  h: number;         // dynamic: HEADER_H + FOOTER_H + innerGraph.totalHeight + PAD*2
   headerH: number;
   innerGraph: InnerGraphCache;
 }
@@ -79,7 +86,7 @@ export interface TobiasRendererOptions {
 }
 
 // ---------------------------------------------------------------------------
-// Pure helper functions
+// Pure helpers
 // ---------------------------------------------------------------------------
 
 function hashToUnit(str: string): number {
@@ -99,12 +106,9 @@ function statusColor(status: VisMachine['status']): string {
   }
 }
 
-/** Draw a rounded rectangle path (no fill/stroke — caller does that). */
 function roundRectPath(
   ctx: CanvasRenderingContext2D,
-  x: number, y: number,
-  w: number, h: number,
-  r: number,
+  x: number, y: number, w: number, h: number, r: number,
 ): void {
   const rad = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -120,50 +124,73 @@ function roundRectPath(
   ctx.closePath();
 }
 
-/**
- * Draw an arrowhead at the end of a quadratic bezier from (sx,sy) via
- * control point (cx,cy) to (tx,ty).
- */
 function drawArrowHead(
   ctx: CanvasRenderingContext2D,
   cx: number, cy: number,
   tx: number, ty: number,
   color: string,
 ): void {
-  const adx = tx - cx;
-  const ady = ty - cy;
+  const adx = tx - cx, ady = ty - cy;
   const alen = Math.hypot(adx, ady) || 1;
-  const ax = adx / alen;
-  const ay = ady / alen;
-
-  const ex = tx - ax * NODE_R;
-  const ey = ty - ay * NODE_R;
-
-  const perpX = -ay;
-  const perpY =  ax;
-
+  const ax = adx / alen, ay = ady / alen;
+  const ex = tx - ax * NODE_R, ey = ty - ay * NODE_R;
+  const px = -ay, py = ax;
   ctx.beginPath();
   ctx.moveTo(ex, ey);
-  ctx.lineTo(
-    ex - ax * ARROW_SIZE + perpX * ARROW_SIZE * 0.4,
-    ey - ay * ARROW_SIZE + perpY * ARROW_SIZE * 0.4,
-  );
-  ctx.lineTo(
-    ex - ax * ARROW_SIZE - perpX * ARROW_SIZE * 0.4,
-    ey - ay * ARROW_SIZE - perpY * ARROW_SIZE * 0.4,
-  );
+  ctx.lineTo(ex - ax * ARROW_SIZE + px * ARROW_SIZE * 0.4, ey - ay * ARROW_SIZE + py * ARROW_SIZE * 0.4);
+  ctx.lineTo(ex - ax * ARROW_SIZE - px * ARROW_SIZE * 0.4, ey - ay * ARROW_SIZE - py * ARROW_SIZE * 0.4);
   ctx.closePath();
   ctx.fillStyle = color;
   ctx.fill();
 }
 
-/** Returns the fill colour for an inner node based on its state. */
 function nodeColor(node: InnerNode, isHovered: boolean): string {
-  if (isHovered)        return COLOR_HOVER;
-  if (node.justFired)   return COLOR_FIRED;
-  if (node.hasOutput)   return COLOR_TERMINAL;
-  if (node.isInitial)   return COLOR_INITIAL;
+  if (isHovered)      return COLOR_HOVER;
+  if (node.justFired) return COLOR_FIRED;
+  if (node.hasOutput) return COLOR_TERMINAL;
+  if (node.isInitial) return COLOR_INITIAL;
   return COLOR_DEFAULT;
+}
+
+// ---------------------------------------------------------------------------
+// BFS rank assignment for a sequence
+// Returns Map<vectorId, rank> where rank 0 = leftmost (initial/source nodes)
+// ---------------------------------------------------------------------------
+function bfsRanks(
+  vectorIds: string[],
+  edges: { source: string; target: string }[],
+  initialIds: Set<string>,
+): Map<string, number> {
+  const ranks = new Map<string, number>();
+  // Build adjacency (exclude self-loops for rank purposes)
+  const adj = new Map<string, string[]>();
+  for (const id of vectorIds) adj.set(id, []);
+  for (const e of edges) {
+    if (e.source !== e.target) adj.get(e.source)?.push(e.target);
+  }
+
+  // BFS from initial nodes first, then any unvisited nodes
+  const starts = vectorIds.filter(id => initialIds.has(id));
+  if (starts.length === 0 && vectorIds.length > 0) starts.push(vectorIds[0]);
+
+  const queue: { id: string; rank: number }[] = starts.map(id => ({ id, rank: 0 }));
+  while (queue.length > 0) {
+    const { id, rank } = queue.shift()!;
+    if (ranks.has(id)) continue;
+    ranks.set(id, rank);
+    for (const nid of (adj.get(id) ?? [])) {
+      if (!ranks.has(nid)) queue.push({ id: nid, rank: rank + 1 });
+    }
+  }
+
+  // Any nodes unreachable from BFS get the next available rank
+  const maxRank = ranks.size > 0 ? Math.max(...ranks.values()) : 0;
+  let extra = maxRank + 1;
+  for (const id of vectorIds) {
+    if (!ranks.has(id)) ranks.set(id, extra++);
+  }
+
+  return ranks;
 }
 
 // ---------------------------------------------------------------------------
@@ -176,20 +203,16 @@ export class TobiasRenderer {
   private readonly _dpr: number;
   private readonly _onSelectMachine: (id: string | null) => void;
 
-  // Simulation data
   private _cards: CardNode[] = [];
   private _outerEdges: OuterEdge[] = [];
   private _simulation: d3.Simulation<CardNode, never> | null = null;
 
-  // Viewport
   private _viewport: Viewport = { tx: 0, ty: 0, scale: 1 };
 
-  // Selection / hover state
   private _selectedId: string | null = null;
   private _hoveredCardId: string | null = null;
   private _hoveredInnerNodeId: string | null = null;
 
-  // Interaction state
   private _isPanning = false;
   private _isDraggingCard = false;
   private _dragCardNode: CardNode | null = null;
@@ -199,7 +222,6 @@ export class TobiasRenderer {
   private _mouseDownY = 0;
   private _hasDragged = false;
 
-  // rAF loop
   private _rafId = 0;
 
   constructor(opts: TobiasRendererOptions) {
@@ -209,7 +231,6 @@ export class TobiasRenderer {
     this._ctx = ctx;
     this._dpr = window.devicePixelRatio || 1;
     this._onSelectMachine = opts.onSelectMachine;
-
     this._bindEvents();
     this._rafId = requestAnimationFrame(this._loop);
   }
@@ -221,53 +242,40 @@ export class TobiasRenderer {
   resize(cssW: number, cssH: number): void {
     this._canvas.width  = Math.round(cssW * this._dpr);
     this._canvas.height = Math.round(cssH * this._dpr);
-
     if (this._simulation) {
       this._simulation
         .force('center', d3.forceCenter(cssW / 2, cssH / 2))
-        .alpha(0.1)
-        .restart();
+        .alpha(0.1).restart();
     }
   }
 
   setData(machines: VisMachine[]): void {
-    // Stop any running simulation
-    if (this._simulation) {
-      this._simulation.stop();
-      this._simulation = null;
-    }
+    if (this._simulation) { this._simulation.stop(); this._simulation = null; }
 
-    // Build card nodes, preserving D3 positions for existing cards
     const existingById = new Map(this._cards.map(c => [c.id, c]));
-
     const cssW = this._canvas.width  / this._dpr;
     const cssH = this._canvas.height / this._dpr;
-    const cx = cssW / 2 || 400;
-    const cy = cssH / 2 || 300;
+    const cx = cssW / 2 || 400, cy = cssH / 2 || 300;
 
     this._cards = machines.map((machine): CardNode => {
       const existing = existingById.get(machine.id);
-      const spread = 260;
 
-      // Determine if inner graph structure is unchanged (same sequence IDs in same order)
-      const existingSeqIds = existing?.machine.sequences.map(s => s.sequenceId).join(',') ?? '';
-      const newSeqIds = machine.sequences.map(s => s.sequenceId).join(',');
+      // Only rebuild inner graph when sequence structure changes
+      const existingSeqIds = existing?.machine.sequences.map(s => s.sequenceId).join('|') ?? '';
+      const newSeqIds      = machine.sequences.map(s => s.sequenceId).join('|');
       const structureChanged = !existing || existingSeqIds !== newSeqIds;
 
-      let innerGraph: InnerGraphCache;
-      if (structureChanged) {
-        innerGraph = this._layoutInnerGraph(machine);
-      } else {
-        // Reuse layout positions — only update dynamic node states
-        innerGraph = this._updateInnerNodeStates(existing!.innerGraph, machine);
-      }
+      const innerGraph = structureChanged
+        ? this._buildInnerGraph(machine)
+        : this._refreshNodeStates(existing!.innerGraph, machine);
 
+      const spread = 280;
       return {
         id: machine.id,
         name: machine.name,
         machine,
         w: CARD_W,
-        h: CARD_H,
+        h: HEADER_H + FOOTER_H + innerGraph.totalHeight + PAD * 2,
         headerH: HEADER_H,
         innerGraph,
         x: existing?.x ?? cx + (Math.random() - 0.5) * spread,
@@ -279,15 +287,11 @@ export class TobiasRenderer {
       };
     });
 
-    // Build inter-machine edges from perceptual space overlaps
     this._outerEdges = this._buildOuterEdges(machines);
-
     this._startOuterSimulation();
   }
 
-  setSelectedId(id: string | null): void {
-    this._selectedId = id;
-  }
+  setSelectedId(id: string | null): void { this._selectedId = id; }
 
   destroy(): void {
     cancelAnimationFrame(this._rafId);
@@ -296,141 +300,165 @@ export class TobiasRenderer {
   }
 
   // ---------------------------------------------------------------------------
-  // Inner graph layout helpers
+  // Inner graph construction
   // ---------------------------------------------------------------------------
 
-  /** Collect all VectorNodeLite objects from a machine in sequence order. */
-  private _getAllVectors(machine: VisMachine): Array<{ isInitial: boolean; hasOutput: boolean; elements: any[] }> {
-    const result: Array<{ isInitial: boolean; hasOutput: boolean; elements: any[] }> = [];
-    machine.sequences.forEach((seq) => {
-      (seq.vectors || []).forEach((v) => result.push(v));
+  /**
+   * Build the inner graph for a machine.
+   * Each CES sequence gets its own horizontal band, laid out left-to-right
+   * by BFS rank order (rank 0 = initial/source, increasing = further downstream).
+   * Sequences are independent — NO cross-sequence edges.
+   */
+  private _buildInnerGraph(machine: VisMachine): InnerGraphCache {
+    const allNodes: InnerNode[]  = [];
+    const allEdges: InnerEdge[]  = [];
+    const neighbors = new Map<string, Set<string>>();
+    const seqBands: SeqBand[]    = [];
+
+    let yOffset = 0;
+    const seqCount = machine.sequences.length;
+
+    machine.sequences.forEach((seq, seqIdx) => {
+      const bandResult = this._layoutSequenceBand(seq, seqIdx, yOffset, machine.justFired);
+      seqBands.push({ yStart: yOffset, yEnd: yOffset + BAND_H, name: seq.name });
+
+      for (const n of bandResult.nodes) {
+        allNodes.push(n);
+        neighbors.set(n.id, new Set());
+      }
+      for (const e of bandResult.edges) {
+        allEdges.push(e);
+        if (e.source.id !== e.target.id) {
+          neighbors.get(e.source.id)?.add(e.target.id);
+          neighbors.get(e.target.id)?.add(e.source.id);
+        }
+      }
+
+      yOffset += BAND_H + (seqIdx < seqCount - 1 ? DIVIDER_H : 0);
     });
-    return result;
+
+    const totalHeight = seqCount > 0
+      ? seqCount * BAND_H + (seqCount - 1) * DIVIDER_H
+      : BAND_H; // fallback for empty machine
+
+    return { nodes: allNodes, edges: allEdges, neighbors, seqBands, totalHeight };
   }
 
   /**
-   * Build the inner graph from scratch using a D3 force simulation for layout.
-   * Runs 320 static ticks then freezes positions.
+   * Layout a single sequence as a horizontal band using BFS rank assignment.
+   * Rank 0 = leftmost (initial nodes), higher rank = further right in flow.
+   * Nodes at the same rank are stacked vertically within the band.
+   * Self-loop edges are included when present in edge data; implicit self-loops
+   * are added for isInitial nodes that don't have an explicit one.
    */
-  private _layoutInnerGraph(machine: VisMachine): InnerGraphCache {
-    type LayoutNode = d3.SimulationNodeDatum & { id: string };
-    const layoutNodes: LayoutNode[] = [];
-    const allVectors = this._getAllVectors(machine);
+  private _layoutSequenceBand(
+    seq: VisMachineSequence,
+    seqIdx: number,
+    yBase: number,
+    machineFired: boolean,
+  ): { nodes: InnerNode[]; edges: InnerEdge[] } {
+    const { vectors, edges: seqEdges } = seq;
+    if (vectors.length === 0) return { nodes: [], edges: [] };
 
-    machine.sequences.forEach((seq) => {
-      const vectors = seq.vectors || [];
-      vectors.forEach((_v, vecIdx) => {
-        layoutNodes.push({ id: `${seq.sequenceId}-${vecIdx}` });
-      });
-    });
+    // --- BFS rank assignment ---
+    const initialIds = new Set(vectors.filter(v => v.isInitial).map(v => v.id));
+    const vectorIds  = vectors.map(v => v.id);
+    const ranks      = bfsRanks(vectorIds, seqEdges, initialIds);
+    const maxRank    = Math.max(0, ...ranks.values());
 
-    if (layoutNodes.length === 0) {
-      return { nodes: [], edges: [], neighbors: new Map() };
+    // Group vectors by rank, preserving definition order within each rank
+    const byRank = new Map<number, string[]>();
+    for (const v of vectors) {
+      const r = ranks.get(v.id) ?? 0;
+      if (!byRank.has(r)) byRank.set(r, []);
+      byRank.get(r)!.push(v.id);
     }
 
-    // Build links (sequential within each sequence)
-    const layoutLinks: { source: string; target: string }[] = [];
+    // --- Assign pixel positions ---
+    const xStep  = INNER_W / (maxRank + 1);
+    const posById = new Map<string, { ix: number; iy: number }>();
 
-    machine.sequences.forEach((seq) => {
-      const vectors = seq.vectors || [];
-      for (let i = 0; i < vectors.length - 1; i++) {
-        layoutLinks.push({
-          source: `${seq.sequenceId}-${i}`,
-          target: `${seq.sequenceId}-${i + 1}`,
+    for (const [rank, ids] of byRank) {
+      const x     = (rank + 0.5) * xStep;
+      const count = ids.length;
+      ids.forEach((id, i) => {
+        const y = yBase + ((i + 1) / (count + 1)) * BAND_H;
+        posById.set(id, {
+          ix: Math.max(NODE_R + 2, Math.min(INNER_W - NODE_R - 2, x)),
+          iy: Math.max(yBase + NODE_R + 2, Math.min(yBase + BAND_H - NODE_R - 2, y)),
         });
-      }
-    });
+      });
+    }
 
-    // Cross-sequence links (last node of seq N → first of seq N+1)
-    machine.sequences.forEach((seq, seqIdx) => {
-      if (seqIdx >= machine.sequences.length - 1) return;
-      const nextSeq = machine.sequences[seqIdx + 1];
-      const seqVecs = seq.vectors || [];
-      const nextVecs = nextSeq.vectors || [];
-      if (seqVecs.length > 0 && nextVecs.length > 0) {
-        layoutLinks.push({
-          source: `${seq.sequenceId}-${seqVecs.length - 1}`,
-          target: `${nextSeq.sequenceId}-0`,
-        });
-      }
-    });
-
-    // Run static D3 simulation for layout
-    const sim = d3.forceSimulation<LayoutNode>(layoutNodes)
-      .force('link', d3.forceLink<LayoutNode, d3.SimulationLinkDatum<LayoutNode>>(layoutLinks)
-                       .id((d) => d.id)
-                       .distance(28)
-                       .strength(0.7))
-      .force('charge', d3.forceManyBody<LayoutNode>().strength(-80))
-      .force('collide', d3.forceCollide<LayoutNode>(6))
-      .force('center', d3.forceCenter(INNER_W / 2, INNER_H / 2))
-      .stop();
-
-    for (let i = 0; i < 320; i++) sim.tick();
-
-    // Freeze positions and attach vector state
-    const nodeById = new Map<string, InnerNode>();
-    const nodes: InnerNode[] = layoutNodes.map((n, i): InnerNode => {
-      const vec = allVectors[i];
+    // --- Build InnerNodes ---
+    const innerById   = new Map<string, InnerNode>();
+    const nodes: InnerNode[] = vectors.map(v => {
+      const pos = posById.get(v.id) ?? { ix: INNER_W / 2, iy: yBase + BAND_H / 2 };
       const node: InnerNode = {
-        id: n.id,
-        ix: Math.max(NODE_R + 1, Math.min(INNER_W - NODE_R - 1, n.x ?? INNER_W / 2)),
-        iy: Math.max(NODE_R + 1, Math.min(INNER_H - NODE_R - 1, n.y ?? INNER_H / 2)),
-        isInitial: vec?.isInitial ?? false,
-        hasOutput: vec?.hasOutput ?? false,
-        justFired: machine.justFired && (vec?.hasOutput ?? false),
-        elements: vec?.elements ?? [],
+        id:        v.id,
+        label:     v.label,
+        seqIdx,
+        ix:        pos.ix,
+        iy:        pos.iy,
+        isInitial: v.isInitial,
+        hasOutput: v.hasOutput,
+        justFired: machineFired && v.hasOutput,
+        elements:  v.elements,
       };
-      nodeById.set(node.id, node);
+      innerById.set(v.id, node);
       return node;
     });
 
-    // Build edges from resolved simulation links
+    // --- Build InnerEdges from actual sequence edges ---
     const edges: InnerEdge[] = [];
-    const linkForce = sim.force<d3.ForceLink<LayoutNode, d3.SimulationLinkDatum<LayoutNode>>>('link');
-    if (linkForce) {
-      for (const rawLink of linkForce.links() as any[]) {
-        const sId: string = rawLink.source.id;
-        const tId: string = rawLink.target.id;
-        const sNode = nodeById.get(sId);
-        const tNode = nodeById.get(tId);
-        if (sNode && tNode) {
-          edges.push({
-            source: sNode,
-            target: tNode,
-            bend: (hashToUnit(`${sId}->${tId}`) - 0.5) * 44,
-          });
+    // Track which source→target pairs we've already added to avoid duplicates
+    const addedEdges = new Set<string>();
+
+    for (const e of seqEdges) {
+      const sNode = innerById.get(e.source);
+      const tNode = innerById.get(e.target);
+      if (!sNode || !tNode) continue;
+
+      const key = `${e.source}→${e.target}`;
+      if (addedEdges.has(key)) continue;
+      addedEdges.add(key);
+
+      edges.push({
+        source: sNode,
+        target: tNode,
+        // Bend parallel edges so multiple arrows between same pair are visible
+        bend: (hashToUnit(key) - 0.5) * 34,
+      });
+    }
+
+    // --- Implicit self-loop for isInitial nodes without an explicit one ---
+    for (const v of vectors) {
+      if (v.isInitial) {
+        const key = `${v.id}→${v.id}`;
+        if (!addedEdges.has(key)) {
+          const n = innerById.get(v.id)!;
+          edges.push({ source: n, target: n, bend: 0 });
         }
       }
     }
 
-    // Build neighbor map
-    const neighbors = new Map<string, Set<string>>();
-    for (const n of nodes) neighbors.set(n.id, new Set());
-    for (const e of edges) {
-      neighbors.get(e.source.id)?.add(e.target.id);
-      neighbors.get(e.target.id)?.add(e.source.id);
-    }
-
-    return { nodes, edges, neighbors };
+    return { nodes, edges };
   }
 
   /**
-   * Reuse existing layout positions but refresh dynamic state (justFired)
-   * without re-running the expensive D3 simulation.
+   * Refresh only the dynamic per-step state (justFired) without re-running layout.
+   * Called on every simulation step for performance.
    */
-  private _updateInnerNodeStates(cache: InnerGraphCache, machine: VisMachine): InnerGraphCache {
-    const allVectors = this._getAllVectors(machine);
-    const updatedNodes = cache.nodes.map((n, i): InnerNode => ({
+  private _refreshNodeStates(cache: InnerGraphCache, machine: VisMachine): InnerGraphCache {
+    const updatedNodes = cache.nodes.map((n): InnerNode => ({
       ...n,
-      justFired: machine.justFired && (allVectors[i]?.hasOutput ?? n.hasOutput),
+      justFired: machine.justFired && n.hasOutput,
     }));
     return { ...cache, nodes: updatedNodes };
   }
 
   /**
-   * Build inter-machine edges by finding perceptual space output→input overlaps.
-   * An edge is drawn from machine A to machine B if A's output region overlaps B's input region.
+   * Build inter-machine edges from perceptual space output→input overlaps.
    */
   private _buildOuterEdges(machines: VisMachine[]): OuterEdge[] {
     const edges: OuterEdge[] = [];
@@ -453,11 +481,7 @@ export class TobiasRenderer {
         const srcCard = cardById.get(src.id);
         const tgtCard = cardById.get(tgt.id);
         if (srcCard && tgtCard) {
-          edges.push({
-            source: srcCard,
-            target: tgtCard,
-            overlapLength: overlapEnd - overlapStart,
-          });
+          edges.push({ source: srcCard, target: tgtCard, overlapLength: overlapEnd - overlapStart });
         }
       }
     }
@@ -470,29 +494,22 @@ export class TobiasRenderer {
 
   private _startOuterSimulation(): void {
     if (this._cards.length === 0) return;
-
     const cssW = this._canvas.width  / this._dpr || 800;
     const cssH = this._canvas.height / this._dpr || 600;
 
-    const linkData = this._outerEdges.map(e => ({
-      source: e.source.id,
-      target: e.target.id,
-    }));
-
-    const collideRadius = Math.max(CARD_W, CARD_H) * 0.62;
+    const linkData = this._outerEdges.map(e => ({ source: e.source.id, target: e.target.id }));
 
     this._simulation = d3.forceSimulation<CardNode>(this._cards)
       .force('link', d3.forceLink<CardNode, d3.SimulationLinkDatum<CardNode>>(linkData)
-                       .id((d) => d.id)
-                       .distance(260))
-      .force('charge', d3.forceManyBody<CardNode>().strength(-900))
+                       .id((d) => d.id).distance(280))
+      .force('charge', d3.forceManyBody<CardNode>().strength(-1000))
       .force('center',  d3.forceCenter(cssW / 2, cssH / 2))
-      .force('collide', d3.forceCollide<CardNode>(collideRadius))
+      .force('collide', d3.forceCollide<CardNode>((d) => Math.max(d.w, d.h) * 0.56))
       .alphaDecay(0.02);
   }
 
   // ---------------------------------------------------------------------------
-  // rAF render loop
+  // rAF loop
   // ---------------------------------------------------------------------------
 
   private _loop = (_ts: number): void => {
@@ -503,81 +520,58 @@ export class TobiasRenderer {
   private _draw(): void {
     const ctx = this._ctx;
     const dpr = this._dpr;
-    const cw  = this._canvas.width;
-    const ch  = this._canvas.height;
-
-    ctx.clearRect(0, 0, cw, ch);
+    ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
     ctx.save();
-
-    // DPR scale then viewport pan + zoom
     ctx.scale(dpr, dpr);
     const { tx, ty, scale } = this._viewport;
     ctx.translate(tx, ty);
     ctx.scale(scale, scale);
 
-    // Outer edges (behind cards)
-    for (const edge of this._outerEdges) {
-      this._drawOuterEdge(edge);
-    }
+    for (const edge of this._outerEdges) this._drawOuterEdge(edge);
 
-    // Non-selected cards first, selected card on top
     for (const card of this._cards) {
       if (card.id !== this._selectedId) this._drawCard(card, false);
     }
     for (const card of this._cards) {
       if (card.id === this._selectedId) this._drawCard(card, true);
     }
-
     ctx.restore();
   }
 
   // ---------------------------------------------------------------------------
-  // Drawing helpers
+  // Card drawing
   // ---------------------------------------------------------------------------
 
   private _drawOuterEdge(edge: OuterEdge): void {
     const ctx = this._ctx;
-    const sx = edge.source.x ?? 0;
-    const sy = edge.source.y ?? 0;
-    const tx = edge.target.x ?? 0;
-    const ty = edge.target.y ?? 0;
-
-    const strokeW = Math.max(1, Math.min(3, edge.overlapLength / 4));
-
-    const mx  = (sx + tx) / 2;
-    const my  = (sy + ty) / 2;
-    const dx  = tx - sx, dy = ty - sy;
+    const sx = edge.source.x ?? 0, sy = edge.source.y ?? 0;
+    const tx = edge.target.x ?? 0, ty = edge.target.y ?? 0;
+    const mx = (sx + tx) / 2, my = (sy + ty) / 2;
+    const dx = tx - sx, dy = ty - sy;
     const len = Math.hypot(dx, dy) || 1;
-    const nx  = -dy / len, ny = dx / len;
-    const bend = 35;
+    const nx = -dy / len, ny = dx / len;
 
     ctx.beginPath();
     ctx.moveTo(sx, sy);
-    ctx.quadraticCurveTo(mx + nx * bend, my + ny * bend, tx, ty);
-
+    ctx.quadraticCurveTo(mx + nx * 35, my + ny * 35, tx, ty);
     ctx.strokeStyle = '#64c8ff';
-    ctx.globalAlpha = 0.40;
-    ctx.lineWidth   = strokeW;
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth   = Math.max(1, Math.min(3, edge.overlapLength / 4));
     ctx.stroke();
     ctx.globalAlpha = 1;
-
-    // Arrowhead toward target
-    drawArrowHead(ctx, mx + nx * bend, my + ny * bend, tx, ty, 'rgba(100,200,255,0.7)');
+    drawArrowHead(ctx, mx + nx * 35, my + ny * 35, tx, ty, 'rgba(100,200,255,0.65)');
   }
 
   private _drawCard(node: CardNode, isSelected: boolean): void {
     const ctx = this._ctx;
-    const cx  = node.x ?? 0;
-    const cy  = node.y ?? 0;
-    const x   = cx - node.w / 2;
-    const y   = cy - node.h / 2;
+    const cx = node.x ?? 0, cy = node.y ?? 0;
+    const x  = cx - node.w / 2, y = cy - node.h / 2;
 
     ctx.save();
     ctx.translate(x, y);
 
-    // Glow when selected or machine just fired
-    const justFired = node.machine.justFired;
-    if (isSelected || justFired) {
+    const fired = node.machine.justFired;
+    if (isSelected || fired) {
       ctx.shadowBlur  = isSelected ? 20 : 12;
       ctx.shadowColor = isSelected ? '#c864ff' : '#a855f7';
     }
@@ -588,22 +582,16 @@ export class TobiasRenderer {
     ctx.fill();
 
     // Border
-    const borderCol = isSelected
-      ? '#c864ff'
-      : justFired
-        ? '#a855f7'
-        : statusColor(node.machine.status);
-    ctx.strokeStyle = borderCol;
-    ctx.lineWidth   = (isSelected || justFired) ? 2 : 1;
+    ctx.strokeStyle = isSelected ? '#c864ff' : fired ? '#a855f7' : statusColor(node.machine.status);
+    ctx.lineWidth   = (isSelected || fired) ? 2 : 1;
     ctx.stroke();
-
-    ctx.shadowBlur = 0;
+    ctx.shadowBlur  = 0;
 
     // Header strip
-    ctx.fillStyle = isSelected ? '#2d1040' : justFired ? '#1e0a30' : '#1a1f2e';
+    ctx.fillStyle = isSelected ? '#2d1040' : fired ? '#1e0a30' : '#1a1f2e';
     ctx.fillRect(0, 0, node.w, node.headerH);
 
-    // Header separator
+    // Header/body separator
     ctx.beginPath();
     ctx.moveTo(0, node.headerH);
     ctx.lineTo(node.w, node.headerH);
@@ -611,49 +599,77 @@ export class TobiasRenderer {
     ctx.lineWidth   = 0.5;
     ctx.stroke();
 
-    // Machine name text
-    ctx.fillStyle    = isSelected ? '#e2b6ff' : justFired ? '#d8aaff' : '#e2e8f0';
+    // Machine name
+    ctx.fillStyle    = isSelected ? '#e2b6ff' : fired ? '#d8aaff' : '#e2e8f0';
     ctx.font         = 'bold 10px monospace';
     ctx.textBaseline = 'middle';
     ctx.textAlign    = 'left';
     const nameText = node.name.length > 28 ? node.name.slice(0, 26) + '…' : node.name;
     ctx.fillText(nameText, 8, node.headerH / 2, node.w - 16);
 
-    // Inner graph area — clip
+    // Inner graph area
+    const innerH = node.innerGraph.totalHeight;
     ctx.save();
     ctx.beginPath();
-    ctx.rect(PAD, node.headerH + PAD, INNER_W, INNER_H);
+    ctx.rect(PAD, node.headerH + PAD, INNER_W, innerH);
     ctx.clip();
     ctx.translate(PAD, node.headerH + PAD);
     this._drawInnerGraph(node.innerGraph, node.id);
     ctx.restore();
 
-    // Footer: perceptual vector display
-    this._drawPerceptualFooter(node);
-
+    // Perceptual vector footer
+    this._drawFooter(node);
     ctx.restore();
   }
 
   /**
-   * Draw the inner graph of vector nodes with state-based coloring.
-   * Blue = isInitial, Amber = terminal, Purple = just fired, Slate = intermediate
+   * Draw the inner graph:
+   * - Sequence band dividers with sequence index labels
+   * - Edges (self-loops + directed arcs)
+   * - Nodes colored by state (initial/terminal/fired/intermediate)
+   * - Node label shown near hovered node
    */
   private _drawInnerGraph(cache: InnerGraphCache, cardId: string): void {
     const ctx = this._ctx;
 
     if (cache.nodes.length === 0) {
-      ctx.fillStyle    = '#475569';
-      ctx.font         = '9px monospace';
+      ctx.fillStyle = '#475569';
+      ctx.font = '9px monospace';
       ctx.textBaseline = 'middle';
-      ctx.textAlign    = 'center';
-      ctx.fillText('no sequences', INNER_W / 2, INNER_H / 2);
+      ctx.textAlign = 'center';
+      ctx.fillText('no sequences', INNER_W / 2, cache.totalHeight / 2);
       return;
     }
 
     const isCardHovered   = this._hoveredCardId === cardId;
     const activeInnerNode = isCardHovered ? this._hoveredInnerNodeId : null;
 
-    // Draw edges
+    // ── Draw sequence band dividers ────────────────────────────────────────
+    for (let i = 0; i < cache.seqBands.length; i++) {
+      const band = cache.seqBands[i];
+
+      // Sequence index label (top-left of each band)
+      ctx.fillStyle    = '#2a3450';
+      ctx.font         = '7px monospace';
+      ctx.textBaseline = 'top';
+      ctx.textAlign    = 'left';
+      ctx.fillText(`${i + 1}`, 1, band.yStart + 1);
+
+      // Divider line above this band (not above band 0)
+      if (i > 0) {
+        const divY = band.yStart - DIVIDER_H / 2;
+        ctx.beginPath();
+        ctx.moveTo(0, divY);
+        ctx.lineTo(INNER_W, divY);
+        ctx.strokeStyle = '#1a2233';
+        ctx.lineWidth   = 0.5;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    // ── Draw edges ─────────────────────────────────────────────────────────
     for (const edge of cache.edges) {
       const { source: s, target: t, bend } = edge;
       const isHighlight = activeInnerNode
@@ -661,29 +677,20 @@ export class TobiasRenderer {
         : false;
       const isDimmed = activeInnerNode ? !isHighlight : false;
 
-      const edgeColor = isHighlight ? COLOR_HOVER : '#7a869a';
-
-      ctx.globalAlpha = isDimmed ? 0.2 : 1.0;
+      const edgeColor = isHighlight ? COLOR_HOVER : '#5a6880';
+      ctx.globalAlpha = isDimmed ? 0.18 : 1.0;
       ctx.strokeStyle = edgeColor;
       ctx.lineWidth   = isHighlight ? 1.8 : 1.2;
 
       if (s.id === t.id) {
-        // Self-loop
-        const r = 10;
-        ctx.beginPath();
-        ctx.moveTo(s.ix, s.iy);
-        ctx.bezierCurveTo(s.ix + r, s.iy - r, s.ix + 2 * r, s.iy + r, s.ix, s.iy + 2 * r);
-        ctx.stroke();
+        // Self-loop: small arc above/to-the-side of the node
+        this._drawSelfLoop(ctx, s);
       } else {
-        const mx  = (s.ix + t.ix) / 2;
-        const my  = (s.iy + t.iy) / 2;
-        const dx  = t.ix - s.ix;
-        const dy  = t.iy - s.iy;
+        const mx  = (s.ix + t.ix) / 2, my = (s.iy + t.iy) / 2;
+        const dx  = t.ix - s.ix,   dy = t.iy - s.iy;
         const len = Math.hypot(dx, dy) || 1;
-        const nx  = -dy / len;
-        const ny  =  dx / len;
-        const cpx = mx + nx * bend;
-        const cpy = my + ny * bend;
+        const nx  = -dy / len,    ny = dx / len;
+        const cpx = mx + nx * bend, cpy = my + ny * bend;
 
         ctx.beginPath();
         ctx.moveTo(s.ix, s.iy);
@@ -694,174 +701,154 @@ export class TobiasRenderer {
       ctx.globalAlpha = 1;
     }
 
-    // Draw nodes with state-based colours
+    // ── Draw nodes ─────────────────────────────────────────────────────────
     for (const node of cache.nodes) {
       const isHovNode  = node.id === activeInnerNode;
       const isNeighbor = activeInnerNode
         ? (cache.neighbors.get(activeInnerNode)?.has(node.id) ?? false)
         : false;
-      const isDimNode = activeInnerNode ? (!isHovNode && !isNeighbor) : false;
+      const isDimNode  = activeInnerNode ? (!isHovNode && !isNeighbor) : false;
 
-      ctx.globalAlpha = isDimNode ? 0.2 : 1.0;
-
+      ctx.globalAlpha = isDimNode ? 0.18 : 1.0;
       const fill = nodeColor(node, isHovNode);
 
-      // Glow for fired terminal nodes
-      if (node.justFired) {
-        ctx.shadowBlur  = 8;
-        ctx.shadowColor = COLOR_FIRED;
-      }
+      if (node.justFired) { ctx.shadowBlur = 8; ctx.shadowColor = COLOR_FIRED; }
 
       ctx.beginPath();
       ctx.arc(node.ix, node.iy, NODE_R, 0, Math.PI * 2);
       ctx.fillStyle = fill;
       ctx.fill();
-
       ctx.shadowBlur = 0;
 
-      // Ring for terminal nodes (even when not fired)
+      // Outer ring for terminal nodes (shows even when not fired)
       if (node.hasOutput && !node.justFired) {
         ctx.beginPath();
-        ctx.arc(node.ix, node.iy, NODE_R + 2, 0, Math.PI * 2);
+        ctx.arc(node.ix, node.iy, NODE_R + 2.5, 0, Math.PI * 2);
         ctx.strokeStyle = COLOR_TERMINAL;
         ctx.lineWidth   = 1;
-        ctx.globalAlpha = isDimNode ? 0.2 : 0.6;
+        ctx.globalAlpha = isDimNode ? 0.18 : 0.55;
         ctx.stroke();
-        ctx.globalAlpha = isDimNode ? 0.2 : 1.0;
       }
 
-      // Thin inner ring for isInitial (self-loop visual hint)
+      // Inner ring for isInitial (A+ visual hint)
       if (node.isInitial && !isHovNode) {
         ctx.beginPath();
         ctx.arc(node.ix, node.iy, NODE_R - 1.5, 0, Math.PI * 2);
-        ctx.strokeStyle = '#93c5fd'; // lighter blue
-        ctx.lineWidth   = 0.8;
-        ctx.globalAlpha = isDimNode ? 0.2 : 0.5;
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth   = 0.7;
+        ctx.globalAlpha = isDimNode ? 0.18 : 0.45;
         ctx.stroke();
-        ctx.globalAlpha = isDimNode ? 0.2 : 1.0;
       }
 
       // Node border
+      ctx.globalAlpha = isDimNode ? 0.18 : 1.0;
       ctx.beginPath();
       ctx.arc(node.ix, node.iy, NODE_R, 0, Math.PI * 2);
       ctx.strokeStyle = '#1e293b';
       ctx.lineWidth   = 0.8;
       ctx.stroke();
-
-      ctx.globalAlpha = 1;
-    }
-
-    // Legend in top-right corner of inner area
-    this._drawNodeLegend(ctx);
-  }
-
-  /** Small legend showing node colour meanings. */
-  private _drawNodeLegend(ctx: CanvasRenderingContext2D): void {
-    const items: [string, string][] = [
-      [COLOR_INITIAL,  'initial'],
-      [COLOR_TERMINAL, 'terminal'],
-      [COLOR_FIRED,    'fired'],
-    ];
-    const lx = INNER_W - 2;
-    let ly = 2;
-    ctx.font         = '7px monospace';
-    ctx.textBaseline = 'top';
-
-    for (const [color, label] of items) {
-      ctx.beginPath();
-      ctx.arc(lx - 50, ly + 3.5, 3, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.globalAlpha = 0.7;
-      ctx.fill();
       ctx.globalAlpha = 1;
 
-      ctx.fillStyle   = '#64748b';
-      ctx.textAlign   = 'left';
-      ctx.fillText(label, lx - 44, ly);
-      ly += 12;
+      // Label under hovered node
+      if (isHovNode && node.label) {
+        ctx.fillStyle    = '#e2e8f0';
+        ctx.font         = '7px monospace';
+        ctx.textBaseline = 'top';
+        ctx.textAlign    = 'center';
+        ctx.fillText(node.label, node.ix, node.iy + NODE_R + 2, 60);
+      }
+
+      // Small label always shown for terminal and initial nodes (when not hovering anything)
+      if (!activeInnerNode && (node.isInitial || node.hasOutput)) {
+        ctx.fillStyle    = node.isInitial ? '#93c5fd' : node.justFired ? COLOR_FIRED : COLOR_TERMINAL;
+        ctx.font         = '6px monospace';
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign    = 'center';
+        ctx.globalAlpha  = 0.7;
+        ctx.fillText(node.label.slice(0, 8), node.ix, node.iy - NODE_R - 1, 50);
+        ctx.globalAlpha  = 1;
+      }
     }
   }
 
-  /**
-   * Draw footer bar showing the latest input/output perceptual vector elements.
-   */
-  private _drawPerceptualFooter(node: CardNode): void {
+  /** Draw a self-loop arc above a node. */
+  private _drawSelfLoop(ctx: CanvasRenderingContext2D, node: InnerNode): void {
+    const r  = 8;
+    const ox = node.ix, oy = node.iy;
+    ctx.beginPath();
+    ctx.arc(ox + r, oy - r, r, Math.PI * 0.9, Math.PI * 2.1, false);
+    ctx.stroke();
+    // Tiny arrowhead at the base of the self-loop
+    ctx.beginPath();
+    ctx.moveTo(ox, oy - NODE_R);
+    ctx.lineTo(ox - 3, oy - NODE_R - 4);
+    ctx.lineTo(ox + 3, oy - NODE_R - 4);
+    ctx.closePath();
+    ctx.fillStyle = ctx.strokeStyle as string;
+    ctx.fill();
+  }
+
+  /** Footer bar: cyan dots for input vector, purple dots for output vector. */
+  private _drawFooter(node: CardNode): void {
     const ctx = this._ctx;
     const m = node.machine;
     const footerY = node.h - FOOTER_H;
 
-    // Footer background
     ctx.fillStyle = '#0d1017';
     ctx.fillRect(0, footerY, node.w, FOOTER_H);
 
-    // Top separator
     ctx.beginPath();
     ctx.moveTo(0, footerY);
     ctx.lineTo(node.w, footerY);
     ctx.strokeStyle = '#1e2535';
-    ctx.lineWidth = 0.5;
+    ctx.lineWidth   = 0.5;
     ctx.stroke();
 
-    const inputVec  = m.latestInputVector;
-    const outputVec = m.latestOutputVector;
-
-    ctx.font         = '7px monospace';
+    const midY = footerY + FOOTER_H / 2;
+    ctx.font = '7px monospace';
     ctx.textBaseline = 'middle';
 
-    const midY = footerY + FOOTER_H / 2;
+    const iv = m.latestInputVector;
+    const ov = m.latestOutputVector;
 
-    if (!inputVec && !outputVec) {
-      ctx.fillStyle = '#334155';
+    if (!iv && !ov) {
+      ctx.fillStyle = '#283040';
       ctx.textAlign = 'center';
-      ctx.fillText('no data', node.w / 2, midY);
+      ctx.fillText('awaiting data', node.w / 2, midY);
       return;
     }
 
-    // Left side: input vector (cyan dots)
-    if (inputVec && inputVec.length > 0) {
-      const maxDots = Math.min(inputVec.length, 8);
-      const dotR    = 3;
-      const dotGap  = 7;
-      const startX  = 6;
-
+    if (iv && iv.length > 0) {
+      const max = Math.min(iv.length, 8), gap = 7, startX = 6;
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#475569';
+      ctx.fillStyle = '#374558';
       ctx.fillText('in', startX, midY);
-
-      for (let i = 0; i < maxDots; i++) {
-        const v  = Math.max(0, Math.min(1, inputVec[i]));
-        const dx = startX + 16 + i * dotGap;
+      for (let i = 0; i < max; i++) {
+        const v = Math.max(0, Math.min(1, iv[i]));
         ctx.beginPath();
-        ctx.arc(dx, midY, dotR, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(100,200,255,${0.15 + v * 0.85})`;
+        ctx.arc(startX + 16 + i * gap, midY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(100,200,255,${0.12 + v * 0.88})`;
         ctx.fill();
       }
     }
 
-    // Right side: output vector (purple dots)
-    if (outputVec && outputVec.length > 0) {
-      const maxDots = Math.min(outputVec.length, 4);
-      const dotR    = 3;
-      const dotGap  = 7;
-      const endX    = node.w - 6;
-
+    if (ov && ov.length > 0) {
+      const max = Math.min(ov.length, 4), gap = 7, endX = node.w - 6;
       ctx.textAlign = 'right';
-      ctx.fillStyle = '#475569';
+      ctx.fillStyle = '#374558';
       ctx.fillText('out', endX, midY);
-
-      for (let i = 0; i < maxDots; i++) {
-        const v  = Math.max(0, Math.min(1, outputVec[i]));
-        const dx = endX - 16 - (maxDots - 1 - i) * dotGap;
+      for (let i = 0; i < max; i++) {
+        const v = Math.max(0, Math.min(1, ov[i]));
         ctx.beginPath();
-        ctx.arc(dx, midY, dotR, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(168,85,247,${0.15 + v * 0.85})`;
+        ctx.arc(endX - 16 - (max - 1 - i) * gap, midY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(168,85,247,${0.12 + v * 0.88})`;
         ctx.fill();
       }
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Coordinate helpers
+  // Coordinate helpers + hit testing
   // ---------------------------------------------------------------------------
 
   private _toWorld(cssX: number, cssY: number): { x: number; y: number } {
@@ -871,53 +858,32 @@ export class TobiasRenderer {
     };
   }
 
-  // ---------------------------------------------------------------------------
-  // Hit testing
-  // ---------------------------------------------------------------------------
-
   private _hitTestHeader(wx: number, wy: number): CardNode | null {
-    for (const card of this._cards) {
-      const lx = (card.x ?? 0) - card.w / 2;
-      const ty = (card.y ?? 0) - card.h / 2;
-      if (wx >= lx && wx <= lx + card.w && wy >= ty && wy <= ty + card.headerH) {
-        return card;
-      }
+    for (const c of this._cards) {
+      const lx = (c.x ?? 0) - c.w / 2, ty = (c.y ?? 0) - c.h / 2;
+      if (wx >= lx && wx <= lx + c.w && wy >= ty && wy <= ty + c.headerH) return c;
     }
     return null;
   }
 
   private _hitTestCard(wx: number, wy: number): CardNode | null {
-    for (const card of this._cards) {
-      const lx = (card.x ?? 0) - card.w / 2;
-      const ty = (card.y ?? 0) - card.h / 2;
-      if (wx >= lx && wx <= lx + card.w && wy >= ty && wy <= ty + card.h) {
-        return card;
-      }
+    for (const c of this._cards) {
+      const lx = (c.x ?? 0) - c.w / 2, ty = (c.y ?? 0) - c.h / 2;
+      if (wx >= lx && wx <= lx + c.w && wy >= ty && wy <= ty + c.h) return c;
     }
     return null;
   }
 
   private _updateHover(wx: number, wy: number): void {
     const card = this._hitTestCard(wx, wy);
-    if (!card) {
-      this._hoveredCardId      = null;
-      this._hoveredInnerNodeId = null;
-      return;
-    }
-
+    if (!card) { this._hoveredCardId = null; this._hoveredInnerNodeId = null; return; }
     this._hoveredCardId = card.id;
-
-    const cardLX = (card.x ?? 0) - card.w / 2;
-    const cardTY = (card.y ?? 0) - card.h / 2;
-    const innerX = wx - cardLX - PAD;
-    const innerY = wy - cardTY - HEADER_H - PAD;
-
+    const lx = (card.x ?? 0) - card.w / 2, ty = (card.y ?? 0) - card.h / 2;
+    const innerX = wx - lx - PAD;
+    const innerY = wy - ty - card.headerH - PAD;
     let hitId: string | null = null;
-    for (const node of card.innerGraph.nodes) {
-      if (Math.hypot(innerX - node.ix, innerY - node.iy) <= NODE_R + HIT_EXTRA) {
-        hitId = node.id;
-        break;
-      }
+    for (const n of card.innerGraph.nodes) {
+      if (Math.hypot(innerX - n.ix, innerY - n.iy) <= NODE_R + HIT_EXTRA) { hitId = n.id; break; }
     }
     this._hoveredInnerNodeId = hitId;
   }
@@ -948,31 +914,24 @@ export class TobiasRenderer {
 
   private _onWheel = (e: WheelEvent): void => {
     e.preventDefault();
-    const { offsetX, offsetY, deltaY } = e;
-    const factor   = Math.pow(0.95, deltaY / 40);
+    const factor   = Math.pow(0.95, e.deltaY / 40);
     const newScale = Math.max(0.1, Math.min(5, this._viewport.scale * factor));
-    const worldX   = (offsetX - this._viewport.tx) / this._viewport.scale;
-    const worldY   = (offsetY - this._viewport.ty) / this._viewport.scale;
+    const worldX   = (e.offsetX - this._viewport.tx) / this._viewport.scale;
+    const worldY   = (e.offsetY - this._viewport.ty) / this._viewport.scale;
     this._viewport.scale = newScale;
-    this._viewport.tx    = offsetX - worldX * newScale;
-    this._viewport.ty    = offsetY - worldY * newScale;
+    this._viewport.tx    = e.offsetX - worldX * newScale;
+    this._viewport.ty    = e.offsetY - worldY * newScale;
   };
 
   private _onMouseDown = (e: MouseEvent): void => {
-    this._mouseDownX = e.offsetX;
-    this._mouseDownY = e.offsetY;
-    this._dragPrevX  = e.offsetX;
-    this._dragPrevY  = e.offsetY;
+    this._mouseDownX = e.offsetX; this._mouseDownY = e.offsetY;
+    this._dragPrevX  = e.offsetX; this._dragPrevY  = e.offsetY;
     this._hasDragged = false;
-
-    const worldPos  = this._toWorld(e.offsetX, e.offsetY);
-    const hitHeader = this._hitTestHeader(worldPos.x, worldPos.y);
-
-    if (hitHeader) {
-      this._isDraggingCard = true;
-      this._dragCardNode   = hitHeader;
-      hitHeader.fx = hitHeader.x ?? 0;
-      hitHeader.fy = hitHeader.y ?? 0;
+    const wp = this._toWorld(e.offsetX, e.offsetY);
+    const hh = this._hitTestHeader(wp.x, wp.y);
+    if (hh) {
+      this._isDraggingCard = true; this._dragCardNode = hh;
+      hh.fx = hh.x ?? 0; hh.fy = hh.y ?? 0;
       if (this._simulation) this._simulation.alphaTarget(0.3).restart();
       this._canvas.style.cursor = 'grabbing';
     } else {
@@ -982,72 +941,55 @@ export class TobiasRenderer {
   };
 
   private _onMouseMove = (e: MouseEvent): void => {
-    const dx = e.offsetX - this._mouseDownX;
-    const dy = e.offsetY - this._mouseDownY;
-    if (Math.hypot(dx, dy) > 3) this._hasDragged = true;
-
+    if (Math.hypot(e.offsetX - this._mouseDownX, e.offsetY - this._mouseDownY) > 3)
+      this._hasDragged = true;
     if (this._isDraggingCard && this._dragCardNode) {
-      const worldPos           = this._toWorld(e.offsetX, e.offsetY);
-      this._dragCardNode.fx    = worldPos.x;
-      this._dragCardNode.fy    = worldPos.y;
+      const wp = this._toWorld(e.offsetX, e.offsetY);
+      this._dragCardNode.fx = wp.x; this._dragCardNode.fy = wp.y;
     } else if (this._isPanning) {
       this._viewport.tx += e.offsetX - this._dragPrevX;
       this._viewport.ty += e.offsetY - this._dragPrevY;
     } else {
-      const worldPos = this._toWorld(e.offsetX, e.offsetY);
-      this._updateHover(worldPos.x, worldPos.y);
-
-      const hitCard = this._hitTestCard(worldPos.x, worldPos.y);
-      if (hitCard) {
-        const hitHeader = this._hitTestHeader(worldPos.x, worldPos.y);
-        this._canvas.style.cursor = hitHeader ? 'pointer' : 'default';
-      } else {
-        this._canvas.style.cursor = 'default';
-      }
+      const wp = this._toWorld(e.offsetX, e.offsetY);
+      this._updateHover(wp.x, wp.y);
+      const hc = this._hitTestCard(wp.x, wp.y);
+      this._canvas.style.cursor = hc
+        ? (this._hitTestHeader(wp.x, wp.y) ? 'pointer' : 'default')
+        : 'default';
     }
-
-    this._dragPrevX = e.offsetX;
-    this._dragPrevY = e.offsetY;
+    this._dragPrevX = e.offsetX; this._dragPrevY = e.offsetY;
   };
 
   private _onMouseUp = (e: MouseEvent): void => {
     if (!this._hasDragged) {
-      const worldPos  = this._toWorld(e.offsetX, e.offsetY);
-      const hitHeader = this._hitTestHeader(worldPos.x, worldPos.y);
-
-      if (hitHeader) {
-        const newId = this._selectedId === hitHeader.id ? null : hitHeader.id;
+      const wp = this._toWorld(e.offsetX, e.offsetY);
+      const hh = this._hitTestHeader(wp.x, wp.y);
+      if (hh) {
+        const newId = this._selectedId === hh.id ? null : hh.id;
         this._selectedId = newId;
         this._onSelectMachine(newId);
-      } else if (!this._hitTestCard(worldPos.x, worldPos.y)) {
+      } else if (!this._hitTestCard(wp.x, wp.y)) {
         this._selectedId = null;
         this._onSelectMachine(null);
       }
     }
-
     if (this._isDraggingCard && this._dragCardNode) {
-      this._dragCardNode.fx = null;
-      this._dragCardNode.fy = null;
-      this._dragCardNode    = null;
+      this._dragCardNode.fx = null; this._dragCardNode.fy = null;
+      this._dragCardNode = null;
       if (this._simulation) this._simulation.alphaTarget(0);
     }
-
-    this._isDraggingCard = false;
-    this._isPanning      = false;
+    this._isDraggingCard = false; this._isPanning = false;
     this._canvas.style.cursor = 'default';
   };
 
   private _onMouseLeave = (): void => {
     if (this._isDraggingCard && this._dragCardNode) {
-      this._dragCardNode.fx = null;
-      this._dragCardNode.fy = null;
-      this._dragCardNode    = null;
+      this._dragCardNode.fx = null; this._dragCardNode.fy = null;
+      this._dragCardNode = null;
       if (this._simulation) this._simulation.alphaTarget(0);
     }
-    this._isDraggingCard     = false;
-    this._isPanning          = false;
-    this._hoveredCardId      = null;
-    this._hoveredInnerNodeId = null;
+    this._isDraggingCard = false; this._isPanning = false;
+    this._hoveredCardId = null; this._hoveredInnerNodeId = null;
     this._canvas.style.cursor = 'default';
   };
 }
