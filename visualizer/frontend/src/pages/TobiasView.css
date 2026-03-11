@@ -425,139 +425,281 @@
   color: #c084fc;
 }
 
-/* ── History strips (top + bottom of canvas area) ────────────── */
-.tobias-history-strip {
+/* ── Perceptual Space Bar (top of canvas area) ───────────────── */
+.tobias-psbar {
   flex-shrink: 0;
+  height: 44px;
   display: flex;
   align-items: stretch;
-  background: #090c11;
+  background: #080c12;
+  border-bottom: 1px solid #1e2535;
   overflow: hidden;
 }
 
-.tobias-history-input {
-  height: 88px;
-  border-bottom: 1px solid #1e2535;
+.tobias-psbar-btn {
+  flex-shrink: 0;
+  background: rgba(100, 200, 255, 0.07);
+  border: none;
+  border-right: 1px solid #1e2535;
+  color: #64c8ff;
+  padding: 0 14px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+  transition: background 0.15s;
+}
+.tobias-psbar-btn:hover {
+  background: rgba(100, 200, 255, 0.16);
 }
 
-.tobias-history-output {
-  height: 88px;
-  border-top: 1px solid #1e2535;
+.tobias-psbar-viz {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 4px 0;
 }
 
-.tobias-history-label {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+/* Region labels row (above heatmap) */
+.tobias-psbar-labels {
+  height: 14px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.tobias-psbar-region-label {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  font-size: 7px;
+  font-family: monospace;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-left: 1px solid;          /* color set inline */
+  padding-left: 2px;
+  line-height: 14px;
+}
+
+.tobias-psbar-placeholder {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
   color: #334155;
-  text-transform: uppercase;
-  padding: 6px 4px;
+  font-style: italic;
+  white-space: nowrap;
+  line-height: 14px;
+}
+
+/* Canvas heatmap */
+.tobias-psbar-canvas {
+  display: block;
+  width: 100%;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Step counter */
+.tobias-psbar-meta {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: #0d1017;
-  border-right: 1px solid #1a2030;
-  min-width: 18px;
+  padding: 0 12px;
+  font-size: 10px;
+  color: #334155;
+  font-family: monospace;
+  white-space: nowrap;
+  border-left: 1px solid #1e2535;
+  min-width: 56px;
 }
 
-.tobias-history-scroll {
+/* ── Output History Bar (bottom of canvas area) ──────────────── */
+.tobias-outbar {
+  flex-shrink: 0;
+  height: 32px;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  background: #090c11;
+  border-top: 1px solid #1e2535;
+  overflow: hidden;
+  transition: height 0.2s ease;
+}
+
+.tobias-outbar.expanded {
+  height: 148px;
+}
+
+/* Left column: toggle button + vertical "OUTPUT" label */
+.tobias-outbar-side {
+  flex-shrink: 0;
+  width: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 3px 2px 2px;
+  border-right: 1px solid #1a2030;
+  background: #0d1017;
+  gap: 3px;
+}
+
+.tobias-outbar-toggle {
+  background: transparent;
+  border: none;
+  color: #475569;
+  cursor: pointer;
+  font-size: 8px;
+  padding: 1px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.tobias-outbar-toggle:hover { color: #94a3b8; }
+
+.tobias-outbar-label {
+  font-size: 6px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #334155;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+/* Scrollable content area */
+.tobias-outbar-content {
   flex: 1;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
   scrollbar-color: #1e2535 transparent;
+  min-width: 0;
 }
-.tobias-history-scroll::-webkit-scrollbar        { height: 3px; }
-.tobias-history-scroll::-webkit-scrollbar-track  { background: transparent; }
-.tobias-history-scroll::-webkit-scrollbar-thumb  { background: #1e2535; border-radius: 2px; }
+.tobias-outbar-content::-webkit-scrollbar       { height: 3px; }
+.tobias-outbar-content::-webkit-scrollbar-thumb { background: #1e2535; border-radius: 2px; }
 
-.tobias-history-grid {
+/* ── Collapsed summary view ─── */
+.tobias-outbar-summary {
   display: flex;
-  align-items: stretch;
+  flex-direction: row;
+  align-items: center;
   height: 100%;
-  gap: 0;
+  padding: 0 6px;
+  gap: 10px;
+  white-space: nowrap;
 }
 
-/* Machine name labels column */
-.tobias-history-names {
+.tobias-outbar-machine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.tobias-outbar-mname {
+  font-size: 8px;
+  color: #475569;
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+.tobias-outbar-dots {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.tobias-outbar-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tobias-outbar-dot-nil {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tobias-outbar-idle {
+  font-size: 10px;
+  color: #334155;
+  font-style: italic;
+}
+
+/* ── Expanded history table ─── */
+.tobias-outbar-table {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+}
+
+.tobias-outbar-names {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
-  padding: 4px 4px;
-  flex-shrink: 0;
   border-right: 1px solid #1a2030;
   background: #0d1017;
 }
 
-.tobias-history-name {
+.tobias-outbar-corner {
+  height: 14px;               /* matches stepnum height */
+  flex-shrink: 0;
+  border-bottom: 1px solid #1a2030;
+}
+
+.tobias-outbar-row-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
   font-size: 8px;
   color: #475569;
   font-family: monospace;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 72px;
-  line-height: 1;
+  max-width: 80px;
+  border-bottom: 1px solid #0f1420;
 }
 
-/* Per-step column */
-.tobias-history-col {
+.tobias-outbar-stepcol {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 2px 1px;
+  flex-shrink: 0;
   border-right: 1px solid #0f1420;
-  min-width: 28px;
-  gap: 2px;
+  min-width: 22px;
 }
 
-.tobias-history-step-num {
+.tobias-outbar-stepnum {
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 7px;
   color: #334155;
   font-family: monospace;
-  text-align: center;
+  border-bottom: 1px solid #1a2030;
   flex-shrink: 0;
-  line-height: 1.2;
 }
 
-/* Per-machine cell within a step column */
-.tobias-history-cell {
+.tobias-outbar-cell {
   flex: 1;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 1px;
-  padding: 1px 2px;
-  border-radius: 2px;
-  width: 100%;
-}
-
-.tobias-history-cell-empty {
-  background: #0d1017;
-}
-
-/* Individual element dot within a cell */
-.tobias-history-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: background 0.15s ease;
-}
-
-/* "No history yet" placeholder */
-.tobias-history-empty {
-  font-size: 10px;
-  color: #334155;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  white-space: nowrap;
-  font-style: italic;
+  padding: 1px;
+  border-bottom: 1px solid #0a0e14;
 }
 
 /* Loading state (if needed) */
