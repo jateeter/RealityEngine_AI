@@ -17,11 +17,10 @@ interface PerceptualSpaceBarProps {
   perceptualSpace: number[];
   machines: VisMachine[];
   latestStep: number | null;
-  onOpenSequences: () => void;
 }
 
 const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
-  perceptualSpace, machines, latestStep, onOpenSequences,
+  perceptualSpace, machines, latestStep,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const vizRef    = useRef<HTMLDivElement>(null);
@@ -99,14 +98,6 @@ const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
 
   return (
     <div className="tobias-psbar">
-      <button
-        className="tobias-psbar-btn"
-        onClick={onOpenSequences}
-        title="Manage input sequences and review output streams"
-      >
-        📑 Sequences
-      </button>
-
       <div className="tobias-psbar-viz" ref={vizRef}>
         {/* Region labels (CSS percentage positioning) */}
         <div className="tobias-psbar-labels">
@@ -300,13 +291,11 @@ const TobiasView: React.FC = () => {
     selectedMachineId,
     isSimulationRunning,
     stepHistory,
-    isDemoLoading,
     selectMachine,
     stepSimulation,
     playSimulation,
     pauseSimulation,
     resetSimulation,
-    loadDataCenterDemo,
     refreshMachines,
   } = useMachineSimulation();
 
@@ -413,11 +402,10 @@ const TobiasView: React.FC = () => {
                 <div className="tbs-section-title">Perceptual Engine</div>
                 <button
                   className="tbs-demo-btn"
-                  onClick={loadDataCenterDemo}
-                  disabled={isDemoLoading}
-                  title="Load DC monitoring machines into perceptual space simulator"
+                  onClick={() => setSequencesPanelOpen(true)}
+                  title="Manage input perception stream and review machine output streams"
                 >
-                  {isDemoLoading ? '⟳ Loading…' : '⚡ Load DC Demo'}
+                  📑 Sequences
                 </button>
                 <button
                   className="tbs-demo-btn tbs-demo-refresh"
@@ -469,7 +457,6 @@ const TobiasView: React.FC = () => {
             perceptualSpace={perceptualSpace}
             machines={filteredMachines}
             latestStep={latestStepNumber}
-            onOpenSequences={() => setSequencesPanelOpen(true)}
           />
 
           {/* CENTER: canvas + floating legend overlay */}

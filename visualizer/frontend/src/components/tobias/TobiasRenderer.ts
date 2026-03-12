@@ -586,11 +586,11 @@ export class TobiasRenderer {
     ctx.moveTo(sx, sy);
     ctx.quadraticCurveTo(mx + nx * 35, my + ny * 35, tx, ty);
     ctx.strokeStyle = '#64c8ff';
-    ctx.globalAlpha = 0.35;
+    ctx.globalAlpha = 0.6;
     ctx.lineWidth   = Math.max(1, Math.min(3, edge.overlapLength / 4));
     ctx.stroke();
     ctx.globalAlpha = 1;
-    drawArrowHead(ctx, mx + nx * 35, my + ny * 35, tx, ty, 'rgba(100,200,255,0.65)');
+    drawArrowHead(ctx, mx + nx * 35, my + ny * 35, tx, ty, 'rgba(100,200,255,0.88)');
   }
 
   private _drawCard(node: CardNode, isSelected: boolean): void {
@@ -680,7 +680,7 @@ export class TobiasRenderer {
       const band = cache.seqBands[i];
 
       // Sequence index label (top-left of each band)
-      ctx.fillStyle    = '#2a3450';
+      ctx.fillStyle    = '#4a5878';
       ctx.font         = '7px monospace';
       ctx.textBaseline = 'top';
       ctx.textAlign    = 'left';
@@ -708,7 +708,7 @@ export class TobiasRenderer {
         : false;
       const isDimmed = activeInnerNode ? !isHighlight : false;
 
-      const edgeColor = isHighlight ? COLOR_HOVER : '#5a6880';
+      const edgeColor = isHighlight ? COLOR_HOVER : '#8899b4';
       ctx.globalAlpha = isDimmed ? 0.18 : 1.0;
       ctx.strokeStyle = edgeColor;
       ctx.lineWidth   = isHighlight ? 1.8 : 1.2;

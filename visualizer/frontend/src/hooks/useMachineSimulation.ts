@@ -157,6 +157,48 @@ export const useMachineSimulation = () => {
     }
   }, [loadMachines]);
 
+  // ── Shared step-result applicator ─────────────────────────────────────────
+  // Used by both the WebSocket handler and the REST stepSimulation() call so
+  // that the step counter and history advance regardless of WebSocket state.
+
+  const applyStepResult = useCallback((step: any) => {
+    if (!step) return;
+    const activeIds: string[] = Object.keys(step.machineResults ?? {});
+    const machineResults: Record<string, StepMachineResult> = step.machineResults ?? {};
+    const perceptualSpace: number[] = step.perceptualSpace ?? [];
+    const stepNumber: number = step.stepNumber ?? 0;
+
+    const record: StepRecord = {
+      stepNumber,
+      timestamp: step.timestamp ?? Date.now(),
+      perceptualSpace,
+      machineResults,
+    };
+
+    setStepHistory((prev) => {
+      // Deduplicate — skip if this step was already applied (e.g. via WebSocket)
+      if (prev.some(r => r.stepNumber === record.stepNumber)) return prev;
+      const next = [...prev, record];
+      return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next;
+    });
+
+    setMachines((prev) =>
+      prev.map((m) => {
+        const fired  = activeIds.includes(m.id);
+        const result = machineResults[m.id];
+        return {
+          ...m,
+          status: fired ? ('processing' as const) : ('idle' as const),
+          justFired: fired,
+          latestInputVector:  result?.inputVector  ?? m.latestInputVector,
+          latestOutputVector: fired
+            ? (result?.outputVector ?? m.latestOutputVector)
+            : m.latestOutputVector,
+        };
+      })
+    );
+  }, []);
+
   // ── WebSocket ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -168,40 +210,8 @@ export const useMachineSimulation = () => {
           const msg = JSON.parse(event.data);
 
           if (msg.type === 'perceptual-simulation-stepped') {
-            const d = msg.data || {};
-            const activeIds: string[] = d.activeMachineIds ?? [];
-            const machineResults: Record<string, StepMachineResult> = d.machineResults ?? {};
-            const perceptualSpace: number[] = d.perceptualSpace ?? [];
-            const stepNumber: number = d.stepNumber ?? 0;
-
-            // Append step record to history (capped at MAX_HISTORY)
-            const record: StepRecord = {
-              stepNumber,
-              timestamp: d.timestamp ?? Date.now(),
-              perceptualSpace,
-              machineResults,
-            };
-            setStepHistory((prev) => {
-              const next = [...prev, record];
-              return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next;
-            });
-
-            // Update machine states
-            setMachines((prev) =>
-              prev.map((m) => {
-                const fired = activeIds.includes(m.id);
-                const result = machineResults[m.id];
-                return {
-                  ...m,
-                  status: fired ? ('processing' as const) : ('idle' as const),
-                  justFired: fired,
-                  latestInputVector: result?.inputVector ?? m.latestInputVector,
-                  latestOutputVector: fired
-                    ? (result?.outputVector ?? m.latestOutputVector)
-                    : m.latestOutputVector,
-                };
-              })
-            );
+            // Step data is in msg.step; msg.data only carries activeMachineIds
+            applyStepResult(msg.step);
           } else if (msg.type === 'perceptual-simulation-reset') {
             setStepHistory([]);
             setMachines((prev) =>
@@ -228,7 +238,7 @@ export const useMachineSimulation = () => {
 
     connect();
     return () => wsRef.current?.close();
-  }, [loadMachines]);
+  }, [loadMachines, applyStepResult]);
 
   useEffect(() => {
     loadMachines();
@@ -238,11 +248,16 @@ export const useMachineSimulation = () => {
 
   const stepSimulation = useCallback(async () => {
     try {
-      await api.stepPerceptualSimulation();
+      const result = await api.stepPerceptualSimulation();
+      // Update state directly from REST response — guards against WebSocket
+      // delivery failures and provides immediate feedback on manual Step.
+      if (result.success && result.step) {
+        applyStepResult(result.step);
+      }
     } catch (error) {
       console.error('Failed to step simulation:', error);
     }
-  }, []);
+  }, [applyStepResult]);
 
   useEffect(() => {
     if (isSimulationRunning) {
