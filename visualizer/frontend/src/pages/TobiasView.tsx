@@ -171,7 +171,7 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
           ...machines.filter(m => m.id !== selectedMachineId),
         ]
       : machines;
-    return ordered.slice(0, 8);
+    return ordered.slice(0, 6);
   }, [machines, selectedMachineId]);
 
   const latestStep = stepHistory[stepHistory.length - 1];

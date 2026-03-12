@@ -55,7 +55,7 @@
 
 .tsp-title-sub {
   font-size: 11px;
-  color: #64748b;
+  color: #94a3b8;
   margin-top: 2px;
 }
 
@@ -92,7 +92,7 @@
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  color: #64748b;
+  color: #94a3b8;
   padding: 10px 16px;
   font-size: 12px;
   font-weight: 600;
@@ -105,7 +105,7 @@
   letter-spacing: 0.03em;
 }
 .tsp-tab:hover {
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 .tsp-tab.active {
   color: #64c8ff;
@@ -141,7 +141,7 @@
 /* ── Input stream tab ────────────────────────────────────────── */
 .tsp-desc {
   font-size: 12px;
-  color: #64748b;
+  color: #b0bfd0;
   line-height: 1.5;
 }
 
@@ -159,7 +159,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid #2a3450;
   border-radius: 6px;
-  color: #64748b;
+  color: #94a3b8;
   padding: 8px 14px;
   font-size: 12px;
   cursor: pointer;
@@ -168,7 +168,7 @@
 }
 .tsp-mode-btn:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 .tsp-mode-btn.active {
   background: rgba(100, 200, 255, 0.1);
@@ -193,7 +193,7 @@
 .tsp-label {
   font-size: 10px;
   font-weight: 700;
-  color: #64748b;
+  color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -219,7 +219,7 @@
 
 .tsp-region-note {
   font-size: 11px;
-  color: #475569;
+  color: #94a3b8;
   font-family: monospace;
 }
 .tsp-region-note code {
@@ -238,7 +238,7 @@
 
 .tsp-quick-label {
   font-size: 10px;
-  color: #475569;
+  color: #94a3b8;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -313,7 +313,7 @@
   align-items: center;
   gap: 10px;
   padding: 40px 0;
-  color: #475569;
+  color: #94a3b8;
   font-size: 13px;
   text-align: center;
 }
@@ -347,14 +347,14 @@
 .tsp-output-mname-text {
   font-size: 11px;
   font-weight: 600;
-  color: #94a3b8;
+  color: #cbd5e1;
 }
 
 .tsp-output-region {
   font-size: 9px;
-  color: #475569;
+  color: #a78bfa;
   font-family: monospace;
-  background: rgba(168, 85, 247, 0.08);
+  background: rgba(168, 85, 247, 0.12);
   padding: 1px 5px;
   border-radius: 3px;
 }
@@ -383,7 +383,7 @@
 
 .tsp-output-stepnum {
   font-size: 7px;
-  color: #334155;
+  color: #64748b;
   font-family: monospace;
   text-align: center;
   line-height: 1;
