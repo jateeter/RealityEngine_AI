@@ -9,7 +9,12 @@
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "2D binary control signal at [60:62]: [1,0]=ALARM, [0,1]=SAFE",
       "outputSpace": "2D binary at [100:102]: [1,0]=COOLING_ACTIVE, [0,1]=COOLING_OFF",
-      "tags": ["flip-flop", "digital-logic", "data-center", "cooling"],
+      "tags": [
+        "flip-flop",
+        "digital-logic",
+        "data-center",
+        "cooling"
+      ],
       "sequenceCount": 2,
       "role": "Latches thermal escalation alarm; downstream input to DCCriticalSynthesizer",
       "upstreamMachine": "DCThermalEscalation (writes [60:62])",
@@ -48,13 +53,13 @@
             "elements": [
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -66,7 +71,10 @@
             "outputVectors": [
               {
                 "id": "dc-cooling-set-output",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "COOLING CONTROL ACTIVE: Emergency cooling engaged",
                   "state": "SET",
@@ -92,13 +100,13 @@
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -110,7 +118,10 @@
             "outputVectors": [
               {
                 "id": "dc-cooling-reset-output",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "COOLING CONTROL INACTIVE: Normal cooling sufficient",
                   "state": "RESET",
@@ -128,8 +139,14 @@
         "pattern": "[0,1] → [1,0]",
         "description": "Simulate DCThermalEscalation firing: safe → alarm",
         "vectors": [
-          [0, 1],
-          [1, 0]
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
         ]
       },
       {
@@ -137,8 +154,14 @@
         "pattern": "[1,0] → [0,1]",
         "description": "Simulate recovery: alarm → safe",
         "vectors": [
-          [1, 0],
-          [0, 1]
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
         ]
       },
       {
@@ -146,11 +169,26 @@
         "pattern": "[0,1] → [1,0] → [1,0] → [1,0] → [0,1]",
         "description": "Full cycle: safe baseline, alarm triggers, persists, clears on recovery",
         "vectors": [
-          [0, 1],
-          [1, 0],
-          [1, 0],
-          [1, 0],
-          [0, 1]
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
         ],
         "metadata": {
           "expectedOutputSequence": "[0,1], [1,0], [1,0], [1,0], [0,1]",

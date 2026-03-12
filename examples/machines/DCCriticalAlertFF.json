@@ -9,7 +9,12 @@
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "2D binary control signal at [72:74]: [1,0]=CRITICAL, [0,1]=ALL_CLEAR",
       "outputSpace": "2D binary at [108:110]: [1,0]=CRITICAL_ALERT_ACTIVE, [0,1]=CRITICAL_ALERT_OFF",
-      "tags": ["flip-flop", "digital-logic", "data-center", "critical-alert"],
+      "tags": [
+        "flip-flop",
+        "digital-logic",
+        "data-center",
+        "critical-alert"
+      ],
       "sequenceCount": 2,
       "role": "Final-stage alert latch; represents the highest-severity combined failure state",
       "upstreamMachine": "DCCriticalSynthesizer (writes [72:74])",
@@ -48,13 +53,13 @@
             "elements": [
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -66,7 +71,10 @@
             "outputVectors": [
               {
                 "id": "dc-critical-alert-set-output",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "CRITICAL ALERT ACTIVE: Multi-system failure — immediate intervention required",
                   "state": "SET",
@@ -93,13 +101,13 @@
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -111,7 +119,10 @@
             "outputVectors": [
               {
                 "id": "dc-critical-alert-reset-output",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "CRITICAL ALERT CLEARED: All monitored subsystems nominal",
                   "state": "RESET",
@@ -130,8 +141,14 @@
         "pattern": "[0,1] → [1,0]",
         "description": "All-clear to critical: multiple subsystems fail simultaneously",
         "vectors": [
-          [0, 1],
-          [1, 0]
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
         ]
       },
       {
@@ -139,8 +156,14 @@
         "pattern": "[1,0] → [0,1]",
         "description": "Critical to all-clear: all subsystems recover",
         "vectors": [
-          [1, 0],
-          [0, 1]
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
         ]
       },
       {
@@ -148,11 +171,26 @@
         "pattern": "[0,1] → [1,0] → [1,0] → [1,0] → [0,1]",
         "description": "Full critical event: nominal → alert fires → persists → resolves",
         "vectors": [
-          [0, 1],
-          [1, 0],
-          [1, 0],
-          [1, 0],
-          [0, 1]
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
         ],
         "metadata": {
           "expectedOutputSequence": "[0,1], [1,0], [1,0], [1,0], [0,1]",

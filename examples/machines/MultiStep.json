@@ -9,7 +9,11 @@
       "created": "2026-02-02T00:00:00Z",
       "eventSpace": "3D binary vectors: 000-111",
       "outputSpace": "2D binary vectors: {00, 01, 10, 11}",
-      "tags": ["state-machine", "multi-step", "three-step"],
+      "tags": [
+        "state-machine",
+        "multi-step",
+        "three-step"
+      ],
       "sequenceCount": 2,
       "description": "Two independent sequences with distinct outputs",
       "singleTransitionAssumption": {
@@ -56,18 +60,18 @@
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -75,25 +79,27 @@
               "name": "000",
               "description": "Initial state"
             },
-            "nextVectorIds": ["ms-seq1-001"]
+            "nextVectorIds": [
+              "ms-seq1-001"
+            ]
           },
           {
             "id": "ms-seq1-001",
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": false,
@@ -101,25 +107,27 @@
               "name": "001",
               "description": "First transition"
             },
-            "nextVectorIds": ["ms-seq1-011"]
+            "nextVectorIds": [
+              "ms-seq1-011"
+            ]
           },
           {
             "id": "ms-seq1-011",
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": false,
@@ -130,7 +138,10 @@
             "outputVectors": [
               {
                 "id": "ms-seq1-output",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "Sequence 1 complete: output [0,1]",
                   "pattern": "01"
@@ -154,18 +165,18 @@
             "elements": [
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -173,25 +184,27 @@
               "name": "100",
               "description": "Initial state"
             },
-            "nextVectorIds": ["ms-seq2-101"]
+            "nextVectorIds": [
+              "ms-seq2-101"
+            ]
           },
           {
             "id": "ms-seq2-101",
             "elements": [
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": false,
@@ -199,25 +212,27 @@
               "name": "101",
               "description": "First transition"
             },
-            "nextVectorIds": ["ms-seq2-111"]
+            "nextVectorIds": [
+              "ms-seq2-111"
+            ]
           },
           {
             "id": "ms-seq2-111",
             "elements": [
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.05
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": false,
@@ -228,7 +243,10 @@
             "outputVectors": [
               {
                 "id": "ms-seq2-output",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "Sequence 2 complete: output [1,0]",
                   "pattern": "10"
@@ -245,9 +263,21 @@
         "pattern": "000→001→011",
         "description": "3-step sequence producing [0,1] output",
         "vectors": [
-          [0, 0, 0],
-          [0, 0, 1],
-          [0, 1, 1]
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            1
+          ]
         ]
       },
       {
@@ -255,9 +285,21 @@
         "pattern": "100→101→111",
         "description": "3-step sequence producing [1,0] output",
         "vectors": [
-          [1, 0, 0],
-          [1, 0, 1],
-          [1, 1, 1]
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
         ]
       },
       {
@@ -265,12 +307,36 @@
         "pattern": "000→001→011...100→101→111",
         "description": "Execute both sequences with outputs",
         "vectors": [
-          [0, 0, 0],
-          [0, 0, 1],
-          [0, 1, 1],
-          [1, 0, 0],
-          [1, 0, 1],
-          [1, 1, 1]
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            1
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
         ],
         "metadata": {
           "expectedOutputs": 2,

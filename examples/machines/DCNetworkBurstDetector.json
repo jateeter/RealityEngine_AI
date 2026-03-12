@@ -9,7 +9,13 @@
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "4D continuous sensor vector at [20:24]: [bandwidth_util_norm, packet_loss_norm, latency_norm, queue_depth_norm]",
       "outputSpace": "2D binary at [64:66]: [1,0]=NETWORK_ALARM, [0,1]=NETWORK_NORMAL",
-      "tags": ["monitoring", "data-center", "network", "burst-detection", "continuous"],
+      "tags": [
+        "monitoring",
+        "data-center",
+        "network",
+        "burst-detection",
+        "continuous"
+      ],
       "sequenceCount": 2,
       "downstreamMachine": "DCNetworkThrottleFF (reads [64:66])",
       "regularExpression": {
@@ -55,10 +61,26 @@
           {
             "id": "dc-net-esc-baseline",
             "elements": [
-              {"value": 0.20, "comparatorType": "threshold", "threshold": 0.15},
-              {"value": 0.05, "comparatorType": "threshold", "threshold": 0.05},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.2,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.05,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -69,15 +91,34 @@
               "packet_loss_range": "0.00–0.10 (0%–1% loss)",
               "kleeneOperator": "+"
             },
-            "nextVectorIds": ["dc-net-esc-baseline", "dc-net-esc-elevated"]
+            "nextVectorIds": [
+              "dc-net-esc-baseline",
+              "dc-net-esc-elevated"
+            ]
           },
           {
             "id": "dc-net-esc-elevated",
             "elements": [
-              {"value": 0.55, "comparatorType": "threshold", "threshold": 0.12},
-              {"value": 0.15, "comparatorType": "threshold", "threshold": 0.10},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.55,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.15,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -88,15 +129,34 @@
               "packet_loss_range": "0.05–0.25 (0.5%–2.5% loss)",
               "kleeneOperator": "+"
             },
-            "nextVectorIds": ["dc-net-esc-elevated", "dc-net-esc-burst"]
+            "nextVectorIds": [
+              "dc-net-esc-elevated",
+              "dc-net-esc-burst"
+            ]
           },
           {
             "id": "dc-net-esc-burst",
             "elements": [
-              {"value": 0.75, "comparatorType": "threshold", "threshold": 0.08},
-              {"value": 0.30, "comparatorType": "threshold", "threshold": 0.12},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.75,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.3,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -107,15 +167,33 @@
               "packet_loss_range": "0.18–0.42 (1.8%–4.2% loss)",
               "semantics": "Non-initial transitional (no self-loop): exactly one BURST reading advances to CONGESTION. Requires observable burst peak before declaring congestion."
             },
-            "nextVectorIds": ["dc-net-esc-congestion"]
+            "nextVectorIds": [
+              "dc-net-esc-congestion"
+            ]
           },
           {
             "id": "dc-net-esc-congestion",
             "elements": [
-              {"value": 0.88, "comparatorType": "threshold", "threshold": 0.06},
-              {"value": 0.55, "comparatorType": "threshold", "threshold": 0.10},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.88,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.55,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -126,15 +204,34 @@
               "packet_loss_range": "0.45–0.65 (4.5%–6.5% loss)",
               "kleeneOperator": "+"
             },
-            "nextVectorIds": ["dc-net-esc-congestion", "dc-net-esc-overflow"]
+            "nextVectorIds": [
+              "dc-net-esc-congestion",
+              "dc-net-esc-overflow"
+            ]
           },
           {
             "id": "dc-net-esc-overflow",
             "elements": [
-              {"value": 0.97, "comparatorType": "threshold", "threshold": 0.04},
-              {"value": 0.85, "comparatorType": "threshold", "threshold": 0.10},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.97,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.85,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -147,7 +244,10 @@
             "outputVectors": [
               {
                 "id": "dc-net-esc-alarm-output",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "NETWORK OVERFLOW: Alarm signal [1,0] to DCNetworkThrottleFF at [64:66]",
                   "severity": "EMERGENCY",
@@ -170,10 +270,26 @@
           {
             "id": "dc-net-normal-event",
             "elements": [
-              {"value": 0.20, "comparatorType": "threshold", "threshold": 0.15},
-              {"value": 0.05, "comparatorType": "threshold", "threshold": 0.05},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.2,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.05,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -186,7 +302,10 @@
             "outputVectors": [
               {
                 "id": "dc-net-normal-output",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "NETWORK NORMAL: Reset signal [0,1] to DCNetworkThrottleFF at [64:66]",
                   "severity": "INFO",
@@ -204,18 +323,78 @@
         "pattern": "12-step: BASELINE→BASELINE→ELEVATED→ELEVATED→ELEVATED→BURST→CONGESTION→CONGESTION→OVERFLOW→OVERFLOW→ELEVATED→BASELINE",
         "description": "Complete network congestion event with recovery",
         "vectors": [
-          [0.20, 0.03, 0.50, 0.50],
-          [0.22, 0.04, 0.50, 0.50],
-          [0.50, 0.12, 0.50, 0.50],
-          [0.58, 0.17, 0.50, 0.50],
-          [0.63, 0.22, 0.50, 0.50],
-          [0.74, 0.30, 0.50, 0.50],
-          [0.84, 0.50, 0.50, 0.50],
-          [0.90, 0.58, 0.50, 0.50],
-          [0.95, 0.82, 0.50, 0.50],
-          [0.97, 0.87, 0.50, 0.50],
-          [0.58, 0.20, 0.50, 0.50],
-          [0.20, 0.03, 0.50, 0.50]
+          [
+            0.2,
+            0.03,
+            0.5,
+            0.5
+          ],
+          [
+            0.22,
+            0.04,
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.12,
+            0.5,
+            0.5
+          ],
+          [
+            0.58,
+            0.17,
+            0.5,
+            0.5
+          ],
+          [
+            0.63,
+            0.22,
+            0.5,
+            0.5
+          ],
+          [
+            0.74,
+            0.3,
+            0.5,
+            0.5
+          ],
+          [
+            0.84,
+            0.5,
+            0.5,
+            0.5
+          ],
+          [
+            0.9,
+            0.58,
+            0.5,
+            0.5
+          ],
+          [
+            0.95,
+            0.82,
+            0.5,
+            0.5
+          ],
+          [
+            0.97,
+            0.87,
+            0.5,
+            0.5
+          ],
+          [
+            0.58,
+            0.2,
+            0.5,
+            0.5
+          ],
+          [
+            0.2,
+            0.03,
+            0.5,
+            0.5
+          ]
         ],
         "metadata": {
           "scenario": "network-saturation-recovery",

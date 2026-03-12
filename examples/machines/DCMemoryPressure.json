@@ -9,7 +9,14 @@
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "4D continuous sensor vector at [16:20]: [mem_usage_norm, mem_page_fault_rate_norm, mem_cache_miss_norm, swap_usage_norm]",
       "outputSpace": "2D binary at [66:68]: [1,0]=MEMORY_ALARM, [0,1]=MEMORY_HEALTHY",
-      "tags": ["monitoring", "data-center", "memory", "thrashing", "cascading-failure", "continuous"],
+      "tags": [
+        "monitoring",
+        "data-center",
+        "memory",
+        "thrashing",
+        "cascading-failure",
+        "continuous"
+      ],
       "sequenceCount": 2,
       "downstreamMachine": "DCMemoryAlertFF (reads [66:68])",
       "regularExpression": {
@@ -55,10 +62,26 @@
           {
             "id": "dc-mem-esc-normal",
             "elements": [
-              {"value": 0.35, "comparatorType": "threshold", "threshold": 0.20},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.05, "comparatorType": "threshold", "threshold": 0.05}
+              {
+                "value": 0.35,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.05,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -69,15 +92,34 @@
               "swap_usage_range": "0.00–0.10 (minimal swap usage)",
               "kleeneOperator": "+"
             },
-            "nextVectorIds": ["dc-mem-esc-normal", "dc-mem-esc-pressure"]
+            "nextVectorIds": [
+              "dc-mem-esc-normal",
+              "dc-mem-esc-pressure"
+            ]
           },
           {
             "id": "dc-mem-esc-pressure",
             "elements": [
-              {"value": 0.65, "comparatorType": "threshold", "threshold": 0.12},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.25, "comparatorType": "threshold", "threshold": 0.15}
+              {
+                "value": 0.65,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.25,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -88,15 +130,34 @@
               "swap_usage_range": "0.10–0.40 (swap activity increasing)",
               "kleeneOperator": "+"
             },
-            "nextVectorIds": ["dc-mem-esc-pressure", "dc-mem-esc-thrashing"]
+            "nextVectorIds": [
+              "dc-mem-esc-pressure",
+              "dc-mem-esc-thrashing"
+            ]
           },
           {
             "id": "dc-mem-esc-thrashing",
             "elements": [
-              {"value": 0.80, "comparatorType": "threshold", "threshold": 0.08},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.55, "comparatorType": "threshold", "threshold": 0.12}
+              {
+                "value": 0.8,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.55,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -107,15 +168,33 @@
               "swap_usage_range": "0.43–0.67 (heavy swap usage)",
               "semantics": "Non-initial transitional (no self-loop): exactly one THRASHING reading confirms active paging before declaring cascading failure."
             },
-            "nextVectorIds": ["dc-mem-esc-cascading"]
+            "nextVectorIds": [
+              "dc-mem-esc-cascading"
+            ]
           },
           {
             "id": "dc-mem-esc-cascading",
             "elements": [
-              {"value": 0.90, "comparatorType": "threshold", "threshold": 0.06},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.80, "comparatorType": "threshold", "threshold": 0.10}
+              {
+                "value": 0.9,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.8,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -126,15 +205,34 @@
               "swap_usage_range": "0.70–0.90 (swap nearly exhausted)",
               "kleeneOperator": "+"
             },
-            "nextVectorIds": ["dc-mem-esc-cascading", "dc-mem-esc-failure"]
+            "nextVectorIds": [
+              "dc-mem-esc-cascading",
+              "dc-mem-esc-failure"
+            ]
           },
           {
             "id": "dc-mem-esc-failure",
             "elements": [
-              {"value": 0.97, "comparatorType": "threshold", "threshold": 0.04},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.97, "comparatorType": "threshold", "threshold": 0.04}
+              {
+                "value": 0.97,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.97,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -147,7 +245,10 @@
             "outputVectors": [
               {
                 "id": "dc-mem-esc-alarm-output",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "MEMORY FAILURE: Alarm signal [1,0] to DCMemoryAlertFF at [66:68]",
                   "severity": "EMERGENCY",
@@ -170,10 +271,26 @@
           {
             "id": "dc-mem-healthy-event",
             "elements": [
-              {"value": 0.35, "comparatorType": "threshold", "threshold": 0.20},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.05, "comparatorType": "threshold", "threshold": 0.05}
+              {
+                "value": 0.35,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.05,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -186,7 +303,10 @@
             "outputVectors": [
               {
                 "id": "dc-mem-healthy-output",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "MEMORY HEALTHY: Reset signal [0,1] to DCMemoryAlertFF at [66:68]",
                   "severity": "INFO",
@@ -204,18 +324,78 @@
         "pattern": "12-step: NORMAL→NORMAL→PRESSURE→PRESSURE→PRESSURE→THRASHING→CASCADING→CASCADING→FAILURE→FAILURE→PRESSURE→NORMAL",
         "description": "Complete memory pressure event modeling gradual exhaustion and recovery",
         "vectors": [
-          [0.35, 0.50, 0.50, 0.04],
-          [0.38, 0.50, 0.50, 0.05],
-          [0.58, 0.50, 0.50, 0.18],
-          [0.65, 0.50, 0.50, 0.25],
-          [0.72, 0.50, 0.50, 0.35],
-          [0.80, 0.50, 0.50, 0.55],
-          [0.87, 0.50, 0.50, 0.75],
-          [0.91, 0.50, 0.50, 0.82],
-          [0.96, 0.50, 0.50, 0.96],
-          [0.97, 0.50, 0.50, 0.97],
-          [0.65, 0.50, 0.50, 0.28],
-          [0.35, 0.50, 0.50, 0.04]
+          [
+            0.35,
+            0.5,
+            0.5,
+            0.04
+          ],
+          [
+            0.38,
+            0.5,
+            0.5,
+            0.05
+          ],
+          [
+            0.58,
+            0.5,
+            0.5,
+            0.18
+          ],
+          [
+            0.65,
+            0.5,
+            0.5,
+            0.25
+          ],
+          [
+            0.72,
+            0.5,
+            0.5,
+            0.35
+          ],
+          [
+            0.8,
+            0.5,
+            0.5,
+            0.55
+          ],
+          [
+            0.87,
+            0.5,
+            0.5,
+            0.75
+          ],
+          [
+            0.91,
+            0.5,
+            0.5,
+            0.82
+          ],
+          [
+            0.96,
+            0.5,
+            0.5,
+            0.96
+          ],
+          [
+            0.97,
+            0.5,
+            0.5,
+            0.97
+          ],
+          [
+            0.65,
+            0.5,
+            0.5,
+            0.28
+          ],
+          [
+            0.35,
+            0.5,
+            0.5,
+            0.04
+          ]
         ],
         "metadata": {
           "scenario": "memory-exhaustion-recovery",

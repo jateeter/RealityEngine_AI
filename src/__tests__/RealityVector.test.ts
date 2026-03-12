@@ -152,6 +152,71 @@ describe('RealityVector', () => {
       expect(result.matched).toBe(false);
     });
 
+    describe('GTE comparator', () => {
+      test('HIGH element (value=1) matches when input >= threshold', () => {
+        const elements: VectorElement[] = [
+          { value: 1, comparatorType: ComparatorType.GTE, threshold: 0.5 }
+        ];
+        const vector = new RealityVector(elements);
+        expect(vector.match([1]).matched).toBe(true);
+        expect(vector.match([0.5]).matched).toBe(true);
+        expect(vector.match([0.8]).matched).toBe(true);
+      });
+
+      test('HIGH element (value=1) does not match when input < threshold', () => {
+        const elements: VectorElement[] = [
+          { value: 1, comparatorType: ComparatorType.GTE, threshold: 0.5 }
+        ];
+        const vector = new RealityVector(elements);
+        expect(vector.match([0]).matched).toBe(false);
+        expect(vector.match([0.49]).matched).toBe(false);
+      });
+
+      test('LOW element (value=0) matches when input < threshold', () => {
+        const elements: VectorElement[] = [
+          { value: 0, comparatorType: ComparatorType.GTE, threshold: 0.5 }
+        ];
+        const vector = new RealityVector(elements);
+        expect(vector.match([0]).matched).toBe(true);
+        expect(vector.match([0.49]).matched).toBe(true);
+      });
+
+      test('LOW element (value=0) does not match when input >= threshold', () => {
+        const elements: VectorElement[] = [
+          { value: 0, comparatorType: ComparatorType.GTE, threshold: 0.5 }
+        ];
+        const vector = new RealityVector(elements);
+        expect(vector.match([0.5]).matched).toBe(false);
+        expect(vector.match([1]).matched).toBe(false);
+      });
+
+      test('multi-element binary vector matches correctly (RS flip-flop SET=[1,0])', () => {
+        const elements: VectorElement[] = [
+          { value: 1, comparatorType: ComparatorType.GTE, threshold: 0.5 },
+          { value: 0, comparatorType: ComparatorType.GTE, threshold: 0.5 }
+        ];
+        const vector = new RealityVector(elements);
+        expect(vector.match([1, 0]).matched).toBe(true);
+        expect(vector.match([0, 0]).matched).toBe(false);
+        expect(vector.match([1, 1]).matched).toBe(false);
+        expect(vector.match([0, 1]).matched).toBe(false);
+      });
+
+      test('score is proportional to distance from threshold on matched side', () => {
+        const elements: VectorElement[] = [
+          { value: 1, comparatorType: ComparatorType.GTE, threshold: 0.5 }
+        ];
+        const vector = new RealityVector(elements);
+        // Mid-range (0.75): score = (0.75-0.5)/(1-0.5) = 0.5
+        // At max (1.0): score = (1.0-0.5)/(1-0.5) = 1.0
+        const atMid = vector.match([0.75]);
+        const atMax = vector.match([1.0]);
+        expect(atMid.matched).toBe(true);
+        expect(atMax.matched).toBe(true);
+        expect(atMax.score!).toBeGreaterThan(atMid.score!);
+      });
+    });
+
     test('should handle dimension mismatch', () => {
       const elements: VectorElement[] = [
         { value: 0.5, comparatorType: ComparatorType.EQUALS }

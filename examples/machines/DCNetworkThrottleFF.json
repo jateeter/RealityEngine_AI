@@ -9,7 +9,12 @@
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "2D binary control signal at [64:66]: [1,0]=ALARM, [0,1]=SAFE",
       "outputSpace": "2D binary at [102:104]: [1,0]=THROTTLE_ACTIVE, [0,1]=THROTTLE_OFF",
-      "tags": ["flip-flop", "digital-logic", "data-center", "network"],
+      "tags": [
+        "flip-flop",
+        "digital-logic",
+        "data-center",
+        "network"
+      ],
       "sequenceCount": 2,
       "role": "Latches network burst alarm; downstream input to DCCriticalSynthesizer",
       "upstreamMachine": "DCNetworkBurstDetector (writes [64:66])",
@@ -48,13 +53,13 @@
             "elements": [
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -66,7 +71,10 @@
             "outputVectors": [
               {
                 "id": "dc-net-throttle-set-output",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "NETWORK THROTTLE ACTIVE: Traffic shaping engaged",
                   "state": "SET",
@@ -92,13 +100,13 @@
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -110,7 +118,10 @@
             "outputVectors": [
               {
                 "id": "dc-net-throttle-reset-output",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "NETWORK THROTTLE INACTIVE: Normal traffic flow",
                   "state": "RESET",
@@ -128,8 +139,14 @@
         "pattern": "[0,1] → [1,0]",
         "description": "Simulate DCNetworkBurstDetector firing: normal → alarm",
         "vectors": [
-          [0, 1],
-          [1, 0]
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ]
         ]
       },
       {
@@ -137,8 +154,14 @@
         "pattern": "[1,0] → [0,1]",
         "description": "Simulate recovery: alarm → normal",
         "vectors": [
-          [1, 0],
-          [0, 1]
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
         ]
       },
       {
@@ -146,10 +169,22 @@
         "pattern": "[0,1] → [1,0] → [1,0] → [0,1]",
         "description": "Full cycle: normal, alarm triggers, persists, recovers",
         "vectors": [
-          [0, 1],
-          [1, 0],
-          [1, 0],
-          [0, 1]
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
         ],
         "metadata": {
           "expectedOutputSequence": "[0,1], [1,0], [1,0], [0,1]",

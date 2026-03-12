@@ -9,7 +9,12 @@
       "created": "2026-02-02T00:00:00Z",
       "eventSpace": "8D continuous vectors: [CPU_TEMP, CPU_LOAD, NETWORK_BWTH, POWER_WATTS, STORAGE_USED, MEMORY_USED, DISK_IO, SECURITY_SCORE]",
       "outputSpace": "12D one-hot encoded action vectors",
-      "tags": ["monitoring", "data-center", "multi-dimensional", "continuous"],
+      "tags": [
+        "monitoring",
+        "data-center",
+        "multi-dimensional",
+        "continuous"
+      ],
       "sequenceCount": 5,
       "description": "Advanced monitoring with thermal-load correlation, network surge detection, power efficiency analysis, storage deduplication, and cascading memory failures",
       "features": [
@@ -26,7 +31,7 @@
         "compliant": true,
         "notes": "STA (Hamming distance ≤ 1) is a binary concept and does not apply directly to continuous-valued vectors. The analogous assumption in continuous space is 'gradual monotonic progression' — each sensor reading advances by a bounded amount per step. The defined 'Gradual Degradation Scenario' (12-step input sequence) satisfies this: all sensor values increase monotonically and smoothly. The THRESHOLD comparator (tolerance ±0.50) provides natural tolerance for small sensor jumps. Large abrupt jumps in sensor values could skip intermediate sequence states (e.g., jumping from Normal directly to Emergency values would miss the Warm, Hot, and Critical states, failing to trigger intermediate alerts). This machine assumes gradual environmental change, consistent with real-world data center sensor physics.",
         "continuousSpaceAnalog": "Gradual monotonic progression — each step advances metrics by a bounded increment",
-        "thresholdTolerance": 0.50,
+        "thresholdTolerance": 0.5,
         "definedSequenceProgression": "Monotonically increasing from 0.25-0.48 range (Normal) to 0.96-0.99 range (Emergency) across 12 steps"
       }
     },
@@ -54,14 +59,46 @@
           {
             "id": "dc-thermal-normal",
             "elements": [
-              {"value": 0.25, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.30, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50}
+              {
+                "value": 0.25,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.3,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -70,11 +107,26 @@
               "tempRange": "20-40°C",
               "loadRange": "0-55%"
             },
-            "nextVectorIds": ["dc-thermal-warm"],
+            "nextVectorIds": [
+              "dc-thermal-warm"
+            ],
             "outputVectors": [
               {
                 "id": "dc-thermal-normal-out",
-                "vector": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
                   "description": "Thermal status: Normal",
                   "severity": "INFO"
@@ -85,14 +137,46 @@
           {
             "id": "dc-thermal-warm",
             "elements": [
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.60, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50}
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -101,10 +185,25 @@
               "tempRange": "40-60°C",
               "loadRange": "50-70%"
             },
-            "nextVectorIds": ["dc-thermal-hot"],
+            "nextVectorIds": [
+              "dc-thermal-hot"
+            ],
             "outputVectors": [
               {
-                "vector": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
                   "description": "Thermal warning: Temperature rising with load",
                   "severity": "WARNING"
@@ -115,14 +214,46 @@
           {
             "id": "dc-thermal-hot",
             "elements": [
-              {"value": 0.69, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.78, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50}
+              {
+                "value": 0.69,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.78,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -131,10 +262,25 @@
               "tempRange": "60-75°C",
               "loadRange": "70-85%"
             },
-            "nextVectorIds": ["dc-thermal-critical"],
+            "nextVectorIds": [
+              "dc-thermal-critical"
+            ],
             "outputVectors": [
               {
-                "vector": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
                   "description": "Thermal warning: High temperature under load",
                   "severity": "WARNING"
@@ -145,14 +291,46 @@
           {
             "id": "dc-thermal-critical",
             "elements": [
-              {"value": 0.81, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.88, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50}
+              {
+                "value": 0.81,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.88,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -161,17 +339,45 @@
               "tempRange": "75-85°C",
               "loadRange": "85-95%"
             },
-            "nextVectorIds": ["dc-thermal-emergency"],
+            "nextVectorIds": [
+              "dc-thermal-emergency"
+            ],
             "outputVectors": [
               {
-                "vector": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
                   "description": "Thermal CRITICAL: Temperature approaching thermal limit",
                   "severity": "CRITICAL"
                 }
               },
               {
-                "vector": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
                   "description": "Action: Throttle CPU to reduce heat",
                   "severity": "ACTION"
@@ -182,14 +388,46 @@
           {
             "id": "dc-thermal-emergency",
             "elements": [
-              {"value": 0.91, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.94, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50},
-              {"value": 0.0, "comparatorType": "pattern", "threshold": 0.50}
+              {
+                "value": 0.91,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.94,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -201,21 +439,60 @@
             },
             "outputVectors": [
               {
-                "vector": [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
                   "description": "THERMAL EMERGENCY: Immediate action required",
                   "severity": "EMERGENCY"
                 }
               },
               {
-                "vector": [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
                   "description": "Action: Activate emergency cooling systems",
                   "severity": "ACTION"
                 }
               },
               {
-                "vector": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
                   "description": "Action: Force CPU throttling",
                   "severity": "ACTION"
@@ -232,18 +509,126 @@
         "pattern": "12-step escalation from normal to total failure",
         "description": "Complete test scenario showing gradual system degradation with multiple correlated failures",
         "vectors": [
-          [0.25, 0.30, 0.28, 0.38, 0.35, 0.45, 0.38, 0.05],
-          [0.32, 0.38, 0.32, 0.42, 0.38, 0.48, 0.42, 0.08],
-          [0.48, 0.58, 0.45, 0.55, 0.45, 0.52, 0.48, 0.12],
-          [0.52, 0.65, 0.52, 0.62, 0.52, 0.58, 0.52, 0.15],
-          [0.68, 0.75, 0.62, 0.72, 0.58, 0.65, 0.68, 0.18],
-          [0.72, 0.82, 0.68, 0.78, 0.68, 0.75, 0.72, 0.22],
-          [0.78, 0.88, 0.75, 0.85, 0.75, 0.82, 0.78, 0.28],
-          [0.82, 0.90, 0.82, 0.88, 0.82, 0.88, 0.82, 0.32],
-          [0.88, 0.94, 0.88, 0.92, 0.88, 0.92, 0.88, 0.38],
-          [0.91, 0.96, 0.92, 0.95, 0.92, 0.95, 0.92, 0.42],
-          [0.94, 0.98, 0.95, 0.97, 0.95, 0.96, 0.95, 0.45],
-          [0.96, 0.99, 0.97, 0.98, 0.97, 0.98, 0.97, 0.48]
+          [
+            0.25,
+            0.3,
+            0.28,
+            0.38,
+            0.35,
+            0.45,
+            0.38,
+            0.05
+          ],
+          [
+            0.32,
+            0.38,
+            0.32,
+            0.42,
+            0.38,
+            0.48,
+            0.42,
+            0.08
+          ],
+          [
+            0.48,
+            0.58,
+            0.45,
+            0.55,
+            0.45,
+            0.52,
+            0.48,
+            0.12
+          ],
+          [
+            0.52,
+            0.65,
+            0.52,
+            0.62,
+            0.52,
+            0.58,
+            0.52,
+            0.15
+          ],
+          [
+            0.68,
+            0.75,
+            0.62,
+            0.72,
+            0.58,
+            0.65,
+            0.68,
+            0.18
+          ],
+          [
+            0.72,
+            0.82,
+            0.68,
+            0.78,
+            0.68,
+            0.75,
+            0.72,
+            0.22
+          ],
+          [
+            0.78,
+            0.88,
+            0.75,
+            0.85,
+            0.75,
+            0.82,
+            0.78,
+            0.28
+          ],
+          [
+            0.82,
+            0.9,
+            0.82,
+            0.88,
+            0.82,
+            0.88,
+            0.82,
+            0.32
+          ],
+          [
+            0.88,
+            0.94,
+            0.88,
+            0.92,
+            0.88,
+            0.92,
+            0.88,
+            0.38
+          ],
+          [
+            0.91,
+            0.96,
+            0.92,
+            0.95,
+            0.92,
+            0.95,
+            0.92,
+            0.42
+          ],
+          [
+            0.94,
+            0.98,
+            0.95,
+            0.97,
+            0.95,
+            0.96,
+            0.95,
+            0.45
+          ],
+          [
+            0.96,
+            0.99,
+            0.97,
+            0.98,
+            0.97,
+            0.98,
+            0.97,
+            0.48
+          ]
         ],
         "metadata": {
           "scenario": "gradual-degradation",

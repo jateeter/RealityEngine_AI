@@ -332,6 +332,8 @@ export class MachineLoader {
         return ComparatorType.PATTERN;
       case 'custom':
         return ComparatorType.CUSTOM;
+      case 'gte':
+        return ComparatorType.GTE;
       default:
         throw new Error(`Unknown comparator type: ${type}`);
     }

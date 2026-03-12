@@ -9,7 +9,12 @@
       "created": "2026-02-02T00:00:00Z",
       "eventSpace": "2D binary vectors: [S, R] inputs (00, 01, 10, 11)",
       "outputSpace": "2D binary: {[1,0]=SET/HIGH, [0,1]=RESET/LOW, [0,0]=SPECIAL}",
-      "tags": ["flip-flop", "digital-logic", "two-step", "stateful"],
+      "tags": [
+        "flip-flop",
+        "digital-logic",
+        "two-step",
+        "stateful"
+      ],
       "sequenceCount": 2,
       "description": "Two 2-step sequences: SET (00→10) and RESET (00→01)",
       "singleTransitionAssumption": {
@@ -64,13 +69,13 @@
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -80,20 +85,22 @@
               "state": "HOLD",
               "sequenceType": "SET"
             },
-            "nextVectorIds": ["rs2-set-10"]
+            "nextVectorIds": [
+              "rs2-set-10"
+            ]
           },
           {
             "id": "rs2-set-10",
             "elements": [
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": false,
@@ -105,7 +112,10 @@
             "outputVectors": [
               {
                 "id": "rs2-output-set",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "RS2 SET to HIGH (1,0)",
                   "state": "SET"
@@ -129,13 +139,13 @@
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -145,20 +155,22 @@
               "state": "HOLD",
               "sequenceType": "RESET"
             },
-            "nextVectorIds": ["rs2-reset-01"]
+            "nextVectorIds": [
+              "rs2-reset-01"
+            ]
           },
           {
             "id": "rs2-reset-01",
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": false,
@@ -170,7 +182,10 @@
             "outputVectors": [
               {
                 "id": "rs2-output-reset",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "RS2 RESET to LOW (0,1)",
                   "state": "RESET"
@@ -187,8 +202,14 @@
         "pattern": "(0,0)→(1,0)",
         "description": "Transition from hold to set state",
         "vectors": [
-          [0, 0],
-          [1, 0]
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ]
         ]
       },
       {
@@ -196,8 +217,14 @@
         "pattern": "(0,0)→(0,1)",
         "description": "Transition from hold to reset state",
         "vectors": [
-          [0, 0],
-          [0, 1]
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ]
         ]
       },
       {
@@ -205,14 +232,38 @@
         "pattern": "(0,0)→(1,0)→(0,0)→(0,1)→(0,0)→(1,0)→(1,1)→(0,1)",
         "description": "Full test sequence with SET, RESET, and invalid states",
         "vectors": [
-          [0, 0],
-          [1, 0],
-          [0, 0],
-          [0, 1],
-          [0, 0],
-          [1, 0],
-          [1, 1],
-          [0, 1]
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ]
         ],
         "metadata": {
           "expectedOutputs": 3,

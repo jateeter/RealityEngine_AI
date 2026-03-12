@@ -9,7 +9,11 @@
       "created": "2026-02-02T00:00:00Z",
       "eventSpace": "2D binary vectors: [S, R] inputs (00, 01, 10, 11)",
       "outputSpace": "2D binary: {[0,1]=RESET/LOW, [1,0]=SET/HIGH}",
-      "tags": ["flip-flop", "digital-logic", "immediate-response"],
+      "tags": [
+        "flip-flop",
+        "digital-logic",
+        "immediate-response"
+      ],
       "sequenceCount": 2,
       "description": "Two always-active events: SET (10→[1,0]) and RESET (01→[0,1])",
       "singleTransitionAssumption": {
@@ -56,13 +60,13 @@
             "elements": [
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -74,7 +78,10 @@
             "outputVectors": [
               {
                 "id": "rs-output-set",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "Flip flop SET to HIGH (1)",
                   "state": "SET",
@@ -101,13 +108,13 @@
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -119,7 +126,10 @@
             "outputVectors": [
               {
                 "id": "rs-output-reset",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "Flip flop RESET to LOW (0)",
                   "state": "RESET",
@@ -139,8 +149,14 @@
         "pattern": "00→10",
         "description": "Transition from hold to set state",
         "vectors": [
-          [0, 0],
-          [1, 0]
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ]
         ]
       },
       {
@@ -148,8 +164,14 @@
         "pattern": "00→01",
         "description": "Transition from hold to reset state",
         "vectors": [
-          [0, 0],
-          [0, 1]
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ]
         ]
       },
       {
@@ -157,19 +179,58 @@
         "pattern": "13-step validation of all events and outputs",
         "description": "Validates: (1) All event activations (2) All output generation (3) Repeated operations (4) State transitions (5) Visualization correctness. Tests 3x SET, 3x RESET with HOLD states between.",
         "vectors": [
-          [0, 0],
-          [1, 0],
-          [0, 0],
-          [1, 0],
-          [0, 0],
-          [0, 1],
-          [0, 0],
-          [0, 1],
-          [0, 0],
-          [1, 0],
-          [0, 0],
-          [0, 1],
-          [0, 0]
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            0
+          ]
         ],
         "metadata": {
           "validationType": "comprehensive",

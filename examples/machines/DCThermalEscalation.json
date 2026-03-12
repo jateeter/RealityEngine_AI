@@ -9,7 +9,14 @@
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "4D continuous sensor vector at [12:16]: [cpu_temp_norm, cpu_load_norm, cpu_throttle_norm, cpu_efficiency_norm]",
       "outputSpace": "2D binary at [60:62]: [1,0]=THERMAL_ALARM, [0,1]=THERMAL_SAFE",
-      "tags": ["monitoring", "data-center", "thermal", "escalation", "kleene-plus", "continuous"],
+      "tags": [
+        "monitoring",
+        "data-center",
+        "thermal",
+        "escalation",
+        "kleene-plus",
+        "continuous"
+      ],
       "sequenceCount": 2,
       "downstreamMachine": "DCCoolingControlFF (reads [60:62])",
       "regularExpression": {
@@ -62,10 +69,26 @@
           {
             "id": "dc-therm-esc-normal",
             "elements": [
-              {"value": 0.30, "comparatorType": "threshold", "threshold": 0.15},
-              {"value": 0.35, "comparatorType": "threshold", "threshold": 0.18},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.3,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -77,15 +100,34 @@
               "kleeneOperator": "+",
               "semantics": "isInitial (A*A = A+): never deactivates; on each match fires nextVectorIds — activating WARM (and keeping NORMAL active via self-loop). At least one NORMAL match is required to prime WARM. This is A*A not A*."
             },
-            "nextVectorIds": ["dc-therm-esc-normal", "dc-therm-esc-warm"]
+            "nextVectorIds": [
+              "dc-therm-esc-normal",
+              "dc-therm-esc-warm"
+            ]
           },
           {
             "id": "dc-therm-esc-warm",
             "elements": [
-              {"value": 0.55, "comparatorType": "threshold", "threshold": 0.12},
-              {"value": 0.65, "comparatorType": "threshold", "threshold": 0.13},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.55,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -97,15 +139,34 @@
               "kleeneOperator": "+",
               "semantics": "Non-initial transitional with self-loop: deactivates after match, re-activated by its own nextVectorId. Also activates HOT when matched."
             },
-            "nextVectorIds": ["dc-therm-esc-warm", "dc-therm-esc-hot"]
+            "nextVectorIds": [
+              "dc-therm-esc-warm",
+              "dc-therm-esc-hot"
+            ]
           },
           {
             "id": "dc-therm-esc-hot",
             "elements": [
-              {"value": 0.75, "comparatorType": "threshold", "threshold": 0.08},
-              {"value": 0.83, "comparatorType": "threshold", "threshold": 0.08},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.75,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.83,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -116,15 +177,33 @@
               "cpu_load_range": "0.75–0.91 (75%–91%)",
               "semantics": "Non-initial transitional (no self-loop): exactly one HOT observation advances to CRITICAL. Prevents false critical triggers from transient spikes."
             },
-            "nextVectorIds": ["dc-therm-esc-critical"]
+            "nextVectorIds": [
+              "dc-therm-esc-critical"
+            ]
           },
           {
             "id": "dc-therm-esc-critical",
             "elements": [
-              {"value": 0.88, "comparatorType": "threshold", "threshold": 0.07},
-              {"value": 0.92, "comparatorType": "threshold", "threshold": 0.05},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.88,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.92,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -136,15 +215,34 @@
               "kleeneOperator": "+",
               "semantics": "Non-initial transitional with self-loop: must be observed at least once before EMERGENCY. Models a sustained critical condition rather than a transient spike."
             },
-            "nextVectorIds": ["dc-therm-esc-critical", "dc-therm-esc-emergency"]
+            "nextVectorIds": [
+              "dc-therm-esc-critical",
+              "dc-therm-esc-emergency"
+            ]
           },
           {
             "id": "dc-therm-esc-emergency",
             "elements": [
-              {"value": 0.97, "comparatorType": "threshold", "threshold": 0.04},
-              {"value": 0.98, "comparatorType": "threshold", "threshold": 0.03},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.97,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.98,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -158,7 +256,10 @@
             "outputVectors": [
               {
                 "id": "dc-therm-esc-alarm-output",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "THERMAL EMERGENCY: Alarm signal [1,0] to DCCoolingControlFF at [60:62]",
                   "severity": "EMERGENCY",
@@ -181,10 +282,26 @@
           {
             "id": "dc-thermal-safe-event",
             "elements": [
-              {"value": 0.30, "comparatorType": "threshold", "threshold": 0.15},
-              {"value": 0.35, "comparatorType": "threshold", "threshold": 0.18},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50},
-              {"value": 0.50, "comparatorType": "threshold", "threshold": 0.50}
+              {
+                "value": 0.3,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "comparatorType": "gte",
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -198,7 +315,10 @@
             "outputVectors": [
               {
                 "id": "dc-thermal-safe-output",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "THERMAL SAFE: Reset signal [0,1] to DCCoolingControlFF at [60:62]",
                   "severity": "INFO",
@@ -216,18 +336,78 @@
         "pattern": "12-step: NORMAL→NORMAL→WARM→WARM→WARM→HOT→CRITICAL→CRITICAL→EMERGENCY→EMERGENCY→WARM→NORMAL",
         "description": "Complete escalation-and-recovery scenario demonstrating all 5 thermal stages",
         "vectors": [
-          [0.30, 0.35, 0.50, 0.50],
-          [0.32, 0.38, 0.50, 0.50],
-          [0.50, 0.60, 0.50, 0.50],
-          [0.58, 0.67, 0.50, 0.50],
-          [0.62, 0.72, 0.50, 0.50],
-          [0.72, 0.82, 0.50, 0.50],
-          [0.84, 0.90, 0.50, 0.50],
-          [0.89, 0.93, 0.50, 0.50],
-          [0.95, 0.97, 0.50, 0.50],
-          [0.96, 0.98, 0.50, 0.50],
-          [0.58, 0.65, 0.50, 0.50],
-          [0.30, 0.35, 0.50, 0.50]
+          [
+            0.3,
+            0.35,
+            0.5,
+            0.5
+          ],
+          [
+            0.32,
+            0.38,
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.6,
+            0.5,
+            0.5
+          ],
+          [
+            0.58,
+            0.67,
+            0.5,
+            0.5
+          ],
+          [
+            0.62,
+            0.72,
+            0.5,
+            0.5
+          ],
+          [
+            0.72,
+            0.82,
+            0.5,
+            0.5
+          ],
+          [
+            0.84,
+            0.9,
+            0.5,
+            0.5
+          ],
+          [
+            0.89,
+            0.93,
+            0.5,
+            0.5
+          ],
+          [
+            0.95,
+            0.97,
+            0.5,
+            0.5
+          ],
+          [
+            0.96,
+            0.98,
+            0.5,
+            0.5
+          ],
+          [
+            0.58,
+            0.65,
+            0.5,
+            0.5
+          ],
+          [
+            0.3,
+            0.35,
+            0.5,
+            0.5
+          ]
         ],
         "metadata": {
           "scenario": "thermal-escalation-recovery",
@@ -249,9 +429,24 @@
         "pattern": "NORMAL → HOT → NORMAL (skips WARM — fails to trigger escalation)",
         "description": "Demonstrates that abrupt temperature spikes without gradual escalation cannot trigger the alarm. HOT requires WARM+ to have been active first.",
         "vectors": [
-          [0.30, 0.35, 0.50, 0.50],
-          [0.75, 0.85, 0.50, 0.50],
-          [0.30, 0.35, 0.50, 0.50]
+          [
+            0.3,
+            0.35,
+            0.5,
+            0.5
+          ],
+          [
+            0.75,
+            0.85,
+            0.5,
+            0.5
+          ],
+          [
+            0.3,
+            0.35,
+            0.5,
+            0.5
+          ]
         ],
         "metadata": {
           "scenario": "abrupt-spike-no-alarm",

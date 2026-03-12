@@ -9,7 +9,19 @@ export enum ComparatorType {
   EQUALS = 'equals',
   THRESHOLD = 'threshold',
   PATTERN = 'pattern',
-  CUSTOM = 'custom'
+  CUSTOM = 'custom',
+  /**
+   * Greater-than-or-equal threshold comparator.
+   *
+   * Each element declares an expected activation state based on whether its
+   * value is above or below the threshold:
+   *   • value >= threshold  →  element expects HIGH  →  matches when inputValue >= threshold
+   *   • value <  threshold  →  element expects LOW   →  matches when inputValue <  threshold
+   *
+   * This preserves binary machine semantics (value 0 → LOW, value 1 → HIGH
+   * when threshold=0.5) and naturally extends to continuous sensors.
+   */
+  GTE = 'gte',
 }
 
 /**

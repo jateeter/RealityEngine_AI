@@ -9,7 +9,12 @@
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "4D binary FF-state vector at [100:104]: [CoolingQ, CoolingQ̄, NetworkQ, NetworkQ̄]",
       "outputSpace": "2D binary at [72:74]: [1,0]=MULTI_ALARM, [0,1]=ALL_CLEAR",
-      "tags": ["synthesizer", "data-center", "multi-alarm", "correlation"],
+      "tags": [
+        "synthesizer",
+        "data-center",
+        "multi-alarm",
+        "correlation"
+      ],
       "sequenceCount": 2,
       "role": "Detects simultaneous thermal AND network failure conditions; drives DCCriticalAlertFF",
       "upstreamMachines": [
@@ -59,23 +64,23 @@
             "elements": [
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -89,7 +94,10 @@
             "outputVectors": [
               {
                 "id": "dc-synth-multi-alarm-output",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "MULTI-SYSTEM CRITICAL: Thermal + Network failure correlation detected",
                   "severity": "CRITICAL",
@@ -116,23 +124,23 @@
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "equals",
-                "threshold": 0.50
+                "comparatorType": "gte",
+                "threshold": 0.5
               }
             ],
             "isInitial": true,
@@ -146,7 +154,10 @@
             "outputVectors": [
               {
                 "id": "dc-synth-all-clear-output",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "ALL SYSTEMS CLEAR: Both thermal and network conditions nominal",
                   "severity": "INFO",
@@ -164,9 +175,24 @@
         "pattern": "[0,1,0,1] → [1,0,0,1] → [1,0,1,0]",
         "description": "All clear → thermal alarm only → thermal + network alarm (critical)",
         "vectors": [
-          [0, 1, 0, 1],
-          [1, 0, 0, 1],
-          [1, 0, 1, 0]
+          [
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ]
         ],
         "metadata": {
           "step1": "All clear: fires ALL_CLEAR [0,1]",
@@ -179,9 +205,24 @@
         "pattern": "[1,0,1,0] → [1,0,0,1] → [0,1,0,1]",
         "description": "Both alarms → thermal only → all clear",
         "vectors": [
-          [1, 0, 1, 0],
-          [1, 0, 0, 1],
-          [0, 1, 0, 1]
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            1
+          ]
         ],
         "metadata": {
           "step1": "Both alarms: fires MULTI_ALARM [1,0]",
@@ -194,12 +235,42 @@
         "pattern": "6-step escalation and recovery",
         "description": "Demonstrates complete cascading failure correlation lifecycle",
         "vectors": [
-          [0, 1, 0, 1],
-          [0, 1, 0, 1],
-          [1, 0, 0, 1],
-          [1, 0, 1, 0],
-          [1, 0, 1, 0],
-          [0, 1, 0, 1]
+          [
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            1
+          ]
         ],
         "metadata": {
           "step1": "Nominal: ALL_CLEAR fires [0,1]",

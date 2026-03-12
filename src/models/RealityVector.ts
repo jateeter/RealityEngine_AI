@@ -234,6 +234,26 @@ export class RealityVector {
           score: element.value === inputValue ? 1 : 0
         };
 
+      case ComparatorType.GTE: {
+        // Threshold-state comparator: each element's "expected state" is
+        // determined by whether its value is above or below the threshold.
+        //   value >= threshold  →  expects HIGH  →  matches when input >= threshold
+        //   value <  threshold  →  expects LOW   →  matches when input <  threshold
+        //
+        // This preserves binary semantics (0=LOW, 1=HIGH when threshold=0.5) and
+        // extends naturally to continuous sensors (low values → detect LOW readings,
+        // high values → detect HIGH readings).
+        const gteThresh = element.threshold ?? 0.5;
+        const inputHigh = inputValue >= gteThresh;
+        const valueHigh = element.value >= gteThresh;
+        if (inputHigh !== valueHigh) return { matched: false, score: 0 };
+        // Score: how strongly the input is on the correct side of the threshold
+        const score = inputHigh
+          ? (gteThresh < 1 ? (inputValue - gteThresh) / (1 - gteThresh) : 1)
+          : (gteThresh > 0 ? (gteThresh - inputValue) / gteThresh : 1);
+        return { matched: true, score: Math.max(0, Math.min(1, score)) };
+      }
+
       default:
         return { matched: false, score: 0 };
     }
