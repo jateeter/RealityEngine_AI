@@ -1,0 +1,460 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "id": "ai-security-monitor",
+    "name": "AI Security Monitor",
+    "description": "Detects security anomalies in AI infrastructure — unusual authentication patterns, network exfiltration indicators, privilege escalation, and confirmed threat signals.",
+    "arbiterRule": "PASSTHROUGH",
+    "matchAlgorithm": "gte",
+    "perceptualMapping": {
+      "inputOffset": 132,
+      "inputLength": 4,
+      "outputOffset": 168,
+      "outputLength": 6
+    },
+    "metadata": {
+      "domain": "AI Infrastructure Security",
+      "inputDimensions": [
+        {
+          "index": 0,
+          "name": "auth_anomaly_score",
+          "description": "0=normal login patterns, 1=highly anomalous (unusual times/locations/volumes)"
+        },
+        {
+          "index": 1,
+          "name": "network_anomaly_score",
+          "description": "0=normal traffic, 1=highly anomalous (exfiltration patterns, beaconing)"
+        },
+        {
+          "index": 2,
+          "name": "privilege_escalation_score",
+          "description": "0=no escalation detected, 1=confirmed escalation attempt"
+        },
+        {
+          "index": 3,
+          "name": "threat_confidence",
+          "description": "0=no corroborating signals, 1=multiple corroborating threat indicators"
+        }
+      ],
+      "outputDimensions": [
+        {
+          "index": 0,
+          "name": "STATUS_SECURE"
+        },
+        {
+          "index": 1,
+          "name": "STATUS_SUSPICIOUS"
+        },
+        {
+          "index": 2,
+          "name": "STATUS_ELEVATED_THREAT"
+        },
+        {
+          "index": 3,
+          "name": "STATUS_CRITICAL_THREAT"
+        },
+        {
+          "index": 4,
+          "name": "ACT_ALERT_SOC"
+        },
+        {
+          "index": 5,
+          "name": "ACT_ISOLATE_NETWORK_SEGMENT"
+        }
+      ]
+    }
+  },
+  "sequences": [
+    {
+      "id": "aism-threat-escalation",
+      "name": "Security Threat Escalation",
+      "description": "4-step escalation: SECURE → SUSPICIOUS → ELEVATED → CRITICAL as threat indicators progressively activate",
+      "vectors": [
+        {
+          "id": "aism-secure",
+          "isInitial": true,
+          "nextVectorIds": [
+            "aism-suspicious"
+          ],
+          "elements": [
+            {
+              "value": 0.08,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.1,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.05,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.12,
+              "threshold": 0.5
+            }
+          ],
+          "outputVectors": [
+            {
+              "id": "aism-out-secure",
+              "vector": [
+                1,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "metadata": {
+                "description": "Security posture SECURE — all anomaly indicators within baseline",
+                "severity": "INFO"
+              }
+            }
+          ]
+        },
+        {
+          "id": "aism-suspicious",
+          "isInitial": false,
+          "nextVectorIds": [
+            "aism-elevated"
+          ],
+          "elements": [
+            {
+              "value": 0.62,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.58,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.55,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.6,
+              "threshold": 0.5
+            }
+          ],
+          "outputVectors": [
+            {
+              "id": "aism-out-suspicious",
+              "vector": [
+                0,
+                1,
+                0,
+                0,
+                0,
+                0
+              ],
+              "metadata": {
+                "description": "Security SUSPICIOUS — anomalous patterns detected, investigation warranted",
+                "severity": "WARNING"
+              }
+            }
+          ]
+        },
+        {
+          "id": "aism-elevated",
+          "isInitial": false,
+          "nextVectorIds": [
+            "aism-critical"
+          ],
+          "elements": [
+            {
+              "value": 0.78,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.75,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.8,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.72,
+              "threshold": 0.5
+            }
+          ],
+          "outputVectors": [
+            {
+              "id": "aism-out-elevated",
+              "vector": [
+                0,
+                0,
+                1,
+                0,
+                0,
+                0
+              ],
+              "metadata": {
+                "description": "Security ELEVATED THREAT — correlated anomalies suggest active intrusion attempt",
+                "severity": "CRITICAL"
+              }
+            },
+            {
+              "id": "aism-act-alert",
+              "vector": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                0
+              ],
+              "metadata": {
+                "description": "Action: Alert Security Operations Center, begin incident investigation",
+                "severity": "ACTION"
+              }
+            }
+          ]
+        },
+        {
+          "id": "aism-critical",
+          "isInitial": false,
+          "nextVectorIds": [],
+          "elements": [
+            {
+              "value": 0.92,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.9,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.95,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.94,
+              "threshold": 0.5
+            }
+          ],
+          "outputVectors": [
+            {
+              "id": "aism-out-critical",
+              "vector": [
+                0,
+                0,
+                0,
+                1,
+                0,
+                0
+              ],
+              "metadata": {
+                "description": "Security CRITICAL — confirmed intrusion with privilege escalation, immediate response required",
+                "severity": "EMERGENCY"
+              }
+            },
+            {
+              "id": "aism-act-alert-crit",
+              "vector": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                0
+              ],
+              "metadata": {
+                "description": "Action: Page on-call security team, escalate to CISO",
+                "severity": "ACTION"
+              }
+            },
+            {
+              "id": "aism-act-isolate",
+              "vector": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                1
+              ],
+              "metadata": {
+                "description": "Action: Isolate affected network segment, revoke compromised credentials",
+                "severity": "ACTION"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aism-rapid-privilege-escalation",
+      "name": "Rapid Privilege Escalation Response",
+      "description": "2-step detection: BASELINE → CONFIRMED_ESCALATION — fires when privilege escalation and threat confidence are HIGH while other indicators remain low",
+      "vectors": [
+        {
+          "id": "aism-baseline",
+          "isInitial": true,
+          "nextVectorIds": [
+            "aism-confirmed-escalation"
+          ],
+          "elements": [
+            {
+              "value": 0.15,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.12,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.1,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.18,
+              "threshold": 0.5
+            }
+          ],
+          "outputVectors": []
+        },
+        {
+          "id": "aism-confirmed-escalation",
+          "isInitial": false,
+          "nextVectorIds": [],
+          "elements": [
+            {
+              "value": 0.15,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.12,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.88,
+              "threshold": 0.5
+            },
+            {
+              "value": 0.9,
+              "threshold": 0.5
+            }
+          ],
+          "outputVectors": [
+            {
+              "id": "aism-out-escalation-alert",
+              "vector": [
+                0,
+                0,
+                1,
+                0,
+                0,
+                0
+              ],
+              "metadata": {
+                "description": "Rapid escalation: Privilege escalation confirmed with high threat confidence",
+                "severity": "CRITICAL"
+              }
+            },
+            {
+              "id": "aism-act-isolate-fast",
+              "vector": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                1
+              ],
+              "metadata": {
+                "description": "Action: Immediate isolation — privilege escalation confirmed, contain before lateral movement",
+                "severity": "ACTION"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "inputSequences": [
+    {
+      "id": "aisec-seq-1",
+      "name": "Normal Security Baseline",
+      "description": "All anomaly scores well below threshold — system operating securely",
+      "inputs": [
+        [
+          0.06,
+          0.08,
+          0.04,
+          0.1
+        ],
+        [
+          0.08,
+          0.1,
+          0.05,
+          0.12
+        ],
+        [
+          0.07,
+          0.09,
+          0.06,
+          0.11
+        ]
+      ]
+    },
+    {
+      "id": "aisec-seq-2",
+      "name": "Threat Escalation to Critical",
+      "description": "Progressive escalation from secure baseline through suspicious and elevated to critical threat level",
+      "inputs": [
+        [
+          0.08,
+          0.1,
+          0.05,
+          0.12
+        ],
+        [
+          0.62,
+          0.58,
+          0.55,
+          0.6
+        ],
+        [
+          0.78,
+          0.75,
+          0.8,
+          0.72
+        ],
+        [
+          0.92,
+          0.9,
+          0.95,
+          0.94
+        ]
+      ],
+      "metadata": {
+        "expectedOutputs": 4,
+        "scenario": "APT attack on AI model weights and training data exfiltration attempt"
+      }
+    },
+    {
+      "id": "aisec-seq-3",
+      "name": "Rapid Privilege Escalation",
+      "description": "Sudden privilege escalation with high confidence while other indicators remain low — insider threat pattern",
+      "inputs": [
+        [
+          0.12,
+          0.1,
+          0.08,
+          0.15
+        ],
+        [
+          0.15,
+          0.12,
+          0.9,
+          0.92
+        ]
+      ],
+      "metadata": {
+        "expectedOutputs": 1,
+        "scenario": "Rogue insider bypasses access controls targeting model serving infrastructure"
+      }
+    }
+  ]
+}
