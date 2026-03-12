@@ -317,4 +317,70 @@ describe('RealityVector', () => {
       expect(restored.metadata).toEqual(vector.metadata);
     });
   });
+
+  describe('Machine-level matchAlgorithm', () => {
+    test('default matchAlgorithm is GTE', () => {
+      const vector = new RealityVector([{ value: 1, threshold: 0.5 }]);
+      expect(vector.matchAlgorithm).toBe(ComparatorType.GTE);
+    });
+
+    test('vector uses matchAlgorithm when elements have no comparatorType', () => {
+      // No comparatorType on elements — relies entirely on machine algorithm (GTE)
+      const elements: VectorElement[] = [
+        { value: 1, threshold: 0.5 },
+        { value: 0, threshold: 0.5 }
+      ];
+      const vector = new RealityVector(elements);
+      vector.matchAlgorithm = ComparatorType.GTE;
+      // GTE: value=1 expects HIGH (input>=0.5), value=0 expects LOW (input<0.5)
+      expect(vector.match([1, 0]).matched).toBe(true);
+      expect(vector.match([0, 1]).matched).toBe(false);
+      expect(vector.match([0, 0]).matched).toBe(false);
+    });
+
+    test('element-level comparatorType overrides matchAlgorithm', () => {
+      // Machine algorithm is GTE, but one element explicitly uses EQUALS
+      const elements: VectorElement[] = [
+        { value: 0.5, comparatorType: ComparatorType.EQUALS }
+      ];
+      const vector = new RealityVector(elements);
+      vector.matchAlgorithm = ComparatorType.GTE;
+      // EQUALS: only exact 0.5 matches (not 0.8 which GTE would accept)
+      expect(vector.match([0.5]).matched).toBe(true);
+      expect(vector.match([0.8]).matched).toBe(false);
+    });
+
+    test('matchAlgorithm=EQUALS treats elements without comparatorType as EQUALS', () => {
+      const elements: VectorElement[] = [{ value: 0.5 }];
+      const vector = new RealityVector(elements);
+      vector.matchAlgorithm = ComparatorType.EQUALS;
+      expect(vector.match([0.5]).matched).toBe(true);
+      expect(vector.match([0.6]).matched).toBe(false);
+    });
+
+    test('clone() preserves matchAlgorithm', () => {
+      const elements: VectorElement[] = [{ value: 1, threshold: 0.5 }];
+      const original = new RealityVector(elements);
+      original.matchAlgorithm = ComparatorType.THRESHOLD;
+      const cloned = original.clone();
+      expect(cloned.matchAlgorithm).toBe(ComparatorType.THRESHOLD);
+    });
+
+    test('toJSON()/fromJSON() roundtrip preserves matchAlgorithm', () => {
+      const elements: VectorElement[] = [{ value: 1, threshold: 0.5 }];
+      const original = new RealityVector(elements);
+      original.matchAlgorithm = ComparatorType.EQUALS;
+      const restored = RealityVector.fromJSON(original.toJSON());
+      expect(restored.matchAlgorithm).toBe(ComparatorType.EQUALS);
+    });
+
+    test('fromJSON() defaults matchAlgorithm to GTE when absent', () => {
+      const elements: VectorElement[] = [{ value: 1, threshold: 0.5 }];
+      const original = new RealityVector(elements);
+      const json = original.toJSON();
+      delete json.matchAlgorithm;
+      const restored = RealityVector.fromJSON(json);
+      expect(restored.matchAlgorithm).toBe(ComparatorType.GTE);
+    });
+  });
 });

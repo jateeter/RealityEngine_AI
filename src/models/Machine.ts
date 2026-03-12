@@ -1,6 +1,7 @@
 import { CriticalEventSequence } from './CriticalEventSequence.js';
 import { OutputArbiter, ArbiterRule } from './OutputArbiter.js';
 import { PerceptualSpace } from './PerceptualSpace.js';
+import { ComparatorType } from './types.js';
 import type { MachineTransitionResult, OutputVector, PerceptualMapping } from './types.js';
 
 /**
@@ -18,6 +19,8 @@ export class Machine {
   public readonly id: string;
   public readonly name: string;
   public readonly description: string;
+  /** The match algorithm used by all vectors in this machine (unless overridden per-element). */
+  public matchAlgorithm: ComparatorType = ComparatorType.GTE;
   private sequences: Map<string, CriticalEventSequence>;
   private arbiter: OutputArbiter;
   public readonly metadata: Record<string, any>;
@@ -258,6 +261,7 @@ export class Machine {
       mapping,
       this.id
     );
+    cloned.matchAlgorithm = this.matchAlgorithm;
 
     for (const sequence of this.sequences.values()) {
       cloned.addSequence(sequence.clone());
@@ -274,6 +278,7 @@ export class Machine {
       id: this.id,
       name: this.name,
       description: this.description,
+      matchAlgorithm: this.matchAlgorithm,
       sequenceCount: this.getSequenceCount(),
       totalVectors: this.getTotalVectorCount(),
       sequenceIds: this.getSequenceIds(),

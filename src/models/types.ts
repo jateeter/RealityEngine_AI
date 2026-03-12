@@ -47,7 +47,7 @@ export type ComparatorFunction = (
  */
 export interface VectorElement {
   value: number;
-  comparatorType: ComparatorType;
+  comparatorType?: ComparatorType;  // Optional — falls back to the machine's matchAlgorithm
   threshold?: number;
   customComparator?: ComparatorFunction;
 }

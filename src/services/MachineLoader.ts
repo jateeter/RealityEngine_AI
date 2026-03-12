@@ -21,6 +21,7 @@ export interface MachineJSON {
     description: string;
     metadata?: Record<string, any>;
     arbiterRule: string;
+    matchAlgorithm?: string;  // Optional machine-level default match algorithm
     perceptualMapping?: {
       input: { offset: number; length: number };
       output: { offset: number; length: number };
@@ -48,7 +49,7 @@ export interface VectorJSON {
 
 export interface ElementJSON {
   value: number;
-  comparatorType: string;
+  comparatorType?: string;  // Optional — element-level override; machine matchAlgorithm is used when absent
   threshold?: number;
 }
 
@@ -119,6 +120,11 @@ export class MachineLoader {
       inputSequences: machineData.inputSequences || []
     };
 
+    // Parse machine-level match algorithm (defaults to GTE for all example machines)
+    const matchAlgorithm = machineData.matchAlgorithm
+      ? this.parseComparatorType(machineData.matchAlgorithm)
+      : ComparatorType.GTE;
+
     // Create machine (use provided id for stable identity across server restarts)
     const machine = new Machine(
       machineData.name,
@@ -128,10 +134,11 @@ export class MachineLoader {
       perceptualMapping,
       id
     );
+    machine.matchAlgorithm = matchAlgorithm;
 
-    // Load sequences
+    // Load sequences, propagating the machine's match algorithm to every vector
     for (const seqJSON of machineData.sequences) {
-      const sequence = this.loadSequenceFromJSON(seqJSON);
+      const sequence = this.loadSequenceFromJSON(seqJSON, matchAlgorithm);
       machine.addSequence(sequence);
     }
 
@@ -141,7 +148,10 @@ export class MachineLoader {
   /**
    * Load a sequence from JSON
    */
-  private static loadSequenceFromJSON(seqJSON: SequenceJSON): CriticalEventSequence {
+  private static loadSequenceFromJSON(
+    seqJSON: SequenceJSON,
+    matchAlgorithm: ComparatorType = ComparatorType.GTE
+  ): CriticalEventSequence {
     const sequenceId = seqJSON.id || uuidv4();
     const sequence = new CriticalEventSequence(seqJSON.name, sequenceId);
 
@@ -156,20 +166,21 @@ export class MachineLoader {
     for (const vecJSON of seqJSON.vectors) {
       const vectorId = vecJSON.id || uuidv4();
 
-      // Parse elements
+      // Parse elements — comparatorType is optional (falls back to machine matchAlgorithm)
       const elements: VectorElement[] = vecJSON.elements.map(elem => {
-        const element: VectorElement = {
-          value: elem.value,
-          comparatorType: this.parseComparatorType(elem.comparatorType)
-        };
+        const element: VectorElement = { value: elem.value };
+        if (elem.comparatorType !== undefined) {
+          element.comparatorType = this.parseComparatorType(elem.comparatorType);
+        }
         if (elem.threshold !== undefined) {
           element.threshold = elem.threshold;
         }
         return element;
       });
 
-      // Create vector
+      // Create vector and stamp the machine's match algorithm on it
       const vector = new RealityVector(elements, vecJSON.isInitial, vectorId);
+      vector.matchAlgorithm = matchAlgorithm;
 
       // Set metadata
       if (vecJSON.metadata) {
@@ -223,7 +234,8 @@ export class MachineLoader {
       description: machine.description,
       metadata: { ...machine.metadata },
       arbiterRule: this.serializeArbiterRule(machine.getArbiter().getRule()),
-      sequences: this.saveSequencesToJSON(machine.getAllSequences()),
+      matchAlgorithm: this.serializeComparatorType(machine.matchAlgorithm),
+      sequences: this.saveSequencesToJSON(machine.getAllSequences(), machine.matchAlgorithm),
       inputSequences: machine.metadata.inputSequences || []
     };
 
@@ -248,27 +260,35 @@ export class MachineLoader {
   /**
    * Save sequences to JSON
    */
-  private static saveSequencesToJSON(sequences: CriticalEventSequence[]): SequenceJSON[] {
+  private static saveSequencesToJSON(
+    sequences: CriticalEventSequence[],
+    machineAlgorithm: ComparatorType = ComparatorType.GTE
+  ): SequenceJSON[] {
     return sequences.map(seq => ({
       id: seq.id,
       name: seq.name,
       metadata: seq.metadata,
-      vectors: this.saveVectorsToJSON(seq.getAllVectors())
+      vectors: this.saveVectorsToJSON(seq.getAllVectors(), machineAlgorithm)
     }));
   }
 
   /**
-   * Save vectors to JSON
+   * Save vectors to JSON — only emits element comparatorType when it is an
+   * explicit per-element override (different from the machine-level algorithm).
    */
-  private static saveVectorsToJSON(vectors: RealityVector[]): VectorJSON[] {
+  private static saveVectorsToJSON(
+    vectors: RealityVector[],
+    machineAlgorithm: ComparatorType = ComparatorType.GTE
+  ): VectorJSON[] {
     return vectors.map(vec => {
       const vectorJSON: VectorJSON = {
         id: vec.id,
         elements: vec.getElements().map(elem => {
-          const elemJSON: ElementJSON = {
-            value: elem.value,
-            comparatorType: this.serializeComparatorType(elem.comparatorType)
-          };
+          const elemJSON: ElementJSON = { value: elem.value };
+          // Only emit comparatorType when it is an element-level override
+          if (elem.comparatorType !== undefined && elem.comparatorType !== machineAlgorithm) {
+            elemJSON.comparatorType = this.serializeComparatorType(elem.comparatorType);
+          }
           if (elem.threshold !== undefined) {
             elemJSON.threshold = elem.threshold;
           }
@@ -344,16 +364,12 @@ export class MachineLoader {
    */
   private static serializeComparatorType(type: ComparatorType): string {
     switch (type) {
-      case ComparatorType.EQUALS:
-        return 'equals';
-      case ComparatorType.THRESHOLD:
-        return 'threshold';
-      case ComparatorType.PATTERN:
-        return 'pattern';
-      case ComparatorType.CUSTOM:
-        return 'custom';
-      default:
-        return 'equals';
+      case ComparatorType.EQUALS:    return 'equals';
+      case ComparatorType.THRESHOLD: return 'threshold';
+      case ComparatorType.PATTERN:   return 'pattern';
+      case ComparatorType.CUSTOM:    return 'custom';
+      case ComparatorType.GTE:       return 'gte';
+      default:                        return 'equals';
     }
   }
 

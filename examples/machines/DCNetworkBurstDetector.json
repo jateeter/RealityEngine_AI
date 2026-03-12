@@ -63,22 +63,18 @@
             "elements": [
               {
                 "value": 0.2,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.05,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -101,22 +97,18 @@
             "elements": [
               {
                 "value": 0.55,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.15,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -139,22 +131,18 @@
             "elements": [
               {
                 "value": 0.75,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.3,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -176,22 +164,18 @@
             "elements": [
               {
                 "value": 0.88,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.55,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -214,22 +198,18 @@
             "elements": [
               {
                 "value": 0.97,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.85,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -272,22 +252,18 @@
             "elements": [
               {
                 "value": 0.2,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.05,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -408,6 +384,7 @@
           }
         }
       }
-    ]
+    ],
+    "matchAlgorithm": "gte"
   }
 }

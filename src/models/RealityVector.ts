@@ -13,6 +13,8 @@ import type { VectorElement, MatchResult, OutputVector } from './types.js';
  */
 export class RealityVector {
   public readonly id: string;
+  /** The default match algorithm for this vector, inherited from the machine. */
+  public matchAlgorithm: ComparatorType = ComparatorType.GTE;
   private elements: VectorElement[];
   private state: VectorState;
   private nextVectorIds: string[];
@@ -199,7 +201,10 @@ export class RealityVector {
    * Compare a single element using its configured comparator
    */
   private compareElement(element: VectorElement, inputValue: number): MatchResult {
-    switch (element.comparatorType) {
+    // Use element's explicit comparatorType if provided; otherwise fall back to
+    // the machine-level matchAlgorithm stored on this vector.
+    const effectiveType = element.comparatorType ?? this.matchAlgorithm;
+    switch (effectiveType) {
       case ComparatorType.EQUALS:
         return {
           matched: element.value === inputValue,
@@ -326,6 +331,7 @@ export class RealityVector {
    */
   public clone(): RealityVector {
     const cloned = new RealityVector([...this.elements], this.isInitial, this.id);
+    cloned.matchAlgorithm = this.matchAlgorithm;
     cloned.state = this.state;
     cloned.nextVectorIds = [...this.nextVectorIds];
     cloned.outputVectors = [...this.outputVectors];
@@ -341,6 +347,7 @@ export class RealityVector {
   public toJSON(): any {
     return {
       id: this.id,
+      matchAlgorithm: this.matchAlgorithm,
       elements: this.elements,
       state: this.state,
       isActive: this.isActive(),
@@ -358,6 +365,7 @@ export class RealityVector {
    */
   public static fromJSON(json: any): RealityVector {
     const vector = new RealityVector(json.elements, json.isInitial, json.id);
+    vector.matchAlgorithm = json.matchAlgorithm ?? ComparatorType.GTE;
     vector.state = json.state;
     vector.nextVectorIds = json.nextVectorIds || [];
     vector.outputVectors = json.outputVectors || [];

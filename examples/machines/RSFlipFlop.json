@@ -60,12 +60,10 @@
             "elements": [
               {
                 "value": 1,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -108,12 +106,10 @@
             "elements": [
               {
                 "value": 0,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 1,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -244,6 +240,7 @@
           "validatesStateTransitions": true
         }
       }
-    ]
+    ],
+    "matchAlgorithm": "gte"
   }
 }

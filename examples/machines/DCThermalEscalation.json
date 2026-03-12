@@ -71,22 +71,18 @@
             "elements": [
               {
                 "value": 0.3,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.35,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -110,22 +106,18 @@
             "elements": [
               {
                 "value": 0.55,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.65,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -149,22 +141,18 @@
             "elements": [
               {
                 "value": 0.75,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.83,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -186,22 +174,18 @@
             "elements": [
               {
                 "value": 0.88,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.92,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -225,22 +209,18 @@
             "elements": [
               {
                 "value": 0.97,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.98,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -284,22 +264,18 @@
             "elements": [
               {
                 "value": 0.3,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.35,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               },
               {
                 "value": 0.5,
-                "comparatorType": "gte",
                 "threshold": 0.5
               }
             ],
@@ -458,6 +434,7 @@
           "note": "HOT vector is only activated after WARM has matched at least once. An abrupt jump from NORMAL to HOT bypasses the WARM+ requirement, preventing false alarms from transient spikes."
         }
       }
-    ]
+    ],
+    "matchAlgorithm": "gte"
   }
 }
