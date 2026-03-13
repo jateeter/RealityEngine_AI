@@ -15,394 +15,394 @@
         "offset": 150,
         "length": 6
       }
-    }
-  },
-  "sequences": [
-    {
-      "id": "aipe-pue-escalation",
-      "name": "PUE Efficiency Escalation",
-      "vectors": [
-        {
-          "id": "aipe-efficient",
-          "isInitial": true,
-          "nextVectorIds": [
-            "aipe-elevated"
-          ],
-          "elements": [
-            {
-              "value": 0.15,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.3,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.2,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.1,
-              "threshold": 0.5
-            }
-          ],
-          "outputVectors": [
-            {
-              "id": "aipe-out-efficient",
-              "vector": [
-                1,
-                0,
-                0,
-                0,
-                0,
-                0
-              ],
-              "metadata": {
-                "description": "Power efficiency OPTIMAL — PUE within target, renewable mix healthy",
-                "severity": "INFO"
-              }
-            }
-          ]
-        },
-        {
-          "id": "aipe-elevated",
-          "isInitial": false,
-          "nextVectorIds": [
-            "aipe-high"
-          ],
-          "elements": [
-            {
-              "value": 0.62,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.65,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.58,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.6,
-              "threshold": 0.5
-            }
-          ],
-          "outputVectors": [
-            {
-              "id": "aipe-out-elevated",
-              "vector": [
-                0,
-                1,
-                0,
-                0,
-                0,
-                0
-              ],
-              "metadata": {
-                "description": "Power efficiency ELEVATED WASTE — PUE rising, review workload scheduling",
-                "severity": "WARNING"
-              }
-            }
-          ]
-        },
-        {
-          "id": "aipe-high",
-          "isInitial": false,
-          "nextVectorIds": [
-            "aipe-critical"
-          ],
-          "elements": [
-            {
-              "value": 0.78,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.8,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.72,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.75,
-              "threshold": 0.5
-            }
-          ],
-          "outputVectors": [
-            {
-              "id": "aipe-out-high",
-              "vector": [
-                0,
-                0,
-                1,
-                0,
-                0,
-                0
-              ],
-              "metadata": {
-                "description": "Power efficiency HIGH WASTE — PUE critical, throttle non-priority workloads",
-                "severity": "CRITICAL"
-              }
-            },
-            {
-              "id": "aipe-act-throttle",
-              "vector": [
-                0,
-                0,
-                0,
-                1,
-                0,
-                0
-              ],
-              "metadata": {
-                "description": "Action: Throttle batch and non-priority ML training jobs",
-                "severity": "ACTION"
-              }
-            }
-          ]
-        },
-        {
-          "id": "aipe-critical",
-          "isInitial": false,
-          "nextVectorIds": [],
-          "elements": [
-            {
-              "value": 0.92,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.95,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.88,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.91,
-              "threshold": 0.5
-            }
-          ],
-          "outputVectors": [
-            {
-              "id": "aipe-out-critical",
-              "vector": [
-                0,
-                0,
-                1,
-                0,
-                0,
-                0
-              ],
-              "metadata": {
-                "description": "Power efficiency EMERGENCY — PUE critical, immediate action required",
-                "severity": "EMERGENCY"
-              }
-            },
-            {
-              "id": "aipe-act-throttle-crit",
-              "vector": [
-                0,
-                0,
-                0,
-                1,
-                0,
-                0
-              ],
-              "metadata": {
-                "description": "Action: Throttle all non-essential compute immediately",
-                "severity": "ACTION"
-              }
-            },
-            {
-              "id": "aipe-act-emergency",
-              "vector": [
-                0,
-                0,
-                0,
-                0,
-                0,
-                1
-              ],
-              "metadata": {
-                "description": "Action: Activate emergency power save mode, suspend training jobs",
-                "severity": "ACTION"
-              }
-            }
-          ]
-        }
-      ]
     },
-    {
-      "id": "aipe-carbon-spike",
-      "name": "Carbon Intensity Spike Alert",
-      "vectors": [
-        {
-          "id": "aipe-carbon-clean",
-          "isInitial": true,
-          "nextVectorIds": [
-            "aipe-carbon-dirty"
-          ],
-          "elements": [
-            {
-              "value": 0.2,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.38,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.22,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.12,
-              "threshold": 0.5
-            }
-          ],
-          "outputVectors": []
-        },
-        {
-          "id": "aipe-carbon-dirty",
-          "isInitial": false,
-          "nextVectorIds": [],
-          "elements": [
-            {
-              "value": 0.2,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.38,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.22,
-              "threshold": 0.5
-            },
-            {
-              "value": 0.82,
-              "threshold": 0.5
-            }
-          ],
-          "outputVectors": [
-            {
-              "id": "aipe-out-carbon-warn",
-              "vector": [
-                0,
-                1,
-                0,
-                0,
-                0,
-                0
-              ],
-              "metadata": {
-                "description": "Carbon spike: grid carbon intensity high despite acceptable power efficiency",
-                "severity": "WARNING"
+    "sequences": [
+      {
+        "id": "aipe-pue-escalation",
+        "name": "PUE Efficiency Escalation",
+        "vectors": [
+          {
+            "id": "aipe-efficient",
+            "isInitial": true,
+            "nextVectorIds": [
+              "aipe-elevated"
+            ],
+            "elements": [
+              {
+                "value": 0.15,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.3,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
               }
-            },
-            {
-              "id": "aipe-act-shift",
-              "vector": [
-                0,
-                0,
-                0,
-                0,
-                1,
-                0
-              ],
-              "metadata": {
-                "description": "Action: Migrate deferrable AI workloads to renewable-powered datacenter regions",
-                "severity": "ACTION"
+            ],
+            "outputVectors": [
+              {
+                "id": "aipe-out-efficient",
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "description": "Power efficiency OPTIMAL — PUE within target, renewable mix healthy",
+                  "severity": "INFO"
+                }
               }
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "inputSequences": [
-    {
-      "id": "aipe-seq-normal",
-      "name": "Normal Operation",
-      "inputs": [
-        [
-          0.12,
-          0.28,
-          0.18,
-          0.08
-        ],
-        [
-          0.15,
-          0.32,
-          0.22,
-          0.11
-        ],
-        [
-          0.18,
-          0.35,
-          0.2,
-          0.09
+            ]
+          },
+          {
+            "id": "aipe-elevated",
+            "isInitial": false,
+            "nextVectorIds": [
+              "aipe-high"
+            ],
+            "elements": [
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              }
+            ],
+            "outputVectors": [
+              {
+                "id": "aipe-out-elevated",
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "description": "Power efficiency ELEVATED WASTE — PUE rising, review workload scheduling",
+                  "severity": "WARNING"
+                }
+              }
+            ]
+          },
+          {
+            "id": "aipe-high",
+            "isInitial": false,
+            "nextVectorIds": [
+              "aipe-critical"
+            ],
+            "elements": [
+              {
+                "value": 0.78,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.8,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.72,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.75,
+                "threshold": 0.5
+              }
+            ],
+            "outputVectors": [
+              {
+                "id": "aipe-out-high",
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "description": "Power efficiency HIGH WASTE — PUE critical, throttle non-priority workloads",
+                  "severity": "CRITICAL"
+                }
+              },
+              {
+                "id": "aipe-act-throttle",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "description": "Action: Throttle batch and non-priority ML training jobs",
+                  "severity": "ACTION"
+                }
+              }
+            ]
+          },
+          {
+            "id": "aipe-critical",
+            "isInitial": false,
+            "nextVectorIds": [],
+            "elements": [
+              {
+                "value": 0.92,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.95,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.88,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.91,
+                "threshold": 0.5
+              }
+            ],
+            "outputVectors": [
+              {
+                "id": "aipe-out-critical",
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "description": "Power efficiency EMERGENCY — PUE critical, immediate action required",
+                  "severity": "EMERGENCY"
+                }
+              },
+              {
+                "id": "aipe-act-throttle-crit",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "description": "Action: Throttle all non-essential compute immediately",
+                  "severity": "ACTION"
+                }
+              },
+              {
+                "id": "aipe-act-emergency",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "metadata": {
+                  "description": "Action: Activate emergency power save mode, suspend training jobs",
+                  "severity": "ACTION"
+                }
+              }
+            ]
+          }
         ]
-      ]
-    },
-    {
-      "id": "aipe-seq-escalation",
-      "name": "PUE Escalation to Critical",
-      "inputs": [
-        [
-          0.15,
-          0.3,
-          0.2,
-          0.1
-        ],
-        [
-          0.62,
-          0.65,
-          0.58,
-          0.6
-        ],
-        [
-          0.78,
-          0.8,
-          0.72,
-          0.75
-        ],
-        [
-          0.92,
-          0.95,
-          0.88,
-          0.91
+      },
+      {
+        "id": "aipe-carbon-spike",
+        "name": "Carbon Intensity Spike Alert",
+        "vectors": [
+          {
+            "id": "aipe-carbon-clean",
+            "isInitial": true,
+            "nextVectorIds": [
+              "aipe-carbon-dirty"
+            ],
+            "elements": [
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.22,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.12,
+                "threshold": 0.5
+              }
+            ],
+            "outputVectors": []
+          },
+          {
+            "id": "aipe-carbon-dirty",
+            "isInitial": false,
+            "nextVectorIds": [],
+            "elements": [
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.22,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.82,
+                "threshold": 0.5
+              }
+            ],
+            "outputVectors": [
+              {
+                "id": "aipe-out-carbon-warn",
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "description": "Carbon spike: grid carbon intensity high despite acceptable power efficiency",
+                  "severity": "WARNING"
+                }
+              },
+              {
+                "id": "aipe-act-shift",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "description": "Action: Migrate deferrable AI workloads to renewable-powered datacenter regions",
+                  "severity": "ACTION"
+                }
+              }
+            ]
+          }
         ]
-      ],
-      "metadata": {
-        "expectedOutputs": 4,
-        "scenario": "AI training spike overwhelming datacenter efficiency"
       }
-    },
-    {
-      "id": "aipe-seq-carbon",
-      "name": "Carbon Spike While Efficient",
-      "inputs": [
-        [
-          0.18,
-          0.38,
-          0.22,
-          0.12
-        ],
-        [
-          0.2,
-          0.38,
-          0.22,
-          0.83
+    ],
+    "inputSequences": [
+      {
+        "id": "aipe-seq-normal",
+        "name": "Normal Operation",
+        "inputs": [
+          [
+            0.12,
+            0.28,
+            0.18,
+            0.08
+          ],
+          [
+            0.15,
+            0.32,
+            0.22,
+            0.11
+          ],
+          [
+            0.18,
+            0.35,
+            0.2,
+            0.09
+          ]
         ]
-      ],
-      "metadata": {
-        "expectedOutputs": 1,
-        "scenario": "Grid shifts to fossil at evening peak; shift training jobs to clean region"
+      },
+      {
+        "id": "aipe-seq-escalation",
+        "name": "PUE Escalation to Critical",
+        "inputs": [
+          [
+            0.15,
+            0.3,
+            0.2,
+            0.1
+          ],
+          [
+            0.62,
+            0.65,
+            0.58,
+            0.6
+          ],
+          [
+            0.78,
+            0.8,
+            0.72,
+            0.75
+          ],
+          [
+            0.92,
+            0.95,
+            0.88,
+            0.91
+          ]
+        ],
+        "metadata": {
+          "expectedOutputs": 4,
+          "scenario": "AI training spike overwhelming datacenter efficiency"
+        }
+      },
+      {
+        "id": "aipe-seq-carbon",
+        "name": "Carbon Spike While Efficient",
+        "inputs": [
+          [
+            0.18,
+            0.38,
+            0.22,
+            0.12
+          ],
+          [
+            0.2,
+            0.38,
+            0.22,
+            0.83
+          ]
+        ],
+        "metadata": {
+          "expectedOutputs": 1,
+          "scenario": "Grid shifts to fossil at evening peak; shift training jobs to clean region"
+        }
       }
-    }
-  ]
+    ]
+  }
 }
