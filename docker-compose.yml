@@ -74,7 +74,7 @@ services:
         loki-max-backoff: "1000ms"
         labels: "service=qdrant,environment=production,app=reality-engine"
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:6333/readyz"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/6333 && printf 'GET /readyz HTTP/1.0\\r\\nHost:localhost\\r\\n\\r\\n' >&3 && read -t 3 r <&3 && echo \"$$r\" | grep -q '200'"]
       interval: 10s
       timeout: 5s
       retries: 5
