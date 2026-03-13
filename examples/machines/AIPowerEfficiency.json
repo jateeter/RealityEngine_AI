@@ -7,10 +7,14 @@
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
     "perceptualMapping": {
-      "inputOffset": 120,
-      "inputLength": 4,
-      "outputOffset": 150,
-      "outputLength": 6
+      "input": {
+        "offset": 120,
+        "length": 4
+      },
+      "output": {
+        "offset": 150,
+        "length": 6
+      }
     }
   },
   "sequences": [

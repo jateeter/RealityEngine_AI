@@ -7,10 +7,14 @@
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
     "perceptualMapping": {
-      "inputOffset": 136,
-      "inputLength": 4,
-      "outputOffset": 174,
-      "outputLength": 6
+      "input": {
+        "offset": 136,
+        "length": 4
+      },
+      "output": {
+        "offset": 174,
+        "length": 6
+      }
     },
     "metadata": {
       "domain": "AI Model Serving Health",

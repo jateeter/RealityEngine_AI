@@ -91,7 +91,13 @@ export class RealityEngineAPI {
         'RS2.json',
         'MultiStep.json',
         'DataCenterMonitoring.json',
-        'KleeneStar.json'
+        'KleeneStar.json',
+        'AIPowerEfficiency.json',
+        'AICoolingRegulator.json',
+        'AICapacityThrottler.json',
+        'AISecurityMonitor.json',
+        'AIModelWellness.json',
+        'AIHardwareResilience.json',
       ];
 
       let loadedCount = 0;

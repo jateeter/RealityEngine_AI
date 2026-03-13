@@ -7,10 +7,14 @@
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
     "perceptualMapping": {
-      "inputOffset": 132,
-      "inputLength": 4,
-      "outputOffset": 168,
-      "outputLength": 6
+      "input": {
+        "offset": 132,
+        "length": 4
+      },
+      "output": {
+        "offset": 168,
+        "length": 6
+      }
     },
     "metadata": {
       "domain": "AI Infrastructure Security",
