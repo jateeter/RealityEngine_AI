@@ -65,6 +65,10 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
   // Log viewer modal state
   const [isLogViewerOpen, setIsLogViewerOpen] = useState(false);
 
+  // Input sequence loading state
+  const [loadingSeqId, setLoadingSeqId] = useState<string | null>(null);
+  const [loadedSeqId, setLoadedSeqId] = useState<string | null>(null);
+
   // Fetch all machines for interconnection graph
   useEffect(() => {
     const fetchMachines = async () => {
@@ -167,6 +171,42 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
 
   const handleSpeedChange = async (delayMs: number) => {
     await setSimulationSpeed(delayMs);
+  };
+
+  // Handler for loading a machine's built-in input sequence into the simulation
+  const handleLoadInputSequence = async (seq: any) => {
+    if (!currentMachine?.perceptualMapping) return;
+    const { input } = currentMachine.perceptualMapping;
+    const rawVectors: number[][] = seq.inputs || seq.vectors || [];
+    if (rawVectors.length === 0) return;
+
+    const seqId = seq.id || seq.name;
+    setLoadingSeqId(seqId);
+    setLoadedSeqId(null);
+    try {
+      // Expand each compact machine-input vector to full 256-byte perceptual space
+      const universalVectors = rawVectors.map((v: number[]) => {
+        const universal = new Array(256).fill(0);
+        for (let i = 0; i < Math.min(v.length, input.length); i++) {
+          universal[input.offset + i] = v[i];
+        }
+        return universal;
+      });
+
+      await api.appendSequenceChunk({
+        vectors: universalVectors,
+        reset: true,
+        inputRegion: input,
+        stepDelayMs: 1000,
+        maxSteps: universalVectors.length
+      });
+      await api.commitSequenceConfig();
+      setLoadedSeqId(seqId);
+    } catch (error) {
+      console.error('Error loading input sequence:', error);
+    } finally {
+      setLoadingSeqId(null);
+    }
   };
 
   // Handler for generating random universal perceptual space vectors
@@ -484,7 +524,95 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
                 />
               </>
             ) : (
-              <CriticalEventGraphView selectedSequenceId={selectedSequenceId} />
+              <>
+                {/* CES Graph */}
+                <div style={{ height: '420px', flexShrink: 0, position: 'relative' }}>
+                  <CriticalEventGraphView selectedSequenceId={selectedSequenceId} />
+                </div>
+
+                {/* Input Sequences Panel */}
+                {currentMachine && (() => {
+                  const inputSeqs: any[] = currentMachine.metadata?.inputSequences || [];
+                  if (inputSeqs.length === 0) return null;
+                  return (
+                    <div style={{
+                      background: 'rgba(15, 23, 42, 0.8)',
+                      border: '1px solid #334155',
+                      borderRadius: '10px',
+                      padding: '16px',
+                      flexShrink: 0
+                    }}>
+                      <div style={{
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        color: '#64748b',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px',
+                        marginBottom: '12px'
+                      }}>
+                        Input Sequences — {currentMachine.name}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {inputSeqs.map((seq: any) => {
+                          const rawVectors: number[][] = seq.inputs || seq.vectors || [];
+                          const seqId = seq.id || seq.name;
+                          const isLoading = loadingSeqId === seqId;
+                          const isLoaded = loadedSeqId === seqId;
+                          return (
+                            <div key={seqId} style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              padding: '12px 14px',
+                              background: isLoaded ? 'rgba(34, 197, 94, 0.07)' : 'rgba(30, 41, 59, 0.6)',
+                              border: `1px solid ${isLoaded ? '#22c55e' : '#334155'}`,
+                              borderRadius: '8px',
+                              transition: 'border-color 0.2s'
+                            }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: '#e2e8f0', marginBottom: '3px' }}>
+                                  {seq.name}
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.4', marginBottom: '4px' }}>
+                                  {seq.description}
+                                </div>
+                                <div style={{ fontSize: '10px', color: '#64748b', fontFamily: 'monospace' }}>
+                                  {rawVectors.length} step{rawVectors.length !== 1 ? 's' : ''}
+                                  {seq.metadata?.scenario ? ` · ${seq.metadata.scenario}` : ''}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleLoadInputSequence(seq)}
+                                disabled={isLoading || !currentMachine.perceptualMapping}
+                                style={{
+                                  padding: '7px 16px',
+                                  background: isLoaded
+                                    ? 'rgba(34, 197, 94, 0.15)'
+                                    : isLoading
+                                      ? 'rgba(59, 130, 246, 0.1)'
+                                      : 'rgba(59, 130, 246, 0.15)',
+                                  border: `1px solid ${isLoaded ? '#22c55e' : '#3b82f6'}`,
+                                  borderRadius: '6px',
+                                  color: isLoaded ? '#22c55e' : '#60a5fa',
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  cursor: isLoading ? 'wait' : 'pointer',
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
+                                  opacity: isLoading ? 0.7 : 1,
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                {isLoading ? '⏳ Loading…' : isLoaded ? '✓ Loaded' : '▶ Load'}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
             )}
           </div>
         </div>
