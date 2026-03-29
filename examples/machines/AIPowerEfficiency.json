@@ -57,7 +57,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Power efficiency OPTIMAL — PUE within target, renewable mix healthy",
+                  "description": "Power efficiency OPTIMAL \u2014 PUE within target, renewable mix healthy",
                   "severity": "INFO"
                 }
               }
@@ -99,7 +99,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Power efficiency ELEVATED WASTE — PUE rising, review workload scheduling",
+                  "description": "Power efficiency ELEVATED WASTE \u2014 PUE rising, review workload scheduling",
                   "severity": "WARNING"
                 }
               }
@@ -141,7 +141,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Power efficiency HIGH WASTE — PUE critical, throttle non-priority workloads",
+                  "description": "Power efficiency HIGH WASTE \u2014 PUE critical, throttle non-priority workloads",
                   "severity": "CRITICAL"
                 }
               },
@@ -196,7 +196,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Power efficiency EMERGENCY — PUE critical, immediate action required",
+                  "description": "Power efficiency EMERGENCY \u2014 PUE critical, immediate action required",
                   "severity": "EMERGENCY"
                 }
               },
@@ -326,7 +326,7 @@
       {
         "id": "aipe-seq-normal",
         "name": "Normal Operation",
-        "inputs": [
+        "vectors": [
           [
             0.12,
             0.28,
@@ -350,7 +350,11 @@
       {
         "id": "aipe-seq-escalation",
         "name": "PUE Escalation to Critical",
-        "inputs": [
+        "metadata": {
+          "expectedOutputs": 4,
+          "scenario": "AI training spike overwhelming datacenter efficiency"
+        },
+        "vectors": [
           [
             0.15,
             0.3,
@@ -375,16 +379,16 @@
             0.88,
             0.91
           ]
-        ],
-        "metadata": {
-          "expectedOutputs": 4,
-          "scenario": "AI training spike overwhelming datacenter efficiency"
-        }
+        ]
       },
       {
         "id": "aipe-seq-carbon",
         "name": "Carbon Spike While Efficient",
-        "inputs": [
+        "metadata": {
+          "expectedOutputs": 1,
+          "scenario": "Grid shifts to fossil at evening peak; shift training jobs to clean region"
+        },
+        "vectors": [
           [
             0.18,
             0.38,
@@ -397,11 +401,7 @@
             0.22,
             0.83
           ]
-        ],
-        "metadata": {
-          "expectedOutputs": 1,
-          "scenario": "Grid shifts to fossil at evening peak; shift training jobs to clean region"
-        }
+        ]
       }
     ]
   }

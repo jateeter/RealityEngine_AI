@@ -3,7 +3,7 @@
   "machine": {
     "id": "ai-model-wellness",
     "name": "AI Model Wellness Monitor",
-    "description": "Monitors AI model serving health — tracks inference error rate, latency SLO compliance, model accuracy drift, and memory leak indicators to detect model degradation before user impact.",
+    "description": "Monitors AI model serving health \u2014 tracks inference error rate, latency SLO compliance, model accuracy drift, and memory leak indicators to detect model degradation before user impact.",
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
     "perceptualMapping": {
@@ -71,7 +71,7 @@
       {
         "id": "aimw-model-degradation",
         "name": "Model Wellness Degradation",
-        "description": "4-step degradation: HEALTHY → DEGRADED → CRITICAL → FAILED as model serving metrics progressively deteriorate",
+        "description": "4-step degradation: HEALTHY \u2192 DEGRADED \u2192 CRITICAL \u2192 FAILED as model serving metrics progressively deteriorate",
         "vectors": [
           {
             "id": "aimw-healthy",
@@ -109,7 +109,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Model wellness HEALTHY — error rate nominal, SLOs met, no drift detected",
+                  "description": "Model wellness HEALTHY \u2014 error rate nominal, SLOs met, no drift detected",
                   "severity": "INFO"
                 }
               }
@@ -151,7 +151,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Model wellness DEGRADED — error rate rising, SLO p99 latency exceeding target",
+                  "description": "Model wellness DEGRADED \u2014 error rate rising, SLO p99 latency exceeding target",
                   "severity": "WARNING"
                 }
               }
@@ -193,7 +193,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Model wellness CRITICAL — significant SLO violations, accuracy drift confirmed",
+                  "description": "Model wellness CRITICAL \u2014 significant SLO violations, accuracy drift confirmed",
                   "severity": "CRITICAL"
                 }
               },
@@ -248,7 +248,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Model wellness FAILED — serving effectively down, user impact severe",
+                  "description": "Model wellness FAILED \u2014 serving effectively down, user impact severe",
                   "severity": "EMERGENCY"
                 }
               },
@@ -289,7 +289,7 @@
       {
         "id": "aimw-latency-breach",
         "name": "Latency SLO Breach Alert",
-        "description": "2-step detection: NOMINAL_LATENCY → SLO_BREACH — fires when latency spikes HIGH while error rate and drift remain LOW",
+        "description": "2-step detection: NOMINAL_LATENCY \u2192 SLO_BREACH \u2014 fires when latency spikes HIGH while error rate and drift remain LOW",
         "vectors": [
           {
             "id": "aimw-lat-nominal",
@@ -351,7 +351,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Latency SLO BREACH — p99 inference latency exceeding SLO despite normal error rate",
+                  "description": "Latency SLO BREACH \u2014 p99 inference latency exceeding SLO despite normal error rate",
                   "severity": "WARNING"
                 }
               },
@@ -379,8 +379,8 @@
       {
         "id": "aimw-seq-1",
         "name": "Healthy Model Operation",
-        "description": "All serving metrics well within acceptable ranges — model operating nominally",
-        "inputs": [
+        "description": "All serving metrics well within acceptable ranges \u2014 model operating nominally",
+        "vectors": [
           [
             0.04,
             0.1,
@@ -405,7 +405,11 @@
         "id": "aimw-seq-2",
         "name": "Model Degradation to Failure",
         "description": "Progressive model health decline from healthy baseline through degraded and critical to complete failure",
-        "inputs": [
+        "metadata": {
+          "expectedOutputs": 4,
+          "scenario": "Model drift after training data distribution shift causing cascading serving failures"
+        },
+        "vectors": [
           [
             0.05,
             0.12,
@@ -430,17 +434,17 @@
             0.9,
             0.88
           ]
-        ],
-        "metadata": {
-          "expectedOutputs": 4,
-          "scenario": "Model drift after training data distribution shift causing cascading serving failures"
-        }
+        ]
       },
       {
         "id": "aimw-seq-3",
         "name": "Latency SLO Breach",
-        "description": "Latency spikes while error rate and accuracy remain acceptable — isolated infrastructure issue",
-        "inputs": [
+        "description": "Latency spikes while error rate and accuracy remain acceptable \u2014 isolated infrastructure issue",
+        "metadata": {
+          "expectedOutputs": 1,
+          "scenario": "KV cache exhaustion in transformer model causing inference latency spike"
+        },
+        "vectors": [
           [
             0.06,
             0.14,
@@ -453,11 +457,7 @@
             0.12,
             0.1
           ]
-        ],
-        "metadata": {
-          "expectedOutputs": 1,
-          "scenario": "KV cache exhaustion in transformer model causing inference latency spike"
-        }
+        ]
       }
     ]
   }

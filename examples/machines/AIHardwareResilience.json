@@ -3,7 +3,7 @@
   "machine": {
     "id": "ai-hardware-resilience",
     "name": "AI Hardware Resilience Monitor",
-    "description": "Monitors AI infrastructure hardware health — detects disk SMART failures, GPU/CPU memory ECC errors, network packet loss, and hardware fault accumulation to trigger proactive workload evacuation before catastrophic failure.",
+    "description": "Monitors AI infrastructure hardware health \u2014 detects disk SMART failures, GPU/CPU memory ECC errors, network packet loss, and hardware fault accumulation to trigger proactive workload evacuation before catastrophic failure.",
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
     "perceptualMapping": {
@@ -71,7 +71,7 @@
       {
         "id": "aihr-hw-degradation",
         "name": "Hardware Degradation Escalation",
-        "description": "4-step escalation: HEALTHY → WARNING → DEGRADED → CRITICAL as hardware fault indicators accumulate across disk, memory, network, and fault counters",
+        "description": "4-step escalation: HEALTHY \u2192 WARNING \u2192 DEGRADED \u2192 CRITICAL as hardware fault indicators accumulate across disk, memory, network, and fault counters",
         "vectors": [
           {
             "id": "aihr-healthy",
@@ -109,7 +109,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Hardware HEALTHY — all SMART indicators nominal, no ECC errors, network clean",
+                  "description": "Hardware HEALTHY \u2014 all SMART indicators nominal, no ECC errors, network clean",
                   "severity": "INFO"
                 }
               }
@@ -151,7 +151,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Hardware WARNING — early SMART deterioration and elevated ECC error rate",
+                  "description": "Hardware WARNING \u2014 early SMART deterioration and elevated ECC error rate",
                   "severity": "WARNING"
                 }
               }
@@ -193,7 +193,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Hardware DEGRADED — multiple components showing failure indicators, reliability compromised",
+                  "description": "Hardware DEGRADED \u2014 multiple components showing failure indicators, reliability compromised",
                   "severity": "CRITICAL"
                 }
               },
@@ -248,7 +248,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Hardware CRITICAL — imminent hardware failure, data loss and downtime risk",
+                  "description": "Hardware CRITICAL \u2014 imminent hardware failure, data loss and downtime risk",
                   "severity": "EMERGENCY"
                 }
               },
@@ -278,7 +278,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "Action: Emergency hardware replacement — pull from production immediately",
+                  "description": "Action: Emergency hardware replacement \u2014 pull from production immediately",
                   "severity": "ACTION"
                 }
               }
@@ -289,7 +289,7 @@
       {
         "id": "aihr-sudden-network-failure",
         "name": "Sudden Network Fabric Failure",
-        "description": "2-step detection: NETWORK_NOMINAL → NETWORK_FAULT — fires when packet loss spikes HIGH while disk and memory health remain LOW (isolated network component failure)",
+        "description": "2-step detection: NETWORK_NOMINAL \u2192 NETWORK_FAULT \u2014 fires when packet loss spikes HIGH while disk and memory health remain LOW (isolated network component failure)",
         "vectors": [
           {
             "id": "aihr-net-nominal",
@@ -351,7 +351,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Network fabric FAULT — sudden packet loss spike, likely NIC or switch failure",
+                  "description": "Network fabric FAULT \u2014 sudden packet loss spike, likely NIC or switch failure",
                   "severity": "WARNING"
                 }
               },
@@ -379,8 +379,8 @@
       {
         "id": "aihr-seq-1",
         "name": "Healthy Hardware Baseline",
-        "description": "All hardware health metrics well within nominal ranges — no faults detected",
-        "inputs": [
+        "description": "All hardware health metrics well within nominal ranges \u2014 no faults detected",
+        "vectors": [
           [
             0.04,
             0.06,
@@ -405,7 +405,11 @@
         "id": "aihr-seq-2",
         "name": "Hardware Degradation to Critical",
         "description": "Progressive hardware failure escalation from healthy baseline through warning and degraded to critical failure state",
-        "inputs": [
+        "metadata": {
+          "expectedOutputs": 4,
+          "scenario": "NVMe drive predictive failure cascade in AI training storage cluster"
+        },
+        "vectors": [
           [
             0.05,
             0.08,
@@ -430,17 +434,17 @@
             0.88,
             0.94
           ]
-        ],
-        "metadata": {
-          "expectedOutputs": 4,
-          "scenario": "NVMe drive predictive failure cascade in AI training storage cluster"
-        }
+        ]
       },
       {
         "id": "aihr-seq-3",
         "name": "Sudden Network Fault",
         "description": "Sudden isolated network packet loss spike with disk and memory health remaining nominal",
-        "inputs": [
+        "metadata": {
+          "expectedOutputs": 1,
+          "scenario": "Top-of-rack switch ASIC failure causing packet loss for GPU training cluster"
+        },
+        "vectors": [
           [
             0.06,
             0.08,
@@ -453,11 +457,7 @@
             0.87,
             0.12
           ]
-        ],
-        "metadata": {
-          "expectedOutputs": 1,
-          "scenario": "Top-of-rack switch ASIC failure causing packet loss for GPU training cluster"
-        }
+        ]
       }
     ]
   }
