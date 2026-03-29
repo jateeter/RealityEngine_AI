@@ -1,0 +1,275 @@
+{
+  "_comment": "DC + AI monitoring sensor source configuration. These 13 sources map into the Reality Engine perceptual space. Use dc_init.py to register them at startup, or call src.dc_sensors.ensure_sources() from Python.",
+  "sources": [
+    {
+      "sensor_id": "dc-thermal",
+      "name": "DC Thermal Monitor",
+      "type": "sensor",
+      "region_offset": 12,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "cpu_temp_norm",
+        "cpu_load_norm",
+        "cpu_throttle_norm",
+        "cpu_efficiency_norm"
+      ],
+      "description": "CPU thermal sensor pack. Feeds DCThermalEscalation CES machine at [12:16]→[60:62].",
+      "normalization": {
+        "cpu_temp_norm": "0.0=20°C, 0.5=60°C, 1.0=100°C",
+        "cpu_load_norm": "0.0=idle, 1.0=100% utilization",
+        "cpu_throttle_norm": "wildcard — always set to 0.5",
+        "cpu_efficiency_norm": "wildcard — always set to 0.5"
+      }
+    },
+    {
+      "sensor_id": "dc-memory",
+      "name": "DC Memory Pressure Monitor",
+      "type": "sensor",
+      "region_offset": 16,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "mem_usage_norm",
+        "page_fault_norm",
+        "cache_miss_norm",
+        "swap_usage_norm"
+      ],
+      "description": "Memory subsystem sensor pack. Feeds DCMemoryPressure CES machine at [16:20]→[66:68].",
+      "normalization": {
+        "mem_usage_norm": "0.0=0% used, 1.0=100% used",
+        "page_fault_norm": "wildcard — always set to 0.5",
+        "cache_miss_norm": "wildcard — always set to 0.5",
+        "swap_usage_norm": "0.0=no swap, 1.0=swap full"
+      }
+    },
+    {
+      "sensor_id": "dc-network",
+      "name": "DC Network Burst Detector",
+      "type": "sensor",
+      "region_offset": 20,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "bw_util_norm",
+        "pkt_loss_norm",
+        "latency_norm",
+        "queue_norm"
+      ],
+      "description": "Network sensor pack. Feeds DCNetworkBurstDetector CES machine at [20:24]→[64:66].",
+      "normalization": {
+        "bw_util_norm": "0.0=0% utilization, 1.0=100% link capacity",
+        "pkt_loss_norm": "0.0=0% loss, 1.0=severe loss (>10%)",
+        "latency_norm": "wildcard — always set to 0.5",
+        "queue_norm": "wildcard — always set to 0.5"
+      }
+    },
+    {
+      "sensor_id": "dc-cpu",
+      "name": "DC CPU Core Utilisation",
+      "type": "sensor",
+      "region_offset": 24,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "core0_util",
+        "core1_util",
+        "core2_util",
+        "core3_util"
+      ],
+      "description": "Per-core CPU utilization for cores 0–3 at [24:28].",
+      "normalization": {
+        "core*_util": "0.0=idle, 1.0=100% utilization"
+      }
+    },
+    {
+      "sensor_id": "dc-power",
+      "name": "DC Power Distribution Monitor",
+      "type": "sensor",
+      "region_offset": 28,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "total_pwr_norm",
+        "pdu_efficiency",
+        "ups_load",
+        "grid_freq_dev"
+      ],
+      "description": "Power infrastructure metrics at [28:32].",
+      "normalization": {
+        "total_pwr_norm": "0.0=minimal draw, 1.0=maximum capacity",
+        "pdu_efficiency": "0.0=0% efficient, 1.0=100% efficient",
+        "ups_load": "0.0=no load, 1.0=full UPS load",
+        "grid_freq_dev": "0.0=no deviation, 1.0=maximum deviation"
+      }
+    },
+    {
+      "sensor_id": "dc-storage",
+      "name": "DC Storage Health Monitor",
+      "type": "sensor",
+      "region_offset": 32,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "iops_norm",
+        "disk_latency_norm",
+        "raid_health",
+        "cache_hit_rate"
+      ],
+      "description": "Storage subsystem health at [32:36].",
+      "normalization": {
+        "iops_norm": "0.0=idle, 1.0=maximum IOPS",
+        "disk_latency_norm": "0.0=minimal latency, 1.0=high latency",
+        "raid_health": "0.0=degraded, 1.0=healthy",
+        "cache_hit_rate": "0.0=0% hits, 1.0=100% hits"
+      }
+    },
+    {
+      "sensor_id": "dc-security",
+      "name": "DC Security Event Monitor",
+      "type": "sensor",
+      "region_offset": 36,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "auth_failures_norm",
+        "anomaly_score_norm",
+        "port_scan_norm",
+        "privilege_events_norm"
+      ],
+      "description": "Security telemetry at [36:40].",
+      "normalization": {
+        "auth_failures_norm": "0.0=no failures, 1.0=high failure rate",
+        "anomaly_score_norm": "0.0=nominal, 1.0=high anomaly",
+        "port_scan_norm": "0.0=none, 1.0=active scanning",
+        "privilege_events_norm": "0.0=none, 1.0=frequent escalation"
+      }
+    },
+    {
+      "sensor_id": "ai-power",
+      "name": "AI Power Efficiency Monitor",
+      "type": "sensor",
+      "region_offset": 120,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "pue_norm",
+        "power_draw_norm",
+        "renewable_deficit_norm",
+        "carbon_intensity_norm"
+      ],
+      "description": "AI infrastructure power efficiency. Feeds AIPowerEfficiency CES machine at [120:124]→[150:156].",
+      "normalization": {
+        "pue_norm": "0.0=PUE 1.0 (perfect), 1.0=PUE 2.0+ (very inefficient)",
+        "power_draw_norm": "0.0=minimal AI load, 1.0=maximum AI power draw",
+        "renewable_deficit_norm": "0.0=100% renewable, 1.0=no renewables",
+        "carbon_intensity_norm": "0.0=zero carbon, 1.0=maximum carbon"
+      }
+    },
+    {
+      "sensor_id": "ai-cooling",
+      "name": "AI Cooling Regulator",
+      "type": "sensor",
+      "region_offset": 124,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "coolant_temp_norm",
+        "chiller_inefficiency_norm",
+        "flow_restriction_norm",
+        "thermal_imbalance_norm"
+      ],
+      "description": "Cooling system metrics for AI workloads. Feeds AICoolingRegulator CES machine at [124:128]→[156:162].",
+      "normalization": {
+        "coolant_temp_norm": "0.0=cold coolant, 1.0=maximum coolant temperature",
+        "chiller_inefficiency_norm": "0.0=optimal chilling, 1.0=chiller failure",
+        "flow_restriction_norm": "0.0=full flow, 1.0=blocked flow",
+        "thermal_imbalance_norm": "0.0=balanced, 1.0=severe hot-spots"
+      }
+    },
+    {
+      "sensor_id": "ai-capacity",
+      "name": "AI Capacity Throttler",
+      "type": "sensor",
+      "region_offset": 128,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "gpu_util_norm",
+        "queue_pressure_norm",
+        "mem_pressure_norm",
+        "thermal_headroom_inv"
+      ],
+      "description": "AI compute capacity indicators. Feeds AICapacityThrottler CES machine at [128:132]→[162:168].",
+      "normalization": {
+        "gpu_util_norm": "0.0=idle, 1.0=full utilization",
+        "queue_pressure_norm": "0.0=no queue, 1.0=queue saturated",
+        "mem_pressure_norm": "0.0=no pressure, 1.0=memory exhausted",
+        "thermal_headroom_inv": "0.0=maximum headroom, 1.0=no headroom (= 1 - cpu_temp_norm)"
+      }
+    },
+    {
+      "sensor_id": "ai-security",
+      "name": "AI Security Monitor",
+      "type": "sensor",
+      "region_offset": 132,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "auth_anomaly_norm",
+        "network_anomaly_norm",
+        "privilege_esc_norm",
+        "threat_confidence_norm"
+      ],
+      "description": "AI-layer security telemetry. Feeds AISecurityMonitor CES machine at [132:136]→[168:174].",
+      "normalization": {
+        "auth_anomaly_norm": "0.0=nominal, 1.0=severe auth anomaly",
+        "network_anomaly_norm": "0.0=nominal, 1.0=severe network anomaly",
+        "privilege_esc_norm": "0.0=none, 1.0=active privilege escalation",
+        "threat_confidence_norm": "0.0=no threat, 1.0=confirmed high-confidence threat"
+      }
+    },
+    {
+      "sensor_id": "ai-wellness",
+      "name": "AI Model Wellness Monitor",
+      "type": "sensor",
+      "region_offset": 136,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "inference_error_rate_norm",
+        "latency_slo_violation_norm",
+        "accuracy_drift_norm",
+        "memory_leak_rate_norm"
+      ],
+      "description": "AI model health indicators. Feeds AIModelWellness CES machine at [136:140]→[174:180].",
+      "normalization": {
+        "inference_error_rate_norm": "0.0=no errors, 1.0=all inferences failing",
+        "latency_slo_violation_norm": "0.0=all requests within SLO, 1.0=all requests breaching SLO",
+        "accuracy_drift_norm": "0.0=nominal accuracy, 1.0=severe accuracy degradation",
+        "memory_leak_rate_norm": "0.0=no leak, 1.0=rapid memory growth"
+      }
+    },
+    {
+      "sensor_id": "ai-resilience",
+      "name": "AI Hardware Resilience Monitor",
+      "type": "sensor",
+      "region_offset": 140,
+      "region_length": 4,
+      "ttl_ms": 120000,
+      "fields": [
+        "disk_smart_fail_norm",
+        "memory_ecc_norm",
+        "packet_loss_norm",
+        "hw_fault_accum_norm"
+      ],
+      "description": "AI hardware resilience metrics. Feeds AIHardwareResilience CES machine at [140:144]→[180:186].",
+      "normalization": {
+        "disk_smart_fail_norm": "0.0=healthy, 1.0=imminent failure predicted",
+        "memory_ecc_norm": "0.0=no ECC errors, 1.0=high ECC error rate",
+        "packet_loss_norm": "0.0=no loss, 1.0=severe packet loss",
+        "hw_fault_accum_norm": "0.0=no accumulated faults, 1.0=critical fault accumulation"
+      }
+    }
+  ]
+}
