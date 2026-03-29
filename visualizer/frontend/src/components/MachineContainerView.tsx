@@ -1,73 +1,202 @@
 import React, { useState, useEffect } from 'react';
 import { useVisualizerStore } from '../store';
 import CriticalEventGraphView from './CriticalEventGraphView';
-import InputStreamVisualization from './InputStreamVisualization';
 import OutputStreamVisualization from './OutputStreamVisualization';
 import { MachineInterconnectionGraph } from './MachineInterconnectionGraph';
-import { UniversalInputVectorDisplay } from './UniversalInputVectorDisplay';
-import { MachineInputFlowDisplay } from './MachineInputFlowDisplay';
-import { GlobalCurrentVectorDisplay } from './GlobalCurrentVectorDisplay';
-import { SequenceManagerModal } from './SequenceManagerModal';
 import { PerceptualLogViewer } from './PerceptualLogViewer';
 import { api } from '../api';
+import { Machine } from '../types';
 
 interface MachineContainerViewProps {
   selectedSequenceId: string | null;
 }
 
+// ─── Compact per-machine input/output strip ───────────────────────────────────
+
+interface MachineInputsStripProps {
+  machines: Machine[];
+  universalVector: number[];
+  currentMachineId: string | null;
+  step: number;
+}
+
+const MachineInputsStrip: React.FC<MachineInputsStripProps> = ({
+  machines,
+  universalVector,
+  currentMachineId,
+  step,
+}) => {
+  const mapped = machines.filter(m => m.perceptualMapping);
+  if (mapped.length === 0) return null;
+
+  return (
+    <div style={{
+      background: 'rgba(15, 23, 42, 0.85)',
+      borderBottom: '1px solid #334155',
+      padding: '6px 14px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '3px',
+    }}>
+      {/* Strip header */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginBottom: '2px',
+      }}>
+        <span style={{ fontSize: '9px', color: '#475569', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+          Machine Inputs
+        </span>
+        <span style={{ fontSize: '9px', color: '#334155', fontFamily: 'monospace' }}>
+          step {step}
+        </span>
+      </div>
+
+      {/* One row per machine */}
+      {mapped.map(m => {
+        const { input, output } = m.perceptualMapping!;
+        const inputVals = universalVector.slice(input.offset, input.offset + input.length);
+        const outputVals = universalVector.slice(output.offset, output.offset + output.length);
+        const isCurrent = m.id === currentMachineId;
+        const hasSignal = inputVals.some(v => v > 0);
+        const hasOutput = outputVals.some(v => v > 0);
+
+        return (
+          <div
+            key={m.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              background: isCurrent ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
+              borderLeft: isCurrent ? '2px solid #3b82f6' : '2px solid transparent',
+            }}
+          >
+            {/* Machine name */}
+            <span style={{
+              fontSize: '10px',
+              fontWeight: isCurrent ? 700 : 400,
+              color: isCurrent ? '#93c5fd' : '#64748b',
+              width: '180px',
+              flexShrink: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              fontFamily: 'monospace',
+            }}>
+              {m.name}
+            </span>
+
+            {/* Input region tag */}
+            <span style={{
+              fontSize: '9px',
+              color: '#475569',
+              fontFamily: 'monospace',
+              width: '58px',
+              flexShrink: 0,
+            }}>
+              in[{input.offset}:{input.offset + input.length - 1}]
+            </span>
+
+            {/* Input value bars */}
+            <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', height: '14px' }}>
+              {inputVals.map((v, i) => (
+                <div
+                  key={i}
+                  title={`[${input.offset + i}] = ${v.toFixed(3)}`}
+                  style={{
+                    width: '7px',
+                    height: `${Math.max(2, Math.round(v * 14))}px`,
+                    background: v > 0
+                      ? `rgba(59, 130, 246, ${0.4 + v * 0.6})`
+                      : '#1e293b',
+                    borderRadius: '1px',
+                    flexShrink: 0,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Output region + bars (if any signal) */}
+            {hasOutput && (
+              <>
+                <span style={{
+                  fontSize: '9px',
+                  color: '#334155',
+                  fontFamily: 'monospace',
+                  flexShrink: 0,
+                }}>→</span>
+                <span style={{
+                  fontSize: '9px',
+                  color: '#475569',
+                  fontFamily: 'monospace',
+                  width: '58px',
+                  flexShrink: 0,
+                }}>
+                  out[{output.offset}:{output.offset + output.length - 1}]
+                </span>
+                <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end', height: '14px' }}>
+                  {outputVals.map((v, i) => (
+                    <div
+                      key={i}
+                      title={`[${output.offset + i}] = ${v.toFixed(3)}`}
+                      style={{
+                        width: '7px',
+                        height: `${Math.max(2, Math.round(v * 14))}px`,
+                        background: v > 0
+                          ? `rgba(244, 114, 182, ${0.4 + v * 0.6})`
+                          : '#1e293b',
+                        borderRadius: '1px',
+                        flexShrink: 0,
+                      }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Signal indicator dot */}
+            {hasSignal && (
+              <div style={{
+                width: '5px',
+                height: '5px',
+                borderRadius: '50%',
+                background: '#3b82f6',
+                boxShadow: '0 0 4px rgba(59, 130, 246, 0.8)',
+                flexShrink: 0,
+                marginLeft: 'auto',
+              }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ─── Main component ────────────────────────────────────────────────────────────
+
 const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSequenceId }) => {
   const {
-    inputVectors,
     currentOutputVectors,
-    simulationState,
     currentMachine,
     highlightedOutputId,
     machines,
-    startSimulation,
-    pauseSimulation,
-    resumeSimulation,
-    resetSimulation,
-    stepSimulation,
-    setSimulationSpeed,
-    inputQueue,
-    outputQueue,
-    generateAlgorithmicSequence,
-    generateRandomSequence,
-    clearInputQueue,
-    clearOutputQueue,
-    removeFromInputQueue,
-    removeFromOutputQueue,
-    loadQueueIntoSimulation
+    ws,
   } = useVisualizerStore();
 
-  // Use inputVectors when populated; fall back to inputQueue so the stream
-  // panel shows generated vectors even before they are loaded into the simulator.
-  const displayVectors: number[][] = inputVectors.length > 0
-    ? inputVectors
-    : inputQueue.map(item => item.vector);
-
-  // View toggle state - default to 'graph'
   const [viewMode, setViewMode] = useState<'graph' | 'sequences'>('graph');
   const [allMachines, setAllMachines] = useState(machines);
 
-  // Universal Perceptual Space state
+  // Universal Perceptual Space state — updated passively via WebSocket
   const [currentUniversalVector, setCurrentUniversalVector] = useState<number[]>(new Array(256).fill(0));
-  const [isGeneratingRandom, setIsGeneratingRandom] = useState(false);
-
-  // Machine-specific input/output state
-  const [machineInput, setMachineInput] = useState<number[] | null>(null);
-  const [machineOutput, setMachineOutput] = useState<number[] | null>(null);
-  const [activeSequenceName, setActiveSequenceName] = useState<string | null>(null);
-
-  // Sequence manager modal state
-  const [isSequenceModalOpen, setIsSequenceModalOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
 
   // Log viewer modal state
   const [isLogViewerOpen, setIsLogViewerOpen] = useState(false);
-
-  // Input sequence loading state
-  const [loadingSeqId, setLoadingSeqId] = useState<string | null>(null);
-  const [loadedSeqId, setLoadedSeqId] = useState<string | null>(null);
 
   // Fetch all machines for interconnection graph
   useEffect(() => {
@@ -80,179 +209,44 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         setAllMachines(machines);
       }
     };
-
     fetchMachines();
   }, [machines]);
 
-  // Listen for perceptual space updates via WebSocket
+  // Listen for perceptual space updates via WebSocket.
+  // Depend on `ws` so we re-subscribe whenever the connection is (re)established.
   useEffect(() => {
+    if (!ws) return;
+
     const handleMessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
-
         if (data.type === 'perceptual-simulation-stepped') {
           const step = data.step;
-          if (step && step.perceptualSpace) {
+          if (step?.perceptualSpace) {
             setCurrentUniversalVector(step.perceptualSpace);
-
-            // Extract machine-specific input and output for current machine
-            if (currentMachine && currentMachine.perceptualMapping) {
-              const { input } = currentMachine.perceptualMapping;
-
-              // Extract machine input from universal vector
-              const extractedInput = step.perceptualSpace.slice(input.offset, input.offset + input.length);
-              setMachineInput(extractedInput);
-
-              // Get machine output from step data if available
-              if (step.machineOutputs && step.machineOutputs[currentMachine.id]) {
-                setMachineOutput(step.machineOutputs[currentMachine.id]);
-              }
-
-              // Set active sequence if available
-              if (step.activeSequences && step.activeSequences[currentMachine.id]) {
-                setActiveSequenceName(step.activeSequences[currentMachine.id]);
-              }
-            }
+            setCurrentStep(prev => prev + 1);
           }
         } else if (data.type === 'perceptual-simulation-reset') {
           setCurrentUniversalVector(new Array(256).fill(0));
-          setMachineInput(null);
-          setMachineOutput(null);
-          setActiveSequenceName(null);
+          setCurrentStep(0);
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
       }
     };
 
-    const ws = (window as any).realityEngineWS;
-    if (ws) {
-      ws.addEventListener('message', handleMessage);
-      return () => ws.removeEventListener('message', handleMessage);
-    }
-  }, [currentMachine]);
-
-  // Determine current input vector index and state
-  const currentIndex = simulationState?.currentIndex ?? 0;
-  const isPlaying = simulationState?.status === 'playing';
-  const isPaused = simulationState?.status === 'paused';
+    ws.addEventListener('message', handleMessage);
+    return () => ws.removeEventListener('message', handleMessage);
+  }, [ws]);
 
   // Filter outputs to show only those from current machine's sequences
   const machineSequenceIds = currentMachine?.sequenceIds || [];
   const filteredOutputs = currentOutputVectors.filter(output => {
-    // Check if output has sequenceId in metadata
     if (output.metadata && typeof output.metadata === 'object' && 'sequenceId' in output.metadata) {
       return machineSequenceIds.includes(output.metadata.sequenceId as string);
     }
-    // If no sequenceId metadata, include all outputs (backward compatibility)
     return true;
   });
-
-  // Control handlers
-  const handleStart = async () => {
-    if (isPaused) {
-      await resumeSimulation();
-    } else {
-      await startSimulation();
-    }
-  };
-
-  const handlePause = async () => {
-    await pauseSimulation();
-  };
-
-  const handleReset = async () => {
-    await resetSimulation();
-  };
-
-  const handleStep = async () => {
-    await stepSimulation();
-  };
-
-  const handleSpeedChange = async (delayMs: number) => {
-    await setSimulationSpeed(delayMs);
-  };
-
-  // Handler for loading a machine's built-in input sequence into the simulation
-  const handleLoadInputSequence = async (seq: any) => {
-    if (!currentMachine?.perceptualMapping) return;
-    const { input } = currentMachine.perceptualMapping;
-    const rawVectors: number[][] = seq.inputs || seq.vectors || [];
-    if (rawVectors.length === 0) return;
-
-    const seqId = seq.id || seq.name;
-    setLoadingSeqId(seqId);
-    setLoadedSeqId(null);
-    try {
-      // Expand each compact machine-input vector to full 256-byte perceptual space
-      const universalVectors = rawVectors.map((v: number[]) => {
-        const universal = new Array(256).fill(0);
-        for (let i = 0; i < Math.min(v.length, input.length); i++) {
-          universal[input.offset + i] = v[i];
-        }
-        return universal;
-      });
-
-      await api.appendSequenceChunk({
-        vectors: universalVectors,
-        reset: true,
-        inputRegion: input,
-        stepDelayMs: 1000,
-        maxSteps: universalVectors.length
-      });
-      await api.commitSequenceConfig();
-      setLoadedSeqId(seqId);
-    } catch (error) {
-      console.error('Error loading input sequence:', error);
-    } finally {
-      setLoadingSeqId(null);
-    }
-  };
-
-  // Handler for generating random universal perceptual space vectors
-  const handleGenerateUniversalRandom = async (
-    vectorCount: number,
-    inputRegion: { offset: number; length: number }
-  ) => {
-    try {
-      setIsGeneratingRandom(true);
-
-      // Generate random universal vectors (256 bytes each)
-      const randomVectors: number[][] = [];
-      for (let i = 0; i < vectorCount; i++) {
-        const vector = new Array(256).fill(0);
-        // Fill only the specified input region with random values
-        for (let j = inputRegion.offset; j < Math.min(inputRegion.offset + inputRegion.length, 256); j++) {
-          vector[j] = Math.random();
-        }
-        randomVectors.push(vector);
-      }
-
-      // Stream vectors to the perceptual simulator in chunks to avoid
-      // HTTP body-size limits.
-      const CHUNK_SIZE = 50;
-      for (let i = 0; i < randomVectors.length; i += CHUNK_SIZE) {
-        const chunk = randomVectors.slice(i, i + CHUNK_SIZE);
-        await api.appendSequenceChunk({
-          vectors: chunk,
-          ...(i === 0
-            ? { reset: true, inputRegion, stepDelayMs: 1000, maxSteps: vectorCount }
-            : {})
-        });
-      }
-      await api.commitSequenceConfig();
-
-      // Set the first vector as current
-      if (randomVectors.length > 0) {
-        setCurrentUniversalVector(randomVectors[0]);
-      }
-
-    } catch (error) {
-      console.error('Error generating random universal vectors:', error);
-    } finally {
-      setIsGeneratingRandom(false);
-    }
-  };
 
   return (
     <div style={{
@@ -263,18 +257,6 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
       background: '#0a0a0a',
       position: 'relative'
     }}>
-      {/* Global Current Vector Display - Top */}
-      <div style={{ padding: '10px 10px 0 10px' }}>
-        <GlobalCurrentVectorDisplay
-          currentVector={currentUniversalVector}
-          currentStep={simulationState?.currentIndex || 0}
-          totalSteps={displayVectors.length}
-          isPlaying={isPlaying}
-          onOpenSequenceManager={() => setIsSequenceModalOpen(true)}
-          onOpenLogViewer={() => setIsLogViewerOpen(true)}
-        />
-      </div>
-
       {/* Main Content Row */}
       <div style={{
         flex: 1,
@@ -282,341 +264,156 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         flexDirection: 'row',
         overflow: 'hidden'
       }}>
-        {/* Input Stream - Left Side */}
-        <InputStreamVisualization
-        inputVectors={displayVectors}
-        currentIndex={currentIndex}
-        isPlaying={isPlaying}
-        isPaused={isPaused}
-        onStart={handleStart}
-        onPause={handlePause}
-        onReset={handleReset}
-        onStep={handleStep}
-        onSpeedChange={handleSpeedChange}
-        currentSpeed={500}
-      />
-
-      {/* Machine Container - Center */}
-      <div style={{
-        flex: 1,
-        position: 'relative',
-        background: '#0f0f0f',
-        border: '3px solid #475569',
-        borderRadius: '12px',
-        margin: '10px',
-        boxShadow: '0 0 30px rgba(59, 130, 246, 0.15), inset 0 0 50px rgba(0, 0, 0, 0.5)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Machine Header */}
-        <div style={{
-          padding: '15px 20px',
-          background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-          borderBottom: '2px solid #475569',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div>
-            <div style={{
-              fontSize: '16px',
-              fontWeight: '700',
-              color: '#e2e8f0',
-              marginBottom: '4px'
-            }}>
-              {currentMachine?.name || 'Critical Event Sequence Machine'}
-            </div>
-            <div style={{
-              fontSize: '11px',
-              color: '#64748b',
-              fontFamily: 'monospace',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px'
-            }}>
-              {viewMode === 'graph' ? 'Machine Interconnections' : 'Internal State Visualization'}
-            </div>
-          </div>
-
-          {/* View Toggle Buttons */}
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            marginRight: '20px'
-          }}>
-            <button
-              onClick={() => setViewMode('graph')}
-              style={{
-                padding: '8px 16px',
-                background: viewMode === 'graph' ? '#3b82f6' : '#334155',
-                border: 'none',
-                borderRadius: '6px',
-                color: '#e2e8f0',
-                fontSize: '12px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: viewMode === 'graph' ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (viewMode !== 'graph') {
-                  e.currentTarget.style.background = '#3f4a5c';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (viewMode !== 'graph') {
-                  e.currentTarget.style.background = '#334155';
-                }
-              }}
-            >
-              🔗 Interconnections
-            </button>
-
-            <button
-              onClick={() => setViewMode('sequences')}
-              style={{
-                padding: '8px 16px',
-                background: viewMode === 'sequences' ? '#3b82f6' : '#334155',
-                border: 'none',
-                borderRadius: '6px',
-                color: '#e2e8f0',
-                fontSize: '12px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: viewMode === 'sequences' ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none'
-              }}
-              onMouseEnter={(e) => {
-                if (viewMode !== 'sequences') {
-                  e.currentTarget.style.background = '#3f4a5c';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (viewMode !== 'sequences') {
-                  e.currentTarget.style.background = '#334155';
-                }
-              }}
-            >
-              📊 Sequences
-            </button>
-          </div>
-
-          {/* Status Indicator */}
-          {simulationState && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              <div style={{
-                fontSize: '11px',
-                color: '#94a3b8',
-                fontWeight: '600',
-                textTransform: 'uppercase'
-              }}>
-                {simulationState.status}
-              </div>
-              <div style={{
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                background: simulationState.status === 'playing'
-                  ? '#22c55e'
-                  : simulationState.status === 'paused'
-                    ? '#f59e0b'
-                    : '#64748b',
-                boxShadow: simulationState.status === 'playing'
-                  ? '0 0 10px rgba(34, 197, 94, 0.6)'
-                  : 'none',
-                animation: simulationState.status === 'playing'
-                  ? 'pulse 1.5s ease-in-out infinite'
-                  : 'none'
-              }} />
-            </div>
-          )}
-        </div>
-
-        {/* Critical Event Graph - Machine Internals */}
+        {/* Machine Container - Center */}
         <div style={{
           flex: 1,
           position: 'relative',
-          background: 'radial-gradient(circle at center, #0f0f0f 0%, #000 100%)',
-          overflow: 'hidden'
+          background: '#0f0f0f',
+          border: '3px solid #475569',
+          borderRadius: '12px',
+          margin: '10px',
+          boxShadow: '0 0 30px rgba(59, 130, 246, 0.15), inset 0 0 50px rgba(0, 0, 0, 0.5)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
         }}>
-          {/* Decorative grid pattern */}
+          {/* Machine Header */}
           <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundImage: `
-              linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px',
-            pointerEvents: 'none',
-            zIndex: 0
-          }} />
-
-          {/* Graph View */}
-          <div style={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-            zIndex: 1,
+            padding: '12px 20px',
+            background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+            borderBottom: '2px solid #475569',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-            padding: '20px',
-            overflowY: 'auto'
+            justifyContent: 'space-between',
+            alignItems: 'center'
           }}>
-            {viewMode === 'graph' ? (
-              <>
-                {/* Machine Interconnection Graph */}
-                {currentMachine && (
+            <div>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: '#e2e8f0',
+                marginBottom: '3px'
+              }}>
+                {currentMachine?.name || 'Critical Event Sequence Machine'}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: '#64748b',
+                fontFamily: 'monospace',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                {viewMode === 'graph' ? 'Machine Interconnections' : 'Internal State Visualization'}
+              </div>
+            </div>
+
+            {/* View Toggle + Logs */}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                onClick={() => setViewMode('graph')}
+                style={{
+                  padding: '6px 14px',
+                  background: viewMode === 'graph' ? '#3b82f6' : '#334155',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#e2e8f0',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  boxShadow: viewMode === 'graph' ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none'
+                }}
+              >
+                🔗 Interconnections
+              </button>
+              <button
+                onClick={() => setViewMode('sequences')}
+                style={{
+                  padding: '6px 14px',
+                  background: viewMode === 'sequences' ? '#3b82f6' : '#334155',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#e2e8f0',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  boxShadow: viewMode === 'sequences' ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none'
+                }}
+              >
+                📊 Sequences
+              </button>
+              <button
+                onClick={() => setIsLogViewerOpen(true)}
+                style={{
+                  padding: '6px 12px',
+                  background: '#1e293b',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  color: '#64748b',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                }}
+                title="View perceptual logs"
+              >
+                📋 Logs
+              </button>
+            </div>
+          </div>
+
+          {/* Machine Inputs Strip */}
+          <MachineInputsStrip
+            machines={allMachines}
+            universalVector={currentUniversalVector}
+            currentMachineId={currentMachine?.id ?? null}
+            step={currentStep}
+          />
+
+          {/* Content area */}
+          <div style={{
+            flex: 1,
+            position: 'relative',
+            background: 'radial-gradient(circle at center, #0f0f0f 0%, #000 100%)',
+            overflow: 'hidden'
+          }}>
+            {/* Decorative grid */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px)
+              `,
+              backgroundSize: '50px 50px',
+              pointerEvents: 'none',
+              zIndex: 0
+            }} />
+
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              zIndex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+              padding: '20px',
+              overflowY: 'auto'
+            }}>
+              {viewMode === 'graph' ? (
+                currentMachine && (
                   <div style={{ flex: 1, minHeight: '500px' }}>
                     <MachineInterconnectionGraph
                       currentMachineId={currentMachine.id}
                       machines={allMachines}
                     />
                   </div>
-                )}
-
-                {/* Machine Input Flow Display */}
-                {currentMachine && currentMachine.perceptualMapping && (
-                  <MachineInputFlowDisplay
-                    universalVector={currentUniversalVector}
-                    inputMapping={currentMachine.perceptualMapping.input}
-                    outputMapping={currentMachine.perceptualMapping.output}
-                    machineInput={machineInput}
-                    machineOutput={machineOutput}
-                    activeSequence={activeSequenceName}
-                    machineName={currentMachine.name}
-                  />
-                )}
-
-                {/* Universal Input Vector Display */}
-                <UniversalInputVectorDisplay
-                  currentVector={currentUniversalVector}
-                  vectorRegions={allMachines
-                    .filter(m => m.perceptualMapping)
-                    .flatMap(m => [
-                      {
-                        offset: m.perceptualMapping!.input.offset,
-                        length: m.perceptualMapping!.input.length,
-                        machineId: m.id,
-                        machineName: m.name,
-                        type: 'input' as const,
-                        color: '#3b82f6'
-                      },
-                      {
-                        offset: m.perceptualMapping!.output.offset,
-                        length: m.perceptualMapping!.output.length,
-                        machineId: m.id,
-                        machineName: m.name,
-                        type: 'output' as const,
-                        color: '#f472b6'
-                      }
-                    ])}
-                  onGenerateRandom={handleGenerateUniversalRandom}
-                  isGenerating={isGeneratingRandom}
-                />
-              </>
-            ) : (
-              <>
-                {/* CES Graph */}
+                )
+              ) : (
                 <div style={{ height: '420px', flexShrink: 0, position: 'relative' }}>
                   <CriticalEventGraphView selectedSequenceId={selectedSequenceId} />
                 </div>
-
-                {/* Input Sequences Panel */}
-                {currentMachine && (() => {
-                  const inputSeqs: any[] = currentMachine.metadata?.inputSequences || [];
-                  if (inputSeqs.length === 0) return null;
-                  return (
-                    <div style={{
-                      background: 'rgba(15, 23, 42, 0.8)',
-                      border: '1px solid #334155',
-                      borderRadius: '10px',
-                      padding: '16px',
-                      flexShrink: 0
-                    }}>
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        color: '#64748b',
-                        textTransform: 'uppercase',
-                        letterSpacing: '1px',
-                        marginBottom: '12px'
-                      }}>
-                        Input Sequences — {currentMachine.name}
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {inputSeqs.map((seq: any) => {
-                          const rawVectors: number[][] = seq.inputs || seq.vectors || [];
-                          const seqId = seq.id || seq.name;
-                          const isLoading = loadingSeqId === seqId;
-                          const isLoaded = loadedSeqId === seqId;
-                          return (
-                            <div key={seqId} style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '12px',
-                              padding: '12px 14px',
-                              background: isLoaded ? 'rgba(34, 197, 94, 0.07)' : 'rgba(30, 41, 59, 0.6)',
-                              border: `1px solid ${isLoaded ? '#22c55e' : '#334155'}`,
-                              borderRadius: '8px',
-                              transition: 'border-color 0.2s'
-                            }}>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: '13px', fontWeight: '600', color: '#e2e8f0', marginBottom: '3px' }}>
-                                  {seq.name}
-                                </div>
-                                <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.4', marginBottom: '4px' }}>
-                                  {seq.description}
-                                </div>
-                                <div style={{ fontSize: '10px', color: '#64748b', fontFamily: 'monospace' }}>
-                                  {rawVectors.length} step{rawVectors.length !== 1 ? 's' : ''}
-                                  {seq.metadata?.scenario ? ` · ${seq.metadata.scenario}` : ''}
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => handleLoadInputSequence(seq)}
-                                disabled={isLoading || !currentMachine.perceptualMapping}
-                                style={{
-                                  padding: '7px 16px',
-                                  background: isLoaded
-                                    ? 'rgba(34, 197, 94, 0.15)'
-                                    : isLoading
-                                      ? 'rgba(59, 130, 246, 0.1)'
-                                      : 'rgba(59, 130, 246, 0.15)',
-                                  border: `1px solid ${isLoaded ? '#22c55e' : '#3b82f6'}`,
-                                  borderRadius: '6px',
-                                  color: isLoaded ? '#22c55e' : '#60a5fa',
-                                  fontSize: '11px',
-                                  fontWeight: '600',
-                                  cursor: isLoading ? 'wait' : 'pointer',
-                                  whiteSpace: 'nowrap',
-                                  flexShrink: 0,
-                                  opacity: isLoading ? 0.7 : 1,
-                                  transition: 'all 0.2s'
-                                }}
-                              >
-                                {isLoading ? '⏳ Loading…' : isLoaded ? '✓ Loaded' : '▶ Load'}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
         {/* Output Stream - Right Side */}
         <OutputStreamVisualization
@@ -626,51 +423,16 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         />
       </div>
 
-      {/* Sequence Manager Modal */}
-      <SequenceManagerModal
-        isOpen={isSequenceModalOpen}
-        onClose={() => setIsSequenceModalOpen(false)}
-        inputSequence={inputQueue}
-        outputSequence={outputQueue}
-        onGenerateAlgorithmic={(count, pattern) => {
-          generateAlgorithmicSequence(pattern, count);
-        }}
-        onGenerateRandom={(count, region) => {
-          generateRandomSequence(count, region);
-        }}
-        onClearInputQueue={() => {
-          clearInputQueue();
-        }}
-        onClearOutputQueue={() => {
-          clearOutputQueue();
-        }}
-        onRemoveInputItem={(id) => {
-          removeFromInputQueue(id);
-        }}
-        onRemoveOutputItem={(id) => {
-          removeFromOutputQueue(id);
-        }}
-        onLoadIntoSimulation={() => {
-          loadQueueIntoSimulation();
-        }}
-      />
-
       {/* Perceptual Log Viewer */}
       <PerceptualLogViewer
         isOpen={isLogViewerOpen}
         onClose={() => setIsLogViewerOpen(false)}
       />
 
-      {/* Animations */}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.7; transform: scale(0.9); }
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-          to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
       `}</style>
     </div>

@@ -17,7 +17,8 @@ const HIT_EXTRA  = 5;                 // extra px around node for hover hit test
 
 // Node state colours
 const COLOR_INITIAL  = '#3b82f6'; // blue   — isInitial (always armed, A+)
-const COLOR_TERMINAL = '#f59e0b'; // amber  — terminal / active fill
+const COLOR_TERMINAL = '#f59e0b'; // amber  — terminal / just-matched fill
+const COLOR_ACTIVE   = '#06b6d4'; // cyan   — currently queued / in pending-activations
 const COLOR_DEFAULT  = '#64748b'; // slate  — intermediate
 const COLOR_HOVER    = '#facc15'; // yellow — hover highlight
 const COLOR_NODE_BG  = '#111827'; // dark   — inactive terminal body (ring drawn separately)
@@ -34,7 +35,8 @@ interface InnerNode {
   iy: number;         // y in inner-graph coordinate space
   isInitial: boolean;
   hasOutput: boolean;
-  justFired: boolean;
+  justFired: boolean; // wasJustMatched this step — amber glow
+  isActive: boolean;  // currently queued in pending-activations — cyan ring
   elements: { value: number; comparatorType: string; threshold?: number }[];
 }
 
@@ -145,13 +147,12 @@ function drawArrowHead(
 }
 
 function nodeColor(node: InnerNode, isHovered: boolean): string {
-  if (isHovered)      return COLOR_HOVER;
-  // Active state: fill with the node's type color
-  if (node.justFired) return COLOR_TERMINAL;  // amber fill — terminal just fired
-  // Inactive states
-  if (node.isInitial) return COLOR_INITIAL;   // blue fill — always armed
-  if (node.hasOutput) return COLOR_NODE_BG;   // dark fill — terminal ring drawn separately
-  return COLOR_DEFAULT;                        // slate — intermediate
+  if (isHovered)       return COLOR_HOVER;
+  if (node.justFired)  return COLOR_TERMINAL; // amber fill  — just matched this step
+  if (node.isActive)   return COLOR_ACTIVE;   // cyan fill   — currently queued
+  if (node.isInitial)  return COLOR_INITIAL;  // blue fill   — always armed (A+)
+  if (node.hasOutput)  return COLOR_NODE_BG;  // dark fill   — terminal ring drawn separately
+  return COLOR_DEFAULT;                        // slate       — intermediate
 }
 
 // ---------------------------------------------------------------------------
@@ -433,7 +434,9 @@ export class TobiasRenderer {
         iy:        pos.iy,
         isInitial: v.isInitial,
         hasOutput: v.hasOutput,
-        justFired: machineFired && v.hasOutput,
+        // Per-node state takes priority; fall back to machine-level fire for backward compat
+        justFired: v.wasJustMatched ?? (machineFired && v.hasOutput),
+        isActive:  v.isActive ?? false,
         elements:  v.elements,
       };
       innerById.set(v.id, node);
@@ -477,14 +480,33 @@ export class TobiasRenderer {
   }
 
   /**
-   * Refresh only the dynamic per-step state (justFired) without re-running layout.
-   * Called on every simulation step for performance.
+   * Refresh only the dynamic per-step state (justFired, isActive) without re-running layout.
+   * Uses per-node isActive/wasJustMatched from machine.sequences when available;
+   * falls back to machine-level justFired flag for any node without per-node data.
    */
   private _refreshNodeStates(cache: InnerGraphCache, machine: VisMachine): InnerGraphCache {
-    const updatedNodes = cache.nodes.map((n): InnerNode => ({
-      ...n,
-      justFired: machine.justFired && n.hasOutput,
-    }));
+    // Build per-node lookup from the sequences data
+    const nodeState = new Map<string, { isActive: boolean; wasJustMatched: boolean }>();
+    for (const seq of machine.sequences) {
+      for (const v of seq.vectors) {
+        nodeState.set(v.id, {
+          isActive:       v.isActive       ?? false,
+          wasJustMatched: v.wasJustMatched ?? false,
+        });
+      }
+    }
+
+    const hasPerNodeData = nodeState.size > 0;
+    const updatedNodes = cache.nodes.map((n): InnerNode => {
+      const state = nodeState.get(n.id);
+      return {
+        ...n,
+        justFired: hasPerNodeData
+          ? (state?.wasJustMatched ?? false)
+          : (machine.justFired && n.hasOutput),
+        isActive: state?.isActive ?? false,
+      };
+    });
     return { ...cache, nodes: updatedNodes };
   }
 
@@ -743,7 +765,9 @@ export class TobiasRenderer {
       ctx.globalAlpha = isDimNode ? 0.18 : 1.0;
       const fill = nodeColor(node, isHovNode);
 
-      if (node.justFired) { ctx.shadowBlur = 10; ctx.shadowColor = COLOR_TERMINAL; }
+      // Glow: amber for just-matched, cyan for actively queued
+      if (node.justFired)       { ctx.shadowBlur = 12; ctx.shadowColor = COLOR_TERMINAL; }
+      else if (node.isActive)   { ctx.shadowBlur = 8;  ctx.shadowColor = COLOR_ACTIVE; }
 
       ctx.beginPath();
       ctx.arc(node.ix, node.iy, NODE_R, 0, Math.PI * 2);
@@ -751,14 +775,24 @@ export class TobiasRenderer {
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      // Outer ring for all terminal nodes — amber ring is the permanent end-node marker.
-      // Inactive: ring visible on dark fill. Active (justFired): amber fill + ring + glow.
+      // Outer ring for terminal nodes — amber ring is the permanent end-node marker.
+      // Inactive: ring on dark fill. Active (justFired): amber fill + ring + glow.
       if (node.hasOutput) {
         ctx.beginPath();
         ctx.arc(node.ix, node.iy, NODE_R + 2.5, 0, Math.PI * 2);
         ctx.strokeStyle = COLOR_TERMINAL;
         ctx.lineWidth   = node.justFired ? 1.5 : 1;
         ctx.globalAlpha = isDimNode ? 0.18 : (node.justFired ? 0.9 : 0.7);
+        ctx.stroke();
+      }
+
+      // Cyan ring for actively queued (isActive) non-terminal nodes
+      if (node.isActive && !node.justFired && !node.hasOutput) {
+        ctx.beginPath();
+        ctx.arc(node.ix, node.iy, NODE_R + 2, 0, Math.PI * 2);
+        ctx.strokeStyle = COLOR_ACTIVE;
+        ctx.lineWidth   = 1.2;
+        ctx.globalAlpha = isDimNode ? 0.18 : 0.8;
         ctx.stroke();
       }
 
@@ -820,7 +854,11 @@ export class TobiasRenderer {
     ctx.fill();
   }
 
-  /** Footer bar: cyan dots for input vector, purple dots for output vector. */
+  /**
+   * Footer bar: shows active CES node names (cyan, left) and just-fired node
+   * names (amber, right).  Falls back to raw input/output vector dots when no
+   * per-node state has arrived yet.
+   */
   private _drawFooter(node: CardNode): void {
     const ctx = this._ctx;
     const m = node.machine;
@@ -840,6 +878,32 @@ export class TobiasRenderer {
     ctx.font = '7px monospace';
     ctx.textBaseline = 'middle';
 
+    // Collect per-node CES states from the inner graph
+    const activeNodes  = node.innerGraph.nodes.filter(n => n.isActive && !n.justFired);
+    const firedNodes   = node.innerGraph.nodes.filter(n => n.justFired);
+
+    if (activeNodes.length > 0 || firedNodes.length > 0) {
+      // ── CES node mode: show node labels ─────────────────────────────────
+      if (activeNodes.length > 0) {
+        const labels = activeNodes.slice(0, 3).map(n => n.label.slice(0, 9)).join(' ');
+        ctx.textAlign = 'left';
+        ctx.fillStyle = COLOR_ACTIVE;
+        ctx.globalAlpha = 0.85;
+        ctx.fillText('▸ ' + labels, 4, midY, node.w / 2 - 6);
+        ctx.globalAlpha = 1;
+      }
+      if (firedNodes.length > 0) {
+        const labels = firedNodes.slice(0, 3).map(n => n.label.slice(0, 9)).join(' ');
+        ctx.textAlign = 'right';
+        ctx.fillStyle = COLOR_TERMINAL;
+        ctx.globalAlpha = 0.9;
+        ctx.fillText(labels + ' ↯', node.w - 4, midY, node.w / 2 - 6);
+        ctx.globalAlpha = 1;
+      }
+      return;
+    }
+
+    // ── Fallback: raw vector dots when no per-node state available ───────
     const iv = m.latestInputVector;
     const ov = m.latestOutputVector;
 

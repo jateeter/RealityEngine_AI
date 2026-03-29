@@ -11,6 +11,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import './MachineInterconnectionGraph.css';
+import { useVisualizerStore } from '../store';
 
 interface Machine {
   id: string;
@@ -68,10 +69,15 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
   currentMachineId,
   machines
 }) => {
+  const { ws } = useVisualizerStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 1200, height: 700 });
+  // Persist node positions and zoom/pan across layout rebuilds so that
+  // per-step state updates (status colors, vectors) never reset the layout.
+  const nodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const zoomTransformRef = useRef<d3.ZoomTransform | null>(null);
   const [perceptualSpace, setPerceptualSpace] = useState<number[]>([]);
   const [machineStatuses, setMachineStatuses] = useState<Record<string, {
     status: 'idle' | 'processing' | 'active';
@@ -95,8 +101,11 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Listen for WebSocket updates for perceptual space
+  // Listen for WebSocket updates for perceptual space.
+  // Depend on `ws` so we re-subscribe whenever the connection is (re)established.
   useEffect(() => {
+    if (!ws) return;
+
     const handleMessage = (event: MessageEvent) => {
       const data = JSON.parse(event.data);
 
@@ -122,14 +131,9 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       }
     };
 
-    const ws = (window as any).realityEngineWS;
-    if (ws) {
-      ws.addEventListener('message', handleMessage);
-      return () => {
-        ws.removeEventListener('message', handleMessage);
-      };
-    }
-  }, []);
+    ws.addEventListener('message', handleMessage);
+    return () => ws.removeEventListener('message', handleMessage);
+  }, [ws]);
 
   useEffect(() => {
     if (!svgRef.current || !machines || machines.length === 0) return;
@@ -177,21 +181,27 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       });
     }
 
-    // Convert machines to nodes with status
-    const nodes: MachineNode[] = validMachines.map(m => ({
-      id: m.id,
-      name: m.name,
-      description: m.description,
-      inputMapping: m.perceptualMapping!.input,
-      outputMapping: m.perceptualMapping!.output,
-      isCurrent: m.id === currentMachineId,
-      isConnected: m.id === currentMachineId || connectedMachineIds.has(m.id),
-      metadata: m.metadata,
-      sequenceCount: m.sequenceCount,
-      status: machineStatuses[m.id]?.status || 'idle',
-      lastInput: machineStatuses[m.id]?.lastInput,
-      lastOutput: machineStatuses[m.id]?.lastOutput
-    }));
+    // Convert machines to nodes — status starts idle; the separate update
+    // effect applies live per-step status without rebuilding the simulation.
+    const cx = width / 2, cy = height / 2;
+    const nodes: MachineNode[] = validMachines.map(m => {
+      const saved = nodePositionsRef.current.get(m.id);
+      return {
+        id: m.id,
+        name: m.name,
+        description: m.description,
+        inputMapping: m.perceptualMapping!.input,
+        outputMapping: m.perceptualMapping!.output,
+        isCurrent: m.id === currentMachineId,
+        isConnected: m.id === currentMachineId || connectedMachineIds.has(m.id),
+        metadata: m.metadata,
+        sequenceCount: m.sequenceCount,
+        status: 'idle' as const,
+        // Restore saved position so layout is preserved when topology changes
+        x: saved?.x ?? cx + (Math.random() - 0.5) * 400,
+        y: saved?.y ?? cy + (Math.random() - 0.5) * 400,
+      };
+    });
 
     // Detect links
     const links: MachineLink[] = [];
@@ -231,13 +241,18 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
     const g = svg.append('g');
 
-    // Add zoom
+    // Add zoom — save transform so it survives topology rebuilds
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.3, 3])
       .on('zoom', (event) => {
+        zoomTransformRef.current = event.transform;
         g.attr('transform', event.transform);
       });
     svg.call(zoom as any);
+    // Restore previous zoom/pan if the layout was already established
+    if (zoomTransformRef.current) {
+      svg.call((zoom as any).transform, zoomTransformRef.current);
+    }
 
     // Create simulation
     const simulation = d3.forceSimulation(nodes as any)
@@ -299,7 +314,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('fill', '#94a3b8')
       .attr('text-anchor', 'middle')
       .text((d: MachineLink) =>
-        `[${d.sourceRegion.offset}:${d.sourceRegion.offset + d.sourceRegion.length}] → [${d.targetRegion.offset}:${d.targetRegion.offset + d.targetRegion.length}]`
+        `[${d.sourceRegion.offset}:${d.sourceRegion.offset + d.sourceRegion.length - 1}] → [${d.targetRegion.offset}:${d.targetRegion.offset + d.targetRegion.length - 1}]`
       );
 
     // Draw nodes
@@ -310,27 +325,17 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         .on('drag', dragged)
         .on('end', dragended) as any);
 
-    // Node rectangles
+    // Node rectangles — data-field marker allows the update effect to patch
+    // colors in-place without a full simulation rebuild.
     node.append('rect')
+      .attr('data-field', 'status-rect')
       .attr('width', 200)
       .attr('height', 140)
       .attr('x', -100)
       .attr('y', -70)
       .attr('rx', 10)
-      .attr('fill', (d: MachineNode) => {
-        if (d.status === 'active') return '#166534'; // Green for active
-        if (d.status === 'processing') return '#854d0e'; // Yellow for processing
-        if (d.isCurrent) return '#1e40af';
-        if (d.isConnected) return '#475569';
-        return '#1e293b';
-      })
-      .attr('stroke', (d: MachineNode) => {
-        if (d.status === 'active') return '#22c55e';
-        if (d.status === 'processing') return '#eab308';
-        if (d.isCurrent) return '#3b82f6';
-        if (d.isConnected) return '#64748b';
-        return '#334155';
-      })
+      .attr('fill', (d: MachineNode) => d.isCurrent ? '#1e40af' : d.isConnected ? '#475569' : '#1e293b')
+      .attr('stroke', (d: MachineNode) => d.isCurrent ? '#3b82f6' : d.isConnected ? '#64748b' : '#334155')
       .attr('stroke-width', (d: MachineNode) => d.isCurrent ? 3 : 2)
       .attr('opacity', (d: MachineNode) => d.isConnected ? 1 : 0.4)
       .on('mouseover', showTooltip)
@@ -365,14 +370,11 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
     // Status indicator
     node.append('circle')
+      .attr('data-field', 'status-dot')
       .attr('cx', 85)
       .attr('cy', -60)
       .attr('r', 6)
-      .attr('fill', (d: MachineNode) => {
-        if (d.status === 'active') return '#22c55e';
-        if (d.status === 'processing') return '#eab308';
-        return '#64748b';
-      })
+      .attr('fill', '#64748b')
       .attr('opacity', 0.8);
 
     // Input mapping
@@ -381,7 +383,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('y', -18)
       .attr('font-size', '11px')
       .attr('fill', '#60a5fa')
-      .text((d: MachineNode) => `In: [${d.inputMapping.offset}:${d.inputMapping.offset + d.inputMapping.length}]`);
+      .text((d: MachineNode) => `In: [${d.inputMapping.offset}:${d.inputMapping.offset + d.inputMapping.length - 1}]`);
 
     // Output mapping
     node.append('text')
@@ -389,35 +391,23 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('y', -3)
       .attr('font-size', '11px')
       .attr('fill', '#f472b6')
-      .text((d: MachineNode) => `Out: [${d.outputMapping.offset}:${d.outputMapping.offset + d.outputMapping.length}]`);
+      .text((d: MachineNode) => `Out: [${d.outputMapping.offset}:${d.outputMapping.offset + d.outputMapping.length - 1}]`);
 
-    // Last input vector (if available)
+    // Last input vector — starts empty; filled by update effect
     node.append('text')
+      .attr('data-field', 'last-input')
       .attr('text-anchor', 'middle')
       .attr('y', 15)
       .attr('font-size', '9px')
-      .attr('fill', '#94a3b8')
-      .text((d: MachineNode) => {
-        if (d.lastInput && d.lastInput.length > 0) {
-          const preview = d.lastInput.slice(0, 4).map(v => v.toFixed(1)).join(',');
-          return `In: [${preview}${d.lastInput.length > 4 ? '...' : ''}]`;
-        }
-        return '';
-      });
+      .attr('fill', '#94a3b8');
 
-    // Last output vector (if available)
+    // Last output vector — starts empty; filled by update effect
     node.append('text')
+      .attr('data-field', 'last-output')
       .attr('text-anchor', 'middle')
       .attr('y', 30)
       .attr('font-size', '9px')
-      .attr('fill', '#f9a8d4')
-      .text((d: MachineNode) => {
-        if (d.lastOutput && d.lastOutput.length > 0) {
-          const preview = d.lastOutput.slice(0, 4).map(v => v.toFixed(1)).join(',');
-          return `Out: [${preview}${d.lastOutput.length > 4 ? '...' : ''}]`;
-        }
-        return '';
-      });
+      .attr('fill', '#f9a8d4');
 
     // Sequence count
     node.append('text')
@@ -427,8 +417,12 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('fill', '#64748b')
       .text((d: MachineNode) => d.sequenceCount ? `${d.sequenceCount} sequences` : '');
 
-    // Update simulation
+    // Update simulation — also persist positions so rebuilds preserve layout
     simulation.on('tick', () => {
+      for (const n of nodes) {
+        if (n.x != null && n.y != null) nodePositionsRef.current.set(n.id, { x: n.x, y: n.y });
+      }
+
       linkPath.attr('d', (d: any) => {
         const dx = d.target.x - d.source.x;
         const dy = d.target.y - d.source.y;
@@ -552,7 +546,66 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       simulation.stop();
     };
 
-  }, [machines, currentMachineId, dimensions, machineStatuses, perceptualSpace]);
+  // Intentionally excludes machineStatuses and perceptualSpace — per-step
+  // status updates are applied in-place by the effect below.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [machines, currentMachineId, dimensions]);
+
+  // ── Lightweight per-step update — patches colors/text without rebuilding ──
+  // Runs whenever machine statuses change (every WebSocket step) but never
+  // touches positions, zoom, or the D3 simulation.
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    svg.selectAll<SVGGElement, MachineNode>('g.node').each(function(d) {
+      const info   = machineStatuses[d.id];
+      const status = info?.status ?? 'idle';
+
+      d3.select(this).select('rect[data-field="status-rect"]')
+        .attr('fill', () => {
+          if (status === 'active')     return '#166534';
+          if (status === 'processing') return '#854d0e';
+          if (d.isCurrent)             return '#1e40af';
+          if (d.isConnected)           return '#475569';
+          return '#1e293b';
+        })
+        .attr('stroke', () => {
+          if (status === 'active')     return '#22c55e';
+          if (status === 'processing') return '#eab308';
+          if (d.isCurrent)             return '#3b82f6';
+          if (d.isConnected)           return '#64748b';
+          return '#334155';
+        });
+
+      d3.select(this).select('circle[data-field="status-dot"]')
+        .attr('fill', () => {
+          if (status === 'active')     return '#22c55e';
+          if (status === 'processing') return '#eab308';
+          return '#64748b';
+        });
+
+      const iv = info?.lastInput;
+      d3.select(this).select('text[data-field="last-input"]')
+        .text(() => {
+          if (iv && iv.length > 0) {
+            const preview = iv.slice(0, 4).map((v: number) => v.toFixed(1)).join(',');
+            return `In: [${preview}${iv.length > 4 ? '...' : ''}]`;
+          }
+          return '';
+        });
+
+      const ov = info?.lastOutput;
+      d3.select(this).select('text[data-field="last-output"]')
+        .text(() => {
+          if (ov && ov.length > 0) {
+            const preview = ov.slice(0, 4).map((v: number) => v.toFixed(1)).join(',');
+            return `Out: [${preview}${ov.length > 4 ? '...' : ''}]`;
+          }
+          return '';
+        });
+    });
+  }, [machineStatuses]);
 
   return (
     <div ref={containerRef} className="machine-interconnection-graph">

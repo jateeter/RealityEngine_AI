@@ -3,6 +3,8 @@ import cors from 'cors';
 import axios from 'axios';
 import { WebSocketServer } from 'ws';
 import * as http from 'http';
+import * as https from 'https';
+import { readFileSync, existsSync } from 'fs';
 
 /**
  * Visualization Backend Server
@@ -14,13 +16,19 @@ import * as http from 'http';
 const app = express();
 const PORT = parseInt(process.env.VIZ_PORT || '3001', 10);
 const REALITY_ENGINE_URL = process.env.REALITY_ENGINE_URL || 'http://localhost:3000';
+const certPath = process.env.TLS_CERT_PATH;
+const keyPath  = process.env.TLS_KEY_PATH;
+const tlsEnabled = !!(certPath && keyPath && existsSync(certPath) && existsSync(keyPath));
 
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Create HTTP server
-const server = http.createServer(app);
+// Use HTTPS when TLS_CERT_PATH and TLS_KEY_PATH are set (dev outside Docker);
+// otherwise plain HTTP (Docker: TLS is terminated by the nginx tls-proxy).
+const server = tlsEnabled
+  ? https.createServer({ cert: readFileSync(certPath!), key: readFileSync(keyPath!) }, app)
+  : http.createServer(app);
 
 // Create WebSocket server
 const wss = new WebSocketServer({ server, path: '/ws' });
@@ -533,6 +541,28 @@ app.post('/api/perceptual-simulation/step', async (req: Request, res: Response) 
   }
 });
 
+// Perception Engine push — accepts a pre-assembled 256-byte reality vector,
+// forwards to the Reality Engine, and broadcasts the result to all visualizer clients.
+app.post('/api/perceive', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceive`, req.body);
+
+    if (response.data.success && response.data.step) {
+      broadcast({
+        type: 'perceptual-simulation-stepped',
+        step: response.data.step,
+        data: { activeMachineIds: Object.keys(response.data.step.machineResults ?? {}) },
+        timestamp: Date.now()
+      });
+    }
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error('Error forwarding /api/perceive:', error.message);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
 // Reset perceptual simulation
 app.post('/api/perceptual-simulation/reset', async (req: Request, res: Response) => {
   try {
@@ -636,8 +666,10 @@ function stopPerceptualSimulationPolling() {
 
 // Start server
 server.listen(PORT, () => {
-  console.log(`Reality Engine Visualizer Backend running on port ${PORT}`);
-  console.log(`WebSocket server available at ws://localhost:${PORT}/ws`);
+  const protocol = tlsEnabled ? 'https' : 'http';
+  const wsProtocol = tlsEnabled ? 'wss' : 'ws';
+  console.log(`Reality Engine Visualizer Backend running on port ${PORT} (${protocol.toUpperCase()})`);
+  console.log(`WebSocket server available at ${wsProtocol}://localhost:${PORT}/ws`);
   console.log(`Proxying to Reality Engine at ${REALITY_ENGINE_URL}`);
 });
 

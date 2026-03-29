@@ -3,7 +3,7 @@
  * with highlighting for machine input/output regions and random generation
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import './UniversalInputVectorDisplay.css';
 
 interface VectorRegion {
@@ -18,26 +18,12 @@ interface VectorRegion {
 interface UniversalInputVectorDisplayProps {
   currentVector: number[];
   vectorRegions: VectorRegion[];
-  onGenerateRandom: (vectorCount: number, inputRegion: { offset: number; length: number }) => void;
-  isGenerating: boolean;
 }
 
 export const UniversalInputVectorDisplay: React.FC<UniversalInputVectorDisplayProps> = ({
   currentVector,
   vectorRegions,
-  onGenerateRandom,
-  isGenerating
 }) => {
-  const [showConfig, setShowConfig] = useState(false);
-  const [vectorCount, setVectorCount] = useState(100);
-  const [inputOffset, setInputOffset] = useState(0);
-  const [inputLength, setInputLength] = useState(16);
-
-  const handleGenerate = () => {
-    onGenerateRandom(vectorCount, { offset: inputOffset, length: inputLength });
-    setShowConfig(false);
-  };
-
   // Group bytes into chunks of 16 for display
   const bytesPerRow = 16;
   const rows = Math.ceil(256 / bytesPerRow);
@@ -81,82 +67,6 @@ export const UniversalInputVectorDisplay: React.FC<UniversalInputVectorDisplayPr
           Universal Perceptual Space (En)
         </div>
         <div className="vector-dimension">256 bytes</div>
-      </div>
-
-      {/* Random Generator Control */}
-      <div className="random-generator-control">
-        <button
-          onClick={() => setShowConfig(!showConfig)}
-          className={`generator-toggle ${showConfig ? 'active' : ''}`}
-          disabled={isGenerating}
-        >
-          <span className="generator-icon">🎲</span>
-          Random Stream Generator
-          {isGenerating && <span className="generating-spinner">⚡</span>}
-        </button>
-
-        {showConfig && (
-          <div className="generator-config">
-            <div className="config-row">
-              <label>
-                Vector Count
-                <input
-                  type="number"
-                  min="1"
-                  max="1000"
-                  value={vectorCount}
-                  onChange={(e) => setVectorCount(Number(e.target.value))}
-                  className="config-input"
-                />
-              </label>
-            </div>
-
-            <div className="config-row">
-              <label>
-                Input Region Offset
-                <input
-                  type="number"
-                  min="0"
-                  max="255"
-                  value={inputOffset}
-                  onChange={(e) => setInputOffset(Math.max(0, Math.min(255, Number(e.target.value))))}
-                  className="config-input"
-                />
-              </label>
-            </div>
-
-            <div className="config-row">
-              <label>
-                Input Region Length
-                <input
-                  type="number"
-                  min="1"
-                  max={256 - inputOffset}
-                  value={inputLength}
-                  onChange={(e) => setInputLength(Math.max(1, Math.min(256 - inputOffset, Number(e.target.value))))}
-                  className="config-input"
-                />
-              </label>
-            </div>
-
-            <div className="config-info">
-              <span className="info-label">Target Region:</span>
-              <span className="info-value">[{inputOffset}:{inputOffset + inputLength}]</span>
-            </div>
-
-            <button
-              onClick={handleGenerate}
-              className="generate-button"
-              disabled={isGenerating}
-            >
-              Generate Stream
-            </button>
-
-            <div className="config-note">
-              Random values generated in target region. Machine outputs will overwrite at their designated offsets.
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Vector Display Grid */}
@@ -217,7 +127,7 @@ export const UniversalInputVectorDisplay: React.FC<UniversalInputVectorDisplayPr
                   }}
                 ></span>
                 <span className="legend-text">
-                  {region.machineName} {region.type === 'output' ? '→' : '←'} [{region.offset}:{region.offset + region.length}]
+                  {region.machineName} {region.type === 'output' ? '→' : '←'} [{region.offset}:{region.offset + region.length - 1}]
                 </span>
               </div>
             ))

@@ -8,10 +8,8 @@ import {
   OutputVector,
   MachineCreateRequest,
   MachineUpdateRequest,
-  VectorSequenceItem
 } from './types';
 import { api } from './api';
-import { perceptualLogger, calculateVectorStats } from './utils/perceptualSequenceLogger';
 
 interface VisualizerState {
   // View state
@@ -30,11 +28,6 @@ interface VisualizerState {
   inputVectors: number[][];
   activityEvents: ActivityEvent[];
   ws: WebSocket | null;
-
-  // Perceptual Input/Output Sequences (FIFO queues)
-  inputQueue: VectorSequenceItem[];
-  outputQueue: VectorSequenceItem[];
-  currentInputVector: number[] | null;
 
   // Machine View state
   expandedSequenceIds: Set<string>;
@@ -80,19 +73,6 @@ interface VisualizerState {
   setCurrentOutputVectors: (outputs: OutputVector[]) => void;
   setHighlightedOutputId: (outputId: string | null) => void;
 
-  // Perceptual Input/Output Queue actions
-  addToInputQueue: (item: VectorSequenceItem) => void;
-  addMultipleToInputQueue: (items: VectorSequenceItem[]) => void;
-  popFromInputQueue: () => VectorSequenceItem | null;
-  removeFromInputQueue: (id: string) => void;
-  clearInputQueue: () => void;
-  addToOutputQueue: (item: VectorSequenceItem) => void;
-  removeFromOutputQueue: (id: string) => void;
-  clearOutputQueue: () => void;
-  setCurrentInputVector: (vector: number[] | null) => void;
-  generateAlgorithmicSequence: (pattern: string, count: number) => Promise<void>;
-  generateRandomSequence: (count: number, region: { offset: number; length: number }) => Promise<void>;
-  loadQueueIntoSimulation: () => Promise<void>;
 }
 
 export const useVisualizerStore = create<VisualizerState>((set, get) => ({
@@ -113,10 +93,6 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   activityEvents: [],
   ws: null,
 
-  // Perceptual Input/Output Queue initialization
-  inputQueue: [],
-  outputQueue: [],
-  currentInputVector: null,
 
   // Machine View state initialization
   expandedSequenceIds: new Set<string>(),
@@ -534,7 +510,8 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   },
 
   connectWebSocket: () => {
-    const wsUrl = `ws://${window.location.hostname}:3001/ws`;
+    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProto}//${window.location.hostname}:3001/ws`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {};
@@ -566,6 +543,25 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
                   lastStepTime: Date.now()
                 } : null
               });
+
+              // Refresh sequences so CriticalEventGraphView sees live activation
+              // state (isActive, wasJustMatched, lastOutputVector) from the engine.
+              api.getSequences().then(sequences => {
+                // Harvest output vectors from nodes that just fired this step.
+                const newOutputs: OutputVector[] = [];
+                for (const seq of sequences) {
+                  for (const node of seq.nodes) {
+                    if (node.wasJustMatched && node.lastOutputVector) {
+                      newOutputs.push(node.lastOutputVector as OutputVector);
+                    }
+                  }
+                }
+                const updates: { sequences: SequenceGraph[]; currentOutputVectors?: OutputVector[] } = { sequences };
+                if (newOutputs.length > 0) {
+                  updates.currentOutputVectors = newOutputs;
+                }
+                set(updates);
+              }).catch(err => console.error('Error refreshing sequences after step:', err));
             }
             break;
           }
@@ -588,6 +584,9 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
       }
     };
 
+    // Expose the WebSocket globally so components can attach their own
+    // message listeners without going through the store.
+    (window as any).realityEngineWS = ws;
     set({ ws });
   },
 
@@ -595,6 +594,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     const { ws } = get();
     if (ws) {
       ws.close();
+      (window as any).realityEngineWS = null;
       set({ ws: null });
     }
   },
@@ -647,312 +647,4 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     set({ highlightedOutputId: outputId });
   },
 
-  // Perceptual Input/Output Queue actions implementation
-  addToInputQueue: (item: VectorSequenceItem) => {
-    const stats = calculateVectorStats(item.vector);
-
-    perceptualLogger.info('input-queue-add', `Added vector to input queue: ${item.id}`, {
-      queueType: 'input',
-      itemId: item.id,
-      vectorDimension: item.vector.length,
-      vectorSource: item.source,
-      vectorNonZeroCount: stats.nonZeroCount,
-      vectorMean: stats.mean,
-      vectorStdDev: stats.stdDev,
-      queueLength: get().inputQueue.length + 1
-    });
-
-    set((state) => ({
-      inputQueue: [...state.inputQueue, item]
-    }));
-  },
-
-  addMultipleToInputQueue: (items: VectorSequenceItem[]) => {
-    perceptualLogger.info('input-queue-add-bulk', `Added ${items.length} vectors to input queue`, {
-      queueType: 'input',
-      itemsAdded: items.length,
-      queueLength: get().inputQueue.length + items.length,
-      vectorSources: items.map(item => item.source),
-      vectorIds: items.map(item => item.id)
-    });
-
-    set((state) => ({
-      inputQueue: [...state.inputQueue, ...items]
-    }));
-  },
-
-  popFromInputQueue: () => {
-    const state = get();
-    if (state.inputQueue.length === 0) {
-      perceptualLogger.debug('input-queue-pop', 'Attempted to pop from empty input queue', {
-        queueType: 'input',
-        queueLength: 0
-      });
-      return null;
-    }
-
-    const [firstItem, ...rest] = state.inputQueue;
-    const stats = calculateVectorStats(firstItem.vector);
-
-    perceptualLogger.info('input-queue-pop', `Popped vector from input queue: ${firstItem.id}`, {
-      queueType: 'input',
-      itemId: firstItem.id,
-      vectorDimension: firstItem.vector.length,
-      vectorSource: firstItem.source,
-      vectorNonZeroCount: stats.nonZeroCount,
-      queueLength: rest.length
-    });
-
-    set({ inputQueue: rest });
-    return firstItem;
-  },
-
-  removeFromInputQueue: (id: string) => {
-    const removedItem = get().inputQueue.find(item => item.id === id);
-
-    perceptualLogger.info('input-queue-remove', `Removed vector from input queue: ${id}`, {
-      queueType: 'input',
-      itemId: id,
-      queueLength: get().inputQueue.length - 1,
-      itemFound: !!removedItem
-    });
-
-    set((state) => ({
-      inputQueue: state.inputQueue.filter(item => item.id !== id)
-    }));
-  },
-
-  clearInputQueue: () => {
-    const clearedCount = get().inputQueue.length;
-
-    perceptualLogger.info('input-queue-clear', `Cleared input queue (${clearedCount} items)`, {
-      queueType: 'input',
-      itemsRemoved: clearedCount,
-      queueLength: 0
-    });
-
-    set({ inputQueue: [] });
-    get().addActivityEvent({
-      id: `event-${Date.now()}`,
-      type: 'info',
-      message: 'Input queue cleared',
-      timestamp: Date.now(),
-      severity: 'info'
-    });
-  },
-
-  addToOutputQueue: (item: VectorSequenceItem) => {
-    const stats = calculateVectorStats(item.vector);
-
-    perceptualLogger.info('output-queue-add', `Added vector to output queue: ${item.id}`, {
-      queueType: 'output',
-      itemId: item.id,
-      vectorDimension: item.vector.length,
-      vectorSource: item.source,
-      vectorNonZeroCount: stats.nonZeroCount,
-      vectorMean: stats.mean,
-      vectorStdDev: stats.stdDev,
-      queueLength: get().outputQueue.length + 1,
-      machineName: item.metadata?.machineName
-    });
-
-    set((state) => ({
-      outputQueue: [...state.outputQueue, item]
-    }));
-  },
-
-  removeFromOutputQueue: (id: string) => {
-    const removedItem = get().outputQueue.find(item => item.id === id);
-
-    perceptualLogger.info('output-queue-remove', `Removed vector from output queue: ${id}`, {
-      queueType: 'output',
-      itemId: id,
-      queueLength: get().outputQueue.length - 1,
-      itemFound: !!removedItem,
-      machineName: removedItem?.metadata?.machineName
-    });
-
-    set((state) => ({
-      outputQueue: state.outputQueue.filter(item => item.id !== id)
-    }));
-  },
-
-  clearOutputQueue: () => {
-    const clearedCount = get().outputQueue.length;
-
-    perceptualLogger.info('output-queue-clear', `Cleared output queue (${clearedCount} items)`, {
-      queueType: 'output',
-      itemsRemoved: clearedCount,
-      queueLength: 0
-    });
-
-    set({ outputQueue: [] });
-    get().addActivityEvent({
-      id: `event-${Date.now()}`,
-      type: 'info',
-      message: 'Output queue cleared',
-      timestamp: Date.now(),
-      severity: 'info'
-    });
-  },
-
-  setCurrentInputVector: (vector: number[] | null) => {
-    set({ currentInputVector: vector });
-  },
-
-  generateAlgorithmicSequence: async (pattern: string, count: number) => {
-    try {
-      perceptualLogger.info('vector-generate-algorithmic', `Generating ${count} algorithmic vectors (${pattern})`, {
-        vectorPattern: pattern,
-        itemsAdded: count,
-        vectorDimension: 256
-      });
-
-      const { generateAlgorithmicVectors } = await import('./utils/algorithmicVectorGeneration');
-
-      const vectors = generateAlgorithmicVectors(pattern, count, 256);
-
-      const items: VectorSequenceItem[] = vectors.map((vector, index) => ({
-        id: `alg-${pattern}-${Date.now()}-${index}`,
-        vector,
-        timestamp: Date.now() + index,
-        source: 'algorithmic' as const,
-        metadata: { pattern, index }
-      }));
-
-      get().addMultipleToInputQueue(items);
-      await get().loadQueueIntoSimulation();
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: `Generated ${count} algorithmic vectors (${pattern}) and loaded into simulation`,
-        timestamp: Date.now(),
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error('Error generating algorithmic sequence:', error);
-      perceptualLogger.error('vector-generate-algorithmic', `Failed to generate algorithmic sequence: ${error}`, {
-        vectorPattern: pattern,
-        itemsAdded: 0
-      });
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to generate algorithmic sequence',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
-    }
-  },
-
-  generateRandomSequence: async (count: number, region: { offset: number; length: number }) => {
-    try {
-      perceptualLogger.info('vector-generate-random', `Generating ${count} random vectors in region [${region.offset}:${region.offset + region.length}]`, {
-        itemsAdded: count,
-        vectorDimension: 256,
-        vectorRegion: region
-      });
-
-      const items: VectorSequenceItem[] = [];
-
-      for (let i = 0; i < count; i++) {
-        const vector = new Array(256).fill(0);
-
-        // Fill specified region with random values
-        for (let j = region.offset; j < region.offset + region.length; j++) {
-          if (j < vector.length) {
-            vector[j] = Math.random();
-          }
-        }
-
-        items.push({
-          id: `rand-${Date.now()}-${i}`,
-          vector,
-          timestamp: Date.now() + i,
-          source: 'random' as const,
-          metadata: { region }
-        });
-      }
-
-      get().addMultipleToInputQueue(items);
-      await get().loadQueueIntoSimulation();
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: `Generated ${count} random vectors in region [${region.offset}:${region.offset + region.length}] and loaded into simulation`,
-        timestamp: Date.now(),
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error('Error generating random sequence:', error);
-      perceptualLogger.error('vector-generate-random', `Failed to generate random sequence: ${error}`, {
-        itemsAdded: 0,
-        vectorRegion: region
-      });
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to generate random sequence',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
-    }
-  },
-
-  loadQueueIntoSimulation: async () => {
-    const { inputQueue } = get();
-
-    if (inputQueue.length === 0) return;
-
-    const vectors = inputQueue.map(item => item.vector);
-
-    try {
-      // Update the store first so the UI reflects the vectors immediately,
-      // regardless of whether the backend configuration succeeds.
-      set({
-        inputVectors: vectors,
-        simulationState: {
-          status: 'stopped',
-          currentIndex: 0,
-          totalVectors: vectors.length,
-          startTime: null,
-          lastStepTime: null
-        }
-      });
-
-      // Stream vectors to the PerceptualSpaceSimulator in chunks to avoid
-      // HTTP body-size limits. Each 256-float vector is ~2-5 KB as JSON;
-      // sending them all at once easily exceeds the default parser limit.
-      const CHUNK_SIZE = 50;
-      for (let i = 0; i < vectors.length; i += CHUNK_SIZE) {
-        const chunk = vectors.slice(i, i + CHUNK_SIZE);
-        await api.appendSequenceChunk({
-          vectors: chunk,
-          ...(i === 0
-            ? { reset: true, inputRegion: { offset: 0, length: 256 }, stepDelayMs: 1000 }
-            : {})
-        });
-      }
-      await api.commitSequenceConfig();
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: `Loaded ${vectors.length} vector${vectors.length !== 1 ? 's' : ''} from input queue into simulation`,
-        timestamp: Date.now(),
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error('Error loading queue into simulation:', error);
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to load input queue into simulation',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
-    }
-  }
 }));

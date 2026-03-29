@@ -10,6 +10,8 @@ export interface VectorNodeLite {
   label: string;
   isInitial: boolean;
   hasOutput: boolean;
+  isActive?: boolean;        // node is currently queued / in pending-activations
+  wasJustMatched?: boolean;  // node matched on the most recent step
   elements: { value: number; comparatorType: string; threshold?: number }[];
 }
 
@@ -197,13 +199,47 @@ export const useMachineSimulation = () => {
         };
       })
     );
+
+    // Asynchronously fetch per-node activation state so individual CES nodes
+    // can be colored correctly (isActive = cyan, wasJustMatched = amber glow).
+    api.getSequences().then((sequenceGraphs) => {
+      const nodeStateBySeqId = new Map<string, Map<string, { isActive: boolean; wasJustMatched: boolean }>>();
+      for (const sg of sequenceGraphs as any[]) {
+        const nodeMap = new Map<string, { isActive: boolean; wasJustMatched: boolean }>();
+        for (const n of (sg.nodes || [])) {
+          nodeMap.set(n.id, {
+            isActive:       n.isActive       ?? false,
+            wasJustMatched: n.wasJustMatched ?? false,
+          });
+        }
+        nodeStateBySeqId.set(sg.sequenceId, nodeMap);
+      }
+      setMachines((prev) =>
+        prev.map((m) => ({
+          ...m,
+          sequences: m.sequences.map((seq) => {
+            const nodeMap = nodeStateBySeqId.get(seq.sequenceId);
+            if (!nodeMap) return seq;
+            return {
+              ...seq,
+              vectors: seq.vectors.map((v) => ({
+                ...v,
+                isActive:       nodeMap.get(v.id)?.isActive       ?? false,
+                wasJustMatched: nodeMap.get(v.id)?.wasJustMatched ?? false,
+              })),
+            };
+          }),
+        }))
+      );
+    }).catch(() => { /* per-node state is cosmetic — ignore errors */ });
   }, []);
 
   // ── WebSocket ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const connect = () => {
-      const ws = new WebSocket('ws://localhost:3001/ws');
+      const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${wsProto}//${window.location.hostname}:3001/ws`);
 
       ws.onmessage = (event) => {
         try {

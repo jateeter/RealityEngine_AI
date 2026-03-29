@@ -6,12 +6,6 @@ interface GlobalCurrentVectorDisplayProps {
   currentVector: number[];
   // Simulation step number
   currentStep: number;
-  // Total steps in queue
-  totalSteps: number;
-  // Is simulation running?
-  isPlaying: boolean;
-  // Callback to open sequence management modal
-  onOpenSequenceManager: () => void;
   // Callback to open log viewer
   onOpenLogViewer: () => void;
 }
@@ -19,9 +13,6 @@ interface GlobalCurrentVectorDisplayProps {
 export const GlobalCurrentVectorDisplay: React.FC<GlobalCurrentVectorDisplayProps> = ({
   currentVector,
   currentStep,
-  totalSteps,
-  isPlaying,
-  onOpenSequenceManager,
   onOpenLogViewer
 }) => {
   const [expandedView, setExpandedView] = useState(false);
@@ -54,7 +45,7 @@ export const GlobalCurrentVectorDisplay: React.FC<GlobalCurrentVectorDisplayProp
           <div className="vector-stats">
             <div className="stat-item">
               <span className="stat-label">Step:</span>
-              <span className="stat-value">{currentStep} / {totalSteps}</span>
+              <span className="stat-value">{currentStep}</span>
             </div>
             <div className="stat-item">
               <span className="stat-label">Dimension:</span>
@@ -80,13 +71,6 @@ export const GlobalCurrentVectorDisplay: React.FC<GlobalCurrentVectorDisplayProp
               {expandedView ? '📋 Compact' : '📊 Expand'}
             </button>
             <button
-              onClick={onOpenSequenceManager}
-              className="action-button sequence-manager"
-              title="Manage input/output sequences"
-            >
-              📑 Sequences
-            </button>
-            <button
               onClick={onOpenLogViewer}
               className="action-button log-viewer"
               title="View perceptual sequence logs"
@@ -100,15 +84,6 @@ export const GlobalCurrentVectorDisplay: React.FC<GlobalCurrentVectorDisplayProp
       {/* Current Vector Display */}
       <div className={`vector-content ${expandedView ? 'expanded' : 'compact'}`}>
         <div className="vector-grid-wrapper">
-          {/* Simulation Status Indicator */}
-          {isPlaying && (
-            <div className="simulation-status playing">
-              <span className="status-icon">▶</span>
-              <span className="status-text">Simulation Running</span>
-              <div className="status-pulse" />
-            </div>
-          )}
-
           {/* Vector Grid */}
           <div className="vector-grid">
             {Array.from({ length: rows }).map((_, rowIndex) => {
@@ -213,14 +188,6 @@ export const GlobalCurrentVectorDisplay: React.FC<GlobalCurrentVectorDisplayProp
             </div>
           </div>
 
-          <div className="info-section">
-            <div className="info-title">Generation Method</div>
-            <div className="info-badges">
-              <span className="info-badge algorithmic">Algorithmic</span>
-              <span className="info-badge universal">Universal (256-byte)</span>
-              <span className="info-badge queued">FIFO Queue</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>

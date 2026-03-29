@@ -29,7 +29,7 @@ export const MachineInputFlowDisplay: React.FC<MachineInputFlowDisplayProps> = (
 }) => {
   // Helper to format byte range
   const formatRange = (offset: number, length: number) => {
-    return `[${offset}:${offset + length}]`;
+    return `[${offset}:${offset + length - 1}]`;
   };
 
   // Helper to format vector display (truncate if too long)

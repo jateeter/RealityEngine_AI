@@ -514,7 +514,7 @@ const TobiasView: React.FC = () => {
       {/* ── Sequences panel (modal) ───────────────────────────── */}
       <TobiasSequencesPanel
         isOpen={sequencesPanelOpen}
-        onClose={() => setSequencesPanelOpen(false)}
+        onClose={() => { setSequencesPanelOpen(false); refreshMachines(); }}
         machines={machines}
         stepHistory={stepHistory}
       />

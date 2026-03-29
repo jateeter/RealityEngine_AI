@@ -116,7 +116,7 @@ export const TobiasSequencesPanel: React.FC<TobiasSequencesPanelProps> = ({
         });
       }
       await api.commitSequenceConfig();
-      setLoadStatus({ ok: true, msg: `✓ ${vectors.length} vectors loaded (region [${region.offset}:${region.offset + region.length}])` });
+      setLoadStatus({ ok: true, msg: `✓ ${vectors.length} vectors loaded (region [${region.offset}:${region.offset + region.length - 1}])` });
     } catch (err) {
       console.error('Failed to load sequence:', err);
       setLoadStatus({ ok: false, msg: '✗ Failed to load sequence — see console for details' });
