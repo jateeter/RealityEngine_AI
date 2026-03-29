@@ -40,6 +40,18 @@ case $SERVICE in
         docker-compose logs --tail=$LINES visualizer-frontend
         ;;
 
+    perception-backend|perception)
+        echo "Showing Perception Engine Backend logs (last $LINES lines):"
+        echo ""
+        docker-compose logs --tail=$LINES perception-engine-backend
+        ;;
+
+    perception-frontend)
+        echo "Showing Perception Engine Frontend logs (last $LINES lines):"
+        echo ""
+        docker-compose logs --tail=$LINES perception-engine-frontend
+        ;;
+
     docker)
         echo "Showing all Docker service logs (last $LINES lines):"
         echo ""
@@ -72,6 +84,18 @@ case $SERVICE in
         echo "=== Visualizer Frontend Logs ==="
         echo ""
         docker-compose logs --tail=15 visualizer-frontend
+
+        echo ""
+        echo ""
+        echo "=== Perception Engine Backend Logs ==="
+        echo ""
+        docker-compose logs --tail=15 perception-engine-backend
+
+        echo ""
+        echo ""
+        echo "=== Perception Engine Frontend Logs ==="
+        echo ""
+        docker-compose logs --tail=15 perception-engine-frontend
         ;;
 
     follow)
@@ -94,9 +118,11 @@ case $SERVICE in
         echo "Services:"
         echo "  api                - Reality Engine API logs"
         echo "  qdrant             - Qdrant database logs"
-        echo "  visualizer-backend - Visualizer backend logs"
-        echo "  visualizer-frontend- Visualizer frontend logs"
-        echo "  docker             - All Docker service logs"
+        echo "  visualizer-backend  - Visualizer backend logs"
+        echo "  visualizer-frontend - Visualizer frontend logs"
+        echo "  perception-backend  - Perception Engine backend logs"
+        echo "  perception-frontend - Perception Engine frontend logs"
+        echo "  docker              - All Docker service logs"
         echo "  all                - All logs (default)"
         echo "  follow             - Follow logs in real-time"
         echo ""

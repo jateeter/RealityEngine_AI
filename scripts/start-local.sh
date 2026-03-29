@@ -87,6 +87,12 @@ fi
 if lsof -i :5173 > /dev/null 2>&1; then
     PORTS_IN_USE="$PORTS_IN_USE 5173"
 fi
+if lsof -i :3004 > /dev/null 2>&1; then
+    PORTS_IN_USE="$PORTS_IN_USE 3004"
+fi
+if lsof -i :3005 > /dev/null 2>&1; then
+    PORTS_IN_USE="$PORTS_IN_USE 3005"
+fi
 
 if [ -n "$PORTS_IN_USE" ]; then
     print_error "Ports still in use:$PORTS_IN_USE"
@@ -188,9 +194,13 @@ else
     docker stop reality-engine-app 2>/dev/null || true
     docker stop reality-engine-visualizer-backend 2>/dev/null || true
     docker stop reality-engine-visualizer-frontend 2>/dev/null || true
+    docker stop reality-engine-perception-backend 2>/dev/null || true
+    docker stop reality-engine-perception-frontend 2>/dev/null || true
     docker rm reality-engine-app 2>/dev/null || true
     docker rm reality-engine-visualizer-backend 2>/dev/null || true
     docker rm reality-engine-visualizer-frontend 2>/dev/null || true
+    docker rm reality-engine-perception-backend 2>/dev/null || true
+    docker rm reality-engine-perception-frontend 2>/dev/null || true
     print_success "Only Qdrant is running in Docker"
 fi
 

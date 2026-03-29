@@ -232,7 +232,37 @@ else
 fi
 echo ""
 
-# Test 10: Check Docker
+# Test 10: Check Perception Engine Backend
+print_test "Perception Engine Backend"
+if curl -s -f http://localhost:3004/api/health > /dev/null 2>&1; then
+    print_success "Perception Engine Backend is running"
+    PASSED=$((PASSED + 1))
+else
+    print_error "Perception Engine Backend is not responding"
+    echo "  Expected: http://localhost:3004/api/health"
+    echo "  Fix: docker-compose up -d perception-engine-backend"
+    FAILED=$((FAILED + 1))
+fi
+echo ""
+
+# Test 11: Check /api/perceive endpoint
+print_test "Reality Engine /api/perceive Endpoint"
+# Build a 256-element zero vector for the test
+ZERO_VEC=$(printf '0.0,%.0s' {1..255})0.0
+PERCEIVE_RESPONSE=$(curl -s -X POST http://localhost:3000/api/perceive \
+    -H "Content-Type: application/json" \
+    -d "{\"vector\": [$ZERO_VEC]}" 2>/dev/null)
+if echo "$PERCEIVE_RESPONSE" | grep -q '"success"'; then
+    print_success "/api/perceive endpoint is working"
+    PASSED=$((PASSED + 1))
+else
+    print_error "/api/perceive endpoint not responding correctly"
+    echo "  Expected JSON with 'success' field"
+    FAILED=$((FAILED + 1))
+fi
+echo ""
+
+# Test 12: Check Docker
 print_test "Docker Environment"
 if command -v docker &> /dev/null; then
     print_success "Docker is installed"
@@ -269,9 +299,11 @@ if [ $FAILED -eq 0 ]; then
     echo -e "${GREEN}✓ All critical tests passed!${NC}"
     echo ""
     echo "System is operational. Services available at:"
-    echo "  - Reality Engine:  http://localhost:3000"
-    echo "  - Visualizer:      http://localhost:5173"
-    echo "  - Qdrant:          http://localhost:6333"
+    echo "  - Reality Engine:         http://localhost:3000"
+    echo "  - Visualizer:             http://localhost:5173"
+    echo "  - Qdrant:                 http://localhost:6333"
+    echo "  - Perception Engine:      http://localhost:3004"
+    echo "  - Perception Engine UI:   http://localhost:3005"
     echo ""
     exit 0
 else

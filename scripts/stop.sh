@@ -53,7 +53,11 @@ fi
 echo ""
 
 # Stop and remove Docker services
-print_info "Stopping and removing Docker services (Qdrant, Visualizer Backend, Visualizer Frontend)..."
+# NOTE: docker-compose down WITHOUT -v intentionally preserves named volumes:
+#   perception_sources_data  — perception engine sources
+#   qdrant_storage           — Qdrant vector store
+#   grafana_data             — Grafana dashboards/config
+print_info "Stopping and removing Docker services (TLS proxy, Qdrant, Visualizer, Perception Engine)..."
 docker-compose down
 
 if [ $? -eq 0 ]; then
@@ -70,9 +74,14 @@ print_success "Docker cache cleared"
 
 echo ""
 echo "=================================================="
-echo "All Services Stopped and Removed"
+echo "All Services Stopped"
 echo "=================================================="
 echo ""
-echo "Docker containers and build cache have been cleared to prevent stale builds."
-echo "To start again: ./scripts/start.sh"
+echo "Containers and build cache cleared. Persistent data preserved:"
+echo "  - Perception sources: volume perception_sources_data"
+echo "  - Qdrant vector store: volume qdrant_storage"
+echo "  - Grafana dashboards:  volume grafana_data"
+echo ""
+echo "To start again (restores perception sources): ./scripts/start.sh"
+echo "To start fresh (clears perception sources):   ./scripts/start.sh --fresh"
 echo ""

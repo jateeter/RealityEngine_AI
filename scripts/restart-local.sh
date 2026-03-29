@@ -54,6 +54,12 @@ fi
 if lsof -ti:3001 > /dev/null 2>&1; then
     PORTS_IN_USE="$PORTS_IN_USE 3001"
 fi
+if lsof -ti:3004 > /dev/null 2>&1; then
+    PORTS_IN_USE="$PORTS_IN_USE 3004"
+fi
+if lsof -ti:3005 > /dev/null 2>&1; then
+    PORTS_IN_USE="$PORTS_IN_USE 3005"
+fi
 if lsof -ti:5173 > /dev/null 2>&1; then
     PORTS_IN_USE="$PORTS_IN_USE 5173"
 fi
@@ -71,6 +77,12 @@ if [ -n "$PORTS_IN_USE" ]; then
     fi
     if lsof -ti:3001 > /dev/null 2>&1; then
         PORTS_IN_USE="$PORTS_IN_USE 3001"
+    fi
+    if lsof -ti:3004 > /dev/null 2>&1; then
+        PORTS_IN_USE="$PORTS_IN_USE 3004"
+    fi
+    if lsof -ti:3005 > /dev/null 2>&1; then
+        PORTS_IN_USE="$PORTS_IN_USE 3005"
     fi
     if lsof -ti:5173 > /dev/null 2>&1; then
         PORTS_IN_USE="$PORTS_IN_USE 5173"

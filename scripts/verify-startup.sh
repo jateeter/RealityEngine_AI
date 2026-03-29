@@ -50,6 +50,8 @@ EXPECTED_CONTAINERS=(
     "reality-engine-app"
     "reality-engine-visualizer-backend"
     "reality-engine-visualizer-frontend"
+    "reality-engine-perception-backend"
+    "reality-engine-perception-frontend"
 )
 
 MISSING_CONTAINERS=()
@@ -108,6 +110,24 @@ else
     echo "Check logs: docker logs reality-engine-visualizer-frontend"
     exit 1
 fi
+
+# Perception Engine Backend
+if curl -s http://localhost:3004/api/health > /dev/null 2>&1; then
+    print_success "Perception Engine Backend responsive on port 3004"
+else
+    print_error "Perception Engine Backend not responsive"
+    echo "Check logs: docker logs reality-engine-perception-backend"
+    exit 1
+fi
+
+# Perception Engine Frontend
+if curl -s http://localhost:3005/ > /dev/null 2>&1; then
+    print_success "Perception Engine Frontend responsive on port 3005"
+else
+    print_error "Perception Engine Frontend not responsive"
+    echo "Check logs: docker logs reality-engine-perception-frontend"
+    exit 1
+fi
 echo ""
 
 # Step 4: Check frontend build includes new components
@@ -160,10 +180,12 @@ echo "Verification Complete!"
 echo "=================================================="
 echo ""
 echo "All Services Running:"
-echo "  ✓ Qdrant Vector DB:      http://localhost:6333"
-echo "  ✓ Reality Engine API:    http://localhost:3000"
-echo "  ✓ Visualizer Backend:    http://localhost:3001"
-echo "  ✓ Visualizer Frontend:   http://localhost:5173"
+echo "  ✓ Qdrant Vector DB:           http://localhost:6333"
+echo "  ✓ Reality Engine API:         http://localhost:3000"
+echo "  ✓ Visualizer Backend:         http://localhost:3001"
+echo "  ✓ Visualizer Frontend:        http://localhost:5173"
+echo "  ✓ Perception Engine Backend:  http://localhost:3004"
+echo "  ✓ Perception Engine Frontend: http://localhost:3005"
 echo ""
 echo "To access the visualizer:"
 echo "  1. Open: http://localhost:5173"

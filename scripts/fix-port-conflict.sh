@@ -108,6 +108,8 @@ fix_port() {
 # Check all Reality Engine ports
 fix_port 3000 "Reality Engine Backend" true
 fix_port 3001 "Visualizer Backend" true
+fix_port 3004 "Perception Engine Backend" true
+fix_port 3005 "Perception Engine Frontend" true
 fix_port 5173 "Visualizer Frontend (Vite)" true
 fix_port 6333 "Qdrant Vector DB" false
 

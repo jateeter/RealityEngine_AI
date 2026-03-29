@@ -2,6 +2,10 @@
 
 # Test RS Flip-Flop
 # Demonstrates the behavior of the RS flip-flop with various input combinations
+#
+# DEPRECATED: This script calls POST /api/sequences/:id/transition which has been
+# removed. Use the Visualizer UI (http://localhost:5173) to test machines interactively,
+# or use POST /api/machines/:id/process with a universal input vector instead.
 
 PORT=${PORT:-3000}
 API_URL="http://localhost:$PORT/api"

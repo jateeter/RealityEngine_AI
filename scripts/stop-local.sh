@@ -148,6 +148,20 @@ if lsof -ti:5173 > /dev/null 2>&1; then
     CLEANED=$((CLEANED + 1))
 fi
 
+# Port 3004 (Perception Engine Backend)
+if lsof -ti:3004 > /dev/null 2>&1; then
+    print_info "Killing stray process on port 3004..."
+    lsof -ti:3004 | xargs kill -9 2>/dev/null || true
+    CLEANED=$((CLEANED + 1))
+fi
+
+# Port 3005 (Perception Engine Frontend)
+if lsof -ti:3005 > /dev/null 2>&1; then
+    print_info "Killing stray process on port 3005..."
+    lsof -ti:3005 | xargs kill -9 2>/dev/null || true
+    CLEANED=$((CLEANED + 1))
+fi
+
 if [ $CLEANED -gt 0 ]; then
     print_success "Cleaned up $CLEANED stray process(es)"
 
@@ -162,6 +176,12 @@ if [ $CLEANED -gt 0 ]; then
     fi
     if lsof -ti:3001 > /dev/null 2>&1; then
         STILL_IN_USE="$STILL_IN_USE 3001"
+    fi
+    if lsof -ti:3004 > /dev/null 2>&1; then
+        STILL_IN_USE="$STILL_IN_USE 3004"
+    fi
+    if lsof -ti:3005 > /dev/null 2>&1; then
+        STILL_IN_USE="$STILL_IN_USE 3005"
     fi
     if lsof -ti:5173 > /dev/null 2>&1; then
         STILL_IN_USE="$STILL_IN_USE 5173"
