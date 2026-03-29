@@ -14,6 +14,8 @@ After starting with `./docker-start.sh` or `docker-compose up -d`:
 | **Grafana Logs** | http://localhost:3002 | Centralized logging dashboard |
 | **Reality Engine API** | http://localhost:3000 | Core API server |
 | **Visualizer Backend** | http://localhost:3001 | WebSocket proxy |
+| **Perception Engine Backend** | http://localhost:3004 | Reality source API + WebSocket |
+| **Perception Engine Frontend** | http://localhost:3005 | Perception source management UI |
 | **Qdrant Dashboard** | http://localhost:6333/dashboard | Vector database UI |
 | **Loki API** | http://localhost:3100 | Log aggregation service |
 

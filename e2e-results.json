@@ -1,11 +1,11 @@
 {
   "config": {
-    "configFile": "/Users/johnt/workspace/idahoApp/realityEngine/playwright.config.ts",
-    "rootDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
+    "configFile": "/Users/johnt/workspace/GitHub/RealityEngine_AI/playwright.config.ts",
+    "rootDir": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e",
     "forbidOnly": false,
     "fullyParallel": false,
-    "globalSetup": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/global-setup.ts",
-    "globalTeardown": "/Users/johnt/workspace/idahoApp/realityEngine/e2e/global-teardown.ts",
+    "globalSetup": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/global-setup.ts",
+    "globalTeardown": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/global-teardown.ts",
     "globalTimeout": 0,
     "grep": {},
     "grepInvert": null,
@@ -39,7 +39,7 @@
     "quiet": false,
     "projects": [
       {
-        "outputDir": "/Users/johnt/workspace/idahoApp/realityEngine/test-results",
+        "outputDir": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -47,7 +47,7 @@
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
+        "testDir": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -55,7 +55,7 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/johnt/workspace/idahoApp/realityEngine/test-results",
+        "outputDir": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -63,7 +63,7 @@
         },
         "id": "firefox",
         "name": "firefox",
-        "testDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
+        "testDir": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -71,7 +71,7 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/johnt/workspace/idahoApp/realityEngine/test-results",
+        "outputDir": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -79,7 +79,7 @@
         },
         "id": "webkit",
         "name": "webkit",
-        "testDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
+        "testDir": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -87,7 +87,7 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/johnt/workspace/idahoApp/realityEngine/test-results",
+        "outputDir": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -95,7 +95,7 @@
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
-        "testDir": "/Users/johnt/workspace/idahoApp/realityEngine/e2e",
+        "testDir": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -118,25 +118,25 @@
   },
   "suites": [
     {
-      "title": "tests/core-data-propagation.spec.ts",
-      "file": "tests/core-data-propagation.spec.ts",
+      "title": "tests/multi-step-output-workflow.spec.ts",
+      "file": "tests/multi-step-output-workflow.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Core Data Propagation Cycle",
-          "file": "tests/core-data-propagation.spec.ts",
-          "line": 18,
+          "title": "Multi-Step State Machine - Output Workflow",
+          "file": "tests/multi-step-output-workflow.spec.ts",
+          "line": 81,
           "column": 6,
           "specs": [
             {
-              "title": "should validate input queue isolation per machine instance",
-              "ok": true,
+              "title": "should complete full output workflow: Seq1→RESET and Seq2→SET via RS flip-flops",
+              "ok": false,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 60000,
+                  "timeout": 120000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -145,46 +145,372 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 101,
-                      "errors": [],
+                      "status": "failed",
+                      "duration": 2026,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:143:23\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:102:5",
+                        "location": {
+                          "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                          "column": 23,
+                          "line": 143
+                        },
+                        "snippet": "  141 |\n  142 |       expect(rsFlipFlopOut1).toEqual([0, 1]);\n> 143 |       expect(rs2Out1).toEqual([0, 1]);\n      |                       ^\n  144 |       console.log('  ✓ RS flip-flops verified in RESET state: Q=0, Q̄=1');\n  145 |     });\n  146 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                            "column": 23,
+                            "line": 143
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m\n\n  141 |\n  142 |       expect(rsFlipFlopOut1).toEqual([0, 1]);\n> 143 |       expect(rs2Out1).toEqual([0, 1]);\n      |                       ^\n  144 |       console.log('  ✓ RS flip-flops verified in RESET state: Q=0, Q̄=1');\n  145 |     });\n  146 |\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:143:23\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:102:5"
+                        }
+                      ],
                       "stdout": [
                         {
-                          "text": "\n=== TEST: Input Queue Isolation ===\n\n"
+                          "text": "Step 1: Loading machines via API...\n"
                         },
                         {
-                          "text": "✓ Created Machine Instance 1: undefined\n"
+                          "text": "  ✓ All three machines loaded\n"
                         },
                         {
-                          "text": "✓ Created Machine Instance 2: undefined\n"
+                          "text": "Step 2: Configuring Sequence 1 (RESET path)...\n"
                         },
                         {
-                          "text": "✓ Machine 1 processed vector from its queue: [0.52]\n"
+                          "text": "  Step 1: completed\n"
                         },
                         {
-                          "text": "✓ Machine 2 processed vector from its queue: [0.82]\n"
+                          "text": "  Step 2: completed\n"
                         },
                         {
-                          "text": "\n✅ Input Queue Isolation Validated\n\n"
+                          "text": "  Step 3: completed\n"
+                        },
+                        {
+                          "text": "  Multi-Step output [3:5] after Seq1 match = [0,1]\n"
+                        },
+                        {
+                          "text": "  ✓ Multi-Step Sequence 1 output verified: [0,1]\n"
+                        },
+                        {
+                          "text": "  Step 4 (probe): completed\n"
+                        },
+                        {
+                          "text": "  RSFlipFlop output [6:8]  = [0,1]\n"
+                        },
+                        {
+                          "text": "  RS2       output [8:10]  = [0,0]\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-01-04T06:03:53.657Z",
+                      "steps": [
+                        {
+                          "title": "Load Multi-Step, RS2, and RSFlipFlop machines",
+                          "duration": 1046
+                        },
+                        {
+                          "title": "Run Sequence 1 (000→001→011) and verify RESET state in RS flip-flops",
+                          "duration": 90,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:143:23\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:102:5",
+                            "location": {
+                              "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                              "column": 23,
+                              "line": 143
+                            },
+                            "snippet": "  141 |\n  142 |       expect(rsFlipFlopOut1).toEqual([0, 1]);\n> 143 |       expect(rs2Out1).toEqual([0, 1]);\n      |                       ^\n  144 |       console.log('  ✓ RS flip-flops verified in RESET state: Q=0, Q̄=1');\n  145 |     });\n  146 |"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-02-18T05:50:18.324Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-13cd6--Seq2→SET-via-RS-flip-flops-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-13cd6--Seq2→SET-via-RS-flip-flops-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-13cd6--Seq2→SET-via-RS-flip-flops-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                        "column": 23,
+                        "line": 143
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
-              "id": "8b275e0ff05b995c8ca5-fec2c90e939f9e2d41ac",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 20,
+              "id": "e1f3475194eda06d9c79-c06977546cae58b67c72",
+              "file": "tests/multi-step-output-workflow.spec.ts",
+              "line": 90,
               "column": 3
             },
             {
-              "title": "should validate multi-step event activation cascade",
+              "title": "should verify output vector metadata and formatting from each Multi-Step sequence",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 1953,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:281:31\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:225:5",
+                        "location": {
+                          "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                          "column": 31,
+                          "line": 281
+                        },
+                        "snippet": "  279 |       }\n  280 |\n> 281 |       expect(foundSeq1Output).toBeTruthy();\n      |                               ^\n  282 |       console.log('  ✓ Sequence 1 output metadata verified');\n  283 |     });\n  284 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                            "column": 31,
+                            "line": 281
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n  279 |       }\n  280 |\n> 281 |       expect(foundSeq1Output).toBeTruthy();\n      |                               ^\n  282 |       console.log('  ✓ Sequence 1 output metadata verified');\n  283 |     });\n  284 |\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:281:31\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:225:5"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "Verifying Sequence 1 metadata...\n"
+                        },
+                        {
+                          "text": "  Multi-Step machineName: Multi-Step State Machine\n"
+                        },
+                        {
+                          "text": "  ✓ Output vector format: [0,1]\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Load machines",
+                          "duration": 1051
+                        },
+                        {
+                          "title": "Verify output metadata for Sequence 1 (000→001→011→[0,1])",
+                          "duration": 76,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:281:31\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:225:5",
+                            "location": {
+                              "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                              "column": 31,
+                              "line": 281
+                            },
+                            "snippet": "  279 |       }\n  280 |\n> 281 |       expect(foundSeq1Output).toBeTruthy();\n      |                               ^\n  282 |       console.log('  ✓ Sequence 1 output metadata verified');\n  283 |     });\n  284 |"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-02-18T05:50:20.897Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-7004b-om-each-Multi-Step-sequence-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-7004b-om-each-Multi-Step-sequence-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-7004b-om-each-Multi-Step-sequence-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                        "column": 31,
+                        "line": 281
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e1f3475194eda06d9c79-2a1720df7efdf832671a",
+              "file": "tests/multi-step-output-workflow.spec.ts",
+              "line": 216,
+              "column": 3
+            },
+            {
+              "title": "should execute both sequences via auto-play and verify final RS flip-flop state",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 5016,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m    0,\u001b[22m\n\u001b[2m  ]\u001b[22m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m    0,\u001b[22m\n\u001b[2m  ]\u001b[22m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:415:34\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:401:5",
+                        "location": {
+                          "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                          "column": 34,
+                          "line": 415
+                        },
+                        "snippet": "  413 |       expect(space.slice(3, 5)).toEqual([1, 0]);   // Multi-Step output persists\n  414 |       expect(space.slice(6, 8)).toEqual([1, 0]);   // RSFlipFlop SET\n> 415 |       expect(space.slice(8, 10)).toEqual([1, 0]);  // RS2 SET\n      |                                  ^\n  416 |\n  417 |       console.log('  ✓ RS flip-flops verified in final SET state');\n  418 |     });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                            "column": 34,
+                            "line": 415
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m    0,\u001b[22m\n\u001b[2m  ]\u001b[22m\n\n  413 |       expect(space.slice(3, 5)).toEqual([1, 0]);   // Multi-Step output persists\n  414 |       expect(space.slice(6, 8)).toEqual([1, 0]);   // RSFlipFlop SET\n> 415 |       expect(space.slice(8, 10)).toEqual([1, 0]);  // RS2 SET\n      |                                  ^\n  416 |\n  417 |       console.log('  ✓ RS flip-flops verified in final SET state');\n  418 |     });\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:415:34\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:401:5"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "Configuring interleaved sequence + probes for auto-play...\n"
+                        },
+                        {
+                          "text": "  ✓ Configured with 8 steps at 200 ms/step\n"
+                        },
+                        {
+                          "text": "Starting auto-play...\n"
+                        },
+                        {
+                          "text": "  ✓ Auto-play started\n"
+                        },
+                        {
+                          "text": "  Current step: 8, isRunning: false\n"
+                        },
+                        {
+                          "text": "  ✓ Simulation completed all steps\n"
+                        },
+                        {
+                          "text": "Verifying final perceptual space...\n"
+                        },
+                        {
+                          "text": "  Final Perceptual Space State:\n"
+                        },
+                        {
+                          "text": "    Multi-Step input  [0:3]:   [0,0,0]\n"
+                        },
+                        {
+                          "text": "    Multi-Step output [3:5]:   [1,0]\n"
+                        },
+                        {
+                          "text": "    RSFlipFlop output [6:8]:   [1,0]\n"
+                        },
+                        {
+                          "text": "    RS2       output  [8:10]:  [0,0]\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "steps": [
+                        {
+                          "title": "Load machines",
+                          "duration": 1047
+                        },
+                        {
+                          "title": "Configure and auto-play both sequences (interleaved + probe)",
+                          "duration": 19
+                        },
+                        {
+                          "title": "Start auto-play and wait for completion",
+                          "duration": 3036
+                        },
+                        {
+                          "title": "Verify RS flip-flops settled in SET state after Seq2",
+                          "duration": 20,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m    0,\u001b[22m\n\u001b[2m  ]\u001b[22m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m    0,\u001b[22m\n\u001b[2m  ]\u001b[22m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:415:34\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:401:5",
+                            "location": {
+                              "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                              "column": 34,
+                              "line": 415
+                            },
+                            "snippet": "  413 |       expect(space.slice(3, 5)).toEqual([1, 0]);   // Multi-Step output persists\n  414 |       expect(space.slice(6, 8)).toEqual([1, 0]);   // RSFlipFlop SET\n> 415 |       expect(space.slice(8, 10)).toEqual([1, 0]);  // RS2 SET\n      |                                  ^\n  416 |\n  417 |       console.log('  ✓ RS flip-flops verified in final SET state');\n  418 |     });"
+                          }
+                        }
+                      ],
+                      "startTime": "2026-02-18T05:50:23.359Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-726bc-fy-final-RS-flip-flop-state-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-726bc-fy-final-RS-flip-flop-state-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-726bc-fy-final-RS-flip-flop-state-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
+                        "column": 34,
+                        "line": 415
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e1f3475194eda06d9c79-9f7a949223f2f6bc614c",
+              "file": "tests/multi-step-output-workflow.spec.ts",
+              "line": 344,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "Multi-Step State Machine - API Verification",
+          "file": "tests/multi-step-output-workflow.spec.ts",
+          "line": 440,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should verify sequences are correctly loaded via API",
               "ok": true,
               "tags": [],
               "tests": [
@@ -196,82 +522,28 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 0,
+                      "workerIndex": 3,
                       "parallelIndex": 0,
                       "status": "passed",
                       "duration": 36,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "\n=== TEST: Multi-Step Event Activation ===\n\n"
+                          "text": "Verifying Multi-Step sequences via API...\n"
                         },
                         {
-                          "text": "✓ Created cascade sequence: undefined\n"
+                          "text": "✓ Sequence 1 verified: Sequence 1: 000→001→011→[01]\n"
                         },
                         {
-                          "text": "\n--- Processing Step 1: Initial Detection ---\n"
+                          "text": "✓ Sequence 2 verified: Sequence 2: 100→101→111→[10]\n"
                         },
                         {
-                          "text": "Input Vector 1: [0.32]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-1-detector (value: 0.3, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "Active vectors after step 1: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "✓ Step 1 completed: step-2-processor should now be active\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 2: Mid-Layer Processing ---\n"
-                        },
-                        {
-                          "text": "Input Vector 2: [0.62]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-2-processor (value: 0.6, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "Active vectors after step 2: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506633776,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "✓ Step 2 completed: step-3-finalizer should now be active\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 3: Final Output Generation ---\n"
-                        },
-                        {
-                          "text": "Input Vector 3: [0.92]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-3-finalizer (value: 0.9, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "✓ Output generated: 1 output(s)\n"
-                        },
-                        {
-                          "text": "✓ Cascade completion output found: [1,1,1]\n"
-                        },
-                        {
-                          "text": "\n--- Final Engine State ---\n"
-                        },
-                        {
-                          "text": "Total sequences: 5\n"
-                        },
-                        {
-                          "text": "Total vectors: 11\n"
-                        },
-                        {
-                          "text": "Active vectors: 6\n"
-                        },
-                        {
-                          "text": "\n✅ Multi-Step Event Activation Cascade Validated\n\n"
+                          "text": "✅ API verification complete\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-01-04T06:03:53.769Z",
+                      "startTime": "2026-02-18T05:50:28.946Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -279,1003 +551,9 @@
                   "status": "expected"
                 }
               ],
-              "id": "8b275e0ff05b995c8ca5-147a5ab7220799d0a681",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 90,
-              "column": 3
-            },
-            {
-              "title": "should validate next event list activation on match",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 24,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Next Event List Activation ===\n\n"
-                        },
-                        {
-                          "text": "✓ Created branching sequence: undefined\n"
-                        },
-                        {
-                          "text": "\n--- Step 1: Root Event Activation ---\n"
-                        },
-                        {
-                          "text": "✓ Root event matched with vector: [0.52]\n"
-                        },
-                        {
-                          "text": "✓ Expected: All 3 branches (a, b, c) should now be active\n"
-                        },
-                        {
-                          "text": "Active vectors: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "\n--- Step 2-4: Branch Activations ---\n"
-                        },
-                        {
-                          "text": "✓ Vector 2 processed: 1 output(s) generated\n"
-                        },
-                        {
-                          "text": "✓ Vector 3 processed: 1 output(s) generated\n"
-                        },
-                        {
-                          "text": "✓ Vector 4 processed: 3 output(s) generated\n"
-                        },
-                        {
-                          "text": "\n✓ Total outputs from all branches: 5\n"
-                        },
-                        {
-                          "text": "\n✅ Next Event List Activation Validated\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:03:53.811Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-5ccc790cd7669fdda58b",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 225,
-              "column": 3
-            },
-            {
-              "title": "should measure core propagation cycle performance",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 26213,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Performance Measurement ===\n\n"
-                        },
-                        {
-                          "text": "Loaded 100 vectors into queue\n"
-                        },
-                        {
-                          "text": "\n--- Performance Metrics ---\n"
-                        },
-                        {
-                          "text": "Total vectors processed: 100\n"
-                        },
-                        {
-                          "text": "Total time: 26173ms\n"
-                        },
-                        {
-                          "text": "Average time per vector: 261.73ms\n"
-                        },
-                        {
-                          "text": "Throughput: 3.82 vectors/second\n"
-                        },
-                        {
-                          "text": "✓ Performance acceptable: 261.73ms per vector\n"
-                        },
-                        {
-                          "text": "\n✅ Performance Measurement Complete\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:03:53.840Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-76ffff9a04a6646cc0f7",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 319,
-              "column": 3
-            },
-            {
-              "title": "should validate input queue isolation per machine instance",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 87,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Input Queue Isolation ===\n\n"
-                        },
-                        {
-                          "text": "✓ Created Machine Instance 1: undefined\n"
-                        },
-                        {
-                          "text": "✓ Created Machine Instance 2: undefined\n"
-                        },
-                        {
-                          "text": "✓ Machine 1 processed vector from its queue: [0.52]\n"
-                        },
-                        {
-                          "text": "✓ Machine 2 processed vector from its queue: [0.82]\n"
-                        },
-                        {
-                          "text": "\n✅ Input Queue Isolation Validated\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:04:20.658Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-3474a61741f52ad3d821",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 20,
-              "column": 3
-            },
-            {
-              "title": "should validate multi-step event activation cascade",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 43,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Multi-Step Event Activation ===\n\n"
-                        },
-                        {
-                          "text": "✓ Created cascade sequence: undefined\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 1: Initial Detection ---\n"
-                        },
-                        {
-                          "text": "Input Vector 1: [0.32]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-1-detector (value: 0.3, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "Active vectors after step 1: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "✓ Step 1 completed: step-2-processor should now be active\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 2: Mid-Layer Processing ---\n"
-                        },
-                        {
-                          "text": "Input Vector 2: [0.62]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-2-processor (value: 0.6, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "Active vectors after step 2: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506633776,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506660760,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "✓ Step 2 completed: step-3-finalizer should now be active\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 3: Final Output Generation ---\n"
-                        },
-                        {
-                          "text": "Input Vector 3: [0.92]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-3-finalizer (value: 0.9, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "✓ Output generated: 2 output(s)\n"
-                        },
-                        {
-                          "text": "✓ Cascade completion output found: [1,1,1]\n"
-                        },
-                        {
-                          "text": "\n--- Final Engine State ---\n"
-                        },
-                        {
-                          "text": "Total sequences: 10\n"
-                        },
-                        {
-                          "text": "Total vectors: 22\n"
-                        },
-                        {
-                          "text": "Active vectors: 12\n"
-                        },
-                        {
-                          "text": "\n✅ Multi-Step Event Activation Cascade Validated\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:04:20.755Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-424d5dbb26fef0161d2e",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 90,
-              "column": 3
-            },
-            {
-              "title": "should validate next event list activation on match",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 53,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Next Event List Activation ===\n\n"
-                        },
-                        {
-                          "text": "✓ Created branching sequence: undefined\n"
-                        },
-                        {
-                          "text": "\n--- Step 1: Root Event Activation ---\n"
-                        },
-                        {
-                          "text": "✓ Root event matched with vector: [0.52]\n"
-                        },
-                        {
-                          "text": "✓ Expected: All 3 branches (a, b, c) should now be active\n"
-                        },
-                        {
-                          "text": "Active vectors: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "\n--- Step 2-4: Branch Activations ---\n"
-                        },
-                        {
-                          "text": "✓ Vector 2 processed: 2 output(s) generated\n"
-                        },
-                        {
-                          "text": "✓ Vector 3 processed: 2 output(s) generated\n"
-                        },
-                        {
-                          "text": "✓ Vector 4 processed: 7 output(s) generated\n"
-                        },
-                        {
-                          "text": "\n✓ Total outputs from all branches: 11\n"
-                        },
-                        {
-                          "text": "\n✅ Next Event List Activation Validated\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:04:20.803Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-48f778f94cb41bc3daf9",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 225,
-              "column": 3
-            },
-            {
-              "title": "should measure core propagation cycle performance",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "firefox",
-                  "projectName": "firefox",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 25805,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Performance Measurement ===\n\n"
-                        },
-                        {
-                          "text": "Loaded 100 vectors into queue\n"
-                        },
-                        {
-                          "text": "\n--- Performance Metrics ---\n"
-                        },
-                        {
-                          "text": "Total vectors processed: 100\n"
-                        },
-                        {
-                          "text": "Total time: 25784ms\n"
-                        },
-                        {
-                          "text": "Average time per vector: 257.84ms\n"
-                        },
-                        {
-                          "text": "Throughput: 3.88 vectors/second\n"
-                        },
-                        {
-                          "text": "✓ Performance acceptable: 257.84ms per vector\n"
-                        },
-                        {
-                          "text": "\n✅ Performance Measurement Complete\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:04:20.862Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-b9d3042fac643d2c001d",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 319,
-              "column": 3
-            },
-            {
-              "title": "should validate input queue isolation per machine instance",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 83,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Input Queue Isolation ===\n\n"
-                        },
-                        {
-                          "text": "✓ Created Machine Instance 1: undefined\n"
-                        },
-                        {
-                          "text": "✓ Created Machine Instance 2: undefined\n"
-                        },
-                        {
-                          "text": "✓ Machine 1 processed vector from its queue: [0.52]\n"
-                        },
-                        {
-                          "text": "✓ Machine 2 processed vector from its queue: [0.82]\n"
-                        },
-                        {
-                          "text": "\n✅ Input Queue Isolation Validated\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:04:47.154Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-4aadc921c2b650d45ba5",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 20,
-              "column": 3
-            },
-            {
-              "title": "should validate multi-step event activation cascade",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 41,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Multi-Step Event Activation ===\n\n"
-                        },
-                        {
-                          "text": "✓ Created cascade sequence: undefined\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 1: Initial Detection ---\n"
-                        },
-                        {
-                          "text": "Input Vector 1: [0.32]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-1-detector (value: 0.3, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "Active vectors after step 1: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "✓ Step 1 completed: step-2-processor should now be active\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 2: Mid-Layer Processing ---\n"
-                        },
-                        {
-                          "text": "Input Vector 2: [0.62]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-2-processor (value: 0.6, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "Active vectors after step 2: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506633776,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506660760,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506687254,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "✓ Step 2 completed: step-3-finalizer should now be active\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 3: Final Output Generation ---\n"
-                        },
-                        {
-                          "text": "Input Vector 3: [0.92]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-3-finalizer (value: 0.9, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "✓ Output generated: 3 output(s)\n"
-                        },
-                        {
-                          "text": "✓ Cascade completion output found: [1,1,1]\n"
-                        },
-                        {
-                          "text": "\n--- Final Engine State ---\n"
-                        },
-                        {
-                          "text": "Total sequences: 15\n"
-                        },
-                        {
-                          "text": "Total vectors: 33\n"
-                        },
-                        {
-                          "text": "Active vectors: 18\n"
-                        },
-                        {
-                          "text": "\n✅ Multi-Step Event Activation Cascade Validated\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:04:47.248Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-94ec55a86140cac5f7fd",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 90,
-              "column": 3
-            },
-            {
-              "title": "should validate next event list activation on match",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 26,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Next Event List Activation ===\n\n"
-                        },
-                        {
-                          "text": "✓ Created branching sequence: undefined\n"
-                        },
-                        {
-                          "text": "\n--- Step 1: Root Event Activation ---\n"
-                        },
-                        {
-                          "text": "✓ Root event matched with vector: [0.52]\n"
-                        },
-                        {
-                          "text": "✓ Expected: All 3 branches (a, b, c) should now be active\n"
-                        },
-                        {
-                          "text": "Active vectors: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"6817140e-76dc-4f48-88f9-933630609374\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "\n--- Step 2-4: Branch Activations ---\n"
-                        },
-                        {
-                          "text": "✓ Vector 2 processed: 3 output(s) generated\n"
-                        },
-                        {
-                          "text": "✓ Vector 3 processed: 3 output(s) generated\n"
-                        },
-                        {
-                          "text": "✓ Vector 4 processed: 11 output(s) generated\n"
-                        },
-                        {
-                          "text": "\n✓ Total outputs from all branches: 17\n"
-                        },
-                        {
-                          "text": "\n✅ Next Event List Activation Validated\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:04:47.295Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-e7978b848d4577ca6ca4",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 225,
-              "column": 3
-            },
-            {
-              "title": "should measure core propagation cycle performance",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "webkit",
-                  "projectName": "webkit",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 25616,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Performance Measurement ===\n\n"
-                        },
-                        {
-                          "text": "Loaded 100 vectors into queue\n"
-                        },
-                        {
-                          "text": "\n--- Performance Metrics ---\n"
-                        },
-                        {
-                          "text": "Total vectors processed: 100\n"
-                        },
-                        {
-                          "text": "Total time: 25582ms\n"
-                        },
-                        {
-                          "text": "Average time per vector: 255.82ms\n"
-                        },
-                        {
-                          "text": "Throughput: 3.91 vectors/second\n"
-                        },
-                        {
-                          "text": "✓ Performance acceptable: 255.82ms per vector\n"
-                        },
-                        {
-                          "text": "\n✅ Performance Measurement Complete\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:04:47.326Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-70b11ac42b728dfc1de6",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 319,
-              "column": 3
-            },
-            {
-              "title": "should validate input queue isolation per machine instance",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 87,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Input Queue Isolation ===\n\n"
-                        },
-                        {
-                          "text": "✓ Created Machine Instance 1: undefined\n"
-                        },
-                        {
-                          "text": "✓ Created Machine Instance 2: undefined\n"
-                        },
-                        {
-                          "text": "✓ Machine 1 processed vector from its queue: [0.52]\n"
-                        },
-                        {
-                          "text": "✓ Machine 2 processed vector from its queue: [0.82]\n"
-                        },
-                        {
-                          "text": "\n✅ Input Queue Isolation Validated\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:05:13.507Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-dfe368ee3feeb9cc3fb1",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 20,
-              "column": 3
-            },
-            {
-              "title": "should validate multi-step event activation cascade",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 51,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Multi-Step Event Activation ===\n\n"
-                        },
-                        {
-                          "text": "✓ Created cascade sequence: undefined\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 1: Initial Detection ---\n"
-                        },
-                        {
-                          "text": "Input Vector 1: [0.32]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-1-detector (value: 0.3, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "Active vectors after step 1: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}],\"6817140e-76dc-4f48-88f9-933630609374\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"edf896ca-db3b-4dd9-a227-453ee2df5fd5\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506687329}],\"isInitial\":false,\"metadata\":{}}],\"062897b9-f821-4362-87c0-128eb55ed9cb\":[{\"id\":\"16b0ed46-6ccc-42dd-a860-906127d1df7c\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"a8d25872-76f2-42c8-8cbe-f7616109f8c1\":[{\"id\":\"5be2ec07-303c-45de-a277-653b5723600a\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"da69a683-d603-42e8-9e0c-a6d12398e4f7\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "✓ Step 1 completed: step-2-processor should now be active\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 2: Mid-Layer Processing ---\n"
-                        },
-                        {
-                          "text": "Input Vector 2: [0.62]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-2-processor (value: 0.6, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "Active vectors after step 2: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506633776,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506660760,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506687254,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}],\"6817140e-76dc-4f48-88f9-933630609374\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"edf896ca-db3b-4dd9-a227-453ee2df5fd5\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506687329}],\"isInitial\":false,\"metadata\":{}}],\"062897b9-f821-4362-87c0-128eb55ed9cb\":[{\"id\":\"16b0ed46-6ccc-42dd-a860-906127d1df7c\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"a8d25872-76f2-42c8-8cbe-f7616109f8c1\":[{\"id\":\"5be2ec07-303c-45de-a277-653b5723600a\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"da69a683-d603-42e8-9e0c-a6d12398e4f7\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"step-2-processor\",\"elements\":[{\"value\":0.6,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-3-finalizer\"],\"outputVectors\":[],\"isInitial\":false,\"metadata\":{}},{\"id\":\"step-3-finalizer\",\"elements\":[{\"value\":0.9,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"cascade-complete\",\"vector\":[1,1,1],\"timestamp\":1767506713612,\"metadata\":{\"type\":\"cascade-completion\"}}],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "✓ Step 2 completed: step-3-finalizer should now be active\n"
-                        },
-                        {
-                          "text": "\n--- Processing Step 3: Final Output Generation ---\n"
-                        },
-                        {
-                          "text": "Input Vector 3: [0.92]\n"
-                        },
-                        {
-                          "text": "Expected Match: step-3-finalizer (value: 0.9, threshold: ±0.1)\n"
-                        },
-                        {
-                          "text": "✓ Output generated: 4 output(s)\n"
-                        },
-                        {
-                          "text": "✓ Cascade completion output found: [1,1,1]\n"
-                        },
-                        {
-                          "text": "\n--- Final Engine State ---\n"
-                        },
-                        {
-                          "text": "Total sequences: 20\n"
-                        },
-                        {
-                          "text": "Total vectors: 44\n"
-                        },
-                        {
-                          "text": "Active vectors: 24\n"
-                        },
-                        {
-                          "text": "\n✅ Multi-Step Event Activation Cascade Validated\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:05:13.606Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-73bc1aeb50680d548e50",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 90,
-              "column": 3
-            },
-            {
-              "title": "should validate next event list activation on match",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 40,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Next Event List Activation ===\n\n"
-                        },
-                        {
-                          "text": "✓ Created branching sequence: undefined\n"
-                        },
-                        {
-                          "text": "\n--- Step 1: Root Event Activation ---\n"
-                        },
-                        {
-                          "text": "✓ Root event matched with vector: [0.52]\n"
-                        },
-                        {
-                          "text": "✓ Expected: All 3 branches (a, b, c) should now be active\n"
-                        },
-                        {
-                          "text": "Active vectors: {\"activeVectors\":{\"ffd0dd9e-62b4-446f-92b6-e0bfa500013b\":[{\"id\":\"9005d30b-fad9-4b11-8632-aa6e5a8c0190\",\"elements\":[{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"4c671acf-0aad-4ac1-9de5-1836ba064b54\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"000\",\"description\":\"Initial state\"}}],\"4b798666-aede-4afc-98f3-c2436cd0013e\":[{\"id\":\"4ddbb9db-88c5-40d2-8728-1c71c7703d3c\",\"elements\":[{\"value\":1,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05},{\"value\":0,\"comparatorType\":\"equals\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[\"fe45e323-0e84-4115-9693-dfb67e0690de\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{\"name\":\"100\",\"description\":\"Initial state\"}}],\"bbffde63-30f1-4419-a9c6-500552f046b8\":[{\"id\":\"654950fc-fe14-4cf2-8b15-51041a277652\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"6488c9a2-efe1-4c94-94ca-f49f2fee0ece\":[{\"id\":\"cba5a0eb-63e0-4b89-b929-c7ca4a2d9b9b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506633671}],\"isInitial\":true,\"metadata\":{}}],\"bdadf97a-8ba7-45b0-a0a2-92927fbea5ed\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"9a75e24c-5b27-4bda-ac7f-23dc0ac48443\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506633815}],\"isInitial\":false,\"metadata\":{}}],\"9e0d4d24-eb6f-4f1b-99b0-37f8e569116d\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506633842}],\"isInitial\":false,\"metadata\":{}}],\"416f18e1-f92e-4cd2-a77a-6c51bc92339f\":[{\"id\":\"196e75a1-05e2-4dd2-9558-2d2b6842f116\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"499dec75-0957-4b3b-a18a-9ffd70379aa3\":[{\"id\":\"8c0e1364-c33d-4c34-a916-df7b753b88e5\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506660671}],\"isInitial\":true,\"metadata\":{}}],\"478fbc94-3fed-4016-905d-2ee56065957e\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"57160fc6-64ca-4dbb-af3e-09e532485eb6\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506660807}],\"isInitial\":false,\"metadata\":{}}],\"925e1de8-921d-45a0-8e93-3c35bbfee379\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506660866}],\"isInitial\":false,\"metadata\":{}}],\"a0b01704-db30-4840-be96-4262729e2323\":[{\"id\":\"da337246-78fd-419f-acca-5a4476a970fe\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"78d360a6-0705-4262-9cd4-56c16f9f48b0\":[{\"id\":\"913ef91e-5b7b-434e-870e-fc66e0d1d11b\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506687171}],\"isInitial\":true,\"metadata\":{}}],\"8ba1b0f7-024a-4313-a6a3-7ca36017331a\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"6817140e-76dc-4f48-88f9-933630609374\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506687298}],\"isInitial\":false,\"metadata\":{}}],\"edf896ca-db3b-4dd9-a227-453ee2df5fd5\":[{\"id\":\"perf-initial\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[\"perf-stage-2\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"perf-stage-2\",\"elements\":[{\"value\":0.7,\"comparatorType\":\"threshold\",\"threshold\":0.2}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"perf-output\",\"vector\":[1],\"timestamp\":1767506687329}],\"isInitial\":false,\"metadata\":{}}],\"062897b9-f821-4362-87c0-128eb55ed9cb\":[{\"id\":\"16b0ed46-6ccc-42dd-a860-906127d1df7c\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-1\",\"vector\":[1],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"a8d25872-76f2-42c8-8cbe-f7616109f8c1\":[{\"id\":\"5be2ec07-303c-45de-a277-653b5723600a\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-2\",\"vector\":[2],\"timestamp\":1767506713524}],\"isInitial\":true,\"metadata\":{}}],\"da69a683-d603-42e8-9e0c-a6d12398e4f7\":[{\"id\":\"step-1-detector\",\"elements\":[{\"value\":0.3,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"step-2-processor\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}}],\"6e0d1402-6a09-4346-8ed8-87a4368acf34\":[{\"id\":\"root-event\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.1}],\"state\":\"active\",\"nextVectorIds\":[\"branch-a\",\"branch-b\",\"branch-c\"],\"outputVectors\":[],\"isInitial\":true,\"metadata\":{}},{\"id\":\"branch-a\",\"elements\":[{\"value\":0.2,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-a\",\"vector\":[1],\"timestamp\":1767506713666}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-b\",\"elements\":[{\"value\":0.5,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-b\",\"vector\":[2],\"timestamp\":1767506713666}],\"isInitial\":false,\"metadata\":{}},{\"id\":\"branch-c\",\"elements\":[{\"value\":0.8,\"comparatorType\":\"threshold\",\"threshold\":0.05}],\"state\":\"active\",\"nextVectorIds\":[],\"outputVectors\":[{\"id\":\"output-c\",\"vector\":[3],\"timestamp\":1767506713666}],\"isInitial\":false,\"metadata\":{}}]}}\n"
-                        },
-                        {
-                          "text": "\n--- Step 2-4: Branch Activations ---\n"
-                        },
-                        {
-                          "text": "✓ Vector 2 processed: 4 output(s) generated\n"
-                        },
-                        {
-                          "text": "✓ Vector 3 processed: 4 output(s) generated\n"
-                        },
-                        {
-                          "text": "✓ Vector 4 processed: 15 output(s) generated\n"
-                        },
-                        {
-                          "text": "\n✓ Total outputs from all branches: 23\n"
-                        },
-                        {
-                          "text": "\n✅ Next Event List Activation Validated\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:05:13.663Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-a71d81c00e76df81bbf2",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 225,
-              "column": 3
-            },
-            {
-              "title": "should measure core propagation cycle performance",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "Mobile Chrome",
-                  "projectName": "Mobile Chrome",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 25682,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n=== TEST: Performance Measurement ===\n\n"
-                        },
-                        {
-                          "text": "Loaded 100 vectors into queue\n"
-                        },
-                        {
-                          "text": "\n--- Performance Metrics ---\n"
-                        },
-                        {
-                          "text": "Total vectors processed: 100\n"
-                        },
-                        {
-                          "text": "Total time: 25667ms\n"
-                        },
-                        {
-                          "text": "Average time per vector: 256.67ms\n"
-                        },
-                        {
-                          "text": "Throughput: 3.90 vectors/second\n"
-                        },
-                        {
-                          "text": "✓ Performance acceptable: 256.67ms per vector\n"
-                        },
-                        {
-                          "text": "\n✅ Performance Measurement Complete\n\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-01-04T06:05:13.708Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "8b275e0ff05b995c8ca5-25afd4f190d18813d5df",
-              "file": "tests/core-data-propagation.spec.ts",
-              "line": 319,
+              "id": "e1f3475194eda06d9c79-d90daf8d9ae8c8a13cdd",
+              "file": "tests/multi-step-output-workflow.spec.ts",
+              "line": 441,
               "column": 3
             }
           ]
@@ -1285,11 +563,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-01-04T06:03:49.122Z",
-    "duration": 110305.347,
-    "expected": 16,
+    "startTime": "2026-02-18T05:50:14.603Z",
+    "duration": 14404.268,
+    "expected": 1,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 3,
     "flaky": 0
   }
 }

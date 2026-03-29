@@ -318,6 +318,44 @@ Overall Status: HEALTHY
 
 ---
 
+---
+
+## Perception Engine
+
+The Perception Engine is an autonomous reality source that assembles 256-byte perceptual vectors from heterogeneous sources and pushes them to the Reality Engine via `/api/perceive`.
+
+**Services:**
+- **Backend** (`:3004`): REST API + WebSocket — source management, vector assembly, auto-push
+- **Frontend** (`:3005`): Web UI for managing sources, visualizing vectors, viewing push logs
+
+**Source types:**
+- `test` — Replay machine `inputSequences` from Reality Engine machines
+- `simulated` — Mathematical waveform generators (sine, square, sawtooth, linear-ramp, random-walk, constant, gaussian-noise, binary)
+- `sensor` — HTTP push endpoint with TTL: `POST /api/sensors/:sensorId`
+
+**Key API endpoints (backend :3004):**
+```
+GET  /api/state            — Full engine state
+POST /api/push             — Assemble vector + push to Reality Engine + advance
+POST /api/auto/start       — Start auto-push: { "intervalMs": 1000 }
+POST /api/auto/stop        — Stop auto-push
+PATCH /api/config          — Update config: { "matchAlgorithm": "gte"|"equals" }
+POST /api/reset            — Reset step counter
+GET  /api/sources          — List sources
+POST /api/sources          — Add source
+PATCH /api/sources/:id     — Update source
+DELETE /api/sources/:id    — Remove source
+POST /api/sensors/:id      — Push sensor value: { "values": [0.5, ...] }
+GET  /api/machines         — Proxy to Reality Engine machine list
+```
+
+**Match algorithm:**
+The Perception Engine sends its configured `matchAlgorithm` (`gte` or `equals`) with each push.
+This overrides individual comparatorType settings in all active CES vectors during `processImmediate()`.
+Switch the algorithm from the Perception Engine UI (≥ GTE | = Equal buttons in the header).
+
+---
+
 ## Example Scripts
 
 Location: `scripts/examples/`
@@ -492,18 +530,27 @@ Pattern recognition demo complete!
 realityEngine/
 ├── scripts/
 │   ├── setup.sh              # Initial setup
-│   ├── start.sh              # Start services
-│   ├── stop.sh               # Stop services
-│   ├── restart.sh            # Restart services
-│   ├── status.sh             # Check status
+│   ├── start.sh              # Start all Docker services
+│   ├── stop.sh               # Stop all Docker services
+│   ├── restart.sh            # Restart all Docker services
+│   ├── start-local.sh        # Start services in local dev mode
+│   ├── stop-local.sh         # Stop local dev services
+│   ├── restart-local.sh      # Restart local dev services
+│   ├── status.sh             # Check status of all services
 │   ├── logs.sh               # View logs
-│   ├── health-check.sh       # Health check
+│   ├── health-check.sh       # Comprehensive health check (14 checks)
+│   ├── validate.sh           # System validation with endpoint tests
+│   ├── verify-startup.sh     # Post-start container & health verification
 │   ├── quick-start.sh        # Automated quick start
+│   ├── cleanup.sh            # Remove containers and volumes
+│   ├── fix-port-conflict.sh  # Diagnose and fix port conflicts
 │   └── examples/
 │       ├── create-sequence.sh      # Create example sequence
 │       ├── process-input.sh        # Process inputs
 │       ├── sampler-demo.sh         # Sampler demonstration
-│       └── pattern-recognition.sh  # Pattern matching demo
+│       ├── pattern-recognition.sh  # Pattern matching demo
+│       ├── rs-flipflop.sh          # Create RS flip-flop machine
+│       └── test-rs-flipflop.sh     # Test RS flip-flop (DEPRECATED)
 ```
 
 ---
@@ -619,7 +666,7 @@ All scripts require:
 ### start.sh requires:
 - `.env` file (created by setup.sh)
 - Docker daemon running
-- Ports 3000, 6333, 6334 available
+- Ports 3000, 3001, 3004, 3005, 5173, 6333, 6334 available
 
 ### Example scripts require:
 - Services running (via start.sh)
@@ -633,10 +680,29 @@ All scripts require:
 Scripts respect these environment variables:
 
 ```bash
-PORT=3000                    # API port (from .env)
+PORT=3000                    # Reality Engine API port (from .env)
 QDRANT_URL=http://localhost:6333  # Qdrant URL (from .env)
 NODE_ENV=development         # Environment (from .env)
 ```
+
+### Perception Engine Environment Variables (docker-compose.yml)
+
+```bash
+PERCEPTION_TARGET_URL=http://visualizer-backend:3001  # Push target (via visualizer proxy)
+REALITY_ENGINE_URL=http://reality-engine:3000          # Direct Reality Engine URL
+```
+
+### Service Ports
+
+| Port | Service |
+|------|---------|
+| 3000 | Reality Engine API |
+| 3001 | Visualizer Backend (WebSocket proxy) |
+| 3004 | Perception Engine Backend |
+| 3005 | Perception Engine Frontend |
+| 5173 | Visualizer Frontend |
+| 6333 | Qdrant HTTP API + Dashboard |
+| 6334 | Qdrant gRPC |
 
 ---
 

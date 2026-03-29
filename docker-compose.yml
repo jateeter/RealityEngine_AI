@@ -2,6 +2,8 @@ version: '3.8'
 
 services:
   # Loki - Log Aggregation
+  # Port 3100 kept bound to host: the Docker logging driver runs on the host
+  # daemon and needs localhost:3100 to push logs into the container network.
   loki:
     image: grafana/loki:2.9.3
     container_name: reality-engine-loki
@@ -20,18 +22,17 @@ services:
       timeout: 5s
       retries: 5
 
-  # Grafana - Visualization and Dashboards
+  # Grafana - accessed via TLS proxy at https://localhost:3002
   grafana:
     image: grafana/grafana:10.2.3
     container_name: reality-engine-grafana
-    ports:
-      - "3002:3000"
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SECURITY_ADMIN_USER=admin
       - GF_INSTALL_PLUGINS=grafana-clock-panel
+      - GF_SERVER_ROOT_URL=https://localhost:3002
     volumes:
       - grafana_data:/var/lib/grafana
       - ./config/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
@@ -49,15 +50,12 @@ services:
       timeout: 5s
       retries: 3
 
-  # Qdrant Vector Database
+  # Qdrant Vector Database - internal only, no host port binding
   qdrant:
     build:
       context: .
       dockerfile: Dockerfile.qdrant
     container_name: reality-engine-qdrant
-    ports:
-      - "6333:6333"
-      - "6334:6334"
     volumes:
       - qdrant_storage:/qdrant/storage
     environment:
@@ -79,14 +77,12 @@ services:
       timeout: 5s
       retries: 5
 
-  # Reality Engine API
+  # Reality Engine API - accessed via TLS proxy at https://localhost:3000
   reality-engine:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: reality-engine-app
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=production
       - QDRANT_URL=http://qdrant:6333
@@ -119,14 +115,12 @@ services:
       timeout: 5s
       retries: 3
 
-  # Visualizer Backend (Proxy Server)
+  # Visualizer Backend (Proxy Server) - accessed via TLS proxy at https://localhost:3001
   visualizer-backend:
     build:
       context: ./visualizer/backend
       dockerfile: Dockerfile
     container_name: reality-engine-visualizer-backend
-    ports:
-      - "3001:3001"
     environment:
       - VIZ_PORT=3001
       - REALITY_ENGINE_URL=http://reality-engine:3000
@@ -152,14 +146,12 @@ services:
       timeout: 5s
       retries: 3
 
-  # Visualizer Frontend (React App)
+  # Visualizer Frontend (React App) - accessed via TLS proxy at https://localhost:5173
   visualizer-frontend:
     build:
       context: ./visualizer/frontend
       dockerfile: Dockerfile
     container_name: reality-engine-visualizer-frontend
-    ports:
-      - "5173:80"
     depends_on:
       - visualizer-backend
       - loki
@@ -180,12 +172,90 @@ services:
       timeout: 5s
       retries: 3
 
+  # Perception Engine Backend - accessed via TLS proxy at https://localhost:3004
+  perception-engine-backend:
+    build:
+      context: ./perception-engine/backend
+      dockerfile: Dockerfile
+    container_name: reality-engine-perception-backend
+    environment:
+      - PORT=3004
+      - PERCEPTION_TARGET_URL=http://visualizer-backend:3001
+      - REALITY_ENGINE_URL=http://reality-engine:3000
+      - DATA_PATH=/app/data
+    volumes:
+      - perception_sources_data:/app/data
+    depends_on:
+      visualizer-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - reality-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3004/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Perception Engine Frontend - accessed via TLS proxy at https://localhost:3005
+  perception-engine-frontend:
+    build:
+      context: ./perception-engine/frontend
+      dockerfile: Dockerfile
+    container_name: reality-engine-perception-frontend
+    depends_on:
+      - perception-engine-backend
+    restart: unless-stopped
+    networks:
+      - reality-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # TLS Termination Proxy — the only service that binds external ports.
+  # Terminates HTTPS/WSS and forwards plain HTTP/WS to internal services.
+  # Requires: certs/server.crt and certs/server.key (run bash certs/generate-dev-certs.sh)
+  tls-proxy:
+    image: nginx:alpine
+    container_name: reality-engine-tls-proxy
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+      - "3002:3002"
+      - "3004:3004"
+      - "3005:3005"
+      - "5173:5173"
+    volumes:
+      - ./nginx/tls-proxy.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      reality-engine:
+        condition: service_healthy
+      visualizer-backend:
+        condition: service_healthy
+      visualizer-frontend:
+        condition: service_healthy
+      grafana:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - reality-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   qdrant_storage:
     driver: local
   loki_data:
     driver: local
   grafana_data:
+    driver: local
+  perception_sources_data:
     driver: local
 
 networks:
