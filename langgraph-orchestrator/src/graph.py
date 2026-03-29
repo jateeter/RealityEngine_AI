@@ -2,33 +2,79 @@
 LangGraph orchestration for regex matching via the Reality Engine (CES) +
 Perception Engine pipeline.
 
-Graph topology:
-  initialize → process_char → [loop back | finalize → END]
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LangGraph ↔ Perception Engine ↔ Reality Engine — Data-flow diagram         │
+│                                                                              │
+│  INITIALIZE                                                                  │
+│  ──────────                                                                  │
+│  regex pattern ──► compile_pattern() ──► CES machine JSON                   │
+│       │                                        │                            │
+│       │                     RealityEngineClient.import_machine()             │
+│       │                        POST /api/machines/json/import               │
+│       │                             RE assigns machine_id                   │
+│       │                        machines[pattern] = machine_id  ──► State    │
+│       │                                                                      │
+│  PerceptionClient.add_sensor_source(offset=200, length=38)                  │
+│    POST /api/sources  →  PE creates source at cells [200:238]               │
+│    sensor_id, sensor_uuid  ──► State                                        │
+│                                                                              │
+│  PROCESS_CHAR  (loops once per character in input_text)                     │
+│  ──────────────                                                              │
+│  input_text[char_index]  ──► char_to_region_vector(ch)                      │
+│    'h'  →  [0,0,0,0,0,0,0,1,0,...,0]  (38 cells, one-hot at slot 7)        │
+│                │                                                             │
+│  PerceptionClient.push_char(sensor_id, ch)                                  │
+│    POST /api/sensors/{sensor_id}  { values: [0,...,1,...,0] }               │
+│    PE writes to cells [200:238] of its internal vector buffer               │
+│                │                                                             │
+│  PerceptionClient.push()                                                    │
+│    POST /api/push                                                            │
+│    PE assembles full 256-cell perceptual vector                             │
+│    PE → RE: POST /api/perceive  { vector: [0,...,1,...,0,...,0] }           │
+│              RE runs PerceptualSpaceSimulator.processImmediate()            │
+│              Each pending CES vector checks: does cell 200+slot == 1.0?    │
+│              On match: dequeue vector, fire output, enqueue nextVectorIds   │
+│    push_result.step.machineResults[machine_id].outputVector                 │
+│              null        → DFA not in accepting state → no match            │
+│              [1.0]       → DFA reached accepting state → MATCH              │
+│                │                                                             │
+│  extract_matches(push_result, machines)  →  {pattern: bool}                 │
+│    match_log += [{char_index, char, pattern, matched, …}]  ──► State       │
+│    char_index += 1  ──► State                                               │
+│                                                                             │
+│  FINALIZE                                                                   │
+│  ────────                                                                   │
+│  match_log  →  results = {pattern: [char_indices where matched==True]}      │
+│  Cleanup: delete machines from RE, remove sensor source from PE             │
+│  results + summary  ──► State (final output to caller)                     │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-State:
-  patterns      : list of regex patterns to match simultaneously
-  input_text    : text to search for pattern occurrences
-  perception_url: Perception Engine base URL
-  reality_url   : Reality Engine base URL
-  machines      : {pattern → machine_id} — populated after initialize
-  sensor_id     : sensor source UUID in Perception Engine (set in initialize)
-  char_index    : current position in input_text
-  match_log     : accumulated list of {char_index, char, pattern, matched}
-  results       : final {pattern → [list of char positions where match fired]}
-  error         : set if a node encounters an unrecoverable error
+Perceptual space mapping:
+  cells [200:238]  — character input region (38 cells, one-hot encoded)
+    [200:226]      — a-z  (slot 0-25)
+    [226:236]      — 0-9  (slot 26-35)
+    [236]          — space (slot 36)
+    [237]          — EOS sentinel (slot 37)
+  cells [238:246]  — match output region (one cell per pattern, up to 8)
+    cell 238       — pattern 0 fires here
+    cell 239       — pattern 1 fires here
+    …
 
-Data flow per character:
-  1. Push the character's one-hot encoding to the sensor source (PE)
-  2. Trigger a PE→RE vector push (assembled vector → Reality Engine)
-  3. Reality Engine processes all CES machines in one step
-  4. Read per-machine outputVector from the push response
-     outputVector=[1.0] → the DFA accepted at this position
-  5. Record match positions; advance char_index
+CES machine encoding:
+  Each (DFA state q, character c) → DFA state q' transition becomes one
+  CES vector with id "vec_{q}_{char_slot}":
+    elements[char_slot].value = 1.0  (HIGH — expect the one-hot bit to be set)
+    elements[other].value     = 0.0  (LOW  — expect those cells to be 0.0)
+    isInitial = (q == dfa_start)     (start-state vectors are always armed)
+    nextVectorIds = all outgoing vectors of q'
+    outputVectors = [{vector:[1.0]}] if q' in accepting_states else []
 
-All interactions with the Reality Engine go exclusively through the
-Perception Engine's REST API (sensor push + push trigger).
-Machine loading uses the Reality Engine REST API directly (POST /api/machines/json/import)
-which the Perception Engine's MCP tool `machines_load_json` also targets.
+LangGraph mechanics used:
+  match_log: Annotated[list, operator.add]
+    → reducer automatically appends each step's entries without merge conflicts
+  should_continue conditional edge
+    → loops process_char exactly len(input_text) times then falls through to finalize
+  initialize → process_char edge (deterministic — always runs at least one char)
 """
 
 from __future__ import annotations
@@ -42,6 +88,7 @@ from typing_extensions import TypedDict
 
 from .regex_compiler import compile_pattern
 from .clients import RealityEngineClient, PerceptionClient
+from .vector_encoding import CHAR_TO_IDX, CHAR_REGION_OFFSET, CHAR_REGION_LENGTH
 
 # ── State schema ──────────────────────────────────────────────────────────────
 
@@ -51,15 +98,32 @@ class RegexOrchestratorState(TypedDict, total=False):
     input_text: str              # text to search
     perception_url: str          # Perception Engine base URL
     reality_url: str             # Reality Engine base URL
+    verbose: bool                # print step-by-step PE↔RE trace to stdout
 
     # ── Internal state ─────────────────────────────────────────────────────
     machines: dict[str, str]     # {pattern: machine_id} — set in initialize
-    sensor_id: Optional[str]     # sensor source UUID in PE — set in initialize
+    sensor_id: Optional[str]     # sensor sensorId written to PE — set in initialize
     sensor_uuid: Optional[str]   # PE source list UUID (for cleanup)
     char_index: int              # current character position
 
-    # ── Accumulator (LangGraph reducer: list items are appended across steps)
+    # ── Accumulators (LangGraph reducer: appended per step, never overwritten)
     match_log: Annotated[list[dict], operator.add]
+    # Each match_log entry captures both the LangGraph-side result AND the raw
+    # PE→RE exchange so callers can inspect exactly what the engines received
+    # and returned:
+    #   {
+    #     char_index   : int    — position in input_text
+    #     char         : str    — the character processed this step
+    #     pattern      : str    — the regex pattern being tracked
+    #     matched      : bool   — True if RE fired outputVector=[1.0] this step
+    #     global_step  : int    — PE's global step counter
+    #     machine_id   : str    — RE's UUID for this pattern's CES machine
+    #     char_slot    : int    — one-hot slot within [200:238] (0–37)
+    #     perceptual_cell : int — absolute perceptual-space cell that fired (200+slot)
+    #     output_vector: list   — raw outputVector from RE machineResults (null → [])
+    #     input_region : dict   — {offset, length} of the machine's input region in PE vector
+    #     output_region: dict   — {offset, length} of the machine's output region in PE vector
+    #   }
 
     # ── Outputs (set in finalize) ───────────────────────────────────────────
     results: dict[str, list[int]]  # {pattern: [match end-positions]}
@@ -94,25 +158,43 @@ def initialize(state: RegexOrchestratorState) -> dict:
 
     machines: dict[str, str] = {}
 
+    verbose = state.get('verbose', False)
+
     try:
         # -- Verify connectivity -----------------------------------------
         re_client.health()
         pe_client.health()
 
         # -- Compile + load machines into Reality Engine -----------------
+        #    Each pattern becomes a CES machine (DFA encoded as GTE vectors)
+        #    RE assigns a UUID (machine_id) used in every subsequent machineResults lookup
         for idx, pattern in enumerate(patterns):
             ces_json = compile_pattern(pattern, idx)
+            n_states = ces_json['machine']['metadata']['dfa_states']
+            n_vectors = len(ces_json['machine']['sequences'][0]['vectors'])
             resp = re_client.import_machine(ces_json)
             machine_id: str = resp['machine']['id']
             machines[pattern] = machine_id
+            if verbose:
+                out_cell = 238 + idx
+                print(f"  [RE] loaded '{pattern}' → machine_id={machine_id[:8]}…"
+                      f"  DFA states={n_states}  CES vectors={n_vectors}"
+                      f"  input=[200:238]  output=[{out_cell}:{out_cell+1}]")
 
         # -- Register sensor source in Perception Engine -----------------
+        #    Source covers cells [200:238] — the 38-cell one-hot character region
         sensor_id = f"regex-input-{uuid.uuid4().hex[:8]}"
         source = pe_client.add_sensor_source(sensor_id=sensor_id)
         source_uuid: str = source.get('id', sensor_id)
+        if verbose:
+            print(f"  [PE] sensor source '{sensor_id}' → uuid={source_uuid[:8]}…"
+                  f"  region=[200:238]  (38-cell one-hot char encoding)")
 
         # -- Set matchAlgorithm = "gte" on PE ----------------------------
         pe_client.set_match_algorithm('gte')
+        if verbose:
+            print(f"  [PE] matchAlgorithm = gte  "
+                  f"(value 1.0 → expect HIGH ≥ 0.5; value 0.0 → expect LOW < 0.5)")
 
     except Exception as exc:
         return {'error': f'Initialization failed: {exc}'}
@@ -133,15 +215,29 @@ def initialize(state: RegexOrchestratorState) -> dict:
 
 def process_char(state: RegexOrchestratorState) -> dict:
     """
-    Process one character from input_text:
-      1. Push the char's one-hot encoding to the PE sensor source
-      2. Trigger PE→RE push (assembles 256-cell vector, calls processImmediate)
-      3. Inspect step result for per-pattern matches
-      4. Append match events to match_log; advance char_index
+    Process one character from input_text.
+
+    PE↔RE exchange per step:
+      1. char_to_region_vector(ch)
+            → 38-cell one-hot list, e.g. 'h' → slot 7 → cell 207 fires
+      2. PerceptionClient.push_char(sensor_id, ch)
+            → POST /api/sensors/{sensor_id}  { values: [0,…,1,…,0] }
+            → PE writes the 38 values into cells [200:238] of its vector buffer
+      3. PerceptionClient.push()
+            → POST /api/push
+            → PE assembles full 256-cell vector, POST /api/perceive to RE
+            → RE.processImmediate(): for every pending CES vector, checks GTE match
+                  if cell[200+slot] == 1.0 AND all other cells == 0.0 → match
+                  on match: dequeue vector, fire outputVectors, enqueue nextVectorIds
+            → returns PushResult with step.machineResults[machine_id]
+      4. extract_matches(push_result, machines)
+            → reads outputVector per machine: [1.0] = match, null/[] = no match
+      5. Append to match_log (LangGraph reducer accumulates across all steps)
     """
     idx = state.get('char_index', 0)
     text = state.get('input_text', '')
     ch = text[idx]
+    verbose = state.get('verbose', False)
 
     sensor_id: str = state['sensor_id']
     machines: dict[str, str] = state.get('machines', {})
@@ -149,26 +245,56 @@ def process_char(state: RegexOrchestratorState) -> dict:
     pe_url = state.get('perception_url', 'http://localhost:3004')
     pe_client = PerceptionClient(base_url=pe_url)
 
+    # Compute one-hot encoding metadata for trace/log
+    char_slot = CHAR_TO_IDX.get(ch, -1)
+    perceptual_cell = CHAR_REGION_OFFSET + char_slot if char_slot >= 0 else -1
+
     new_entries: list[dict] = []
 
     try:
-        # Push char encoding to sensor
+        # ── Step 1+2: encode char and write to PE sensor ───────────────────
         pe_client.push_char(sensor_id, ch)
 
-        # Trigger assembled-vector push → Reality Engine processImmediate
+        # ── Step 3: trigger assembled-vector push → RE processImmediate ────
         push_result = pe_client.push()
 
-        # Detect matches
+        # ── Step 4: read per-machine match results from RE response ─────────
         matches = PerceptionClient.extract_matches(push_result, machines)
+        machine_results_raw = push_result.get('step', {}).get('machineResults', {})
+        global_step = push_result.get('globalStep')
 
+        # ── Step 5: build match_log entries with full PE↔RE context ─────────
         for pattern, matched in matches.items():
-            new_entries.append({
-                'char_index': idx,
-                'char': ch,
-                'pattern': pattern,
-                'matched': matched,
-                'global_step': push_result.get('globalStep'),
-            })
+            mid = machines[pattern]
+            raw = machine_results_raw.get(mid, {})
+            entry = {
+                # LangGraph-side fields
+                'char_index':   idx,
+                'char':         ch,
+                'pattern':      pattern,
+                'matched':      matched,
+                'global_step':  global_step,
+                # PE↔RE bridge fields — makes the association explicit
+                'machine_id':      mid,
+                'char_slot':       char_slot,
+                'perceptual_cell': perceptual_cell,
+                'output_vector':   raw.get('outputVector') or [],
+                'input_region':    raw.get('inputRegion', {'offset': CHAR_REGION_OFFSET,
+                                                            'length': CHAR_REGION_LENGTH}),
+                'output_region':   raw.get('outputRegion', {}),
+            }
+            new_entries.append(entry)
+
+        # ── Verbose trace output ─────────────────────────────────────────────
+        if verbose:
+            slot_str = f"slot {char_slot}/38 → cell {perceptual_cell}" if char_slot >= 0 else "unsupported char"
+            print(f"  step {idx:3d} | '{ch}'  {slot_str}")
+            for entry in new_entries:
+                fired = "✓ MATCH" if entry['matched'] else "·"
+                ov = entry['output_vector']
+                print(f"           [{entry['pattern']!r:20s}]  "
+                      f"machine={entry['machine_id'][:8]}…  "
+                      f"outputVector={ov}  {fired}")
 
     except Exception as exc:
         return {
@@ -179,7 +305,7 @@ def process_char(state: RegexOrchestratorState) -> dict:
         pe_client.close()
 
     return {
-        'match_log': new_entries,  # appended via reducer
+        'match_log': new_entries,   # appended by LangGraph's operator.add reducer
         'char_index': idx + 1,
     }
 
@@ -309,17 +435,52 @@ def run_regex_search(
     input_text: str,
     perception_url: str = 'http://localhost:3004',
     reality_url: str = 'http://localhost:3000',
+    verbose: bool = False,
 ) -> dict:
     """
     Run the compiled LangGraph and return the final state dict.
 
-    Example:
+    Args:
+        patterns:        Regex patterns to search for simultaneously.
+        input_text:      Text to search (a-z, 0-9, space; case-insensitive).
+        perception_url:  Perception Engine base URL.
+        reality_url:     Reality Engine base URL.
+        verbose:         Print the step-by-step PE↔RE trace to stdout.
+
+    Returns:
+        Final state dict.  Key fields:
+
+        ``results``
+            ``{pattern: [char_indices]}``  — positions where each pattern matched.
+
+        ``summary``
+            Human-readable match report.
+
+        ``match_log``
+            Full trace: one entry per (character × pattern) step, each carrying
+            the char, pattern, matched flag, RE machine_id, perceptual cell that
+            fired, and the raw outputVector from the Reality Engine.
+
+        ``error``
+            Set on failure; ``None`` on success.
+
+    Example::
+
         result = run_regex_search(
             patterns=['hello', 'world'],
             input_text='say hello to the world today',
+            verbose=True,
         )
         print(result['summary'])
-        print(result['results'])   # {'hello': [12], 'world': [22]}
+        # {'hello': [12], 'world': [22]}
+        print(result['results'])
+
+        # Inspect the PE↔RE exchange at each step:
+        for entry in result['match_log']:
+            if entry['matched']:
+                print(f"  '{entry['char']}' at cell {entry['perceptual_cell']} "
+                      f"fired machine {entry['machine_id'][:8]}… "
+                      f"outputVector={entry['output_vector']}")
     """
     app = build_graph()
     final_state = app.invoke({
@@ -327,5 +488,6 @@ def run_regex_search(
         'input_text': input_text,
         'perception_url': perception_url,
         'reality_url': reality_url,
+        'verbose': verbose,
     })
     return final_state

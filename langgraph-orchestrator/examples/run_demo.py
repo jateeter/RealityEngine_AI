@@ -103,7 +103,7 @@ def demo_compiler():
                   f"fires_output={'yes' if vec['outputVectors'] else 'no'}")
 
 
-def demo_full_pipeline():
+def demo_full_pipeline(trace: bool = False):
     """Run the full LangGraph pipeline against live services."""
     try:
         from src.graph import run_regex_search
@@ -132,8 +132,9 @@ def demo_full_pipeline():
             input_text=text1,
             perception_url=PERCEPTION_URL,
             reality_url=REALITY_URL,
+            verbose=trace,
         )
-        _print_result(result1)
+        _print_result(result1, trace=trace)
     except Exception as exc:
         print(f"  ERROR: {exc}")
         print("  (Is the Reality Engine running? Check REALITY_URL / PERCEPTION_URL)")
@@ -151,8 +152,9 @@ def demo_full_pipeline():
         input_text=text2,
         perception_url=PERCEPTION_URL,
         reality_url=REALITY_URL,
+        verbose=trace,
     )
-    _print_result(result2)
+    _print_result(result2, trace=trace)
 
     # ── Demo 3: repetition ────────────────────────────────────────────────────
     print("\n── Demo 3: Repetition (ab+c) ──")
@@ -166,8 +168,9 @@ def demo_full_pipeline():
         input_text=text3,
         perception_url=PERCEPTION_URL,
         reality_url=REALITY_URL,
+        verbose=trace,
     )
-    _print_result(result3)
+    _print_result(result3, trace=trace)
 
     # ── Demo 4: digit class ───────────────────────────────────────────────────
     print("\n── Demo 4: Digit class (\\d+) ──")
@@ -181,11 +184,12 @@ def demo_full_pipeline():
         input_text=text4,
         perception_url=PERCEPTION_URL,
         reality_url=REALITY_URL,
+        verbose=trace,
     )
-    _print_result(result4)
+    _print_result(result4, trace=trace)
 
 
-def _print_result(result: dict) -> None:
+def _print_result(result: dict, trace: bool = False) -> None:
     if result.get('error'):
         print(f"  Error: {result['error']}")
         return
@@ -193,18 +197,57 @@ def _print_result(result: dict) -> None:
     for line in result.get('summary', '').split('\n'):
         print(f"  {line}")
 
+    if trace:
+        _print_match_trace(result)
+
+
+def _print_match_trace(result: dict) -> None:
+    """Print the PE↔RE association trace: which perceptual cells fired matches."""
+    match_log = result.get('match_log', [])
+    fired = [e for e in match_log if e.get('matched')]
+    if not fired:
+        print("\n  [trace] No matches fired during this run.")
+        return
+
+    print("\n  [trace] LangGraph ↔ Perception Engine ↔ Reality Engine — match events:")
+    print(f"  {'idx':>4}  {'char':<4}  {'cell':>4}  {'pattern':<20}  {'machine':<12}  {'outputVector'}")
+    print("  " + "─" * 70)
+    seen_idx: set[int] = set()
+    for e in fired:
+        idx  = e['char_index']
+        mark = "▶" if idx not in seen_idx else " "
+        seen_idx.add(idx)
+        cell = e.get('perceptual_cell', '?')
+        slot = e.get('char_slot', '?')
+        mid  = (e.get('machine_id') or '')[:10] + '…'
+        ov   = e.get('output_vector', [])
+        ireg = e.get('input_region', {})
+        oreg = e.get('output_region', {})
+        print(
+            f"  {mark}{idx:>4}  {e['char']!r:<4}  {cell:>4}  "
+            f"{e['pattern']!r:<20}  {mid:<12}  {ov}"
+        )
+        print(
+            f"        slot={slot}/38  "
+            f"RE input=[{ireg.get('offset','')}:{ireg.get('offset',0)+ireg.get('length',0)}]  "
+            f"RE output=[{oreg.get('offset','')}:{oreg.get('offset',0)+oreg.get('length',0)}]"
+        )
+
 
 if __name__ == '__main__':
     # Always show the compiler demo (no services needed)
     demo_compiler()
 
-    # Run live demo if --live flag is passed or LIVE=1 env var is set
+    # Parse flags
     run_live = '--live' in sys.argv or os.environ.get('LIVE', '').lower() in ('1', 'true', 'yes')
+    trace    = '--trace' in sys.argv
+
     if run_live:
-        demo_full_pipeline()
+        demo_full_pipeline(trace=trace)
     else:
         print(
             "\n\nTo run the full pipeline demo (requires running services):\n"
             "  python examples/run_demo.py --live\n"
+            "  python examples/run_demo.py --live --trace   # show PE↔RE exchange per match\n"
             "  LIVE=1 python examples/run_demo.py\n"
         )
