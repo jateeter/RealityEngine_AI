@@ -7,6 +7,7 @@
 
 import { PerceptualSpace } from '../models/PerceptualSpace.js';
 import { Machine } from '../models/Machine.js';
+import { ComparatorType } from '../models/types.js';
 import type { MachineTransitionResult } from '../models/types.js';
 
 export interface SimulationStep {
@@ -46,6 +47,7 @@ export class PerceptualSpaceSimulator {
   private autoPlayTimer: NodeJS.Timeout | undefined;
   private config?: SimulationConfig;
   private onStepCompleteCallback?: (step: SimulationStep, perceptualSpaceVector: number[]) => void;
+  private immediateStepCount = 0;
 
   constructor(dimension: number = 256) {
     this.perceptualSpace = new PerceptualSpace(dimension);
@@ -268,6 +270,117 @@ export class PerceptualSpaceSimulator {
     // Notify any registered listener with the completed step and the full
     // post-merge perceptual space vector so external systems (e.g. PreceptionEngine)
     // can stay in sync with the simulator's evolved perceptual state.
+    if (this.onStepCompleteCallback) {
+      this.onStepCompleteCallback(step, this.perceptualSpace.getPerceptualVector());
+    }
+
+    return step;
+  }
+
+  /**
+   * Process a pre-assembled 256-byte perceptual vector immediately, bypassing
+   * the configured input sequence. This is the entry point for the external
+   * Perception Engine: the caller has already assembled the full reality vector
+   * from heterogeneous sources and presents it here for machine processing.
+   *
+   * Mirrors the 3-phase snapshot→process→merge logic of step() but:
+   * - Installs the caller-provided vector directly into the perceptual space
+   * - Does not read or modify this.config, this.currentStep, or this.isRunning
+   * - Uses a separate immediateStepCount counter for stepNumber
+   * - Still fires onStepCompleteCallback so external systems stay in sync
+   */
+  public processImmediate(vector: number[], matchAlgorithmOverride?: ComparatorType): SimulationStep {
+    this.perceptualSpace.setPerceptualVector(vector);
+
+    const mappedMachines = Array.from(this.machines.values()).filter(
+      (m) => m.perceptualMapping !== undefined
+    );
+
+    // ── Phase 1: Snapshot ────────────────────────────────────────────────────
+    const inputSnapshots = new Map<string, number[]>();
+    for (const machine of mappedMachines) {
+      inputSnapshots.set(
+        machine.id,
+        this.perceptualSpace.extractMachineInput(machine.perceptualMapping!)
+      );
+    }
+
+    // ── Phase 2: Process ─────────────────────────────────────────────────────
+    const machineResults = new Map<string, any>();
+    const pendingOutputs: Array<{ machine: Machine; vector: number[] }> = [];
+
+    for (const machine of mappedMachines) {
+      const snapshotInput = inputSnapshots.get(machine.id)!;
+      const transitionResult = machine.processInput(snapshotInput, matchAlgorithmOverride);
+
+      const outputVector = transitionResult.machineOutput?.vector ?? null;
+
+      if (transitionResult.arbiterMetadata.shouldOutput) {
+        for (const seqResult of transitionResult.sequenceResults.values()) {
+          for (const assertedOutput of seqResult.assertedOutputs) {
+            pendingOutputs.push({ machine, vector: assertedOutput.vector });
+          }
+        }
+      }
+
+      machineResults.set(machine.id, {
+        machineId: machine.id,
+        machineName: machine.name,
+        inputVector: snapshotInput,
+        outputVector,
+        inputRegion: {
+          offset: machine.perceptualMapping!.input.offset,
+          length: machine.perceptualMapping!.input.length
+        },
+        outputRegion: outputVector
+          ? {
+              offset: machine.perceptualMapping!.output.offset,
+              length: machine.perceptualMapping!.output.length
+            }
+          : null,
+        transitionResult
+      });
+    }
+
+    // ── Phase 3: Merge ───────────────────────────────────────────────────────
+    for (const { machine, vector: outputVec } of pendingOutputs) {
+      this.perceptualSpace.mergeMachineOutput(outputVec, machine.perceptualMapping!);
+    }
+
+    const activeRegions: Array<{
+      offset: number;
+      length: number;
+      machineId: string;
+      type: 'input' | 'output';
+    }> = [];
+
+    for (const [, entry] of machineResults) {
+      activeRegions.push({
+        offset: entry.inputRegion.offset,
+        length: entry.inputRegion.length,
+        machineId: entry.machineId,
+        type: 'input'
+      });
+      if (entry.outputRegion) {
+        activeRegions.push({
+          offset: entry.outputRegion.offset,
+          length: entry.outputRegion.length,
+          machineId: entry.machineId,
+          type: 'output'
+        });
+      }
+    }
+
+    const step: SimulationStep = {
+      stepNumber: this.immediateStepCount++,
+      timestamp: Date.now(),
+      perceptualSpace: this.perceptualSpace.getPerceptualVector(),
+      machineResults,
+      activeRegions
+    };
+
+    this.history.unshift(step);
+
     if (this.onStepCompleteCallback) {
       this.onStepCompleteCallback(step, this.perceptualSpace.getPerceptualVector());
     }

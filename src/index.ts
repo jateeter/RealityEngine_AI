@@ -4,6 +4,8 @@
  */
 
 import express from 'express';
+import * as https from 'https';
+import { readFileSync, existsSync } from 'fs';
 import { RealityEngine } from './engine/RealityEngine.js';
 import { VectorStore } from './services/VectorStore.js';
 import { RealityEngineAPI } from './api/routes.js';
@@ -64,15 +66,24 @@ app.get('/', (_req, res) => {
 
 // Start server
 const port = parseInt(process.env.PORT || '3000', 10);
+const certPath = process.env.TLS_CERT_PATH;
+const keyPath  = process.env.TLS_KEY_PATH;
+const tlsEnabled = !!(certPath && keyPath && existsSync(certPath) && existsSync(keyPath));
 
-// Add error handler for port conflicts
-const server = app.listen(port, () => {
-  console.log(`\n✅ Reality Engine running on port ${port}`);
+const startupLog = () => {
+  const protocol = tlsEnabled ? 'HTTPS' : 'HTTP';
+  console.log(`\n✅ Reality Engine running on ${protocol} port ${port}`);
   console.log(`📊 Vector dimension: ${config.getVectorDimension()}`);
   console.log(`🎯 Match threshold: ${config.getDefaultMatchThreshold()}`);
   console.log(`🗄️  Qdrant URL: ${config.getQdrantUrl()}`);
   console.log(`🚀 Node.js: ${process.version}\n`);
-});
+};
+
+// Use HTTPS when TLS_CERT_PATH and TLS_KEY_PATH are set (dev outside Docker);
+// otherwise plain HTTP (Docker: TLS is terminated by the nginx tls-proxy).
+const server = tlsEnabled
+  ? https.createServer({ cert: readFileSync(certPath!), key: readFileSync(keyPath!) }, app).listen(port, startupLog)
+  : app.listen(port, startupLog);
 
 // Handle server startup errors
 server.on('error', (err: NodeJS.ErrnoException) => {

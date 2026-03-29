@@ -218,6 +218,9 @@ export class RealityEngineAPI {
     this.router.get('/demo/multi-step', this.loadMultiStepExample.bind(this));
     this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
     this.router.get('/demo/kleene-star', this.loadKleeneStarExample.bind(this));
+
+    // Perception Engine push endpoint — accepts a pre-assembled reality vector
+    this.router.post('/perceive', this.perceive.bind(this));
   }
 
   // Health check
@@ -1745,6 +1748,76 @@ export class RealityEngineAPI {
         success: false,
         error: 'Failed to get simulation history',
         message: error.message
+      });
+    }
+  }
+
+  /**
+   * Accept a pre-assembled 256-byte reality vector from the external Perception Engine.
+   * POST /api/perceive
+   *
+   * Body: { "vector": number[] }  — must be exactly 256 elements in [0, 1]
+   *
+   * Installs the vector directly into the perceptual space simulator and runs
+   * one processing cycle through all registered machines. The result is identical
+   * in shape to /api/perceptual-simulation/step.
+   */
+  private perceive(req: Request, res: Response): void {
+    try {
+      const { vector, matchAlgorithm } = req.body;
+
+      if (!Array.isArray(vector)) {
+        res.status(400).json({ success: false, error: 'vector must be an array' });
+        return;
+      }
+
+      if (vector.length !== 256) {
+        res.status(400).json({
+          success: false,
+          error: 'vector must be exactly 256 elements',
+          provided: vector.length
+        });
+        return;
+      }
+
+      // Resolve optional match algorithm override — only 'gte' and 'equals' accepted
+      let matchAlgorithmOverride: ComparatorType | undefined;
+      if (matchAlgorithm !== undefined) {
+        if (matchAlgorithm === 'gte') {
+          matchAlgorithmOverride = ComparatorType.GTE;
+        } else if (matchAlgorithm === 'equals') {
+          matchAlgorithmOverride = ComparatorType.EQUALS;
+        } else {
+          res.status(400).json({
+            success: false,
+            error: `Invalid matchAlgorithm "${matchAlgorithm}". Supported values: "gte", "equals"`
+          });
+          return;
+        }
+      }
+
+      const step = this.perceptualSimulator.processImmediate(vector, matchAlgorithmOverride);
+
+      // Serialize machineResults Map → plain object for JSON transport
+      const machineResults: Record<string, any> = {};
+      for (const [key, value] of step.machineResults) {
+        machineResults[key] = value;
+      }
+
+      res.json({
+        success: true,
+        step: {
+          ...step,
+          machineResults
+        },
+        timestamp: Date.now()
+      });
+    } catch (error: any) {
+      console.error('Error in /api/perceive:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to process perceptual vector',
+        details: error.message
       });
     }
   }

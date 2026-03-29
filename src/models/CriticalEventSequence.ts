@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { RealityVector } from './RealityVector.js';
+import { ComparatorType } from './types.js';
 import type { OutputVector, MatchResult } from './types.js';
 
 /**
@@ -108,7 +109,7 @@ export class CriticalEventSequence {
    * Activation of successors is deliberately deferred to the next cycle, making
    * the transition atomic with respect to the input — no same-cycle cascade.
    */
-  public transition(inputVector: number[]): {
+  public transition(inputVector: number[], matchAlgorithmOverride?: ComparatorType): {
     matchedVectors: string[];
     activatedVectors: string[];
     assertedOutputs: OutputVector[];
@@ -135,7 +136,7 @@ export class CriticalEventSequence {
 
     // Match every currently active vector against the input.
     for (const vector of this.getActiveVectors()) {
-      const transitionResult = vector.transition(inputVector);
+      const transitionResult = vector.transition(inputVector, matchAlgorithmOverride);
       results.set(vector.id, transitionResult.matchResult);
 
       if (transitionResult.matched) {

@@ -153,10 +153,11 @@ export class RealityVector {
   }
 
   /**
-   * Perform match operation against an input vector
-   * Returns true if all elements match according to their comparators
+   * Perform match operation against an input vector.
+   * matchAlgorithmOverride, when present, overrides both the element-level
+   * comparatorType and the vector-level matchAlgorithm for every element.
    */
-  public match(inputVector: number[]): MatchResult {
+  public match(inputVector: number[], matchAlgorithmOverride?: ComparatorType): MatchResult {
     if (inputVector.length !== this.elements.length) {
       return {
         matched: false,
@@ -175,7 +176,7 @@ export class RealityVector {
         continue; // Skip undefined elements or values
       }
 
-      const result = this.compareElement(element, inputValue);
+      const result = this.compareElement(element, inputValue, matchAlgorithmOverride);
 
       elementResults.push(result);
 
@@ -198,12 +199,13 @@ export class RealityVector {
   }
 
   /**
-   * Compare a single element using its configured comparator
+   * Compare a single element using its configured comparator.
+   * matchAlgorithmOverride, when supplied, takes highest precedence — above
+   * both the element-level comparatorType and the machine-level matchAlgorithm.
+   * This allows the Perception Engine to configure the algorithm per-push.
    */
-  private compareElement(element: VectorElement, inputValue: number): MatchResult {
-    // Use element's explicit comparatorType if provided; otherwise fall back to
-    // the machine-level matchAlgorithm stored on this vector.
-    const effectiveType = element.comparatorType ?? this.matchAlgorithm;
+  private compareElement(element: VectorElement, inputValue: number, matchAlgorithmOverride?: ComparatorType): MatchResult {
+    const effectiveType = matchAlgorithmOverride ?? element.comparatorType ?? this.matchAlgorithm;
     switch (effectiveType) {
       case ComparatorType.EQUALS:
         return {
@@ -271,13 +273,13 @@ export class RealityVector {
    * 3. If matches, return next vectors to activate and output vectors to assert
    * 4. Deactivate transitional vectors after successful match
    */
-  public transition(inputVector: number[]): {
+  public transition(inputVector: number[], matchAlgorithmOverride?: ComparatorType): {
     matched: boolean;
     nextVectorIds: string[];
     outputVectors: OutputVector[];
     matchResult: MatchResult;
   } {
-    const matchResult = this.match(inputVector);
+    const matchResult = this.match(inputVector, matchAlgorithmOverride);
 
     if (!matchResult.matched) {
       // Deactivate if not an initial vector

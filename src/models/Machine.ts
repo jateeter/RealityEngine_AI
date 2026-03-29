@@ -115,7 +115,7 @@ export class Machine {
    * @param inputVector - The input reality vector to process
    * @returns MachineTransitionResult with sequence results and machine output
    */
-  public processInput(inputVector: number[]): MachineTransitionResult {
+  public processInput(inputVector: number[], matchAlgorithmOverride?: ComparatorType): MachineTransitionResult {
     // Phase 1: Resolve new input reality vector
     const result: MachineTransitionResult = {
       inputVector,
@@ -134,7 +134,7 @@ export class Machine {
     const sequenceOutputs = new Map<string, OutputVector[]>();
 
     for (const [sequenceId, sequence] of this.sequences) {
-      const transitionResult = sequence.transition(inputVector);
+      const transitionResult = sequence.transition(inputVector, matchAlgorithmOverride);
 
       result.sequenceResults.set(sequenceId, {
         matchedVectors: transitionResult.matchedVectors,
