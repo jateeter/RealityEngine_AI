@@ -77,18 +77,18 @@ services:
       timeout: 5s
       retries: 5
 
-  # Reality Engine API - accessed via TLS proxy at https://localhost:3000
+  # Reality Engine API (Scala/Akka HTTP) - accessed via TLS proxy at https://localhost:3000
   reality-engine:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: scala/Dockerfile
     container_name: reality-engine-app
     environment:
-      - NODE_ENV=production
       - QDRANT_URL=http://qdrant:6333
-      - VECTOR_DIMENSION=${VECTOR_DIMENSION:-128}
-      - MATCH_THRESHOLD=${MATCH_THRESHOLD:-0.85}
+      - COLLECTION_NAME=reality-vectors
+      - VECTOR_DIMENSION=${VECTOR_DIMENSION:-256}
       - PORT=3000
+      - MACHINES_DIR=/app/examples/machines
     depends_on:
       qdrant:
         condition: service_healthy
@@ -98,8 +98,6 @@ services:
     networks:
       - reality-network
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
       - ./examples/machines:/app/examples/machines
     logging:
       driver: loki
@@ -110,10 +108,11 @@ services:
         loki-max-backoff: "1000ms"
         loki-external-labels: "service=reality-engine,environment=production,app=reality-engine"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/engine/stats"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 15s
-      timeout: 5s
-      retries: 3
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   # Visualizer Backend (Proxy Server) - accessed via TLS proxy at https://localhost:3001
   visualizer-backend:
