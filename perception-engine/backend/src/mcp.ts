@@ -37,7 +37,7 @@ export interface McpDeps {
   getAutoState: () => { running: boolean; intervalMs: number };
   getLastPush: () => number | null;
   /** Persist sources to disk and broadcast state-update to WS clients. */
-  saveAndBroadcast: () => void;
+  saveAndBroadcast: () => Promise<void>;
   /** engine.reset() + clear lastPush + broadcast state-update. */
   resetAndBroadcast: () => void;
   realityEngineUrl: string;
@@ -192,7 +192,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
     },
     async ({ algorithm }) => {
       engine.setMatchAlgorithm(algorithm as MatchAlgorithm);
-      saveAndBroadcast();
+      await saveAndBroadcast();
       return { content: [{ type: 'text' as const, text: JSON.stringify({ success: true, matchAlgorithm: algorithm }) }] };
     },
   );
@@ -234,8 +234,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
         region: { offset: region_offset, length: region_length },
         pattern, frequency, amplitude, dcOffset: dc_offset,
       } as Omit<SimulatedSourceConfig, 'id'>);
-      store.save(engine.getSources());
-      saveAndBroadcast();
+      await saveAndBroadcast();
       return { content: [{ type: 'text' as const, text: JSON.stringify(source, null, 2) }] };
     },
   );
@@ -258,8 +257,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
         region: { offset: region_offset, length: region_length },
         sensorId: sensor_id, lastValue: [], lastUpdated: null, ttlMs: ttl_ms,
       } as Omit<SensorSourceConfig, 'id'>);
-      store.save(engine.getSources());
-      saveAndBroadcast();
+      await saveAndBroadcast();
       return { content: [{ type: 'text' as const, text: JSON.stringify(source, null, 2) }] };
     },
   );
@@ -287,8 +285,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
         machineId: machine_id, machineName: machine_name,
         sequenceName: sequence_name, inputs, loop: loop ?? false,
       } as Omit<TestSourceConfig, 'id'>);
-      store.save(engine.getSources());
-      saveAndBroadcast();
+      await saveAndBroadcast();
       return { content: [{ type: 'text' as const, text: JSON.stringify(source, null, 2) }] };
     },
   );
@@ -314,8 +311,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
           isError: true,
         };
       }
-      store.save(engine.getSources());
-      saveAndBroadcast();
+      await saveAndBroadcast();
       return { content: [{ type: 'text' as const, text: JSON.stringify(source, null, 2) }] };
     },
   );
@@ -334,8 +330,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
           isError: true,
         };
       }
-      store.save(engine.getSources());
-      saveAndBroadcast();
+      await saveAndBroadcast();
       return { content: [{ type: 'text' as const, text: JSON.stringify({ success: true, id }) }] };
     },
   );

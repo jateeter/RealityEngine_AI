@@ -70,7 +70,7 @@ services:
         loki-batch-size: "400"
         loki-retries: "2"
         loki-max-backoff: "1000ms"
-        labels: "service=qdrant,environment=production,app=reality-engine"
+        loki-external-labels: "service=qdrant,environment=production,app=reality-engine"
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/6333 && printf 'GET /readyz HTTP/1.0\\r\\nHost:localhost\\r\\n\\r\\n' >&3 && read -t 3 r <&3 && echo \"$$r\" | grep -q '200'"]
       interval: 10s
@@ -108,7 +108,7 @@ services:
         loki-batch-size: "400"
         loki-retries: "2"
         loki-max-backoff: "1000ms"
-        labels: "service=reality-engine,environment=production,app=reality-engine"
+        loki-external-labels: "service=reality-engine,environment=production,app=reality-engine"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/engine/stats"]
       interval: 15s
@@ -139,7 +139,7 @@ services:
         loki-batch-size: "400"
         loki-retries: "2"
         loki-max-backoff: "1000ms"
-        labels: "service=visualizer-backend,environment=production,app=reality-engine"
+        loki-external-labels: "service=visualizer-backend,environment=production,app=reality-engine"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
       interval: 15s
@@ -165,7 +165,7 @@ services:
         loki-batch-size: "400"
         loki-retries: "2"
         loki-max-backoff: "1000ms"
-        labels: "service=visualizer-frontend,environment=production,app=reality-engine"
+        loki-external-labels: "service=visualizer-frontend,environment=production,app=reality-engine"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:80/"]
       interval: 15s
@@ -188,9 +188,19 @@ services:
     depends_on:
       visualizer-backend:
         condition: service_healthy
+      loki:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - reality-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-batch-size: "400"
+        loki-retries: "2"
+        loki-max-backoff: "1000ms"
+        loki-external-labels: "service=perception-engine-backend,environment=production,app=reality-engine"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3004/api/health"]
       interval: 15s
@@ -208,6 +218,14 @@ services:
     restart: unless-stopped
     networks:
       - reality-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-batch-size: "400"
+        loki-retries: "2"
+        loki-max-backoff: "1000ms"
+        loki-external-labels: "service=perception-engine-frontend,environment=production,app=reality-engine"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:80/"]
       interval: 15s
@@ -242,6 +260,14 @@ services:
     restart: unless-stopped
     networks:
       - reality-network
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-batch-size: "400"
+        loki-retries: "2"
+        loki-max-backoff: "1000ms"
+        loki-external-labels: "service=tls-proxy,environment=production,app=reality-engine"
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s

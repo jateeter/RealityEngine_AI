@@ -1,4 +1,5 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFile, rename } from 'fs/promises';
 import { join } from 'path';
 import type { SourceConfig } from './types.js';
 
@@ -46,7 +47,7 @@ export class SourceStore {
     }
   }
 
-  save(sources: SourceConfig[]): void {
+  async save(sources: SourceConfig[]): Promise<void> {
     // Strip transient sensor runtime data before persisting
     const sanitized: SourceConfig[] = sources.map(src => {
       if (src.type === 'sensor') {
@@ -59,8 +60,8 @@ export class SourceStore {
     const tmp = this.filePath + '.tmp';
 
     try {
-      writeFileSync(tmp, JSON.stringify(payload, null, 2), 'utf-8');
-      renameSync(tmp, this.filePath);
+      await writeFile(tmp, JSON.stringify(payload, null, 2), 'utf-8');
+      await rename(tmp, this.filePath);
     } catch (err) {
       console.error('[SourceStore] Failed to save sources:', err);
     }

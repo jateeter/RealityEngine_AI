@@ -124,8 +124,8 @@ function stopAuto(): void {
 // ── Shared helpers (used by both REST routes and MCP tools) ───────────────
 
 /** Save current sources to disk and push a state-update to all WS clients. */
-function saveAndBroadcast(): void {
-  store.save(engine.getSources());
+async function saveAndBroadcast(): Promise<void> {
+  await store.save(engine.getSources());
   const state = engine.getState(lastPush, { running: autoTimer !== null, intervalMs: autoIntervalMs });
   broadcast({ type: 'state-update', state });
 }
@@ -225,7 +225,7 @@ app.post('/api/auto/stop', (_req: Request, res: Response) => {
 });
 
 // Update engine configuration (matchAlgorithm etc.)
-app.patch('/api/config', (req: Request, res: Response) => {
+app.patch('/api/config', async (req: Request, res: Response) => {
   const { matchAlgorithm } = req.body;
   if (matchAlgorithm !== undefined) {
     if (matchAlgorithm !== 'gte' && matchAlgorithm !== 'equals') {
@@ -233,7 +233,7 @@ app.patch('/api/config', (req: Request, res: Response) => {
       return;
     }
     engine.setMatchAlgorithm(matchAlgorithm as MatchAlgorithm);
-    saveAndBroadcast();
+    await saveAndBroadcast();
   }
   res.json({ success: true, matchAlgorithm: engine.matchAlgorithm });
 });
@@ -250,7 +250,7 @@ app.get('/api/sources', (_req: Request, res: Response) => {
 });
 
 // Add source
-app.post('/api/sources', (req: Request, res: Response) => {
+app.post('/api/sources', async (req: Request, res: Response) => {
   try {
     const config = req.body as Omit<SourceConfig, 'id'>;
     if (!config.type || !config.name || !config.region) {
@@ -258,7 +258,7 @@ app.post('/api/sources', (req: Request, res: Response) => {
       return;
     }
     const source = engine.addSource(config);
-    saveAndBroadcast();
+    await saveAndBroadcast();
     res.json({ source });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -266,26 +266,26 @@ app.post('/api/sources', (req: Request, res: Response) => {
 });
 
 // Update source
-app.patch('/api/sources/:id', (req: Request, res: Response) => {
+app.patch('/api/sources/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const source = engine.updateSource(id, req.body);
   if (!source) {
     res.status(404).json({ error: 'Source not found' });
     return;
   }
-  saveAndBroadcast();
+  await saveAndBroadcast();
   res.json({ source });
 });
 
 // Delete source
-app.delete('/api/sources/:id', (req: Request, res: Response) => {
+app.delete('/api/sources/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const removed = engine.removeSource(id);
   if (!removed) {
     res.status(404).json({ error: 'Source not found' });
     return;
   }
-  saveAndBroadcast();
+  await saveAndBroadcast();
   res.json({ success: true });
 });
 
@@ -302,7 +302,10 @@ app.post('/api/sensors/:id', (req: Request, res: Response) => {
     res.status(404).json({ error: `No sensor source with sensorId "${id}"` });
     return;
   }
-  res.json({ success: true, sensorId: id, timestamp: Date.now() });
+  const timestamp = Date.now();
+  const state = engine.getState(lastPush, { running: autoTimer !== null, intervalMs: autoIntervalMs });
+  broadcast({ type: 'state-update', state });
+  res.json({ success: true, sensorId: id, timestamp });
 });
 
 // Machine listing — proxy from Reality Engine for use in the add-source form

@@ -22,46 +22,53 @@ export default function App() {
     getState().then(setState).catch(console.error);
   }, []);
 
-  // WebSocket connection
+  // WebSocket connection with reconnect
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${protocol}//${window.location.host}/ws`;
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
+    let destroyed = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data as string) as { type: string; [key: string]: unknown };
+    function connect() {
+      if (destroyed) return;
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const url = `${protocol}//${window.location.host}/ws`;
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
 
-        if (msg.type === 'state-update') {
-          setState(msg.state as EngineState);
-        } else if (msg.type === 'push-result') {
-          const entry: PushLogEntry = {
-            id: `${Date.now()}-${Math.random()}`,
-            success: msg.success as boolean,
-            step: msg.step as Record<string, unknown> | undefined,
-            timestamp: msg.timestamp as number,
-            globalStep: msg.globalStep as number,
-            error: msg.error as string | undefined,
-          };
-          setPushLog(prev => [entry, ...prev].slice(0, MAX_LOG));
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data as string) as { type: string; [key: string]: unknown };
+
+          if (msg.type === 'state-update') {
+            setState(msg.state as EngineState);
+          } else if (msg.type === 'push-result') {
+            const entry: PushLogEntry = {
+              id: `${Date.now()}-${Math.random()}`,
+              success: msg.success as boolean,
+              step: msg.step as Record<string, unknown> | undefined,
+              timestamp: msg.timestamp as number,
+              globalStep: msg.globalStep as number,
+              error: msg.error as string | undefined,
+            };
+            setPushLog(prev => [entry, ...prev].slice(0, MAX_LOG));
+          }
+        } catch {
+          // ignore parse errors
         }
-      } catch {
-        // ignore parse errors
-      }
-    };
+      };
 
-    ws.onclose = () => {
-      // Reconnect after a short delay
-      setTimeout(() => {
-        if (wsRef.current === ws) {
-          wsRef.current = null;
+      ws.onclose = () => {
+        if (!destroyed) {
+          reconnectTimer = setTimeout(connect, 2000);
         }
-      }, 100);
-    };
+      };
+    }
+
+    connect();
 
     return () => {
-      ws.close();
+      destroyed = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (wsRef.current) wsRef.current.close();
     };
   }, []);
 
