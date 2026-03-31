@@ -1,0 +1,49 @@
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/Main.scala:25:16: Implicit definition should have explicit type (inferred sttp.client3.SttpBackend[sttp.client3.Identity,Any]) [quickfixable]
+[warn]   implicit val sttpBackend = HttpURLConnectionBackend()
+[warn]                ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/Main.scala:5:34: Unused import
+[warn] import akka.http.scaladsl.server.Route
+[warn]                                  ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/api/Routes.scala:7:20: Unused import
+[warn] import akka.stream.Materializer
+[warn]                    ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/api/Routes.scala:14:24: Unused import
+[warn] import io.circe.parser._
+[warn]                        ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/api/Routes.scala:17:44: Unused import
+[warn] import scala.concurrent.{ExecutionContext, Future}
+[warn]                                            ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/api/Routes.scala:19:23: Unused import
+[warn] import java.io.{File, FileInputStream}
+[warn]                       ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/api/Routes.scala:20:30: Unused import
+[warn] import java.nio.file.{Files, Paths}
+[warn]                              ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/api/Routes.scala:27:12: parameter system in class Routes is never used
+[warn] )(implicit system: ActorSystem, ec: ExecutionContext) {
+[warn]            ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/engine/PerceptualSpaceSimulator.scala:200:28: Unused import
+[warn]     import io.circe.syntax._
+[warn]                            ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/models/Machine.scala:139:28: Unused import
+[warn]     import io.circe.syntax._
+[warn]                            ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/services/VectorStore.scala:9:18: Unused import
+[warn] import java.util.UUID
+[warn]                  ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/services/VectorStore.scala:23:15: private var initialized in class VectorStore is never used
+[warn]   private var initialized = false
+[warn]               ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/api/JsonProtocol.scala:44:62: method mapValues in trait MapOps is deprecated (since 2.13.0): Use .view.mapValues(f). A future version will include a strict version of this method (for now, .view.mapValues(f).toMap).
+[warn]       "sequenceResults" -> Json.fromFields(r.sequenceResults.mapValues(_.asJson).toSeq),
+[warn]                                                              ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/api/JsonProtocol.scala:88:62: method mapValues in trait MapOps is deprecated (since 2.13.0): Use .view.mapValues(f). A future version will include a strict version of this method (for now, .view.mapValues(f).toMap).
+[warn]       "machineResults"  -> Json.fromFields(ss.machineResults.mapValues(_.asJson).toSeq),
+[warn]                                                              ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/api/Routes.scala:239:75: method mapValues in trait MapOps is deprecated (since 2.13.0): Use .view.mapValues(f). A future version will include a strict version of this method (for now, .view.mapValues(f).toMap).
+[warn]               complete(Json.obj("activeVectors" -> Json.fromFields(active.mapValues(vs => Json.arr(vs.map(_.toJson): _*)).toSeq)))
+[warn]                                                                           ^
+[warn] /Users/johnt/workspace/GitHub/RealityEngine_AI/scala/src/main/scala/com/realityengine/api/Routes.scala:323:70: method mapValues in trait MapOps is deprecated (since 2.13.0): Use .view.mapValues(f). A future version will include a strict version of this method (for now, .view.mapValues(f).toMap).
+[warn]               complete(Json.obj("results" -> Json.fromFields(results.mapValues(_.asJson).toSeq)))
+[warn]                                                                      ^
+[warn] 16 warnings found

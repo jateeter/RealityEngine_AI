@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuite hostname="Johns-MacBook-Pro.local" name="com.realityengine.RealityEngineSpec" tests="19" errors="0" failures="0" skipped="0" time="0.178" timestamp="2026-03-31T07:33:04">
+          <properties>
+      <property name="java.specification.version" value="17"/><property name="sun.jnu.encoding" value="UTF-8"/><property name="sun.arch.data.model" value="64"/><property name="java.vendor.url" value="https://adoptium.net/"/><property name="sun.boot.library.path" value="/Users/johnt/.sdkman/candidates/java/17.0.6-tem/lib"/><property name="sun.java.command" value="/Users/johnt/.sdkman/candidates/sbt/1.8.2/bin/sbt-launch.jar test"/><property name="jdk.debug" value="release"/><property name="java.specification.vendor" value="Oracle Corporation"/><property name="java.version.date" value="2023-01-17"/><property name="java.home" value="/Users/johnt/.sdkman/candidates/java/17.0.6-tem"/><property name="file.separator" value="/"/><property name="java.vm.compressedOopsMode" value="Zero based"/><property name="line.separator" value="
+"/><property name="java.vm.specification.vendor" value="Oracle Corporation"/><property name="java.specification.name" value="Java Platform API Specification"/><property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/><property name="java.runtime.version" value="17.0.6+10"/><property name="user.name" value="johnt"/><property name="log4j.ignoreTCL" value="true"/><property name="file.encoding" value="UTF-8"/><property name="java.vendor.version" value="Temurin-17.0.6+10"/><property name="java.io.tmpdir" value="/var/folders/xx/54_hdhr50pqf4swtlbryzp4h0000gn/T/"/><property name="java.version" value="17.0.6"/><property name="java.vm.specification.name" value="Java Virtual Machine Specification"/><property name="native.encoding" value="UTF-8"/><property name="java.library.path" value="/Users/johnt/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:."/><property name="java.vendor" value="Eclipse Adoptium"/><property name="scala.ext.dirs" value="/Users/johnt/.sbt/1.0/java9-rt-ext-eclipse_adoptium_17_0_6"/><property name="sun.io.unicode.encoding" value="UnicodeBig"/><property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/><property name="java.class.path" value="/Users/johnt/.sdkman/candidates/sbt/1.8.2/bin/sbt-launch.jar"/><property name="java.vm.vendor" value="Eclipse Adoptium"/><property name="jline.shutdownhook" value="false"/><property name="user.timezone" value="America/Los_Angeles"/><property name="java.vm.specification.version" value="17"/><property name="os.name" value="Mac OS X"/><property name="sun.java.launcher" value="SUN_STANDARD"/><property name="user.country" value="US"/><property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/><property name="sun.cpu.endian" value="little"/><property name="user.home" value="/Users/johnt"/><property name="user.language" value="en"/><property name="sbt.script" value="/Users/johnt/.sdkman/candidates/sbt/current/bin/sbt"/><property name="sbt.ipcsocket.tmpdir" value="/var/folders/xx/54_hdhr50pqf4swtlbryzp4h0000gn/T/.sbt4ef54bf7/ipcsocket"/><property name="swoval.tmpdir" value="/var/folders/xx/54_hdhr50pqf4swtlbryzp4h0000gn/T/.sbt4ef54bf7/swoval"/><property name="jline.esc.timeout" value="0"/><property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/><property name="path.separator" value=":"/><property name="os.version" value="15.7.4"/><property name="jna.nosys" value="true"/><property name="java.runtime.name" value="OpenJDK Runtime Environment"/><property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/><property name="java.vendor.url.bug" value="https://github.com/adoptium/adoptium-support/issues"/><property name="user.dir" value="/Users/johnt/workspace/GitHub/RealityEngine_AI/scala"/><property name="os.arch" value="aarch64"/><property name="java.vm.info" value="mixed mode"/><property name="java.vm.version" value="17.0.6+10"/><property name="java.class.version" value="61.0"/>
+    </properties>
+          <testcase classname="com.realityengine.RealityEngineSpec" name="RealityVector should match with GTE comparator (both HIGH)" time="0.013">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="RealityVector should not match with GTE when input is LOW and value is HIGH" time="0.069">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="RealityVector should match with GTE when both are LOW" time="0.0">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="RealityVector should return dimension mismatch error for wrong input length" time="0.001">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="RealityVector should match with Equals comparator" time="0.0">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="RealityVector should match with Threshold comparator within tolerance" time="0.001">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="RealityVector should serialize and deserialize via toJson/fromJson" time="0.051">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="CriticalEventSequence should activate successors after transition (deferred)" time="0.005">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="CriticalEventSequence should validate correctly" time="0.001">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="OutputArbiter should produce output with PASSTHROUGH when any sequence has output" time="0.002">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="OutputArbiter should require ALL sequences with AND rule" time="0.0">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="OutputArbiter should succeed with AND when all sequences have output" time="0.0">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="Machine should process input and produce output via PASSTHROUGH arbiter" time="0.002">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="Machine should clone independently" time="0.003">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="PerceptualSpace should extract and merge machine input/output" time="0.003">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="PreceptionEngine should resolve machine input from universal space" time="0.001">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="MachineLoader should validate valid machine JSON" time="0.007">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="MachineLoader should load a machine from JSON and round-trip" time="0.019">
+                      
+                    </testcase><testcase classname="com.realityengine.RealityEngineSpec" name="RealityEngine (no VectorStore) should process universal input through machine with perceptual mapping" time="0.0">
+                      
+                    </testcase>
+          <system-out><![CDATA[]]></system-out>
+          <system-err><![CDATA[]]></system-err>
+        </testsuite>

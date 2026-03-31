@@ -1,0 +1,481 @@
+package com.realityengine.api
+
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.{ExceptionHandler, Route}
+import akka.stream.Materializer
+import com.realityengine.engine._
+import com.realityengine.models._
+import com.realityengine.services.MachineLoader
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.Json
+import io.circe.syntax._
+import io.circe.parser._
+import JsonProtocol._
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
+import java.io.{File, FileInputStream}
+import java.nio.file.{Files, Paths}
+
+// Routes — Akka HTTP route definitions mirroring all TypeScript /api/... endpoints.
+class Routes(
+  engine:    RealityEngine,
+  simulator: PerceptualSpaceSimulator,
+  machinesDir: String = sys.env.getOrElse("MACHINES_DIR", "examples/machines")
+)(implicit system: ActorSystem, ec: ExecutionContext) {
+
+  private val perception = new PreceptionOfReality(
+    sys.env.getOrElse("VECTOR_DIMENSION", "256").toIntOption.getOrElse(256))
+  private var sampler: Option[RealitySampler] = None
+
+  // Staging buffer for chunk-based simulation configure protocol
+  private var sequenceBuffer: Vector[Vector[Double]] = Vector.empty
+  private var sequenceBufferConfig: Option[(RegionMapping, Long, Option[Int])] = None
+
+  implicit val exceptionHandler: ExceptionHandler = ExceptionHandler {
+    case e: NoSuchElementException => complete(StatusCodes.NotFound      -> Json.obj("error" -> Json.fromString(e.getMessage)))
+    case e: IllegalArgumentException => complete(StatusCodes.BadRequest   -> Json.obj("error" -> Json.fromString(e.getMessage)))
+    case e: Exception              => complete(StatusCodes.InternalServerError -> Json.obj("error" -> Json.fromString(e.getMessage)))
+  }
+
+  // ── Startup: load machine JSON files ─────────────────────────────────────
+
+  def loadDefaultMachines(): Unit = {
+    val dir = new File(machinesDir)
+    if (!dir.exists()) { println(s"Machines directory not found: $machinesDir"); return }
+
+    val machinesToLoad = List(
+      "RSFlipFlop.json", "RS2.json", "MultiStep.json", "DataCenterMonitoring.json",
+      "KleeneStar.json", "AIPowerEfficiency.json", "AICoolingRegulator.json",
+      "AICapacityThrottler.json", "AISecurityMonitor.json", "AIModelWellness.json",
+      "AIHardwareResilience.json"
+    )
+
+    var loaded = 0; var failed = 0
+    println("Loading example machines from JSON files on startup...")
+
+    machinesToLoad.foreach { filename =>
+      val file = new File(dir, filename)
+      if (!file.exists()) { println(s"  ⚠ JSON file not found: $filename"); failed += 1 }
+      else {
+        Try {
+          val json    = new String(Files.readAllBytes(file.toPath))
+          val baseName = filename.replaceAll("\\.json$", "").toLowerCase.replaceAll("[^a-z0-9]+", "-")
+          val machine  = MachineLoader.loadFromJson(json, Some(s"machine-$baseName"))
+          addMachineToSystem(machine)
+          println(s"  ✓ ${machine.name} loaded from $filename")
+          loaded += 1
+        }.failed.foreach { e =>
+          println(s"  ✗ Failed to load $filename: ${e.getMessage}")
+          failed += 1
+        }
+      }
+    }
+    println(s"\nMachine loading complete: $loaded loaded, $failed failed")
+  }
+
+  private def addMachineToSystem(machine: Machine): Unit = {
+    engine.addMachine(machine)
+    if (machine.perceptualMapping.isDefined) {
+      simulator.addMachine(machine)
+      println(s"""  ✓ Machine "${machine.name}" registered with perceptual simulator""")
+    }
+  }
+
+  // ── Route tree ────────────────────────────────────────────────────────────
+
+  val routes: Route = handleExceptions(exceptionHandler) {
+    pathPrefix("api") {
+      concat(
+        // Health
+        path("health") { get { complete(Json.obj("status" -> Json.fromString("healthy"), "timestamp" -> Json.fromLong(System.currentTimeMillis()), "version" -> Json.fromString("1.0.0"))) } },
+
+        // Config
+        pathPrefix("config") {
+          concat(
+            pathEnd { get { complete(Json.obj(
+              "vectorDimension"   -> Json.fromInt(sys.env.getOrElse("VECTOR_DIMENSION", "256").toIntOption.getOrElse(256)),
+              "matchThreshold"    -> Json.fromDouble(0.5).get,
+              "qdrantUrl"         -> Json.fromString(sys.env.getOrElse("QDRANT_URL", "http://localhost:6333")),
+              "collectionName"    -> Json.fromString(sys.env.getOrElse("COLLECTION_NAME", "reality-vectors"))
+            )) } },
+            path("dimension") { put { entity(as[Json]) { body =>
+              val dim = body.hcursor.get[Int]("dimension").getOrElse(256)
+              complete(Json.obj("success" -> Json.fromBoolean(true), "dimension" -> Json.fromInt(dim)))
+            } } },
+            path("threshold") { put { entity(as[Json]) { body =>
+              val t = body.hcursor.get[Double]("threshold").getOrElse(0.5)
+              complete(Json.obj("success" -> Json.fromBoolean(true), "threshold" -> Json.fromDoubleOrNull(t)))
+            } } }
+          )
+        },
+
+        // Vectors
+        pathPrefix("vectors") {
+          concat(
+            path("search") { post { entity(as[Json]) { body =>
+              val qv    = body.hcursor.downField("vector").as[Vector[Double]].getOrElse(Vector.empty)
+              val limit = body.hcursor.get[Int]("limit").getOrElse(10)
+              val thr   = body.hcursor.get[Double]("threshold").toOption
+              onComplete(engine.searchVectors(qv, limit, thr)) {
+                case Success(results) => complete(Json.obj("results" ->
+                  Json.arr(results.map { case (v, s) => Json.obj("vector" -> v.toJson, "score" -> Json.fromDoubleOrNull(s)) }: _*)))
+                case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+              }
+            } } },
+            pathEnd { post { entity(as[Json]) { body =>
+              val elementsJ = body.hcursor.downField("elements").as[Vector[Json]].getOrElse(Vector.empty)
+              val isInitial = body.hcursor.get[Boolean]("isInitial").getOrElse(false)
+              val elems = elementsJ.map { ej =>
+                val ec = ej.hcursor
+                VectorElement(
+                  value          = ec.get[Double]("value").getOrElse(0.0),
+                  comparatorType = ec.get[String]("comparatorType").toOption.map(ComparatorType.fromString),
+                  threshold      = ec.get[Double]("threshold").toOption
+                )
+              }
+              val vector = new RealityVector(elems, isInitial)
+              complete(Json.obj("success" -> Json.fromBoolean(true), "vector" -> vector.toJson))
+            } } },
+            path(Segment) { id =>
+              concat(
+                get  { complete(Json.obj("message" -> Json.fromString("Vector retrieval endpoint"), "id" -> Json.fromString(id))) },
+                delete { onComplete(engine.vectorStore.deleteVector(id)) {
+                  case Success(_) => complete(Json.obj("success" -> Json.fromBoolean(true), "id" -> Json.fromString(id)))
+                  case Failure(e) => complete(StatusCodes.InternalServerError -> Json.obj("error" -> Json.fromString(e.getMessage)))
+                } }
+              )
+            }
+          )
+        },
+
+        // Sequences
+        pathPrefix("sequences") {
+          concat(
+            path("persist") { post { onComplete(engine.persistAllSequences()) {
+              case Success(_) => complete(Json.obj("success" -> Json.fromBoolean(true)))
+              case Failure(e) => complete(StatusCodes.InternalServerError -> Json.obj("error" -> Json.fromString(e.getMessage)))
+            } } },
+            pathEnd {
+              concat(
+                get  { complete(Json.obj("sequences" -> Json.arr(engine.getAllSequences.map(_.toJson): _*))) },
+                post { entity(as[Json]) { body =>
+                  val name  = body.hcursor.get[String]("name").getOrElse("unnamed")
+                  val seq   = new CriticalEventSequence(name)
+                  body.hcursor.downField("vectors").as[Vector[Json]].getOrElse(Vector.empty).foreach { vj =>
+                    val vc = vj.hcursor
+                    val elems = vc.downField("elements").as[Vector[Json]].getOrElse(Vector.empty).map { ej =>
+                      VectorElement(
+                        value          = ej.hcursor.get[Double]("value").getOrElse(0.0),
+                        comparatorType = ej.hcursor.get[String]("comparatorType").toOption.map(ComparatorType.fromString),
+                        threshold      = ej.hcursor.get[Double]("threshold").toOption
+                      )
+                    }
+                    val vec = new RealityVector(elems, vc.get[Boolean]("isInitial").getOrElse(false),
+                      vc.get[String]("id").getOrElse(java.util.UUID.randomUUID().toString))
+                    vc.downField("nextVectorIds").as[Vector[String]].getOrElse(Vector.empty).foreach(vec.addNextVector)
+                    vc.downField("outputVectors").as[Vector[Json]].getOrElse(Vector.empty).foreach { oj =>
+                      vec.addOutputVector(OutputVector(
+                        id        = oj.hcursor.get[String]("id").getOrElse(java.util.UUID.randomUUID().toString),
+                        vector    = oj.hcursor.downField("vector").as[Vector[Double]].getOrElse(Vector.empty),
+                        metadata  = oj.hcursor.downField("metadata").as[Map[String, Json]].getOrElse(Map.empty),
+                        timestamp = System.currentTimeMillis()
+                      ))
+                    }
+                    seq.addVector(vec)
+                  }
+                  val (valid, errors) = seq.validate()
+                  if (!valid) complete(StatusCodes.BadRequest -> Json.obj("error" -> errors.asJson))
+                  else { engine.addSequence(seq); complete(Json.obj("success" -> Json.fromBoolean(true), "sequence" -> seq.toJson)) }
+                } }
+              )
+            },
+            path(Segment) { id =>
+              concat(
+                get    { engine.getSequence(id).fold(complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("Sequence not found"))))(s => complete(Json.obj("sequence" -> s.toJson))) },
+                delete { if (engine.getSequence(id).isDefined) { engine.removeSequence(id); complete(Json.obj("success" -> Json.fromBoolean(true))) }
+                         else complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("Sequence not found"))) }
+              )
+            },
+            path(Segment / "reset") { id =>
+              post { if (engine.resetSequence(id)) complete(Json.obj("success" -> Json.fromBoolean(true)))
+                     else complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("Sequence not found"))) }
+            },
+            path(Segment / "vectors") { id =>
+              post { entity(as[Json]) { body =>
+                engine.getSequence(id) match {
+                  case None => complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("Sequence not found")))
+                  case Some(seq) =>
+                    val elems = body.hcursor.downField("elements").as[Vector[Json]].getOrElse(Vector.empty).map { ej =>
+                      VectorElement(
+                        value          = ej.hcursor.get[Double]("value").getOrElse(0.0),
+                        comparatorType = ej.hcursor.get[String]("comparatorType").toOption.map(ComparatorType.fromString),
+                        threshold      = ej.hcursor.get[Double]("threshold").toOption
+                      )
+                    }
+                    val vec = new RealityVector(elems, body.hcursor.get[Boolean]("isInitial").getOrElse(false))
+                    seq.addVector(vec)
+                    complete(Json.obj("success" -> Json.fromBoolean(true), "vector" -> vec.toJson))
+                }
+              } }
+            }
+          )
+        },
+
+        // Engine
+        pathPrefix("engine") {
+          concat(
+            path("process") { post { entity(as[Json]) { body =>
+              val vec = body.hcursor.downField("vector").as[Vector[Double]].getOrElse(Vector.empty)
+              val result = engine.processInputLegacy(vec)
+              complete(Json.obj("result" -> result.asJson))
+            } } },
+            path("reset") { post { engine.resetAllSequences(); complete(Json.obj("success" -> Json.fromBoolean(true))) } },
+            path("stats") { get { complete(Json.obj("stats" -> engine.getStats)) } },
+            path("active") { get {
+              val active = engine.getAllActiveVectors
+              complete(Json.obj("activeVectors" -> Json.fromFields(active.mapValues(vs => Json.arr(vs.map(_.toJson): _*)).toSeq)))
+            } },
+            path("history") { get { parameter("limit".as[Int].?) { limit =>
+              complete(Json.obj("history" -> engine.getHistory(limit).asJson))
+            } } }
+          )
+        },
+
+        // Perception
+        path("perception" / "observe") { post { entity(as[Json]) { body =>
+          val data     = body.hcursor.downField("data").as[Vector[Double]].getOrElse(Vector.empty)
+          val source   = body.hcursor.get[String]("source").toOption
+          val meta     = body.hcursor.downField("metadata").as[Map[String, Json]].getOrElse(Map.empty)
+          val obs      = PreceptionOfReality.createObservation(data, source, meta)
+          val perceived = perception.perceive(obs)
+          complete(Json.obj(
+            "success"            -> Json.fromBoolean(true),
+            "inputVector"        -> perceived.inputVector.asJson,
+            "transformations"    -> perceived.transformations.asJson,
+            "processingTimestamp" -> Json.fromLong(perceived.processingTimestamp)
+          ))
+        } } },
+
+        // Sampler
+        pathPrefix("sampler") {
+          concat(
+            path("start") { post { entity(as[Json]) { body =>
+              val strat = body.hcursor.get[String]("strategy").toOption.map {
+                case "periodic"     => SamplingStrategy.PERIODIC
+                case "continuous"   => SamplingStrategy.CONTINUOUS
+                case "event-driven" => SamplingStrategy.EVENT_DRIVEN
+                case _              => SamplingStrategy.MANUAL
+              }.getOrElse(SamplingStrategy.MANUAL)
+              val intervalMs = body.hcursor.get[Long]("intervalMs").toOption
+              if (sampler.isEmpty) sampler = Some(new RealitySampler(perception, engine,
+                SamplingConfig(strat, intervalMs)))
+              complete(Json.obj("success" -> Json.fromBoolean(true), "stats" -> sampler.get.getStats))
+            } } },
+            path("stop") { post {
+              sampler.fold(complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString("Sampler not initialized")))) { s =>
+                complete(Json.obj("success" -> Json.fromBoolean(true)))
+              }
+            } },
+            path("sample") { post { entity(as[Json]) { body =>
+              val data   = body.hcursor.downField("data").as[Vector[Double]].getOrElse(Vector.empty)
+              val source = body.hcursor.get[String]("source").toOption
+              val meta   = body.hcursor.downField("metadata").as[Map[String, Json]].getOrElse(Map.empty)
+              val obs    = PreceptionOfReality.createObservation(data, source, meta)
+              if (sampler.isEmpty) sampler = Some(new RealitySampler(perception, engine, SamplingConfig(SamplingStrategy.MANUAL)))
+              val result = sampler.get.sample(obs)
+              complete(Json.obj("success" -> Json.fromBoolean(true), "result" -> result.asJson))
+            } } },
+            path("stats") { get {
+              sampler.fold(complete(Json.obj("stats" -> Json.Null)))(s => complete(Json.obj("stats" -> s.getStats.asJson)))
+            } }
+          )
+        },
+
+        // Machines — fixed paths BEFORE parameterized
+        pathPrefix("machines") {
+          concat(
+            // Fixed: /machines/json/...
+            path("json" / "list") { get {
+              val dir = new File(machinesDir)
+              val files = if (dir.exists()) dir.listFiles().filter(_.getName.endsWith(".json")).map(_.getName).toList else Nil
+              complete(Json.obj("files" -> files.asJson))
+            } },
+            path("json" / Segment) { name =>
+              get {
+                val file = new File(machinesDir, if (name.endsWith(".json")) name else s"$name.json")
+                if (!file.exists()) complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("File not found")))
+                else complete(HttpEntity(ContentTypes.`application/json`, new String(Files.readAllBytes(file.toPath))))
+              }
+            },
+            path("json" / "import") { post { entity(as[String]) { body =>
+              Try(MachineLoader.loadFromJson(body)) match {
+                case Failure(e)       => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+                case Success(machine) => addMachineToSystem(machine); complete(Json.obj("success" -> Json.fromBoolean(true), "machine" -> machine.toJson))
+              }
+            } } },
+            // Fixed: /machines/process-universal/all
+            path("process-universal" / "all") { post { entity(as[Json]) { body =>
+              val vec = body.hcursor.downField("universalInputSpace").as[Vector[Double]].getOrElse(Vector.empty)
+              val results = engine.processUniversalInputForAllMachines(vec)
+              complete(Json.obj("results" -> Json.fromFields(results.mapValues(_.asJson).toSeq)))
+            } } },
+            // Fixed: /machines/machine-graph
+            pathEnd {
+              concat(
+                get  { complete(Json.obj("machines" -> Json.arr(engine.getAllMachines.map(_.toJson): _*))) },
+                post { entity(as[Json]) { body =>
+                  Try(MachineLoader.loadFromJson(body.noSpaces)) match {
+                    case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+                    case Success(machine) =>
+                      addMachineToSystem(machine)
+                      complete(Json.obj("success" -> Json.fromBoolean(true), "machine" -> machine.toJson))
+                  }
+                } }
+              )
+            },
+            path(Segment) { id =>
+              concat(
+                get    { engine.getMachine(id).fold(complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("Machine not found"))))(m => complete(m.toJson)) },
+                put    { entity(as[Json]) { body =>
+                  Try(MachineLoader.loadFromJson(body.noSpaces, Some(id))) match {
+                    case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+                    case Success(machine) =>
+                      engine.removeMachine(id); simulator.removeMachine(id)
+                      addMachineToSystem(machine)
+                      complete(Json.obj("success" -> Json.fromBoolean(true), "machine" -> machine.toJson))
+                  }
+                } },
+                delete { engine.removeMachine(id); simulator.removeMachine(id); complete(Json.obj("success" -> Json.fromBoolean(true))) }
+              )
+            },
+            path(Segment / "process") { id => post { entity(as[Json]) { body =>
+              val vec = body.hcursor.downField("inputVector").as[Vector[Double]].getOrElse(Vector.empty)
+              Try(engine.processMachineInput(id, vec)) match {
+                case Success(r) => complete(r.asJson)
+                case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+              }
+            } } },
+            path(Segment / "process-universal") { id => post { entity(as[Json]) { body =>
+              val vec = body.hcursor.downField("universalInputSpace").as[Vector[Double]].getOrElse(Vector.empty)
+              Try(engine.processUniversalInput(vec, id)) match {
+                case Success(r) => complete(r.asJson)
+                case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+              }
+            } } },
+            path(Segment / "whatif") { id => post { entity(as[Json]) { body =>
+              val vec = body.hcursor.downField("inputVector").as[Vector[Double]].getOrElse(Vector.empty)
+              Try(engine.processWhatIf(id, vec)) match {
+                case Success(r) => complete(r.asJson)
+                case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+              }
+            } } },
+            path(Segment / "whatif-universal") { id => post { entity(as[Json]) { body =>
+              val vec = body.hcursor.downField("universalInputSpace").as[Vector[Double]].getOrElse(Vector.empty)
+              Try(engine.processUniversalWhatIf(vec, id)) match {
+                case Success(r) => complete(r.asJson)
+                case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+              }
+            } } },
+            path(Segment / "checkpoints") { id =>
+              concat(
+                get  { complete(Json.arr(engine.listCheckpoints(id).map(_.asJson): _*)) },
+                post { entity(as[Json]) { body =>
+                  val label = body.hcursor.get[String]("label").toOption
+                  Try(engine.createCheckpoint(id, label)) match {
+                    case Success(cpId) => complete(Json.obj("success" -> Json.fromBoolean(true), "checkpointId" -> Json.fromString(cpId)))
+                    case Failure(e)    => complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString(e.getMessage)))
+                  }
+                } }
+              )
+            },
+            path(Segment / "checkpoints" / Segment / "restore") { (machineId, cpId) =>
+              post { Try(engine.restoreCheckpoint(machineId, cpId)) match {
+                case Success(_) => complete(Json.obj("success" -> Json.fromBoolean(true)))
+                case Failure(e) => complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString(e.getMessage)))
+              } }
+            },
+            path(Segment / "checkpoints" / Segment) { (machineId, cpId) =>
+              delete { complete(Json.obj("success" -> Json.fromBoolean(engine.deleteCheckpoint(machineId, cpId)))) }
+            },
+            path(Segment / "export") { id =>
+              get { engine.getMachine(id).fold(complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("Machine not found")))) { m =>
+                complete(HttpEntity(ContentTypes.`application/json`, MachineLoader.saveToJson(m)))
+              } }
+            }
+          )
+        },
+
+        // Machine graph
+        path("machine-graph") { get { complete(simulator.getMachineGraphData) } },
+
+        // Perceptual simulation
+        pathPrefix("perceptual-simulation") {
+          concat(
+            path("configure" / "chunk") { post { entity(as[Json]) { body =>
+              val chunk = body.hcursor.downField("vectors").as[Vector[Vector[Double]]].getOrElse(Vector.empty)
+              sequenceBuffer = sequenceBuffer ++ chunk
+              // Store config on first chunk or if provided
+              body.hcursor.downField("config").as[Json].toOption.foreach { cfg =>
+                val c = cfg.hcursor
+                val iOff = c.downField("inputRegion").get[Int]("offset").getOrElse(0)
+                val iLen = c.downField("inputRegion").get[Int]("length").getOrElse(1)
+                val delay = c.get[Long]("stepDelayMs").getOrElse(100L)
+                val maxS  = c.get[Int]("maxSteps").toOption
+                sequenceBufferConfig = Some((RegionMapping(iOff, iLen), delay, maxS))
+              }
+              complete(Json.obj("success" -> Json.fromBoolean(true), "bufferedVectors" -> Json.fromInt(sequenceBuffer.length)))
+            } } },
+            path("configure" / "commit") { post {
+              sequenceBufferConfig match {
+                case None => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString("No config buffered. Send a chunk with config first.")))
+                case Some((region, delay, maxS)) =>
+                  val cfg = SimulationConfig(sequenceBuffer, region, delay, maxS)
+                  simulator.configure(cfg)
+                  sequenceBuffer = Vector.empty; sequenceBufferConfig = None
+                  complete(Json.obj("success" -> Json.fromBoolean(true)))
+              }
+            } },
+            path("start")   { post { Try(simulator.start()) match {
+              case Success(_) => complete(Json.obj("success" -> Json.fromBoolean(true)))
+              case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+            } } },
+            path("stop")    { post { simulator.stop(); complete(Json.obj("success" -> Json.fromBoolean(true))) } },
+            path("step")    { post { simulator.step() match {
+              case None    => complete(Json.obj("done" -> Json.fromBoolean(true)))
+              case Some(s) => complete(s.asJson)
+            } } },
+            path("reset")   { post { simulator.reset(); complete(Json.obj("success" -> Json.fromBoolean(true))) } },
+            path("state")   { get { complete(simulator.toJson) } },
+            path("history") { get { complete(Json.obj("history" -> simulator.getHistory.asJson)) } }
+          )
+        },
+
+        // Preception diagnostic
+        path("preception" / "diagnostic") { post { entity(as[Json]) { body =>
+          val vec = body.hcursor.downField("universalInputSpace").as[Vector[Double]].getOrElse(Vector.empty)
+          complete(engine.getDiagnosticMapping(vec))
+        } } },
+
+        // Perceive (Perception Engine push endpoint)
+        path("perceive") { post { entity(as[Json]) { body =>
+          val vec      = body.hcursor.downField("vector").as[Vector[Double]].getOrElse(Vector.empty)
+          val matchOvr = body.hcursor.get[String]("matchAlgorithmOverride").toOption.map(ComparatorType.fromString)
+          val step     = simulator.processImmediate(vec, matchOvr)
+          // Sync PreceptionEngine's space with post-merge state
+          engine.preceptionEngine.getPerceptualSpace.setPerceptualVector(step.perceptualSpace)
+          complete(step.asJson)
+        } } },
+
+        // Root
+        pathEndOrSingleSlash { get { complete(Json.obj(
+          "name"    -> Json.fromString("Reality Engine"),
+          "version" -> Json.fromString("1.0.0"),
+          "status"  -> Json.fromString("running")
+        )) } }
+      )
+    }
+  }
+}

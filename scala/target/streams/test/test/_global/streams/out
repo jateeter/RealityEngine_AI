@@ -1,0 +1,36 @@
+[debug] Running TaskDef(com.realityengine.RealityEngineSpec, org.scalatest.tools.Framework$$anon$1@106874c6, false, [SuiteSelector])
+[info] RealityEngineSpec:
+[info] RealityVector
+[info] - should match with GTE comparator (both HIGH)
+[info] - should not match with GTE when input is LOW and value is HIGH
+[info] - should match with GTE when both are LOW
+[info] - should return dimension mismatch error for wrong input length
+[info] - should match with Equals comparator
+[info] - should match with Threshold comparator within tolerance
+[info] - should serialize and deserialize via toJson/fromJson
+[info] CriticalEventSequence
+[info] - should activate successors after transition (deferred)
+[info] - should validate correctly
+[info] OutputArbiter
+[info] - should produce output with PASSTHROUGH when any sequence has output
+[info] - should require ALL sequences with AND rule
+[info] - should succeed with AND when all sequences have output
+[info] Machine
+[info] - should process input and produce output via PASSTHROUGH arbiter
+[info] - should clone independently
+[info] PerceptualSpace
+[info] - should extract and merge machine input/output
+[info] PreceptionEngine
+[info] - should resolve machine input from universal space
+[info] MachineLoader
+[info] - should validate valid machine JSON
+[info] - should load a machine from JSON and round-trip
+[info] RealityEngine (no VectorStore)
+[info] - should process universal input through machine with perceptual mapping
+[info] Run completed in 403 milliseconds.
+[info] Total number of tests run: 19
+[info] Suites: completed 1, aborted 0
+[info] Tests: succeeded 19, failed 0, canceled 0, ignored 0, pending 0
+[info] All tests passed.
+[debug] Passed tests:
+[debug] 	com.realityengine.RealityEngineSpec
