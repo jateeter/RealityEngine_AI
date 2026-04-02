@@ -15,6 +15,10 @@ export class PerceptionEngine {
   private sources: Map<string, SourceConfig> = new Map();
   private testStep: Map<string, number> = new Map();
   private walkState: Map<string, number[]> = new Map();
+  // Persistent perceptual space: carries machine outputs forward between pushes.
+  // Sources overwrite their own regions; all other positions retain the values
+  // that the Reality Engine wrote back in the previous step's merge phase.
+  private persistentVector: number[] = new Array(256).fill(0);
   globalStep = 0;
   matchAlgorithm: MatchAlgorithm = 'gte';
 
@@ -92,8 +96,22 @@ export class PerceptionEngine {
 
   // ── Vector assembly ───────────────────────────────────────────────────────
 
+  /**
+   * Assemble the next push vector.
+   *
+   * Starts from the persistent perceptual space — which was last updated with
+   * the full post-merge state returned by the Reality Engine — so that machine
+   * output regions carry forward unchanged.  Each active source then overwrites
+   * only its own assigned region.  Positions touched by no active source remain
+   * exactly as the RE left them (e.g. an RS flip-flop Q output stays asserted
+   * until a source or another machine actively changes it).
+   *
+   * This method is pure: it does not modify persistentVector.
+   * Call updateFromPerceptualSpace() after each successful push to advance the
+   * persistent base to the RE's post-merge state.
+   */
   assembleVector(): number[] {
-    const out = new Array(256).fill(0);
+    const out = [...this.persistentVector];
 
     for (const [id, src] of this.sources) {
       if (!src.active) continue;
@@ -107,6 +125,18 @@ export class PerceptionEngine {
     }
 
     return out;
+  }
+
+  /**
+   * Update the persistent base vector with the full perceptual space returned
+   * by the Reality Engine after a push.  Must be called after every successful
+   * push so that machine outputs written during the merge phase are visible to
+   * the next assembleVector() call.
+   */
+  updateFromPerceptualSpace(ps: number[]): void {
+    for (let i = 0; i < 256; i++) {
+      this.persistentVector[i] = ps[i] ?? 0;
+    }
   }
 
   // ── Advance state (call after each push) ──────────────────────────────────
@@ -159,6 +189,7 @@ export class PerceptionEngine {
 
   reset(): void {
     this.globalStep = 0;
+    this.persistentVector = new Array(256).fill(0);
     for (const [id, src] of this.sources) {
       if (src.type === 'test') {
         this.testStep.set(id, 0);

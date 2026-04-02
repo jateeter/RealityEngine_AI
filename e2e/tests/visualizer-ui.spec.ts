@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
  * Tests the React UI running in Docker with Nginx
  */
 
-const VISUALIZER_URL = 'http://localhost:5173';
+const VISUALIZER_URL = 'https://localhost:5173';
 
 test.describe('Visualizer - Page Load', () => {
   test('should load the visualizer homepage', async ({ page }) => {

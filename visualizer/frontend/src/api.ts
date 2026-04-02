@@ -7,6 +7,35 @@ import {
 } from './types';
 
 const API_BASE_URL = '/api/viz';
+const PE_BASE_URL  = '/api/perception';
+
+// Perception Engine API — controls the flow of inputs pushed into the Reality Engine
+export const perceptionEngineApi = {
+  async getState(): Promise<any> {
+    const response = await axios.get(`${PE_BASE_URL}/state`);
+    return response.data;
+  },
+
+  async push(): Promise<{ success: boolean; step?: any; globalStep: number; timestamp: number; error?: string }> {
+    const response = await axios.post(`${PE_BASE_URL}/push`);
+    return response.data;
+  },
+
+  async autoStart(intervalMs: number): Promise<{ success: boolean; intervalMs: number }> {
+    const response = await axios.post(`${PE_BASE_URL}/auto/start`, { intervalMs });
+    return response.data;
+  },
+
+  async autoStop(): Promise<{ success: boolean }> {
+    const response = await axios.post(`${PE_BASE_URL}/auto/stop`);
+    return response.data;
+  },
+
+  async reset(): Promise<{ success: boolean }> {
+    const response = await axios.post(`${PE_BASE_URL}/reset`);
+    return response.data;
+  },
+};
 
 export const api = {
   // Get all sequences with graph data

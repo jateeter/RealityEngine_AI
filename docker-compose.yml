@@ -108,7 +108,7 @@ services:
         loki-max-backoff: "1000ms"
         loki-external-labels: "service=reality-engine,environment=production,app=reality-engine"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 15s
       timeout: 10s
       retries: 5

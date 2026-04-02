@@ -149,6 +149,7 @@ class PerceptualSpaceSimulator(dimension: Int = 256) {
   def getHistory: List[SimulationStep] = history
   def getIsRunning: Boolean = isRunning
   def getConfig: Option[SimulationConfig] = config
+  def getStepDelayMs: Long = config.map(_.stepDelayMs).getOrElse(100L)
 
   // ── Graph data ────────────────────────────────────────────────────────────
 

@@ -1,379 +1,195 @@
-# Reality Engine Simulation API - Complete Integration Guide
+# Reality Engine — API Reference
 
-## ✅ Status: API Integration Complete!
-
-All simulation API endpoints have been successfully integrated and compiled.
+All services run behind the TLS proxy. Use `https://` for REST and `wss://` for WebSocket.
 
 ---
 
-## 📋 Available Endpoints
+## Reality Engine (port 3000)
 
-### Simulation Control Endpoints
-
-#### 1. Load Simulation Vectors
-```bash
-POST /api/simulation/load
-Content-Type: application/json
-
-{
-  "vectors": [[0.5, 0.5, ...], [0.7, 0.3, ...], ...],  # Array of input vectors
-  "autoPlayDelayMs": 1000,                               # Optional, default: 1000
-  "loop": true                                            # Optional, default: true
-}
-
-Response:
-{
-  "success": true,
-  "state": {
-    "status": "stopped",
-    "currentIndex": 0,
-    "totalVectors": 100,
-    "startTime": null,
-    "lastStepTime": null
-  }
-}
+### Health
+```
+GET  /api/health            → { status, timestamp }
 ```
 
-#### 2. Start Auto-Play
-```bash
-POST /api/simulation/start
+### Machines
+```
+GET  /api/machines                       → { machines: [...] }
+GET  /api/machines/:id                   → { machine }
+POST /api/machines                       → { machine }       create
+PUT  /api/machines/:id                   → { machine }       full replace
+DELETE /api/machines/:id                 → { success }
 
-Response:
-{
-  "success": true,
-  "state": {
-    "status": "playing",
-    "currentIndex": 0,
-    "totalVectors": 100,
-    "startTime": 1703721234567,
-    "lastStepTime": null
-  }
-}
+GET  /api/machines/json/list             → { machines: [{ filename, name, description, version, sequenceCount }] }
+GET  /api/machines/json/:name            → { success, machine, message }   load & register from JSON file
+GET  /api/machines/:id/export?pretty=true → raw JSON string
 ```
 
-#### 3. Pause Simulation
-```bash
-POST /api/simulation/pause
-
-Response:
-{
-  "success": true,
-  "state": {
-    "status": "paused",
-    "currentIndex": 42,
-    ...
-  }
-}
+### Sequences
+```
+GET  /api/sequences                      → { sequences: [...] }
+GET  /api/sequences/:id                  → sequence graph with nodes/edges and live activation state
 ```
 
-#### 4. Resume Simulation
-```bash
-POST /api/simulation/resume
+### Perceptual Space Simulator
 
-Response:
-{
-  "success": true,
-  "state": {
-    "status": "playing",
-    ...
-  }
-}
+The simulator accepts a pre-configured input sequence and steps through it. Used by e2e tests; day-to-day operation uses the Perception Engine push path instead.
+
+```
+POST /api/perceptual-simulation/configure/chunk   body: { vectors, reset?, inputRegion?, stepDelayMs?, maxSteps? }
+POST /api/perceptual-simulation/configure/commit  → { success, committed, config }
+POST /api/perceptual-simulation/step              → { success, step: SimulationStep, isComplete }
+POST /api/perceptual-simulation/reset             → { success }
+GET  /api/perceptual-simulation/state             → { isRunning, currentStep, config, perceptualSpaceDimension }
+GET  /api/perceptual-simulation/history           → { history: SimulationStep[] }
 ```
 
-#### 5. Stop Simulation
-```bash
-POST /api/simulation/stop
-
-Response:
-{
-  "success": true,
-  "state": {
-    "status": "stopped",
-    ...
-  }
-}
+### Perception Engine push endpoint
+```
+POST /api/perceive    body: { vector: number[256], matchAlgorithm?: "gte"|"equals" }
+                      → SimulationStep  (runs processImmediate, returns full step result)
 ```
 
-#### 6. Reset Simulation
-```bash
-POST /api/simulation/reset
-
-Response:
-{
-  "success": true,
-  "state": {
-    "status": "stopped",
-    "currentIndex": 0,
-    ...
-  }
-}
+### Machine interconnection graph
+```
+GET  /api/machine-graph   → { nodes, edges, perceptualSpaceDimension }
 ```
 
-#### 7. Single Step
-```bash
-POST /api/simulation/step
-
-Response:
-{
-  "success": true,
-  "state": {
-    "status": "stopped",
-    "currentIndex": 1,
-    ...
-  },
-  "result": {
-    "inputVector": [0.5, 0.5, ...],
-    "timestamp": 1703721234567,
-    "sequenceResults": {...},
-    "totalOutputs": [...]
-  }
-}
+### Demos
 ```
-
-#### 8. Set Playback Speed
-```bash
-PUT /api/simulation/speed
-Content-Type: application/json
-
-{
-  "delayMs": 500
-}
-
-Response:
-{
-  "success": true,
-  "delayMs": 500
-}
-```
-
-#### 9. Get Simulation State
-```bash
-GET /api/simulation/state
-
-Response:
-{
-  "state": {
-    "status": "playing",
-    "currentIndex": 42,
-    "totalVectors": 100,
-    "startTime": 1703721234567,
-    "lastStepTime": 1703721276543
-  },
-  "progress": 42  # Percentage (0-100)
-}
-```
-
-#### 10. Get Activation Heatmap
-```bash
-GET /api/simulation/heatmap
-
-Response:
-{
-  "heatmap": [
-    {
-      "key": "sequence-id-1:vector-id-1",
-      "sequenceId": "sequence-id-1",
-      "vectorId": "vector-id-1",
-      "count": 15,
-      "lastActivated": 1703721276543
-    },
-    ...
-  ]
-}
+GET  /api/demo/data-center   → { success, metadata }
+GET  /api/demo/multi-step    → { success, machine, metadata }
+GET  /api/demo/kleene-star   → { success, machine, metadata }
 ```
 
 ---
 
-## 🧪 Complete Testing Example
+## SimulationStep shape
 
-### 1. Start the Reality Engine Server
-
-```bash
-npm run build
-npm start
-```
-
-Server should start on http://localhost:3000
-
-### 2. Create Test Data
-
-Create `test-simulation.json`:
 ```json
 {
-  "vectors": [
-    [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-    [0.6, 0.6, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-    [0.7, 0.7, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-    [0.75, 0.75, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-    [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-  ],
-  "autoPlayDelayMs": 1000,
-  "loop": false
+  "stepNumber": 0,
+  "timestamp": 1234567890,
+  "perceptualSpace": [/* 256 numbers */],
+  "machineResults": {
+    "<machineId>": {
+      "machineId": "...",
+      "machineName": "...",
+      "inputVector": [/* numbers */],
+      "outputVector": [/* numbers */ ] | null,
+      "inputRegion":  { "offset": 0, "length": 3 },
+      "outputRegion": { "offset": 3, "length": 2 } | null,
+      "transitionResult": { ... }
+    }
+  },
+  "activeRegions": [{ "offset", "length", "machineId", "role" }]
 }
 ```
 
-### 3. Test the Full Workflow
+---
 
-```bash
-# Load simulation vectors
-curl -X POST http://localhost:3000/api/simulation/load \
-  -H "Content-Type: application/json" \
-  -d @test-simulation.json
+## Visualizer Backend (port 3001)
 
-# Check state
-curl http://localhost:3000/api/simulation/state
+Proxies all Reality Engine endpoints listed above. Additional:
 
-# Start auto-play
-curl -X POST http://localhost:3000/api/simulation/start
-
-# Wait a few seconds, then pause
-sleep 2
-curl -X POST http://localhost:3000/api/simulation/pause
-
-# Check progress
-curl http://localhost:3000/api/simulation/state
-
-# Resume
-curl -X POST http://localhost:3000/api/simulation/resume
-
-# Get heatmap
-curl http://localhost:3000/api/simulation/heatmap
-
-# Reset
-curl -X POST http://localhost:3000/api/simulation/reset
-
-# Manual step-through
-curl -X POST http://localhost:3000/api/simulation/step
-curl -X POST http://localhost:3000/api/simulation/step
-curl -X POST http://localhost:3000/api/simulation/step
-
-# Change speed to 500ms
-curl -X PUT http://localhost:3000/api/simulation/speed \
-  -H "Content-Type: application/json" \
-  -d '{"delayMs": 500}'
-
-# Stop
-curl -X POST http://localhost:3000/api/simulation/stop
+### WebSocket
+```
+wss://localhost:3001/ws
 ```
 
----
+Message types broadcast to clients:
 
-## 📝 Implementation Details
-
-### Backend Files Modified/Created:
-
-1. **`src/engine/SimulationController.ts`** ✅
-   - Core simulation playback engine
-   - Auto-play and manual stepping
-   - Heatmap tracking
-   - Event system for real-time updates
-
-2. **`src/api/routes.ts`** ✅
-   - Added SimulationController import
-   - Added `simulationController` property
-   - Implemented 10 simulation endpoints
-   - Integrated with Reality Engine
-
-3. **`examples/demo-30-sequences/`** ✅
-   - `data-generator.ts` - Generates 30 sequences
-   - `output-definitions.ts` - 10 output types
-   - `input-patterns.ts` - 100 input vectors
-   - `README.md` - Documentation
+| Type | Payload | Trigger |
+|---|---|---|
+| `perceptual-simulation-stepped` | `{ step: SimulationStep }` | Any push or manual step |
+| `perceptual-simulation-reset` | `{ timestamp }` | `POST /api/perceptual-simulation/reset` |
+| `demo-loaded` | `{ metadata, machine? }` | Any demo endpoint |
+| `machine-loaded` | `{ machine }` | `GET /api/machines/json/:name` |
 
 ---
 
-## ⚠️ Known Limitations
+## Perception Engine Backend (port 3004)
 
-1. **Demo Auto-Loader**: The `GET /api/demo/load` endpoint is disabled due to TypeScript compilation issues with dynamic imports from the examples directory. Demo data must be loaded manually via `/api/simulation/load`.
+### Core
+```
+GET  /api/health            → { status, timestamp }
+GET  /api/state             → EngineState
+POST /api/push              → { success, step: SimulationStep, globalStep, timestamp }
+POST /api/reset             → { success }
+PATCH /api/config           body: { matchAlgorithm: "gte"|"equals" }  → { success, matchAlgorithm }
+```
 
-2. **Frontend Integration**: Frontend components (SimulationControls, InputTimeline, ActivityFeed, HeatmapOverlay, DemoDashboard) are not yet implemented.
+### Auto-push
+```
+POST /api/auto/start        body: { intervalMs: number }  → { success, intervalMs }
+POST /api/auto/stop         → { success }
+```
 
-3. **Auto-Play Polling**: During auto-play mode, frontend clients should poll `/api/simulation/state` periodically (recommended: 500ms) to get real-time updates, as the simulation runs server-side.
+### Sources
+```
+GET  /api/sources           → { sources: SourceConfig[] }
+POST /api/sources           body: { type, name, region, ...typeFields }  → { source }
+PATCH /api/sources/:id      body: Partial<SourceConfig>                  → { source }
+DELETE /api/sources/:id     → { success }
+```
 
----
+Source shapes by type:
 
-## 🌐 WebSocket Events
+**test**
+```json
+{ "type": "test", "name": "...", "region": { "offset": 0, "length": 3 },
+  "inputs": [[0,0,0],[1,0,0],[1,1,1]], "loop": true, "active": true }
+```
 
-The visualizer backend broadcasts the following events to connected WebSocket clients (`ws://localhost:3001/ws`):
+**simulated**
+```json
+{ "type": "simulated", "name": "...", "region": { "offset": 10, "length": 2 },
+  "pattern": "sine", "frequency": 0.1, "amplitude": 0.5, "dcOffset": 0.5, "active": true }
+```
+Patterns: `sine` | `sawtooth` | `square` | `linear-ramp` | `constant` | `random-walk` | `gaussian-noise` | `binary`
 
-### Simulation Events:
-- `simulation-loaded` - Fired when simulation vectors are loaded
-- `simulation-started` - Fired when auto-play begins
-- `simulation-paused` - Fired when auto-play is paused
-- `simulation-resumed` - Fired when auto-play resumes
-- `simulation-stopped` - Fired when simulation stops
-- `simulation-reset` - Fired when simulation resets to beginning
-- `simulation-stepped` - Fired when single step is executed
-- `simulation-speed-changed` - Fired when playback speed changes
-- `demo-loaded` - Fired when demo data is loaded
+**sensor**
+```json
+{ "type": "sensor", "name": "...", "region": { "offset": 20, "length": 4 },
+  "sensorId": "my-sensor", "ttlMs": 5000, "active": true }
+```
 
-### Event Format:
+### Sensor push
+```
+POST /api/sensors/:sensorId   body: { values: number[] }   → { success, sensorId, timestamp }
+```
+
+### WebSocket
+```
+wss://localhost:3004/ws
+```
+
+Message types broadcast to clients:
+
+| Type | Payload | Trigger |
+|---|---|---|
+| `state-update` | `EngineState` | Any state change (push, source CRUD, config) |
+| `push-result` | `{ success, step, globalStep, timestamp }` | After every push |
+
+### EngineState shape
 ```json
 {
-  "type": "simulation-started",
-  "state": {
-    "status": "playing",
-    "currentIndex": 0,
-    "totalVectors": 100,
-    ...
-  },
-  "timestamp": 1703721234567
+  "sources": [/* SourceConfig[] */],
+  "assembledVector": [/* number[256] — current pre-push preview */],
+  "globalStep": 42,
+  "auto": { "running": true, "intervalMs": 600 },
+  "lastPush": 1234567890,
+  "matchAlgorithm": "gte"
 }
 ```
 
-### Frontend Integration:
-```javascript
-const ws = new WebSocket('ws://localhost:3001/ws');
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log('WebSocket event:', data.type, data);
-
-  // Update UI based on event type
-  if (data.type === 'simulation-stepped') {
-    updateSimulationState(data.state);
-    displayTransitionResult(data.result);
-  }
-};
-```
-
 ---
 
-## 🎯 Next Steps
+## Visualizer Frontend nginx proxy (port 5173)
 
-### High Priority (Backend):
-- [x] Implement WebSocket broadcasting for simulation events
-- [ ] Add demo auto-loader (workaround TypeScript issues)
-- [ ] Add API endpoint documentation with Swagger/OpenAPI
+The visualizer frontend nginx adds two proxy paths so the browser can reach other services without hard-coded ports:
 
-### Medium Priority (Frontend):
-- [ ] Create SimulationControls component
-- [ ] Create InputTimeline component
-- [ ] Create ActivityFeed component
-- [ ] Create HeatmapOverlay component
-- [ ] Create DemoDashboard container
-- [ ] Extend Zustand store for simulation state
-- [ ] Extend API client with simulation methods
-
-### Low Priority (Testing & Polish):
-- [ ] Add endpoint tests
-- [ ] Add integration tests
-- [ ] Performance optimization
-- [ ] Docker deployment verification
-
----
-
-## 🏆 Summary
-
-**Completed:**
-- ✅ SimulationController backend class (fully functional)
-- ✅ 10 simulation API endpoints (integrated and compiled)
-- ✅ Demo data generator (30 sequences, 100 vectors, 10 outputs)
-- ✅ TypeScript compilation successful
-- ✅ Ready for testing and frontend integration
-
-**Build Status:** ✅ **SUCCESS**
-
-**API Status:** ✅ **READY FOR USE**
-
-The backend simulation infrastructure is complete and ready for frontend development!
+| Path prefix | Routes to |
+|---|---|
+| `/api/perception/*` | `perception-engine-backend:3004/api/*` |
+| `/api/*` | `visualizer-backend:3001/*` |
+| `/ws` | `visualizer-backend:3001/ws` (WebSocket) |

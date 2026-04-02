@@ -111,7 +111,8 @@
     "workers": 1,
     "webServer": {
       "command": "docker-compose up -d && sleep 10",
-      "url": "http://localhost:5173",
+      "url": "https://localhost:5173",
+      "ignoreHTTPSErrors": true,
       "timeout": 120000,
       "reuseExistingServer": true
     }
@@ -127,16 +128,16 @@
         {
           "title": "Multi-Step State Machine - Output Workflow",
           "file": "tests/multi-step-output-workflow.spec.ts",
-          "line": 81,
+          "line": 87,
           "column": 6,
           "specs": [
             {
-              "title": "should complete full output workflow: Seq1→RESET and Seq2→SET via RS flip-flops",
+              "title": "should execute both sequences via auto-play and verify RS flip-flop state",
               "ok": false,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 120000,
+                  "timeout": 60000,
                   "annotations": [],
                   "expectedStatus": "passed",
                   "projectId": "chromium",
@@ -146,292 +147,51 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 2026,
+                      "duration": 4754,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:143:23\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:102:5",
-                        "location": {
-                          "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
-                          "column": 23,
-                          "line": 143
-                        },
-                        "snippet": "  141 |\n  142 |       expect(rsFlipFlopOut1).toEqual([0, 1]);\n> 143 |       expect(rs2Out1).toEqual([0, 1]);\n      |                       ^\n  144 |       console.log('  ✓ RS flip-flops verified in RESET state: Q=0, Q̄=1');\n  145 |     });\n  146 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
-                            "column": 23,
-                            "line": 143
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m\n\n  141 |\n  142 |       expect(rsFlipFlopOut1).toEqual([0, 1]);\n> 143 |       expect(rs2Out1).toEqual([0, 1]);\n      |                       ^\n  144 |       console.log('  ✓ RS flip-flops verified in RESET state: Q=0, Q̄=1');\n  145 |     });\n  146 |\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:143:23\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:102:5"
-                        }
-                      ],
-                      "stdout": [
-                        {
-                          "text": "Step 1: Loading machines via API...\n"
-                        },
-                        {
-                          "text": "  ✓ All three machines loaded\n"
-                        },
-                        {
-                          "text": "Step 2: Configuring Sequence 1 (RESET path)...\n"
-                        },
-                        {
-                          "text": "  Step 1: completed\n"
-                        },
-                        {
-                          "text": "  Step 2: completed\n"
-                        },
-                        {
-                          "text": "  Step 3: completed\n"
-                        },
-                        {
-                          "text": "  Multi-Step output [3:5] after Seq1 match = [0,1]\n"
-                        },
-                        {
-                          "text": "  ✓ Multi-Step Sequence 1 output verified: [0,1]\n"
-                        },
-                        {
-                          "text": "  Step 4 (probe): completed\n"
-                        },
-                        {
-                          "text": "  RSFlipFlop output [6:8]  = [0,1]\n"
-                        },
-                        {
-                          "text": "  RS2       output [8:10]  = [0,0]\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Load Multi-Step, RS2, and RSFlipFlop machines",
-                          "duration": 1046
-                        },
-                        {
-                          "title": "Run Sequence 1 (000→001→011) and verify RESET state in RS flip-flops",
-                          "duration": 90,
-                          "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:143:23\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:102:5",
-                            "location": {
-                              "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
-                              "column": 23,
-                              "line": 143
-                            },
-                            "snippet": "  141 |\n  142 |       expect(rsFlipFlopOut1).toEqual([0, 1]);\n> 143 |       expect(rs2Out1).toEqual([0, 1]);\n      |                       ^\n  144 |       console.log('  ✓ RS flip-flops verified in RESET state: Q=0, Q̄=1');\n  145 |     });\n  146 |"
-                          }
-                        }
-                      ],
-                      "startTime": "2026-02-18T05:50:18.324Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-13cd6--Seq2→SET-via-RS-flip-flops-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-13cd6--Seq2→SET-via-RS-flip-flops-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-13cd6--Seq2→SET-via-RS-flip-flops-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
-                        "column": 23,
-                        "line": 143
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "e1f3475194eda06d9c79-c06977546cae58b67c72",
-              "file": "tests/multi-step-output-workflow.spec.ts",
-              "line": 90,
-              "column": 3
-            },
-            {
-              "title": "should verify output vector metadata and formatting from each Multi-Step sequence",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 1953,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:281:31\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:225:5",
-                        "location": {
-                          "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
-                          "column": 31,
-                          "line": 281
-                        },
-                        "snippet": "  279 |       }\n  280 |\n> 281 |       expect(foundSeq1Output).toBeTruthy();\n      |                               ^\n  282 |       console.log('  ✓ Sequence 1 output metadata verified');\n  283 |     });\n  284 |"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
-                            "column": 31,
-                            "line": 281
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n  279 |       }\n  280 |\n> 281 |       expect(foundSeq1Output).toBeTruthy();\n      |                               ^\n  282 |       console.log('  ✓ Sequence 1 output metadata verified');\n  283 |     });\n  284 |\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:281:31\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:225:5"
-                        }
-                      ],
-                      "stdout": [
-                        {
-                          "text": "Verifying Sequence 1 metadata...\n"
-                        },
-                        {
-                          "text": "  Multi-Step machineName: Multi-Step State Machine\n"
-                        },
-                        {
-                          "text": "  ✓ Output vector format: [0,1]\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "steps": [
-                        {
-                          "title": "Load machines",
-                          "duration": 1051
-                        },
-                        {
-                          "title": "Verify output metadata for Sequence 1 (000→001→011→[0,1])",
-                          "duration": 76,
-                          "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:281:31\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:225:5",
-                            "location": {
-                              "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
-                              "column": 31,
-                              "line": 281
-                            },
-                            "snippet": "  279 |       }\n  280 |\n> 281 |       expect(foundSeq1Output).toBeTruthy();\n      |                               ^\n  282 |       console.log('  ✓ Sequence 1 output metadata verified');\n  283 |     });\n  284 |"
-                          }
-                        }
-                      ],
-                      "startTime": "2026-02-18T05:50:20.897Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-7004b-om-each-Multi-Step-sequence-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-7004b-om-each-Multi-Step-sequence-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-7004b-om-each-Multi-Step-sequence-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
-                        "column": 31,
-                        "line": 281
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "e1f3475194eda06d9c79-2a1720df7efdf832671a",
-              "file": "tests/multi-step-output-workflow.spec.ts",
-              "line": 216,
-              "column": 3
-            },
-            {
-              "title": "should execute both sequences via auto-play and verify final RS flip-flop state",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 5016,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m    0,\u001b[22m\n\u001b[2m  ]\u001b[22m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m    0,\u001b[22m\n\u001b[2m  ]\u001b[22m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:415:34\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:401:5",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:429:34\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:390:5",
                         "location": {
                           "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
                           "column": 34,
-                          "line": 415
+                          "line": 429
                         },
-                        "snippet": "  413 |       expect(space.slice(3, 5)).toEqual([1, 0]);   // Multi-Step output persists\n  414 |       expect(space.slice(6, 8)).toEqual([1, 0]);   // RSFlipFlop SET\n> 415 |       expect(space.slice(8, 10)).toEqual([1, 0]);  // RS2 SET\n      |                                  ^\n  416 |\n  417 |       console.log('  ✓ RS flip-flops verified in final SET state');\n  418 |     });"
+                        "snippet": "  427 |       console.log(`    RS2       output  [8:10]:  [${space1.slice(8, 10)}]`);\n  428 |\n> 429 |       expect(space1.slice(3, 5)).toEqual([0, 1]);   // Multi-Step output [0,1]\n      |                                  ^\n  430 |       expect(space1.slice(6, 8)).toEqual([0, 1]);   // RSFlipFlop RESET\n  431 |       expect(space1.slice(8, 10)).toEqual([0, 1]);  // RS2 RESET\n  432 |       console.log('  ✓ RS flip-flops verified in RESET state');"
                       },
                       "errors": [
                         {
                           "location": {
                             "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
                             "column": 34,
-                            "line": 415
+                            "line": 429
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m    0,\u001b[22m\n\u001b[2m  ]\u001b[22m\n\n  413 |       expect(space.slice(3, 5)).toEqual([1, 0]);   // Multi-Step output persists\n  414 |       expect(space.slice(6, 8)).toEqual([1, 0]);   // RSFlipFlop SET\n> 415 |       expect(space.slice(8, 10)).toEqual([1, 0]);  // RS2 SET\n      |                                  ^\n  416 |\n  417 |       console.log('  ✓ RS flip-flops verified in final SET state');\n  418 |     });\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:415:34\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:401:5"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m\n\n  427 |       console.log(`    RS2       output  [8:10]:  [${space1.slice(8, 10)}]`);\n  428 |\n> 429 |       expect(space1.slice(3, 5)).toEqual([0, 1]);   // Multi-Step output [0,1]\n      |                                  ^\n  430 |       expect(space1.slice(6, 8)).toEqual([0, 1]);   // RSFlipFlop RESET\n  431 |       expect(space1.slice(8, 10)).toEqual([0, 1]);  // RS2 RESET\n  432 |       console.log('  ✓ RS flip-flops verified in RESET state');\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:429:34\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:390:5"
                         }
                       ],
                       "stdout": [
                         {
-                          "text": "Configuring interleaved sequence + probes for auto-play...\n"
+                          "text": "Configuring auto-play for Sequence 1 (RESET)...\n"
                         },
                         {
-                          "text": "  ✓ Configured with 8 steps at 200 ms/step\n"
-                        },
-                        {
-                          "text": "Starting auto-play...\n"
+                          "text": "  ✓ Configured with 4 steps at 200 ms/step\n"
                         },
                         {
                           "text": "  ✓ Auto-play started\n"
                         },
                         {
-                          "text": "  Current step: 8, isRunning: false\n"
+                          "text": "  Current step: 4, isRunning: false\n"
                         },
                         {
-                          "text": "  ✓ Simulation completed all steps\n"
+                          "text": "  ✓ Auto-play completed all 4 steps\n"
                         },
                         {
-                          "text": "Verifying final perceptual space...\n"
+                          "text": "  Perceptual Space after Seq1 auto-play:\n"
                         },
                         {
-                          "text": "  Final Perceptual Space State:\n"
+                          "text": "    Multi-Step output [3:5]:   [0,0]\n"
                         },
                         {
-                          "text": "    Multi-Step input  [0:3]:   [0,0,0]\n"
-                        },
-                        {
-                          "text": "    Multi-Step output [3:5]:   [1,0]\n"
-                        },
-                        {
-                          "text": "    RSFlipFlop output [6:8]:   [1,0]\n"
+                          "text": "    RSFlipFlop output [6:8]:   [0,0]\n"
                         },
                         {
                           "text": "    RS2       output  [8:10]:  [0,0]\n"
@@ -442,118 +202,55 @@
                       "steps": [
                         {
                           "title": "Load machines",
-                          "duration": 1047
+                          "duration": 1124
                         },
                         {
-                          "title": "Configure and auto-play both sequences (interleaved + probe)",
-                          "duration": 19
-                        },
-                        {
-                          "title": "Start auto-play and wait for completion",
-                          "duration": 3036
-                        },
-                        {
-                          "title": "Verify RS flip-flops settled in SET state after Seq2",
-                          "duration": 20,
+                          "title": "Auto-play Sequence 1 (000→001→011) and verify RESET state",
+                          "duration": 2601,
                           "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m    0,\u001b[22m\n\u001b[2m  ]\u001b[22m",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m    0,\u001b[22m\n\u001b[2m  ]\u001b[22m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:415:34\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:401:5",
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 1\u001b[39m\n\n\u001b[2m  Array [\u001b[22m\n\u001b[2m    0,\u001b[22m\n\u001b[32m-   1,\u001b[39m\n\u001b[31m+   0,\u001b[39m\n\u001b[2m  ]\u001b[22m\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:429:34\n    at /Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts:390:5",
                             "location": {
                               "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
                               "column": 34,
-                              "line": 415
+                              "line": 429
                             },
-                            "snippet": "  413 |       expect(space.slice(3, 5)).toEqual([1, 0]);   // Multi-Step output persists\n  414 |       expect(space.slice(6, 8)).toEqual([1, 0]);   // RSFlipFlop SET\n> 415 |       expect(space.slice(8, 10)).toEqual([1, 0]);  // RS2 SET\n      |                                  ^\n  416 |\n  417 |       console.log('  ✓ RS flip-flops verified in final SET state');\n  418 |     });"
+                            "snippet": "  427 |       console.log(`    RS2       output  [8:10]:  [${space1.slice(8, 10)}]`);\n  428 |\n> 429 |       expect(space1.slice(3, 5)).toEqual([0, 1]);   // Multi-Step output [0,1]\n      |                                  ^\n  430 |       expect(space1.slice(6, 8)).toEqual([0, 1]);   // RSFlipFlop RESET\n  431 |       expect(space1.slice(8, 10)).toEqual([0, 1]);  // RS2 RESET\n  432 |       console.log('  ✓ RS flip-flops verified in RESET state');"
                           }
                         }
                       ],
-                      "startTime": "2026-02-18T05:50:23.359Z",
+                      "startTime": "2026-04-01T05:30:03.910Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-726bc-fy-final-RS-flip-flop-state-chromium/test-failed-1.png"
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-b98b6-d-verify-RS-flip-flop-state-chromium/test-failed-1.png"
                         },
                         {
                           "name": "video",
                           "contentType": "video/webm",
-                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-726bc-fy-final-RS-flip-flop-state-chromium/video.webm"
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-b98b6-d-verify-RS-flip-flop-state-chromium/video.webm"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-726bc-fy-final-RS-flip-flop-state-chromium/error-context.md"
+                          "path": "/Users/johnt/workspace/GitHub/RealityEngine_AI/test-results/tests-multi-step-output-wo-b98b6-d-verify-RS-flip-flop-state-chromium/error-context.md"
                         }
                       ],
                       "errorLocation": {
                         "file": "/Users/johnt/workspace/GitHub/RealityEngine_AI/e2e/tests/multi-step-output-workflow.spec.ts",
                         "column": 34,
-                        "line": 415
+                        "line": 429
                       }
                     }
                   ],
                   "status": "unexpected"
                 }
               ],
-              "id": "e1f3475194eda06d9c79-9f7a949223f2f6bc614c",
+              "id": "e1f3475194eda06d9c79-4048c460490926837c12",
               "file": "tests/multi-step-output-workflow.spec.ts",
-              "line": 344,
-              "column": 3
-            }
-          ]
-        },
-        {
-          "title": "Multi-Step State Machine - API Verification",
-          "file": "tests/multi-step-output-workflow.spec.ts",
-          "line": 440,
-          "column": 6,
-          "specs": [
-            {
-              "title": "should verify sequences are correctly loaded via API",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 36,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "Verifying Multi-Step sequences via API...\n"
-                        },
-                        {
-                          "text": "✓ Sequence 1 verified: Sequence 1: 000→001→011→[01]\n"
-                        },
-                        {
-                          "text": "✓ Sequence 2 verified: Sequence 2: 100→101→111→[10]\n"
-                        },
-                        {
-                          "text": "✅ API verification complete\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-02-18T05:50:28.946Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "e1f3475194eda06d9c79-d90daf8d9ae8c8a13cdd",
-              "file": "tests/multi-step-output-workflow.spec.ts",
-              "line": 441,
+              "line": 381,
               "column": 3
             }
           ]
@@ -563,11 +260,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-02-18T05:50:14.603Z",
-    "duration": 14404.268,
-    "expected": 1,
+    "startTime": "2026-04-01T05:29:56.717Z",
+    "duration": 12129.985,
+    "expected": 0,
     "skipped": 0,
-    "unexpected": 3,
+    "unexpected": 1,
     "flaky": 0
   }
 }

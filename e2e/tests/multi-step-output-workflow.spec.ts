@@ -23,9 +23,10 @@ import { test, expect } from '@playwright/test';
  *   after the terminal match allows RS2 and RSFlipFlop to latch their response.
  */
 
-const VISUALIZER_URL = 'http://localhost:5173';
-const PERCEPTUAL_API_URL = 'http://localhost:3001';  // Visualizer backend (perceptual simulation)
-const API_URL = 'http://localhost:3000';              // Reality Engine direct (legacy API)
+const VISUALIZER_URL = 'https://localhost:5173';
+const PERCEPTUAL_API_URL = 'https://localhost:3001';  // Visualizer backend (perceptual simulation)
+const API_URL = 'https://localhost:3000';              // Reality Engine direct (legacy API)
+const PERCEPTION_ENGINE_URL = 'https://localhost:3004'; // Perception Engine backend
 
 /** Load all three machines required for the interconnection test. */
 async function loadMachines(page: Parameters<Parameters<typeof test>[1]>[0]['page']) {
@@ -74,6 +75,29 @@ async function stepSim(page: Parameters<Parameters<typeof test>[1]>[0]['page']) 
   return body;
 }
 
+/**
+ * Poll until isRunning=false (or timeout), then return the perceptual space.
+ * Reads state immediately after completion to avoid interference from external
+ * perceivers (e.g. Perception Engine auto-push).
+ */
+async function waitForCompletion(
+  page: Parameters<Parameters<typeof test>[1]>[0]['page'],
+  expectedSteps: number,
+  timeoutMs = 5000
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const resp = await page.request.get(`${PERCEPTUAL_API_URL}/api/perceptual-simulation/state`);
+    if (resp.ok()) {
+      const body = await resp.json();
+      const running: boolean = body.state?.isRunning ?? true;
+      const step: number = body.state?.currentStep ?? 0;
+      if (!running && step >= expectedSteps) return;
+    }
+    await page.waitForTimeout(100);
+  }
+}
+
 /** Fetch the current perceptual space vector. */
 async function getPerceptualSpace(page: Parameters<Parameters<typeof test>[1]>[0]['page']): Promise<number[]> {
   const resp = await page.request.get(`${PERCEPTUAL_API_URL}/api/perceptual-simulation/state`);
@@ -85,9 +109,35 @@ async function getPerceptualSpace(page: Parameters<Parameters<typeof test>[1]>[0
 // ---------------------------------------------------------------------------
 
 test.describe('Multi-Step State Machine - Output Workflow', () => {
+  let perceptionEngineWasRunning = false;
+  let perceptionEngineIntervalMs = 1000;
+
   test.beforeEach(async ({ page }) => {
+    // Stop perception engine auto-push so it cannot corrupt perceptual space
+    // during simulation steps. Capture current state so we can restore it.
+    try {
+      const stateResp = await page.request.get(`${PERCEPTION_ENGINE_URL}/api/state`);
+      if (stateResp.ok()) {
+        const state = await stateResp.json();
+        perceptionEngineWasRunning = state.auto?.running === true;
+        perceptionEngineIntervalMs = state.auto?.intervalMs ?? 1000;
+      }
+      await page.request.post(`${PERCEPTION_ENGINE_URL}/api/auto/stop`);
+    } catch { /* perception engine may not be available */ }
+
     await page.goto(VISUALIZER_URL);
     await page.waitForLoadState('networkidle');
+  });
+
+  test.afterEach(async ({ page }) => {
+    // Restore perception engine auto-push state
+    if (perceptionEngineWasRunning) {
+      try {
+        await page.request.post(`${PERCEPTION_ENGINE_URL}/api/auto/start`, {
+          data: { intervalMs: perceptionEngineIntervalMs }
+        });
+      } catch { /* ignore */ }
+    }
   });
 
   // =========================================================================
@@ -407,8 +457,8 @@ test.describe('Multi-Step State Machine - Output Workflow', () => {
       expect((await startResp.json()).success).toBeTruthy();
       console.log('  ✓ Auto-play started');
 
-      // 4 steps × 200 ms = 800 ms minimum; wait 2500 ms for generous headroom
-      await page.waitForTimeout(2500);
+      // Poll until complete (4 steps × 200 ms = 800 ms minimum)
+      await waitForCompletion(page, 4, 5000);
 
       // Verify completion
       const stateBody = await (await page.request.get(`${PERCEPTUAL_API_URL}/api/perceptual-simulation/state`)).json();
@@ -455,8 +505,8 @@ test.describe('Multi-Step State Machine - Output Workflow', () => {
       expect((await startResp.json()).success).toBeTruthy();
       console.log('  ✓ Auto-play started');
 
-      // 4 steps × 200 ms = 800 ms minimum; wait 2500 ms for generous headroom
-      await page.waitForTimeout(2500);
+      // Poll until complete (4 steps × 200 ms = 800 ms minimum)
+      await waitForCompletion(page, 4, 5000);
 
       // Verify completion
       const stateBody = await (await page.request.get(`${PERCEPTUAL_API_URL}/api/perceptual-simulation/state`)).json();

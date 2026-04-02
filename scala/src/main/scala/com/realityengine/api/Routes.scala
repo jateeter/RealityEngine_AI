@@ -14,7 +14,9 @@ import io.circe.syntax._
 import io.circe.parser._
 import JsonProtocol._
 
+import akka.actor.Cancellable
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 import java.io.{File, FileInputStream}
 import java.nio.file.{Files, Paths}
@@ -33,6 +35,25 @@ class Routes(
   // Staging buffer for chunk-based simulation configure protocol
   private var sequenceBuffer: Vector[Vector[Double]] = Vector.empty
   private var sequenceBufferConfig: Option[(RegionMapping, Long, Option[Int])] = None
+
+  // Auto-play scheduler
+  private var autoPlayTask: Option[Cancellable] = None
+
+  private def cancelAutoPlay(): Unit = {
+    autoPlayTask.foreach(_.cancel())
+    autoPlayTask = None
+  }
+
+  private def startAutoPlay(delayMs: Long): Unit = {
+    cancelAutoPlay()
+    val task = system.scheduler.scheduleWithFixedDelay(0.milliseconds, delayMs.milliseconds) { () =>
+      simulator.step() match {
+        case None    => cancelAutoPlay()
+        case Some(_) => ()
+      }
+    }
+    autoPlayTask = Some(task)
+  }
 
   implicit val exceptionHandler: ExceptionHandler = ExceptionHandler {
     case e: NoSuchElementException => complete(StatusCodes.NotFound      -> Json.obj("error" -> Json.fromString(e.getMessage)))
@@ -272,12 +293,12 @@ class Routes(
               val intervalMs = body.hcursor.get[Long]("intervalMs").toOption
               if (sampler.isEmpty) sampler = Some(new RealitySampler(perception, engine,
                 SamplingConfig(strat, intervalMs)))
+              sampler.get.start()
               complete(Json.obj("success" -> Json.fromBoolean(true), "stats" -> sampler.get.getStats))
             } } },
             path("stop") { post {
-              sampler.fold(complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString("Sampler not initialized")))) { s =>
-                complete(Json.obj("success" -> Json.fromBoolean(true)))
-              }
+              sampler.foreach(_.stop())
+              complete(Json.obj("success" -> Json.fromBoolean(true)))
             } },
             path("sample") { post { entity(as[Json]) { body =>
               val data   = body.hcursor.downField("data").as[Vector[Double]].getOrElse(Vector.empty)
@@ -289,7 +310,8 @@ class Routes(
               complete(Json.obj("success" -> Json.fromBoolean(true), "result" -> result.asJson))
             } } },
             path("stats") { get {
-              sampler.fold(complete(Json.obj("stats" -> Json.Null)))(s => complete(Json.obj("stats" -> s.getStats.asJson)))
+              val statsJson = sampler.map(_.getStats).getOrElse(Json.obj("isRunning" -> Json.fromBoolean(false), "sampleCount" -> Json.fromInt(0), "bufferSize" -> Json.fromInt(0), "strategy" -> Json.fromString("MANUAL")))
+              complete(Json.obj("stats" -> statsJson))
             } }
           )
         },
@@ -300,14 +322,38 @@ class Routes(
             // Fixed: /machines/json/...
             path("json" / "list") { get {
               val dir = new File(machinesDir)
-              val files = if (dir.exists()) dir.listFiles().filter(_.getName.endsWith(".json")).map(_.getName).toList else Nil
-              complete(Json.obj("files" -> files.asJson))
+              val files = if (dir.exists()) dir.listFiles().filter(_.getName.endsWith(".json")).toList else Nil
+              val machineList = files.flatMap { file =>
+                Try {
+                  val json = new String(Files.readAllBytes(file.toPath))
+                  val root = io.circe.parser.parse(json).getOrElse(io.circe.Json.obj())
+                  val m    = root.hcursor.downField("machine")
+                  Json.obj(
+                    "filename"      -> Json.fromString(file.getName),
+                    "name"          -> Json.fromString(m.get[String]("name").getOrElse(file.getName)),
+                    "description"   -> Json.fromString(m.get[String]("description").getOrElse("")),
+                    "version"       -> Json.fromString(root.hcursor.get[String]("version").getOrElse("1.0.0")),
+                    "metadata"      -> m.downField("metadata").as[Json].getOrElse(Json.obj()),
+                    "sequenceCount" -> Json.fromInt(m.downField("sequences").as[Vector[Json]].map(_.length).getOrElse(0))
+                  )
+                }.toOption
+              }
+              complete(Json.obj("machines" -> Json.arr(machineList: _*)))
             } },
             path("json" / Segment) { name =>
               get {
                 val file = new File(machinesDir, if (name.endsWith(".json")) name else s"$name.json")
-                if (!file.exists()) complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("File not found")))
-                else complete(HttpEntity(ContentTypes.`application/json`, new String(Files.readAllBytes(file.toPath))))
+                if (!file.exists()) complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString(s"Machine file not found: $name")))
+                else Try {
+                  val json    = new String(Files.readAllBytes(file.toPath))
+                  val baseName = name.replaceAll("\\.json$", "").toLowerCase.replaceAll("[^a-z0-9]+", "-")
+                  val machine = MachineLoader.loadFromJson(json, Some(s"machine-$baseName"))
+                  addMachineToSystem(machine)
+                  machine
+                } match {
+                  case Failure(e)       => complete(StatusCodes.InternalServerError -> Json.obj("error" -> Json.fromString(e.getMessage)))
+                  case Success(machine) => complete(Json.obj("success" -> Json.fromBoolean(true), "machine" -> machine.toJson, "message" -> Json.fromString(s"Machine ${machine.name} loaded successfully")))
+                }
               }
             },
             path("json" / "import") { post { entity(as[String]) { body =>
@@ -338,7 +384,7 @@ class Routes(
             },
             path(Segment) { id =>
               concat(
-                get    { engine.getMachine(id).fold(complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("Machine not found"))))(m => complete(m.toJson)) },
+                get    { engine.getMachine(id).fold(complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("Machine not found"))))(m => complete(Json.obj("machine" -> m.toJson))) },
                 put    { entity(as[Json]) { body =>
                   Try(MachineLoader.loadFromJson(body.noSpaces, Some(id))) match {
                     case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
@@ -416,14 +462,18 @@ class Routes(
           concat(
             path("configure" / "chunk") { post { entity(as[Json]) { body =>
               val chunk = body.hcursor.downField("vectors").as[Vector[Vector[Double]]].getOrElse(Vector.empty)
+              if (body.hcursor.downField("reset").as[Boolean].getOrElse(false)) sequenceBuffer = Vector.empty
               sequenceBuffer = sequenceBuffer ++ chunk
-              // Store config on first chunk or if provided
-              body.hcursor.downField("config").as[Json].toOption.foreach { cfg =>
-                val c = cfg.hcursor
-                val iOff = c.downField("inputRegion").get[Int]("offset").getOrElse(0)
-                val iLen = c.downField("inputRegion").get[Int]("length").getOrElse(1)
-                val delay = c.get[Long]("stepDelayMs").getOrElse(100L)
-                val maxS  = c.get[Int]("maxSteps").toOption
+              // Accept config from nested "config" field OR top-level fields (backwards compat)
+              val cfgSrc = body.hcursor.downField("config").as[Json].toOption.getOrElse(body)
+              val c = cfgSrc.hcursor
+              val hasRegion = c.downField("inputRegion").as[Json].isRight
+              if (hasRegion || body.hcursor.downField("inputRegion").as[Json].isRight) {
+                val src = if (hasRegion) c else body.hcursor
+                val iOff = src.downField("inputRegion").get[Int]("offset").getOrElse(0)
+                val iLen = src.downField("inputRegion").get[Int]("length").getOrElse(1)
+                val delay = src.get[Long]("stepDelayMs").getOrElse(100L)
+                val maxS  = src.get[Int]("maxSteps").toOption
                 sequenceBufferConfig = Some((RegionMapping(iOff, iLen), delay, maxS))
               }
               complete(Json.obj("success" -> Json.fromBoolean(true), "bufferedVectors" -> Json.fromInt(sequenceBuffer.length)))
@@ -438,17 +488,32 @@ class Routes(
                   complete(Json.obj("success" -> Json.fromBoolean(true)))
               }
             } },
-            path("start")   { post { Try(simulator.start()) match {
-              case Success(_) => complete(Json.obj("success" -> Json.fromBoolean(true)))
-              case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
-            } } },
-            path("stop")    { post { simulator.stop(); complete(Json.obj("success" -> Json.fromBoolean(true))) } },
+            path("start")   { post {
+              try {
+                simulator.start()
+                val delayMs = simulator.getStepDelayMs
+                startAutoPlay(delayMs)
+                complete(Json.obj("success" -> Json.fromBoolean(true)))
+              } catch { case e: Exception =>
+                complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+              }
+            } },
+            path("stop")    { post { cancelAutoPlay(); simulator.stop(); complete(Json.obj("success" -> Json.fromBoolean(true))) } },
             path("step")    { post { simulator.step() match {
-              case None    => complete(Json.obj("done" -> Json.fromBoolean(true)))
-              case Some(s) => complete(s.asJson)
+              case None    => complete(Json.obj("done" -> Json.fromBoolean(true), "success" -> Json.fromBoolean(true)))
+              case Some(s) => complete(Json.obj("success" -> Json.fromBoolean(true), "step" -> s.asJson))
             } } },
             path("reset")   { post { simulator.reset(); complete(Json.obj("success" -> Json.fromBoolean(true))) } },
-            path("state")   { get { complete(simulator.toJson) } },
+            path("state")   { get {
+              val ps = simulator.getPerceptualSpace.getPerceptualVector
+              val stateObj = Json.obj(
+                "perceptualSpace" -> Json.arr(ps.map(Json.fromDoubleOrNull): _*),
+                "currentStep"     -> Json.fromInt(simulator.getCurrentStep),
+                "isRunning"       -> Json.fromBoolean(simulator.getIsRunning),
+                "machines"        -> simulator.toJson.hcursor.downField("machines").as[Json].getOrElse(Json.arr())
+              )
+              complete(Json.obj("state" -> stateObj))
+            } },
             path("history") { get { complete(Json.obj("history" -> simulator.getHistory.asJson)) } }
           )
         },

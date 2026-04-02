@@ -395,6 +395,14 @@ const TobiasView: React.FC = () => {
                     title="Reset"
                   >↺</button>
                 </div>
+                <button
+                  className="tbs-demo-btn tbs-step-single"
+                  onClick={stepSimulation}
+                  disabled={isSimulationRunning}
+                  title="Push one perception vector into the Reality Engine"
+                >
+                  ⏭ Single Step
+                </button>
               </div>
 
               {/* Section: Perceptual Engine ───────────────────── */}

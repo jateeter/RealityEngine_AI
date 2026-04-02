@@ -386,6 +386,16 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+.tbs-step-single {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.3);
+  margin-top: 8px;
+}
+.tbs-step-single:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.6);
+}
 .tbs-demo-refresh {
   color: #94a3b8;
   background: rgba(148, 163, 184, 0.06);

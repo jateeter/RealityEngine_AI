@@ -37,10 +37,9 @@ async function globalSetup(config: FullConfig) {
 
 async function waitForServices() {
   const services = [
-    { name: 'Qdrant', url: 'http://localhost:6333/readyz' },
-    { name: 'Reality Engine', url: 'http://localhost:3000/api/engine/stats' },
-    { name: 'Visualizer Backend', url: 'http://localhost:3001/health' },
-    { name: 'Visualizer Frontend', url: 'http://localhost:5173/' },
+    { name: 'Reality Engine', url: 'https://localhost:3000/api/health' },
+    { name: 'Visualizer Backend', url: 'https://localhost:3001/health' },
+    { name: 'Visualizer Frontend', url: 'https://localhost:5173/' },
   ];
 
   const maxRetries = 30; // 30 seconds
@@ -53,7 +52,7 @@ async function waitForServices() {
     while (!healthy && retries < maxRetries) {
       try {
         const browser = await chromium.launch();
-        const context = await browser.newContext();
+        const context = await browser.newContext({ ignoreHTTPSErrors: true });
         const page = await context.newPage();
 
         const response = await page.goto(service.url, {

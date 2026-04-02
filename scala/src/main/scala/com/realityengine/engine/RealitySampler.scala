@@ -38,6 +38,11 @@ class RealitySampler(
 ) {
   private var observationBuffer: Vector[RawObservation] = Vector.empty
   private var sampleCount: Int                           = 0
+  private var running: Boolean                           = config.strategy != SamplingStrategy.MANUAL
+
+  def isRunning: Boolean = running
+  def start(): Unit      = { running = true }
+  def stop(): Unit       = { running = false }
 
   def sample(observation: RawObservation): Option[TransitionResult] = {
     sampleCount += 1
@@ -68,6 +73,7 @@ class RealitySampler(
   def getStats: io.circe.Json = {
     import io.circe.Json
     Json.obj(
+      "isRunning"   -> Json.fromBoolean(running),
       "sampleCount" -> Json.fromInt(sampleCount),
       "bufferSize"  -> Json.fromInt(observationBuffer.length),
       "strategy"    -> Json.fromString(config.strategy.toString)

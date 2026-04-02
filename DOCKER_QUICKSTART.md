@@ -1,173 +1,83 @@
-# Docker Quick Start Guide
+# Docker Quick Start
 
-Run the entire Reality Engine stack with a single command.
+Run the entire Reality Engine stack (9 services) with a single command.
 
 ## TL;DR
 
 ```bash
-./docker-start.sh
+bash certs/generate-dev-certs.sh   # first time only
+./start.sh
 ```
 
-Then open http://localhost:5173 in your browser.
+Then open **https://localhost:5173** in your browser (accept the self-signed certificate warning).
 
 ## Prerequisites
 
 - Docker Desktop installed and running
-- 4GB+ RAM available
-- Ports 3000, 3001, 5173, 6333, 6334 available
+- 4 GB+ RAM available
+- Ports 3000–3005, 5173, 6333, 6334, 3100 free
 
-## All Services in One Command
+## Commands
 
 ```bash
-# Start everything
-./docker-start.sh
-
-# Check status
-./docker-status.sh
-
-# View logs
-./docker-logs.sh
-
-# Stop everything
-./docker-stop.sh
+./start.sh          # build (if needed) and start all services
+./stop.sh           # stop all services
+docker-compose ps   # check health status
+docker-compose logs -f <service>   # stream logs for one service
 ```
 
-## What Gets Started
+## Services Started
 
-| Service | Port | URL |
-|---------|------|-----|
-| Visualizer Frontend | 5173 | http://localhost:5173 |
-| Reality Engine API | 3000 | http://localhost:3000 |
-| Visualizer Backend | 3001 | http://localhost:3001 |
-| Qdrant Database | 6333 | http://localhost:6333/dashboard |
+| Service | External URL | Internal name |
+|---|---|---|
+| Visualizer Frontend | https://localhost:5173 | visualizer-frontend |
+| Visualizer Backend (WebSocket) | https://localhost:3001 | visualizer-backend |
+| Reality Engine API | https://localhost:3000 | reality-engine |
+| Perception Engine UI | https://localhost:3005 | perception-engine-frontend |
+| Perception Engine API | https://localhost:3004 | perception-engine-backend |
+| Grafana | https://localhost:3002 | grafana |
+| Qdrant | http://localhost:6333/dashboard | qdrant |
+| Loki | http://localhost:3100 | loki |
 
-## Helper Scripts
+All HTTPS ports are handled by the **TLS proxy** (nginx) container which terminates TLS and forwards to each service over plain HTTP on the internal Docker network.
 
-All scripts are executable and ready to use:
+## First Run: TLS Certificates
 
-### `./docker-start.sh`
-Builds and starts all services in the correct order with health checks.
+Dev certificates are required for the nginx TLS proxy:
 
-### `./docker-stop.sh`
-Gracefully stops all services.
-
-### `./docker-restart.sh`
-Restarts all services without rebuilding.
-
-### `./docker-status.sh`
-Shows detailed status of all services including health checks and resource usage.
-
-### `./docker-logs.sh [service]`
-Shows logs. Examples:
 ```bash
-./docker-logs.sh                    # All services
-./docker-logs.sh reality-engine     # Just the API
-./docker-logs.sh visualizer-frontend # Just the frontend
+bash certs/generate-dev-certs.sh
 ```
 
-## Manual Docker Compose Commands
+This creates `certs/server.crt` and `certs/server.key`. They are bind-mounted into the TLS proxy container at startup.
 
-If you prefer using docker-compose directly:
+To trust the certificate in Chrome/Firefox, import `certs/server.crt` into your system or browser trust store, or simply accept the "Not Secure" warning for local dev.
+
+## Rebuilding After Code Changes
 
 ```bash
-# Start (detached mode)
-docker-compose up -d
+# Rebuild a specific service
+docker-compose build --no-cache <service>
+docker-compose up -d <service>
 
-# Start with build
-docker-compose up -d --build
+# Rebuild everything
+docker-compose build --no-cache
+./start.sh
+```
 
-# View logs
+## Useful Log Queries
+
+```bash
+# All services
 docker-compose logs -f
 
-# Check status
-docker-compose ps
+# Specific service
+docker-compose logs -f perception-engine-backend
 
-# Stop
-docker-compose down
-
-# Stop and remove volumes (deletes data!)
-docker-compose down -v
-
-# Restart specific service
-docker-compose restart reality-engine
-
-# Rebuild specific service
-docker-compose up -d --build reality-engine
+# Reality Engine errors
+docker-compose logs reality-engine | grep -i error
 ```
 
-## Configuration
+## Health Checks
 
-Optional: Create `.env` file for custom settings:
-
-```env
-VECTOR_DIMENSION=256
-MATCH_THRESHOLD=0.90
-```
-
-## First Time Setup
-
-1. Make sure Docker Desktop is running
-2. Clone/navigate to the project directory
-3. Run `./docker-start.sh`
-4. Wait for services to be healthy (30-60 seconds)
-5. Open http://localhost:5173
-
-## Troubleshooting
-
-### "Port already in use"
-```bash
-# Find what's using the port
-lsof -i :3000
-# Kill the process or change ports in docker-compose.yml
-```
-
-### "Docker daemon not running"
-Start Docker Desktop application.
-
-### Services unhealthy
-```bash
-# Check logs for errors
-./docker-logs.sh
-
-# Check which service is failing
-./docker-status.sh
-```
-
-### Need to reset everything
-```bash
-docker-compose down -v  # Removes all data!
-./docker-start.sh
-```
-
-## Development vs Production
-
-### Development (hot reload)
-```bash
-npm run dev  # Local development
-```
-
-### Production (Docker)
-```bash
-./docker-start.sh  # Containerized deployment
-```
-
-## Data Persistence
-
-Your data is persisted in:
-- `./data/` - Reality Engine data
-- `./logs/` - Application logs
-- Docker volume `qdrant_storage` - Vector database
-
-## Next Steps
-
-1. Access the visualizer at http://localhost:5173
-2. Check out the API at http://localhost:3000/api/engine/stats
-3. Read DOCKER.md for advanced configuration
-4. View logs with `./docker-logs.sh`
-
-## Full Documentation
-
-For detailed information, see:
-- `DOCKER.md` - Complete Docker guide
-- `README.md` - Application documentation
-- `visualizer/README.md` - Visualizer documentation
+All services define Docker health checks. Use `docker-compose ps` to see status. Services that depend on others will wait until dependencies are healthy before starting.

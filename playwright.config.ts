@@ -32,7 +32,10 @@ export default defineConfig({
   // Shared settings for all tests
   use: {
     // Base URL for the application
-    baseURL: 'http://localhost:5173',
+    baseURL: 'https://localhost:5173',
+
+    // Accept self-signed dev certificates
+    ignoreHTTPSErrors: true,
 
     // Collect trace on first retry
     trace: 'on-first-retry',
@@ -75,7 +78,8 @@ export default defineConfig({
   // Automatically start services if not running
   webServer: {
     command: 'docker-compose up -d && sleep 10',
-    url: 'http://localhost:5173',
+    url: 'https://localhost:5173',
+    ignoreHTTPSErrors: true,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },

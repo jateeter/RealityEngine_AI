@@ -1,6 +1,6 @@
 # Build context is the project root (context: .)
 # ── Stage 1: Build ─────────────────────────────────────────────────────────
-FROM sbtscala/scala-sbt:eclipse-temurin-jammy-17.0.5_8_1.9.9_2.13.14 AS build
+FROM sbtscala/scala-sbt:eclipse-temurin-17.0.15_6_1.12.8_2.13.18 AS build
 
 WORKDIR /build
 

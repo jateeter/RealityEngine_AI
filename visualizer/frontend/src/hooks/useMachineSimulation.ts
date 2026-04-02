@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { api } from '../api';
+import { api, perceptionEngineApi } from '../api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,7 +65,7 @@ export interface StepRecord {
 // ---------------------------------------------------------------------------
 
 const MAX_HISTORY = 24;
-const AUTO_PLAY_INTERVAL_MS = 600;
+const AUTO_PLAY_INTERVAL_MS = 600; // ms between pushes when auto-play is active
 
 export const useMachineSimulation = () => {
   const [machines, setMachines] = useState<VisMachine[]>([]);
@@ -75,7 +75,6 @@ export const useMachineSimulation = () => {
   const [isDemoLoading, setIsDemoLoading] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
-  const intervalRef = useRef<number | null>(null);
 
   // ── Machine loading ────────────────────────────────────────────────────────
 
@@ -280,45 +279,61 @@ export const useMachineSimulation = () => {
     loadMachines();
   }, [loadMachines]);
 
-  // ── Auto-play interval ─────────────────────────────────────────────────────
+  // Sync isSimulationRunning with the Perception Engine's actual auto-push state on mount
+  useEffect(() => {
+    perceptionEngineApi.getState().then((state) => {
+      setIsSimulationRunning(state.auto?.running === true);
+    }).catch(() => { /* PE may not be reachable — leave default false */ });
+  }, []);
+
+  // ── Simulation controls — backed by the Perception Engine ─────────────────
+  //
+  // Play  → PE auto/start: PE assembles & pushes vectors on its own timer
+  // Pause → PE auto/stop:  PE stops its timer; no more pushes
+  // Step  → PE push:       PE assembles & pushes one vector immediately
+  // Reset → PE reset + RE reset: PE step counter cleared, RE sim state cleared
 
   const stepSimulation = useCallback(async () => {
     try {
-      const result = await api.stepPerceptualSimulation();
-      // Update state directly from REST response — guards against WebSocket
-      // delivery failures and provides immediate feedback on manual Step.
+      const result = await perceptionEngineApi.push();
+      // Apply immediately from the REST response for snappy feedback; the
+      // matching WS perceptual-simulation-stepped message is deduplicated.
       if (result.success && result.step) {
         applyStepResult(result.step);
       }
     } catch (error) {
-      console.error('Failed to step simulation:', error);
+      console.error('Failed to push perception vector:', error);
     }
   }, [applyStepResult]);
 
-  useEffect(() => {
-    if (isSimulationRunning) {
-      intervalRef.current = window.setInterval(stepSimulation, AUTO_PLAY_INTERVAL_MS);
-    } else if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+  const selectMachine  = useCallback((id: string | null) => setSelectedMachineId(id), []);
+
+  const playSimulation = useCallback(async () => {
+    try {
+      await perceptionEngineApi.autoStart(AUTO_PLAY_INTERVAL_MS);
+      setIsSimulationRunning(true);
+    } catch (error) {
+      console.error('Failed to start perception engine auto-push:', error);
     }
-    return () => {
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isSimulationRunning, stepSimulation]);
+  }, []);
 
-  // ── Controls ───────────────────────────────────────────────────────────────
-
-  const selectMachine = useCallback((id: string | null) => setSelectedMachineId(id), []);
-  const playSimulation = useCallback(() => setIsSimulationRunning(true), []);
-  const pauseSimulation = useCallback(() => setIsSimulationRunning(false), []);
+  const pauseSimulation = useCallback(async () => {
+    try {
+      await perceptionEngineApi.autoStop();
+    } catch (error) {
+      console.error('Failed to stop perception engine auto-push:', error);
+    } finally {
+      setIsSimulationRunning(false);
+    }
+  }, []);
 
   const resetSimulation = useCallback(async () => {
     try {
-      await api.resetPerceptualSimulation();
+      await Promise.all([
+        perceptionEngineApi.autoStop(),
+        perceptionEngineApi.reset(),
+        api.resetPerceptualSimulation(),
+      ]);
       setIsSimulationRunning(false);
       setStepHistory([]);
       setMachines((prev) =>

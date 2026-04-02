@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import {
   SequenceGraph,
-  SimulationState,
-  ActivityEvent,
   WebSocketMessage,
   Machine,
   OutputVector,
@@ -23,14 +21,10 @@ interface VisualizerState {
   sequences: SequenceGraph[];
   currentMachine: Machine | null;
 
-  // Simulation state
-  simulationState: SimulationState | null;
-  inputVectors: number[][];
-  activityEvents: ActivityEvent[];
+  // WebSocket
   ws: WebSocket | null;
 
-  // Machine View state
-  expandedSequenceIds: Set<string>;
+  // Output stream state (used by MachineContainerView / CriticalEventGraphView)
   currentOutputVectors: OutputVector[];
   highlightedOutputId: string | null;
 
@@ -50,59 +44,36 @@ interface VisualizerState {
   importMachineJSON: (jsonString: string) => Promise<void>;
   exportMachineToJSON: (machineId: string, pretty?: boolean) => Promise<string>;
 
-  // Simulation methods
-  startSimulation: () => Promise<void>;
-  pauseSimulation: () => Promise<void>;
-  resumeSimulation: () => Promise<void>;
-  resetSimulation: () => Promise<void>;
-  stepSimulation: () => Promise<void>;
-  setSimulationSpeed: (delayMs: number) => Promise<void>;
-  refreshSimulationState: () => Promise<void>;
+  // Demo loaders
   loadDataCenterExample: () => Promise<void>;
   loadMultiStepExample: () => Promise<void>;
   loadKleeneStarExample: () => Promise<void>;
+
+  // WebSocket lifecycle
   connectWebSocket: () => void;
   disconnectWebSocket: () => void;
-  addActivityEvent: (event: ActivityEvent) => void;
-  clearActivityEvents: () => void;
 
-  // Machine View actions
-  toggleSequenceExpansion: (sequenceId: string) => void;
-  expandAllSequences: () => void;
-  collapseAllSequences: () => void;
+  // Output stream actions
   setCurrentOutputVectors: (outputs: OutputVector[]) => void;
   setHighlightedOutputId: (outputId: string | null) => void;
-
 }
 
 export const useVisualizerStore = create<VisualizerState>((set, get) => ({
-  // View state initialization
+  // Initialization
   currentView: 'selection',
-
-  // Machine management initialization
   machines: [],
   currentMachineId: null,
   lastViewedMachineId: localStorage.getItem('lastViewedMachineId'),
-
   sequences: [],
   currentMachine: null,
-
-  // Simulation state initialization
-  simulationState: null,
-  inputVectors: [],
-  activityEvents: [],
   ws: null,
-
-
-  // Machine View state initialization
-  expandedSequenceIds: new Set<string>(),
   currentOutputVectors: [],
   highlightedOutputId: null,
 
-  // View actions implementation
+  // View actions
   setCurrentView: (view) => set({ currentView: view }),
 
-  // Machine management actions implementation
+  // Machine management
   setMachines: (machines) => set({ machines }),
 
   loadMachine: async (machineId: string) => {
@@ -116,20 +87,19 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         currentOutputVectors: []
       });
 
-      // Store in localStorage
       localStorage.setItem('lastViewedMachineId', machineId);
 
-      // Update last accessed timestamp
-      await api.updateMachine(machineId, { metadata: { lastAccessedAt: Date.now() } });
+      // Update last accessed timestamp (best-effort — PUT requires full machine JSON so this may
+      // fail; wrap so it never aborts the sequence fetch below)
+      try {
+        await api.updateMachine(machineId, { metadata: { lastAccessedAt: Date.now() } });
+      } catch { /* non-fatal */ }
 
-      // Load sequences for this machine
       const sequences = await api.getSequences();
       set({ sequences });
 
-      // Automatically load simulation vectors for example machines
       if (machine.isExample) {
         try {
-          // Load the appropriate example based on machine ID
           if (machineId === 'multi-step-example') {
             await get().loadMultiStepExample();
           } else if (machineId === 'data-center-example') {
@@ -150,8 +120,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   createMachine: async (request: MachineCreateRequest) => {
     try {
       const machine = await api.createMachine(request);
-      const machines = get().machines;
-      set({ machines: [...machines, machine] });
+      set({ machines: [...get().machines, machine] });
       return machine;
     } catch (error) {
       console.error('Error creating machine:', error);
@@ -162,13 +131,11 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   updateMachine: async (machineId: string, request: MachineUpdateRequest) => {
     try {
       await api.updateMachine(machineId, request);
-      const machines = get().machines;
-      const updatedMachines = machines.map(m =>
+      const updated = get().machines.map(m =>
         m.id === machineId ? { ...m, ...request, updatedAt: Date.now() } : m
       );
-      set({ machines: updatedMachines });
+      set({ machines: updated });
 
-      // If updating current machine, refresh it
       if (get().currentMachineId === machineId) {
         const machine = await api.getMachine(machineId);
         set({ currentMachine: machine });
@@ -182,16 +149,10 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   deleteMachine: async (machineId: string) => {
     try {
       await api.deleteMachine(machineId);
-      const machines = get().machines;
-      set({ machines: machines.filter(m => m.id !== machineId) });
+      set({ machines: get().machines.filter(m => m.id !== machineId) });
 
-      // If deleting current machine, navigate to selection
       if (get().currentMachineId === machineId) {
-        set({
-          currentMachine: null,
-          currentMachineId: null,
-          currentView: 'selection'
-        });
+        set({ currentMachine: null, currentMachineId: null, currentView: 'selection' });
         localStorage.removeItem('lastViewedMachineId');
       }
     } catch (error) {
@@ -200,7 +161,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
-  // Machine JSON actions implementation
+  // Machine JSON actions
   listMachineJSONFiles: async () => {
     try {
       const response = await api.listMachineJSONFiles();
@@ -216,20 +177,15 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
       const response = await api.loadMachineFromJSON(name);
       const machine = response.machine;
 
-      // Add to machines list
       const machines = get().machines;
       const existingIndex = machines.findIndex(m => m.id === machine.id);
-
       if (existingIndex >= 0) {
-        // Update existing machine
         machines[existingIndex] = machine;
         set({ machines: [...machines] });
       } else {
-        // Add new machine
         set({ machines: [...machines, machine] });
       }
 
-      // Automatically load the machine
       await get().loadMachine(machine.id);
     } catch (error) {
       console.error('Error loading machine from JSON:', error);
@@ -241,12 +197,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     try {
       const response = await api.importMachineJSON(jsonString);
       const machine = response.machine;
-
-      // Add to machines list
-      const machines = get().machines;
-      set({ machines: [...machines, machine] });
-
-      // Automatically load the imported machine
+      set({ machines: [...get().machines, machine] });
       await get().loadMachine(machine.id);
     } catch (error) {
       console.error('Error importing machine JSON:', error);
@@ -256,192 +207,21 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
   exportMachineToJSON: async (machineId: string, pretty: boolean = true) => {
     try {
-      const jsonString = await api.exportMachineToJSON(machineId, pretty);
-      return jsonString;
+      return await api.exportMachineToJSON(machineId, pretty);
     } catch (error) {
       console.error('Error exporting machine to JSON:', error);
       throw error;
     }
   },
 
-
-  startSimulation: async () => {
-    try {
-      await api.startPerceptualSimulation();
-      const { inputVectors, simulationState } = get();
-      set({
-        simulationState: {
-          status: 'playing',
-          currentIndex: simulationState?.currentIndex ?? 0,
-          totalVectors: inputVectors.length,
-          startTime: Date.now(),
-          lastStepTime: simulationState?.lastStepTime ?? null
-        }
-      });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: 'Simulation started',
-        timestamp: Date.now(),
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error('Error starting simulation:', error);
-    }
-  },
-
-  pauseSimulation: async () => {
-    try {
-      await api.stopPerceptualSimulation();
-      const current = get().simulationState;
-      set({
-        simulationState: current ? { ...current, status: 'paused' } : null
-      });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: 'Simulation paused',
-        timestamp: Date.now(),
-        severity: 'warning'
-      });
-    } catch (error) {
-      console.error('Error pausing simulation:', error);
-    }
-  },
-
-  resumeSimulation: async () => {
-    try {
-      await api.startPerceptualSimulation();
-      const current = get().simulationState;
-      set({
-        simulationState: current ? { ...current, status: 'playing' } : null
-      });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: 'Simulation resumed',
-        timestamp: Date.now(),
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error('Error resuming simulation:', error);
-    }
-  },
-
-  resetSimulation: async () => {
-    try {
-      await api.resetPerceptualSimulation();
-      set({
-        simulationState: {
-          status: 'stopped',
-          currentIndex: 0,
-          totalVectors: 0,
-          startTime: null,
-          lastStepTime: null
-        },
-        activityEvents: [],
-        currentOutputVectors: []
-      });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: 'Simulation reset',
-        timestamp: Date.now(),
-        severity: 'info'
-      });
-    } catch (error) {
-      console.error('Error resetting simulation:', error);
-    }
-  },
-
-  stepSimulation: async () => {
-    try {
-      const result = await api.stepPerceptualSimulation();
-      const current = get().simulationState;
-      const stepNumber = result.step?.stepNumber ?? (current?.currentIndex ?? 0) + 1;
-      set({
-        simulationState: current ? {
-          ...current,
-          status: result.isComplete ? 'stopped' : current.status,
-          currentIndex: stepNumber,
-          lastStepTime: Date.now()
-        } : null
-      });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'vector-processed',
-        message: `Perceptual step #${stepNumber} processed${result.isComplete ? ' — sequence complete' : ''}`,
-        timestamp: Date.now(),
-        severity: 'info',
-        metadata: { step: result.step }
-      });
-    } catch (error) {
-      console.error('Error stepping simulation:', error);
-    }
-  },
-
-  setSimulationSpeed: async (delayMs) => {
-    try {
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: `Playback speed set to ${delayMs}ms`,
-        timestamp: Date.now(),
-        severity: 'info'
-      });
-    } catch (error) {
-      console.error('Error setting simulation speed:', error);
-    }
-  },
-
-  refreshSimulationState: async () => {
-    try {
-      const result = await api.getPerceptualSimulationState();
-      const { inputVectors } = get();
-      set({
-        simulationState: {
-          status: result.isRunning ? 'playing' : 'stopped',
-          currentIndex: result.currentStep ?? 0,
-          totalVectors: inputVectors.length,
-          startTime: result.isRunning ? Date.now() : null,
-          lastStepTime: null
-        }
-      });
-    } catch (error) {
-      console.error('Error refreshing simulation state:', error);
-    }
-  },
-
+  // Demo loaders
   loadDataCenterExample: async () => {
     try {
-      const result = await api.loadDataCenterExample();
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: 'Data Center Example loaded',
-        timestamp: Date.now(),
-        severity: 'success',
-        metadata: result.metadata
-      });
-
-      // Refresh sequences after loading example
+      await api.loadDataCenterExample();
       const sequences = await api.getSequences();
       set({ sequences });
     } catch (error) {
       console.error('Error loading data center example:', error);
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to load data center example',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
     }
   },
 
@@ -449,31 +229,10 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     try {
       const result = await api.loadMultiStepExample();
       set({ currentMachine: result.machine || null });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: `Machine loaded: ${result.machine?.name || 'Multi-Step Sequences'}`,
-        timestamp: Date.now(),
-        severity: 'success',
-        metadata: result.metadata
-      });
-
-      // Refresh sequences after loading example
       const sequences = await api.getSequences();
       set({ sequences });
-
-      // Refresh simulation state to load input vectors
-      await get().refreshSimulationState();
     } catch (error) {
       console.error('Error loading multi-step sequences example:', error);
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to load multi-step sequences example',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
     }
   },
 
@@ -481,42 +240,18 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     try {
       const result = await api.loadKleeneStarExample();
       set({ currentMachine: result.machine || null });
-
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'info',
-        message: `Machine loaded: ${result.machine?.name || '* Operator Test'}`,
-        timestamp: Date.now(),
-        severity: 'success',
-        metadata: result.metadata
-      });
-
-      // Refresh sequences after loading example
       const sequences = await api.getSequences();
       set({ sequences });
-
-      // Refresh simulation state to load input vectors
-      await get().refreshSimulationState();
     } catch (error) {
       console.error('Error loading Kleene star example:', error);
-      get().addActivityEvent({
-        id: `event-${Date.now()}`,
-        type: 'error',
-        message: 'Failed to load Kleene star example',
-        timestamp: Date.now(),
-        severity: 'error'
-      });
     }
   },
 
+  // WebSocket — used by MachineAdministrationView and MachineInterconnectionView
   connectWebSocket: () => {
     const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${wsProto}//${window.location.hostname}:3001/ws`;
     const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {};
-
-    ws.onclose = () => {};
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
@@ -526,28 +261,13 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
       try {
         const message: WebSocketMessage = JSON.parse(event.data);
 
-        // Handle different message types
         switch (message.type) {
-          case 'demo-loaded':
-            get().refreshSimulationState();
-            break;
-
           case 'perceptual-simulation-stepped': {
             const step = (message as any).step;
             if (step) {
-              const current = get().simulationState;
-              set({
-                simulationState: current ? {
-                  ...current,
-                  currentIndex: step.stepNumber ?? current.currentIndex,
-                  lastStepTime: Date.now()
-                } : null
-              });
-
-              // Refresh sequences so CriticalEventGraphView sees live activation
-              // state (isActive, wasJustMatched, lastOutputVector) from the engine.
+              // Refresh sequences so CriticalEventGraphView sees live activation state
+              // (isActive, wasJustMatched, lastOutputVector) from the engine.
               api.getSequences().then(sequences => {
-                // Harvest output vectors from nodes that just fired this step.
                 const newOutputs: OutputVector[] = [];
                 for (const seq of sequences) {
                   for (const node of seq.nodes) {
@@ -557,9 +277,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
                   }
                 }
                 const updates: { sequences: SequenceGraph[]; currentOutputVectors?: OutputVector[] } = { sequences };
-                if (newOutputs.length > 0) {
-                  updates.currentOutputVectors = newOutputs;
-                }
+                if (newOutputs.length > 0) updates.currentOutputVectors = newOutputs;
                 set(updates);
               }).catch(err => console.error('Error refreshing sequences after step:', err));
             }
@@ -567,16 +285,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
           }
 
           case 'perceptual-simulation-reset':
-            set({
-              simulationState: {
-                status: 'stopped',
-                currentIndex: 0,
-                totalVectors: 0,
-                startTime: null,
-                lastStepTime: null
-              },
-              currentOutputVectors: []
-            });
+            set({ currentOutputVectors: [] });
             break;
         }
       } catch (error) {
@@ -584,8 +293,6 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
       }
     };
 
-    // Expose the WebSocket globally so components can attach their own
-    // message listeners without going through the store.
     (window as any).realityEngineWS = ws;
     set({ ws });
   },
@@ -599,52 +306,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     }
   },
 
-  addActivityEvent: (event) => {
-    set((state) => ({
-      activityEvents: [event, ...state.activityEvents].slice(0, 100) // Keep last 100 events
-    }));
-  },
-
-  clearActivityEvents: () => {
-    set({ activityEvents: [] });
-  },
-
-  // Machine View actions implementation
-  toggleSequenceExpansion: (sequenceId: string) => {
-    set((state) => {
-      const newSet = new Set(state.expandedSequenceIds);
-      if (newSet.has(sequenceId)) {
-        newSet.delete(sequenceId);
-      } else {
-        // Limit to 3 simultaneous expansions for performance
-        if (newSet.size >= 3) {
-          const firstId = newSet.values().next().value;
-          if (firstId !== undefined) {
-            newSet.delete(firstId);
-          }
-        }
-        newSet.add(sequenceId);
-      }
-      return { expandedSequenceIds: newSet };
-    });
-  },
-
-  expandAllSequences: () => {
-    const { sequences } = get();
-    const allIds = sequences.map(seq => seq.sequenceId);
-    set({ expandedSequenceIds: new Set(allIds) });
-  },
-
-  collapseAllSequences: () => {
-    set({ expandedSequenceIds: new Set<string>() });
-  },
-
-  setCurrentOutputVectors: (outputs: OutputVector[]) => {
-    set({ currentOutputVectors: outputs });
-  },
-
-  setHighlightedOutputId: (outputId: string | null) => {
-    set({ highlightedOutputId: outputId });
-  },
-
+  // Output stream actions
+  setCurrentOutputVectors: (outputs: OutputVector[]) => set({ currentOutputVectors: outputs }),
+  setHighlightedOutputId: (outputId: string | null) => set({ highlightedOutputId: outputId }),
 }));

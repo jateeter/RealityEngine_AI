@@ -80,6 +80,14 @@ async function doPush(): Promise<PushResult> {
     engine.advance();
     lastPush = Date.now();
 
+    // Update the engine's persistent perceptual space with the full post-merge
+    // state returned by the Reality Engine so that machine outputs written
+    // during this step's merge phase are carried forward into the next push.
+    const returnedPs: number[] | undefined = response.data.step?.perceptualSpace;
+    if (Array.isArray(returnedPs) && returnedPs.length === 256) {
+      engine.updateFromPerceptualSpace(returnedPs);
+    }
+
     const result: PushResult = {
       success: response.data.success ?? true,
       step: response.data.step,

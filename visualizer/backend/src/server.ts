@@ -492,10 +492,6 @@ app.post('/api/perceptual-simulation/configure/commit', async (req: Request, res
 app.post('/api/perceptual-simulation/start', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/start`);
-
-    // Start polling for updates
-    startPerceptualSimulationPolling();
-
     res.json(response.data);
   } catch (error: any) {
     console.error('Error starting perceptual simulation:', error.message);
@@ -507,10 +503,6 @@ app.post('/api/perceptual-simulation/start', async (req: Request, res: Response)
 app.post('/api/perceptual-simulation/stop', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/stop`);
-
-    // Stop polling
-    stopPerceptualSimulationPolling();
-
     res.json(response.data);
   } catch (error: any) {
     console.error('Error stopping perceptual simulation:', error.message);
@@ -543,20 +535,25 @@ app.post('/api/perceptual-simulation/step', async (req: Request, res: Response) 
 
 // Perception Engine push — accepts a pre-assembled 256-byte reality vector,
 // forwards to the Reality Engine, and broadcasts the result to all visualizer clients.
+// The Scala /api/perceive returns the SimulationStep directly (not wrapped in {success, step}),
+// so we treat the entire response body as the step object.
 app.post('/api/perceive', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceive`, req.body);
 
-    if (response.data.success && response.data.step) {
+    // RE returns step JSON directly: { stepNumber, timestamp, perceptualSpace, machineResults, ... }
+    const step = response.data;
+    if (step && typeof step.stepNumber === 'number') {
       broadcast({
         type: 'perceptual-simulation-stepped',
-        step: response.data.step,
-        data: { activeMachineIds: Object.keys(response.data.step.machineResults ?? {}) },
+        step,
+        data: { activeMachineIds: Object.keys(step.machineResults ?? {}) },
         timestamp: Date.now()
       });
     }
 
-    res.json(response.data);
+    // Return in the {success, step} envelope that the Perception Engine and other callers expect
+    res.json({ success: true, step });
   } catch (error: any) {
     console.error('Error forwarding /api/perceive:', error.message);
     res.status(error.response?.status || 500).json({ error: error.message });
@@ -568,10 +565,6 @@ app.post('/api/perceptual-simulation/reset', async (req: Request, res: Response)
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/reset`);
 
-    // Stop polling
-    stopPerceptualSimulationPolling();
-
-    // Broadcast reset
     broadcast({
       type: 'perceptual-simulation-reset',
       timestamp: Date.now()
@@ -606,64 +599,6 @@ app.get('/api/perceptual-simulation/history', async (req: Request, res: Response
   }
 });
 
-// Perceptual simulation polling (similar to regular simulation)
-let perceptualSimulationPollInterval: NodeJS.Timeout | null = null;
-let lastPerceptualStep = -1;
-
-function startPerceptualSimulationPolling() {
-  if (perceptualSimulationPollInterval) return; // Already polling
-
-  perceptualSimulationPollInterval = setInterval(async () => {
-    try {
-      // Stop polling if no clients are connected
-      if (clients.size === 0) {
-        console.log('No clients connected, stopping perceptual simulation polling');
-        stopPerceptualSimulationPolling();
-        return;
-      }
-
-      const response = await axios.get(`${REALITY_ENGINE_URL}/api/perceptual-simulation/state`);
-      const state = response.data.state;
-
-      // Check if simulation is still running
-      if (!state.isRunning) {
-        stopPerceptualSimulationPolling();
-        return;
-      }
-
-      // Check if step changed
-      if (state.currentStep !== lastPerceptualStep) {
-        lastPerceptualStep = state.currentStep;
-
-        // Get the latest step from history
-        const historyResponse = await axios.get(`${REALITY_ENGINE_URL}/api/perceptual-simulation/history`);
-        const history = historyResponse.data.history;
-        const latestStep = history[history.length - 1];
-
-        if (latestStep) {
-          broadcast({
-            type: 'perceptual-simulation-stepped',
-            step: latestStep,
-            state,
-            data: { activeMachineIds: Object.keys(latestStep.machineResults ?? {}) },
-            timestamp: Date.now()
-          });
-        }
-      }
-    } catch (error: any) {
-      console.error('Error polling perceptual simulation state:', error.message);
-    }
-  }, 200); // Poll every 200ms
-}
-
-function stopPerceptualSimulationPolling() {
-  if (perceptualSimulationPollInterval) {
-    clearInterval(perceptualSimulationPollInterval);
-    perceptualSimulationPollInterval = null;
-    lastPerceptualStep = -1;
-  }
-}
-
 // Start server
 server.listen(PORT, () => {
   const protocol = tlsEnabled ? 'https' : 'http';
@@ -677,17 +612,11 @@ server.listen(PORT, () => {
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully...');
   clearInterval(heartbeatInterval);
-  stopPerceptualSimulationPolling();
-  server.close(() => {
-    process.exit(0);
-  });
+  server.close(() => process.exit(0));
 });
 
 process.on('SIGINT', () => {
   console.log('SIGINT received, shutting down gracefully...');
   clearInterval(heartbeatInterval);
-  stopPerceptualSimulationPolling();
-  server.close(() => {
-    process.exit(0);
-  });
+  server.close(() => process.exit(0));
 });
