@@ -1,13 +1,16 @@
 package com.realityengine
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.{ConnectionContext, Http}
 import com.realityengine.api.Routes
 import com.realityengine.engine.{PerceptualSpaceSimulator, RealityEngine}
 import com.realityengine.services.VectorStore
 import sttp.client3.HttpURLConnectionBackend
 
+import java.io.{File, FileInputStream}
+import java.security.{KeyStore, SecureRandom}
+import java.security.cert.CertificateFactory
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
@@ -21,19 +24,37 @@ object Main extends App {
 
   println("Starting Reality Engine (Scala/Akka)...")
 
-  // Blocking sttp backend for Qdrant REST calls (runs on blocking-io-dispatcher)
+  // ── TLS setup ─────────────────────────────────────────────────────────────
+  // When KEYSTORE_PATH and CA_CERT_PATH are set, build a custom SSLContext
+  // that (a) presents our cert to inbound connections and (b) trusts our CA
+  // for all outgoing HTTPS calls (Qdrant REST API, etc.).
+  val keystorePath     = sys.env.getOrElse("KEYSTORE_PATH", "")
+  val keystorePassword = sys.env.getOrElse("KEYSTORE_PASSWORD", "").toCharArray
+  val caCertPath       = sys.env.getOrElse("CA_CERT_PATH", "")
+
+  val tlsEnabled = keystorePath.nonEmpty && new File(keystorePath).exists() &&
+                   caCertPath.nonEmpty   && new File(caCertPath).exists()
+
+  val sslContext: Option[SSLContext] =
+    if (tlsEnabled) Some(buildSslContext(keystorePath, keystorePassword, caCertPath))
+    else None
+
+  // Set as JVM-wide default so sttp's HttpURLConnectionBackend trusts our CA
+  // for all outgoing HTTPS calls (Qdrant REST API, etc.).
+  sslContext.foreach(SSLContext.setDefault)
+
+  // ── Engine bootstrap ──────────────────────────────────────────────────────
+
   implicit val sttpBackend = HttpURLConnectionBackend()
 
   val vectorStore  = new VectorStore()
   val engine       = new RealityEngine(vectorStore)
   val simulator    = new PerceptualSpaceSimulator(256)
 
-  // Sync simulator's evolved perceptual space back into PreceptionEngine after every step
   simulator.setOnStepComplete { (_, spaceVector) =>
     engine.preceptionEngine.getPerceptualSpace.setPerceptualVector(spaceVector)
   }
 
-  // Initialize VectorStore, then start HTTP server
   val startup = for {
     _ <- vectorStore.initialize()
     _ <- engine.initialize()
@@ -47,23 +68,61 @@ object Main extends App {
       println("✓ Vector store initialized")
       println("✓ Reality Engine initialized")
 
-      val routes = new Routes(engine, simulator)
+      val routes   = new Routes(engine, simulator)
       routes.loadDefaultMachines()
 
-      Http().newServerAt(host, port).bind(routes.routes).onComplete {
+      val serverAt = Http().newServerAt(host, port)
+      val binding  = sslContext match {
+        case Some(ctx) =>
+          println(s"✓ TLS enabled (keystore: $keystorePath)")
+          serverAt.enableHttps(ConnectionContext.httpsServer(ctx)).bind(routes.routes)
+        case None =>
+          println("  TLS not configured — binding plain HTTP")
+          serverAt.bind(routes.routes)
+      }
+
+      binding.onComplete {
         case Failure(e) =>
           println(s"Failed to bind to $host:$port: ${e.getMessage}")
           system.terminate()
-        case Success(binding) =>
-          println(s"\n✅ Reality Engine running on http://$host:$port")
-          println(s"🗄️  Qdrant URL: ${sys.env.getOrElse("QDRANT_URL", "http://localhost:6333")}")
+        case Success(b) =>
+          val scheme = if (tlsEnabled) "https" else "http"
+          println(s"\n✅ Reality Engine running on $scheme://$host:$port")
+          println(s"🗄️  Qdrant URL: ${sys.env.getOrElse("QDRANT_URL", "https://localhost:6333")}")
 
           sys.addShutdownHook {
             println("\nShutting down gracefully...")
-            Await.result(binding.unbind(), 10.seconds)
+            Await.result(b.unbind(), 10.seconds)
             Await.result(system.terminate(), 10.seconds)
             println("✓ Shutdown complete")
           }
       }
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  def buildSslContext(
+    keystorePath: String,
+    password: Array[Char],
+    caCertPath: String,
+  ): SSLContext = {
+    // Key material — server cert + private key from PKCS12
+    val ks = KeyStore.getInstance("PKCS12")
+    ks.load(new FileInputStream(keystorePath), password)
+    val kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm)
+    kmf.init(ks, password)
+
+    // Trust material — CA cert only; loaded from PEM without needing keytool
+    val caCert = CertificateFactory.getInstance("X.509")
+      .generateCertificate(new FileInputStream(caCertPath))
+    val ts = KeyStore.getInstance(KeyStore.getDefaultType)
+    ts.load(null, null)
+    ts.setCertificateEntry("ca", caCert)
+    val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm)
+    tmf.init(ts)
+
+    val ctx = SSLContext.getInstance("TLS")
+    ctx.init(kmf.getKeyManagers, tmf.getTrustManagers, new SecureRandom())
+    ctx
   }
 }

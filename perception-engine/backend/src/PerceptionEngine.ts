@@ -16,13 +16,16 @@ export class PerceptionEngine {
   private testStep: Map<string, number> = new Map();
   private walkState: Map<string, number[]> = new Map();
 
+  /** Dimension of the perceptual vector. Defaults to 256; override via VECTOR_SIZE env var. */
+  readonly vectorSize: number;
+
   // Typed array for the persistent perceptual space — avoids per-element boxing
   // overhead of plain number[] and enables fast bulk copy via Float64Array.set().
-  private persistentVector: Float64Array = new Float64Array(256);
+  private persistentVector: Float64Array;
 
   // Pre-allocated output buffer — reused by assembleVector() on every push tick
   // so no heap allocation is needed per call.
-  private outBuf: Float64Array = new Float64Array(256);
+  private outBuf: Float64Array;
 
   // Active source IDs — kept in sync with sources.active so that advance() and
   // assembleVector() skip paused/exhausted sources without iterating the full map.
@@ -35,6 +38,12 @@ export class PerceptionEngine {
 
   globalStep = 0;
   matchAlgorithm: MatchAlgorithm = 'gte';
+
+  constructor(vectorSize: number = 256) {
+    this.vectorSize = vectorSize;
+    this.persistentVector = new Float64Array(vectorSize);
+    this.outBuf = new Float64Array(vectorSize);
+  }
 
   setMatchAlgorithm(algo: MatchAlgorithm): void {
     this.matchAlgorithm = algo;
@@ -130,7 +139,7 @@ export class PerceptionEngine {
    * persistent base to the RE's post-merge state.
    */
   assembleVector(): number[] {
-    // Bulk copy via typed array: one native memcpy vs 256 individual JS writes.
+    // Bulk copy via typed array: one native memcpy vs vectorSize individual JS writes.
     this.outBuf.set(this.persistentVector);
 
     for (const id of this.activeSources) {
@@ -157,7 +166,7 @@ export class PerceptionEngine {
    * the next assembleVector() call.
    */
   updateFromPerceptualSpace(ps: number[]): void {
-    for (let i = 0; i < 256; i++) {
+    for (let i = 0; i < this.vectorSize; i++) {
       this.persistentVector[i] = ps[i] ?? 0;
     }
   }
@@ -245,6 +254,7 @@ export class PerceptionEngine {
       auto,
       lastPush,
       matchAlgorithm: this.matchAlgorithm,
+      vectorSize: this.vectorSize,
     };
   }
 

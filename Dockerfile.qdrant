@@ -1,4 +1,4 @@
 FROM qdrant/qdrant:latest
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
-  CMD bash -c 'exec 3<>/dev/tcp/localhost/6333 && printf "GET /readyz HTTP/1.0\r\nHost:localhost\r\n\r\n" >&3 && read -t 3 r <&3 && echo "$r" | grep -q "200"'
+  CMD wget -qO- --no-check-certificate https://localhost:6333/readyz || exit 1

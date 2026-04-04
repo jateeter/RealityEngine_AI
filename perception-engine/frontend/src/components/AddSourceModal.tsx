@@ -5,6 +5,7 @@ import { getMachines } from '../api.js';
 interface Props {
   onAdd: (config: Omit<SourceConfig, 'id'>) => void;
   onClose: () => void;
+  vectorSize?: number;
 }
 
 type Tab = 'test' | 'simulated' | 'sensor';
@@ -58,7 +59,7 @@ function Field({ label: lbl, children }: { label: string; children: React.ReactN
   );
 }
 
-export default function AddSourceModal({ onAdd, onClose }: Props) {
+export default function AddSourceModal({ onAdd, onClose, vectorSize = 256 }: Props) {
   const [tab, setTab] = useState<Tab>('test');
   const [name, setName] = useState('');
 
@@ -214,7 +215,7 @@ export default function AddSourceModal({ onAdd, onClose }: Props) {
 
               {!selectedMachine?.perceptualMapping && (
                 <Field label="Region Offset (no perceptual mapping detected)">
-                  <input type="number" style={input} value={testOffset} onChange={e => setTestOffset(Number(e.target.value))} min={0} max={255} />
+                  <input type="number" style={input} value={testOffset} onChange={e => setTestOffset(Number(e.target.value))} min={0} max={vectorSize - 1} />
                 </Field>
               )}
 
@@ -247,12 +248,12 @@ export default function AddSourceModal({ onAdd, onClose }: Props) {
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1 }}>
                   <Field label="Region Offset">
-                    <input type="number" style={input} value={simOffset} onChange={e => setSimOffset(Number(e.target.value))} min={0} max={255} />
+                    <input type="number" style={input} value={simOffset} onChange={e => setSimOffset(Number(e.target.value))} min={0} max={vectorSize - 1} />
                   </Field>
                 </div>
                 <div style={{ flex: 1 }}>
                   <Field label="Region Length">
-                    <input type="number" style={input} value={simLength} onChange={e => setSimLength(Number(e.target.value))} min={1} max={256} />
+                    <input type="number" style={input} value={simLength} onChange={e => setSimLength(Number(e.target.value))} min={1} max={vectorSize} />
                   </Field>
                 </div>
               </div>
@@ -268,12 +269,12 @@ export default function AddSourceModal({ onAdd, onClose }: Props) {
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1 }}>
                   <Field label="Region Offset">
-                    <input type="number" style={input} value={sensorOffset} onChange={e => setSensorOffset(Number(e.target.value))} min={0} max={255} />
+                    <input type="number" style={input} value={sensorOffset} onChange={e => setSensorOffset(Number(e.target.value))} min={0} max={vectorSize - 1} />
                   </Field>
                 </div>
                 <div style={{ flex: 1 }}>
                   <Field label="Region Length">
-                    <input type="number" style={input} value={sensorLength} onChange={e => setSensorLength(Number(e.target.value))} min={1} max={256} />
+                    <input type="number" style={input} value={sensorLength} onChange={e => setSensorLength(Number(e.target.value))} min={1} max={vectorSize} />
                   </Field>
                 </div>
               </div>

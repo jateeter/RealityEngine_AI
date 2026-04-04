@@ -61,12 +61,12 @@ export default function VectorDisplay({ vector, sources, hoveredSourceId }: Prop
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
-        Assembled Reality Vector (256 bytes)
+        Assembled Reality Vector ({vector.length} cells)
       </div>
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(32, 1fr)',
+          gridTemplateColumns: `repeat(${Math.min(32, vector.length)}, 1fr)`,
           gap: 1,
           background: '#0a0a0a',
           padding: 4,

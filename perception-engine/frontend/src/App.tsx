@@ -139,7 +139,7 @@ export default function App() {
         />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '12px', gap: '12px' }}>
           <VectorDisplay
-            vector={state?.assembledVector ?? new Array(256).fill(0)}
+            vector={state?.assembledVector ?? new Array(state?.vectorSize ?? 256).fill(0)}
             sources={state?.sources ?? []}
             hoveredSourceId={hoveredSourceId}
           />
@@ -150,6 +150,7 @@ export default function App() {
         <AddSourceModal
           onAdd={handleAddSource}
           onClose={() => setShowAddModal(false)}
+          vectorSize={state?.vectorSize ?? 256}
         />
       )}
     </div>

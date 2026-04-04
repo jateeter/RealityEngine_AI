@@ -43,17 +43,6 @@ export interface McpDeps {
   realityEngineUrl: string;
 }
 
-// ── Shared schema fragments ───────────────────────────────────────────────
-
-const regionSchema = {
-  region_offset: z
-    .number().int().min(0).max(255)
-    .describe('Starting byte offset in the 256-cell perceptual vector'),
-  region_length: z
-    .number().int().min(1).max(256)
-    .describe('Number of cells this source occupies'),
-};
-
 // ── MCP server factory (one per session) ─────────────────────────────────
 
 function buildMcpServer(deps: McpDeps): McpServer {
@@ -62,6 +51,18 @@ function buildMcpServer(deps: McpDeps): McpServer {
     getAutoState, getLastPush, saveAndBroadcast, resetAndBroadcast,
     realityEngineUrl,
   } = deps;
+
+  const vectorSize = engine.vectorSize;
+
+  // Region schema built dynamically so max values reflect the actual vector size.
+  const regionSchema = {
+    region_offset: z
+      .number().int().min(0).max(vectorSize - 1)
+      .describe(`Starting offset in the ${vectorSize}-cell perceptual vector`),
+    region_length: z
+      .number().int().min(1).max(vectorSize)
+      .describe('Number of cells this source occupies'),
+  };
 
   const server = new McpServer({
     name: 'reality-engine-perception',
@@ -127,7 +128,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
 
   server.tool(
     'perception_get_state',
-    'Return the full perception engine state: sources, assembled 256-cell vector, ' +
+    `Return the full perception engine state: sources, assembled ${vectorSize}-cell vector, ` +
     'auto-push status, match algorithm, global step counter, and last push timestamp.',
     {},
     async () => {
@@ -211,8 +212,8 @@ function buildMcpServer(deps: McpDeps): McpServer {
 
   server.tool(
     'sources_add_simulated',
-    'Add a simulated waveform source that generates synthetic signal patterns and ' +
-    'writes them into a region of the 256-cell perceptual vector on every push.',
+    `Add a simulated waveform source that generates synthetic signal patterns and ` +
+    `writes them into a region of the ${vectorSize}-cell perceptual vector on every push.`,
     {
       name: z.string().describe('Human-readable source name'),
       ...regionSchema,
@@ -405,7 +406,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
   server.tool(
     'perceptual_sim_state',
     'Get the current state of the Reality Engine perceptual simulation: registered ' +
-    'machines, 256-cell perceptual space vector, current step, and running status.',
+    'machines, perceptual space vector, current step, and running status.',
     {},
     async () => reCall(async () => {
       const { data } = await axios.get(re('/perceptual-simulation/state'));

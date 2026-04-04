@@ -15,6 +15,7 @@ const PORT = parseInt(process.env['PORT'] ?? '3004', 10);
 const PERCEPTION_TARGET_URL = process.env['PERCEPTION_TARGET_URL'] ?? 'http://localhost:3001';
 const REALITY_ENGINE_URL = process.env['REALITY_ENGINE_URL'] ?? 'http://localhost:3000';
 const DATA_PATH = process.env['DATA_PATH'] ?? './data';
+const VECTOR_SIZE = parseInt(process.env['VECTOR_SIZE'] ?? '256', 10);
 const certPath = process.env['TLS_CERT_PATH'];
 const keyPath  = process.env['TLS_KEY_PATH'];
 const tlsEnabled = !!(certPath && keyPath && existsSync(certPath) && existsSync(keyPath));
@@ -33,7 +34,7 @@ app.use(express.json());
 // ── Engine instance ───────────────────────────────────────────────────────
 
 const store = new SourceStore(DATA_PATH);
-const engine = new PerceptionEngine();
+const engine = new PerceptionEngine(VECTOR_SIZE);
 
 // Restore persisted sources (preserves original IDs)
 for (const src of store.load()) {
@@ -110,7 +111,7 @@ async function doPush(): Promise<PushResult> {
     // Update the engine's persistent perceptual space with the full post-merge
     // state so that machine outputs written this step carry forward into the next push.
     const returnedPs: number[] | undefined = step?.perceptualSpace;
-    if (Array.isArray(returnedPs) && returnedPs.length === 256) {
+    if (Array.isArray(returnedPs) && returnedPs.length >= VECTOR_SIZE) {
       engine.updateFromPerceptualSpace(returnedPs);
     }
 
@@ -305,6 +306,11 @@ app.post('/api/sources', async (req: Request, res: Response) => {
       res.status(400).json({ error: 'type, name, and region are required' });
       return;
     }
+    const { offset, length } = config.region;
+    if (typeof offset !== 'number' || typeof length !== 'number' || offset < 0 || length < 1 || offset >= VECTOR_SIZE) {
+      res.status(400).json({ error: `region.offset must be 0–${VECTOR_SIZE - 1} and region.length must be ≥ 1` });
+      return;
+    }
     const source = engine.addSource(config);
     await saveAndBroadcast();
     res.json({ source });
@@ -316,6 +322,17 @@ app.post('/api/sources', async (req: Request, res: Response) => {
 // Update source
 app.patch('/api/sources/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
+  if (req.body.region) {
+    const { offset, length } = req.body.region;
+    if (typeof offset === 'number' && (offset < 0 || offset >= VECTOR_SIZE)) {
+      res.status(400).json({ error: `region.offset must be 0–${VECTOR_SIZE - 1}` });
+      return;
+    }
+    if (typeof length === 'number' && length < 1) {
+      res.status(400).json({ error: 'region.length must be ≥ 1' });
+      return;
+    }
+  }
   const source = engine.updateSource(id, req.body);
   if (!source) {
     res.status(404).json({ error: 'Source not found' });

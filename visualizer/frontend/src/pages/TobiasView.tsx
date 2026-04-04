@@ -346,14 +346,6 @@ const TobiasView: React.FC = () => {
               step <strong>{latestStepNumber}</strong>
             </span>
           )}
-          <button
-            className="tobias-step-btn"
-            onClick={stepSimulation}
-            disabled={isSimulationRunning}
-            title="Single step simulation"
-          >
-            ⏭ Step
-          </button>
           {selectedMachineId && (
             <span className="tobias-selected-label">
               <strong>{selectedMachineId}</strong>

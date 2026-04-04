@@ -68,6 +68,7 @@ export interface EngineState {
   auto: AutoConfig;
   lastPush: number | null;
   matchAlgorithm: MatchAlgorithm;
+  vectorSize: number;
 }
 
 export interface PushResult {

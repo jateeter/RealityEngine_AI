@@ -624,9 +624,15 @@ export class TobiasRenderer {
     ctx.translate(x, y);
 
     const fired = node.machine.justFired;
-    if (isSelected || fired) {
-      ctx.shadowBlur  = isSelected ? 20 : 12;
-      ctx.shadowColor = isSelected ? '#c864ff' : '#a855f7';
+
+    // Glow pass — drawn before fill so shadow bleeds outward only
+    if (isSelected) {
+      ctx.shadowBlur  = 20;
+      ctx.shadowColor = '#c864ff';
+    } else if (fired) {
+      // Amber pulse: draw the border path twice so the outer glow is bright
+      ctx.shadowBlur  = 30;
+      ctx.shadowColor = '#f59e0b';
     }
 
     // Card background
@@ -634,26 +640,37 @@ export class TobiasRenderer {
     ctx.fillStyle = '#101318';
     ctx.fill();
 
-    // Border
-    ctx.strokeStyle = isSelected ? '#c864ff' : fired ? '#a855f7' : statusColor(node.machine.status);
-    ctx.lineWidth   = (isSelected || fired) ? 2 : 1;
-    ctx.stroke();
-    ctx.shadowBlur  = 0;
+    // Border — amber (output firing) takes priority over selection purple
+    if (fired) {
+      // Double-draw: first pass carries the glow; second pass gives crisp edge
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth   = 3;
+      ctx.stroke();
+      ctx.shadowBlur  = 0;
+      ctx.strokeStyle = '#fcd34d'; // amber-300 crisp inner line
+      ctx.lineWidth   = 1.5;
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = isSelected ? '#c864ff' : statusColor(node.machine.status);
+      ctx.lineWidth   = isSelected ? 2 : 1;
+      ctx.stroke();
+      ctx.shadowBlur  = 0;
+    }
 
     // Header strip
-    ctx.fillStyle = isSelected ? '#2d1040' : fired ? '#1e0a30' : '#1a1f2e';
+    ctx.fillStyle = isSelected ? '#2d1040' : fired ? '#1a1200' : '#1a1f2e';
     ctx.fillRect(0, 0, node.w, node.headerH);
 
     // Header/body separator
     ctx.beginPath();
     ctx.moveTo(0, node.headerH);
     ctx.lineTo(node.w, node.headerH);
-    ctx.strokeStyle = isSelected ? '#c864ff55' : '#2a3040';
+    ctx.strokeStyle = fired ? '#f59e0b44' : isSelected ? '#c864ff55' : '#2a3040';
     ctx.lineWidth   = 0.5;
     ctx.stroke();
 
     // Machine name
-    ctx.fillStyle    = isSelected ? '#e2b6ff' : fired ? '#d8aaff' : '#e2e8f0';
+    ctx.fillStyle    = isSelected ? '#e2b6ff' : fired ? '#fcd34d' : '#e2e8f0';
     ctx.font         = 'bold 10px monospace';
     ctx.textBaseline = 'middle';
     ctx.textAlign    = 'left';
