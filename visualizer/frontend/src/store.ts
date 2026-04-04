@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import {
   SequenceGraph,
-  WebSocketMessage,
   Machine,
   OutputVector,
   MachineCreateRequest,
