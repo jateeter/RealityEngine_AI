@@ -16,6 +16,7 @@ import sttp.client3._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import com.realityengine.perception.logging.{AuditConfig, AuditLogger}
 
 class PerceptionRoutes(
   engine: PerceptionEngine,
@@ -23,6 +24,7 @@ class PerceptionRoutes(
   broadcastActor: ActorRef,
   perceptionTargetUrl: String,
   realityEngineUrl: String,
+  auditCfg: AuditConfig,
 )(implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext) {
 
   // Blocking sttp backend runs on calling thread (routes are already on a
@@ -132,7 +134,7 @@ class PerceptionRoutes(
 
   // ── Routes ────────────────────────────────────────────────────────────────
 
-  val routes: Route = concat(
+  val routes: Route = AuditLogger.directive(auditCfg) { concat(
 
     // ── Health ──────────────────────────────────────────────────────────────
     path("api" / "health") {
@@ -301,7 +303,7 @@ class PerceptionRoutes(
         "status"  -> "running".asJson,
       ))}
     },
-  )
+  ) }
 
   // ── Merge JSON patch onto SourceConfig ────────────────────────────────────
 

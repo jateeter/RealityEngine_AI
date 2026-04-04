@@ -6,8 +6,10 @@ import { WebSocketServer, WebSocket } from 'ws';
 import * as http from 'http';
 import * as https from 'https';
 import { readFileSync, existsSync } from 'fs';
+import { auditMiddleware, loadAuditConfig, logAuditEvent } from './auditLogger.js';
 
 const PORT = parseInt(process.env.VIZ_PORT || '3001', 10);
+const auditConfig = loadAuditConfig('visualizer-backend');
 const REALITY_ENGINE_URL = process.env.REALITY_ENGINE_URL || 'http://localhost:3000';
 // Comma-separated list of allowed browser origins (no trailing slash).
 const ALLOWED_ORIGINS: string[] = (
@@ -20,6 +22,8 @@ const tlsEnabled = !!(certPath && keyPath && existsSync(certPath) && existsSync(
 const app = express();
 
 // ── CORS — restrict to configured origins ────────────────────────────────────
+app.use(auditMiddleware(auditConfig));
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
@@ -583,6 +587,11 @@ server.listen(PORT, () => {
   console.log(`WebSocket server available at ${wsProtocol}://localhost:${PORT}/ws`);
   console.log(`Proxying to Reality Engine at ${REALITY_ENGINE_URL}`);
   console.log(`Allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
+  logAuditEvent(auditConfig, 'startup', {
+    audit_enabled: auditConfig.enabled,
+    audit_level:   auditConfig.level,
+    port:          PORT,
+  });
 });
 
 process.on('SIGTERM', () => { console.log('SIGTERM received, shutting down gracefully...'); clearInterval(heartbeatInterval); server.close(() => process.exit(0)); });

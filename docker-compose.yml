@@ -96,6 +96,9 @@ services:
       - KEYSTORE_PATH=/etc/certs/keystore.p12
       - KEYSTORE_PASSWORD=realityengine
       - CA_CERT_PATH=/etc/certs/ca.crt
+      - AUDIT_LOG_ENABLED=true
+      - AUDIT_LOG_LEVEL=2
+      - AUDIT_LOG_SERVICE=reality-engine
     depends_on:
       qdrant:
         condition: service_healthy
@@ -136,6 +139,9 @@ services:
       - TLS_KEY_PATH=/etc/certs/server.key
       - NODE_EXTRA_CA_CERTS=/etc/certs/ca.crt
       - ALLOWED_ORIGINS=https://localhost:5173,https://localhost:3001
+      - AUDIT_LOG_ENABLED=true
+      - AUDIT_LOG_LEVEL=2
+      - AUDIT_LOG_SERVICE=visualizer-backend
     depends_on:
       reality-engine:
         condition: service_healthy
@@ -202,6 +208,9 @@ services:
       - KEYSTORE_PATH=/etc/certs/keystore.p12
       - KEYSTORE_PASSWORD=realityengine
       - CA_CERT_PATH=/etc/certs/ca.crt
+      - AUDIT_LOG_ENABLED=true
+      - AUDIT_LOG_LEVEL=2
+      - AUDIT_LOG_SERVICE=perception-engine
     volumes:
       - perception_sources_data:/app/data
       - ./certs:/etc/certs:ro

@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.{ConnectionContext, Http}
 import akka.stream.Materializer
 import com.realityengine.perception.api.{PerceptionRoutes, WsBroadcastActor}
+import com.realityengine.perception.logging.{AuditConfig, AuditLogger}
 import com.realityengine.perception.engine.PerceptionEngine
 import com.realityengine.perception.store.SourceStore
 
@@ -26,7 +27,13 @@ object PerceptionMain extends App {
   val realityEngineUrl   = sys.env.getOrElse("REALITY_ENGINE_URL",   "https://localhost:3000")
   val dataPath           = sys.env.getOrElse("DATA_PATH", "./data")
 
+  val auditCfg = AuditConfig.fromEnv("perception-engine")
+
   println("Starting Perception Engine (Scala/Akka)...")
+  AuditLogger.logEvent(auditCfg, "startup", Map(
+    "audit_enabled" -> io.circe.Json.fromBoolean(auditCfg.enabled),
+    "audit_level"   -> io.circe.Json.fromInt(auditCfg.level),
+  ))
 
   // ── TLS setup ─────────────────────────────────────────────────────────────
   // When KEYSTORE_PATH and CA_CERT_PATH are set, build a custom SSLContext
@@ -64,6 +71,7 @@ object PerceptionMain extends App {
     broadcastActor      = broadcastActor,
     perceptionTargetUrl = perceptionTarget,
     realityEngineUrl    = realityEngineUrl,
+    auditCfg            = auditCfg,
   )
 
   val serverAt = Http().newServerAt(host, port)

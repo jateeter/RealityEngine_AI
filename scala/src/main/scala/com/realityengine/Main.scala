@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.{ConnectionContext, Http}
 import com.realityengine.api.Routes
 import com.realityengine.engine.{PerceptualSpaceSimulator, RealityEngine}
+import com.realityengine.logging.{AuditConfig, AuditLogger}
 import com.realityengine.services.VectorStore
 import sttp.client3.HttpURLConnectionBackend
 
@@ -22,7 +23,13 @@ object Main extends App {
   val port    = sys.env.getOrElse("PORT", "3000").toIntOption.getOrElse(3000)
   val host    = sys.env.getOrElse("HOST", "0.0.0.0")
 
+  val auditCfg = AuditConfig.fromEnv("reality-engine")
+
   println("Starting Reality Engine (Scala/Akka)...")
+  AuditLogger.logEvent(auditCfg, "startup", Map(
+    "audit_enabled" -> io.circe.Json.fromBoolean(auditCfg.enabled),
+    "audit_level"   -> io.circe.Json.fromInt(auditCfg.level),
+  ))
 
   // ── TLS setup ─────────────────────────────────────────────────────────────
   // When KEYSTORE_PATH and CA_CERT_PATH are set, build a custom SSLContext
@@ -68,7 +75,7 @@ object Main extends App {
       println("✓ Vector store initialized")
       println("✓ Reality Engine initialized")
 
-      val routes   = new Routes(engine, simulator)
+      val routes   = new Routes(engine, simulator, auditCfg)
       routes.loadDefaultMachines()
 
       val serverAt = Http().newServerAt(host, port)

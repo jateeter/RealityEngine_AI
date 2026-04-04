@@ -21,11 +21,13 @@ import scala.util.{Failure, Success, Try}
 import java.io.{File, FileInputStream}
 import java.nio.file.{Files, Paths}
 import scala.collection.concurrent.TrieMap
+import com.realityengine.logging.{AuditConfig, AuditLogger}
 
 // Routes — Akka HTTP route definitions mirroring all TypeScript /api/... endpoints.
 class Routes(
-  engine:    RealityEngine,
-  simulator: PerceptualSpaceSimulator,
+  engine:      RealityEngine,
+  simulator:   PerceptualSpaceSimulator,
+  auditCfg:    AuditConfig,
   machinesDir: String = sys.env.getOrElse("MACHINES_DIR", "examples/machines")
 )(implicit system: ActorSystem, ec: ExecutionContext) {
 
@@ -124,7 +126,7 @@ class Routes(
 
   // ── Route tree ────────────────────────────────────────────────────────────
 
-  val routes: Route = handleExceptions(exceptionHandler) {
+  val routes: Route = AuditLogger.directive(auditCfg) { handleExceptions(exceptionHandler) {
     pathPrefix("api") {
       concat(
         // Health
@@ -574,5 +576,5 @@ class Routes(
         )) } }
       )
     }
-  }
+  } }
 }
