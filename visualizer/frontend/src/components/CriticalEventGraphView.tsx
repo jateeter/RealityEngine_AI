@@ -47,6 +47,10 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
   const nodePositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const zoomTransformRef = useRef<d3.ZoomTransform | null>(null);
   const previousResetKeyRef = useRef<number>(0);
+  const simulationRef = useRef<d3.Simulation<GraphNode, GraphLink> | null>(null);
+  const nodeSelRef = useRef<d3.Selection<SVGCircleElement, GraphNode, SVGGElement, unknown> | null>(null);
+  const linkSelRef = useRef<d3.Selection<SVGLineElement, GraphLink, SVGGElement, unknown> | null>(null);
+  const structuralKeyRef = useRef<string>('');
   const { sequences, currentMachine, setHighlightedOutputId } = useVisualizerStore();
   const [legendHovered, setLegendHovered] = useState(false);
   const [layoutResetKey, setLayoutResetKey] = useState(0);
@@ -114,6 +118,71 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
     const container = containerRef.current;
     const width = container.clientWidth;
     const height = container.clientHeight;
+
+    // Compute structural key — encodes node IDs + edge topology only, not state flags.
+    const structuralKey = nodes.map(n => n.id).sort().join(',') + '|' +
+      links.map(l => `${l.source as string}->${l.target as string}`).sort().join(',');
+
+    // State-only change: same node IDs and edges — update visual attrs in-place,
+    // no SVG teardown or simulation restart.
+    if (
+      structuralKey === structuralKeyRef.current &&
+      layoutResetKey === previousResetKeyRef.current &&
+      nodeSelRef.current !== null &&
+      linkSelRef.current !== null
+    ) {
+      const nodeById = new Map<string, GraphNode>(nodes.map(n => [n.id, n]));
+      nodeSelRef.current
+        .attr('fill', d => {
+          const n = nodeById.get(d.id) ?? d;
+          if (n.wasJustMatched) return '#a855f7';
+          if (n.isActive) return '#22c55e';
+          if (n.isInitial) return '#3b82f6';
+          return '#64748b';
+        })
+        .attr('stroke', d => {
+          const n = nodeById.get(d.id) ?? d;
+          if (n.wasJustMatched && n.isActive) return '#22c55e';
+          if (n.wasJustMatched) return '#c084fc';
+          if (n.isActive && n.hasOutput) return '#22c55e';
+          if (n.hasOutput) return '#f59e0b';
+          if (n.isActive) return '#16a34a';
+          if (n.isInitial) return '#2563eb';
+          return '#475569';
+        })
+        .attr('stroke-width', d => {
+          const n = nodeById.get(d.id) ?? d;
+          if (n.wasJustMatched && n.isActive) return 6;
+          if (n.wasJustMatched) return 5;
+          if (n.hasOutput) return 4;
+          if (n.isActive) return 3;
+          return 2;
+        })
+        .style('filter', d => {
+          const n = nodeById.get(d.id) ?? d;
+          if (n.wasJustMatched && n.isActive) return 'drop-shadow(0 0 10px #a855f7) drop-shadow(0 0 8px #22c55e)';
+          if (n.wasJustMatched) return 'drop-shadow(0 0 10px #a855f7)';
+          if (n.isActive) return 'drop-shadow(0 0 6px #22c55e)';
+          return 'none';
+        });
+      linkSelRef.current
+        .attr('stroke', d => {
+          const srcId = typeof d.source === 'object' ? (d.source as GraphNode).id : d.source as string;
+          return (nodeById.get(srcId)?.isActive ?? false) ? '#22c55e' : '#64748b';
+        })
+        .attr('stroke-width', d => {
+          const srcId = typeof d.source === 'object' ? (d.source as GraphNode).id : d.source as string;
+          return (nodeById.get(srcId)?.isActive ?? false) ? 3 : 2;
+        })
+        .attr('marker-end', d => {
+          const srcId = typeof d.source === 'object' ? (d.source as GraphNode).id : d.source as string;
+          return (nodeById.get(srcId)?.isActive ?? false) ? 'url(#arrowhead-active)' : 'url(#arrowhead)';
+        });
+      return;
+    }
+
+    // Structural change — update key and do full SVG rebuild.
+    structuralKeyRef.current = structuralKey;
 
     // Clear previous SVG content
     d3.select(svgRef.current).selectAll('*').remove();
@@ -606,8 +675,9 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       label.style('opacity', 1);
     });
 
-    // Update positions on simulation tick
-    simulation.on('tick', () => {
+    // applyPositions: shared tick function used by both the live simulation and the
+    // frozen-layout fast path — eliminates duplicated position-update code.
+    const applyPositions = (): void => {
       link
         .attr('x1', d => {
           const source = typeof d.source === 'object' ? d.source : nodes.find(n => n.id === d.source);
@@ -625,51 +695,30 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
           const target = typeof d.target === 'object' ? d.target : nodes.find(n => n.id === d.target);
           return target?.y || 0;
         });
-
       node
         .attr('cx', d => d.x || 0)
         .attr('cy', d => d.y || 0);
-
       label
         .attr('x', d => d.x || 0)
         .attr('y', d => d.y || 0);
-
-      // Update output display positions
       outputDisplay
         .attr('transform', d => `translate(${d.x || 0}, ${d.y || 0})`);
-
-      // Save positions to preserve layout across re-renders
       nodes.forEach(n => {
         if (n.x !== undefined && n.y !== undefined) {
           nodePositionsRef.current.set(n.id, { x: n.x, y: n.y });
         }
       });
-    });
+    };
+
+    // Update positions on simulation tick
+    simulation.on('tick', applyPositions);
 
     // If all nodes have saved positions, stop simulation immediately and update visuals once
     if (allNodesHavePositions) {
-      // Manually update positions once
-      link
-        .attr('x1', d => {
-          const source = typeof d.source === 'object' ? d.source : nodes.find(n => n.id === d.source);
-          return source?.x || 0;
-        })
-        .attr('y1', d => {
-          const source = typeof d.source === 'object' ? d.source : nodes.find(n => n.id === d.source);
-          return source?.y || 0;
-        })
-        .attr('x2', d => {
-          const target = typeof d.target === 'object' ? d.target : nodes.find(n => n.id === d.target);
-          return target?.x || 0;
-        })
-        .attr('y2', d => {
-          const target = typeof d.target === 'object' ? d.target : nodes.find(n => n.id === d.target);
-          return target?.y || 0;
-        });
+      // Apply positions via the shared helper — no simulation ticks needed.
+      applyPositions();
 
       node
-        .attr('cx', d => d.x || 0)
-        .attr('cy', d => d.y || 0)
         .attr('fill', d => {
           if (d.wasJustMatched) return '#a855f7';
           if (d.isActive) return '#22c55e';
@@ -690,14 +739,6 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
         })
         .style('filter', d => d.wasJustMatched ? 'drop-shadow(0 0 10px #a855f7)' : 'none');
 
-      label
-        .attr('x', d => d.x || 0)
-        .attr('y', d => d.y || 0);
-
-      // Update output display positions
-      outputDisplay
-        .attr('transform', d => `translate(${d.x || 0}, ${d.y || 0})`);
-
       // Update link colors based on active state
       link
         .attr('stroke', d => d.isActive ? '#22c55e' : '#64748b')
@@ -708,11 +749,16 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       simulation.alpha(0).stop();
 
       // Unfix positions so nodes can still be dragged
-      nodes.forEach(node => {
-        node.fx = null;
-        node.fy = null;
+      nodes.forEach(n => {
+        n.fx = null;
+        n.fy = null;
       });
     }
+
+    // Save selections for the state-only fast path on subsequent renders.
+    simulationRef.current = simulation;
+    nodeSelRef.current = node as any;
+    linkSelRef.current = link as any;
 
     // Cleanup
     return () => {

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useVisualizerStore } from '../store';
 import TopNavigationBar from '../components/TopNavigationBar';
 import MachineContainerView from '../components/MachineContainerView';
@@ -11,15 +11,7 @@ interface MachineAdministrationViewProps {
 const MachineAdministrationView: React.FC<MachineAdministrationViewProps> = ({
   onNavigateBack
 }) => {
-  const { currentMachine, connectWebSocket, disconnectWebSocket } = useVisualizerStore();
-
-  // Connect WebSocket when component mounts for real-time updates
-  useEffect(() => {
-    connectWebSocket();
-    return () => {
-      disconnectWebSocket();
-    };
-  }, [connectWebSocket, disconnectWebSocket]);
+  const { currentMachine } = useVisualizerStore();
 
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column' }}>

@@ -67,30 +67,56 @@ function broadcast(payload: object): void {
   }
 }
 
+// Debounced state broadcast for high-frequency sensor pushes.
+// Rapid sensor POSTs coalesce into a single broadcast within the 50 ms window
+// instead of fanning out a full state payload to every WS client per event.
+let sensorBroadcastTimer: ReturnType<typeof setTimeout> | null = null;
+const SENSOR_DEBOUNCE_MS = 50;
+
+function scheduleSensorBroadcast(): void {
+  if (sensorBroadcastTimer !== null) return; // already pending — coalesce
+  sensorBroadcastTimer = setTimeout(() => {
+    sensorBroadcastTimer = null;
+    const state = engine.getState(lastPush, { running: autoTimer !== null, intervalMs: autoIntervalMs });
+    broadcast({ type: 'state-update', state });
+  }, SENSOR_DEBOUNCE_MS);
+}
+
 // ── Push helper ───────────────────────────────────────────────────────────
+//
+// Critical-path design:
+//   1. Call the Reality Engine DIRECTLY — no visualizer proxy hop.
+//   2. Advance engine state and return the result to the caller immediately.
+//   3. THEN asynchronously notify the visualizer so it can fan out to its
+//      WebSocket clients.  This step is fire-and-forget: it never blocks
+//      the perception loop or the HTTP caller, and its failure is non-fatal.
 
 async function doPush(): Promise<PushResult> {
   const vector = engine.assembleVector();
 
   try {
-    const response = await axios.post(`${PERCEPTION_TARGET_URL}/api/perceive`, {
+    // Direct call to the Reality Engine — bypasses the visualizer entirely.
+    // RE returns the step object directly (not wrapped in {success, step}).
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceive`, {
       vector,
       matchAlgorithm: engine.matchAlgorithm,
     });
     engine.advance();
     lastPush = Date.now();
 
+    // RE returns the step directly as response.data.
+    const step = response.data;
+
     // Update the engine's persistent perceptual space with the full post-merge
-    // state returned by the Reality Engine so that machine outputs written
-    // during this step's merge phase are carried forward into the next push.
-    const returnedPs: number[] | undefined = response.data.step?.perceptualSpace;
+    // state so that machine outputs written this step carry forward into the next push.
+    const returnedPs: number[] | undefined = step?.perceptualSpace;
     if (Array.isArray(returnedPs) && returnedPs.length === 256) {
       engine.updateFromPerceptualSpace(returnedPs);
     }
 
     const result: PushResult = {
-      success: response.data.success ?? true,
-      step: response.data.step,
+      success: true,
+      step,
       timestamp: lastPush,
       globalStep: engine.globalStep,
     };
@@ -99,8 +125,22 @@ async function doPush(): Promise<PushResult> {
     broadcast({ type: 'state-update', state });
     broadcast({ type: 'push-result', ...result });
 
+    // Passive visualizer notification — fire-and-forget, never awaited.
+    // The visualizer uses this to fan out to its own WebSocket clients.
+    // If the visualizer is unavailable the perception loop is unaffected.
+    setImmediate(() => {
+      axios.post(`${PERCEPTION_TARGET_URL}/api/perceive-notify`, {
+        step,
+        globalStep: result.globalStep,
+        timestamp: result.timestamp,
+      }).catch((err: any) => {
+        console.warn(`[doPush] Visualizer notify skipped:`, err.message);
+      });
+    });
+
     return result;
   } catch (err: any) {
+    console.error(`[doPush] Push failed (step ${engine.globalStep}):`, err.message);
     const result: PushResult = {
       success: false,
       timestamp: Date.now(),
@@ -311,8 +351,8 @@ app.post('/api/sensors/:id', (req: Request, res: Response) => {
     return;
   }
   const timestamp = Date.now();
-  const state = engine.getState(lastPush, { running: autoTimer !== null, intervalMs: autoIntervalMs });
-  broadcast({ type: 'state-update', state });
+  // Debounced: rapid sensor pushes coalesce into one broadcast per 50 ms window.
+  scheduleSensorBroadcast();
   res.json({ success: true, sensorId: id, timestamp });
 });
 

@@ -38,8 +38,9 @@ const OutputStreamVisualization: React.FC<OutputStreamVisualizationProps> = ({
     }
   }, [highlightedOutputId]);
 
+  const now = Date.now();
   const renderOutputCard = (output: OutputVector, isCurrent: boolean, index?: number) => {
-    const age = Date.now() - (output.timestamp || 0);
+    const age = now - (output.timestamp || 0);
     const isNew = age < 3000;
     const isHighlighted = highlightedOutputId === output.id;
 
@@ -47,8 +48,9 @@ const OutputStreamVisualization: React.FC<OutputStreamVisualizationProps> = ({
       <div
         key={output.id || index}
         ref={(el) => {
-          if (el && output.id) {
-            outputRefs.current.set(output.id, el);
+          if (output.id) {
+            if (el) outputRefs.current.set(output.id, el);
+            else outputRefs.current.delete(output.id);
           }
         }}
         style={{

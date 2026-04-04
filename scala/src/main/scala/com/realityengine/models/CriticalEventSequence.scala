@@ -21,6 +21,13 @@ class CriticalEventSequence(
   private var outputVectorIds:  Set[String]              = Set.empty
   var metadata: Map[String, Json] = Map.empty
 
+  // Pre-allocated transition buffers — cleared and reused each transition() call
+  // to avoid allocating new ListBuffers on every hot-path invocation.
+  private val _matchedBuf     = new scala.collection.mutable.ArrayBuffer[String](8)
+  private val _outputsBuf     = new scala.collection.mutable.ArrayBuffer[OutputVector](4)
+  private val _activatedBuf   = new scala.collection.mutable.ArrayBuffer[String](8)
+  private val _pendingBuf     = new scala.collection.mutable.HashSet[String]()
+
   // ── Mutations ────────────────────────────────────────────────────────────
 
   def addVector(vector: RealityVector): Unit = {
@@ -66,41 +73,42 @@ class CriticalEventSequence(
       v.clearLastOutputVector()
     }
 
-    val matchedVectors  = scala.collection.mutable.ListBuffer.empty[String]
-    val assertedOutputs = scala.collection.mutable.ListBuffer.empty[OutputVector]
-    val pendingActivations = scala.collection.mutable.Set.empty[String]
+    // Reuse pre-allocated buffers — no allocation per call.
+    _matchedBuf.clear()
+    _outputsBuf.clear()
+    _activatedBuf.clear()
+    _pendingBuf.clear()
 
     // Match every currently active vector.
     for (vector <- getActiveVectors) {
       val (matched, nextIds, outputs, _) = vector.transition(inputVector, matchAlgorithmOverride)
       if (matched) {
-        matchedVectors += vector.id
+        _matchedBuf += vector.id
 
         if (vector.getOutputVectors.nonEmpty) {
           vector.setWasJustMatched()
           outputs.headOption.foreach(ov => vector.setLastOutputVector(Some(ov)))
         }
 
-        nextIds.foreach(pendingActivations += _)
-        outputs.foreach(assertedOutputs += _)
+        nextIds.foreach(_pendingBuf += _)
+        outputs.foreach(_outputsBuf += _)
       }
     }
 
     // Deferred activation — apply after all deactivations have settled.
-    val activatedVectors = scala.collection.mutable.ListBuffer.empty[String]
-    for (id <- pendingActivations) {
+    for (id <- _pendingBuf) {
       vectors.get(id).foreach { nv =>
         if (!nv.isActive) {
           nv.setActive()
-          activatedVectors += id
+          _activatedBuf += id
         }
       }
     }
 
     SequenceResult(
-      matchedVectors   = matchedVectors.toList,
-      activatedVectors = activatedVectors.toList,
-      assertedOutputs  = assertedOutputs.toList
+      matchedVectors   = _matchedBuf.toList,
+      activatedVectors = _activatedBuf.toList,
+      assertedOutputs  = _outputsBuf.toList
     )
   }
 

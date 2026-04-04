@@ -18,6 +18,7 @@ class PerceptualSpaceSimulator(dimension: Int = 256) {
   private var isRunning:         Boolean              = false
   private var config:            Option[SimulationConfig] = None
   private var onStepComplete:    Option[(SimulationStep, Vector[Double]) => Unit] = None
+  private var cachedEdges:       List[Json]           = Nil
 
   // ── Configuration ─────────────────────────────────────────────────────────
 
@@ -28,9 +29,32 @@ class PerceptualSpaceSimulator(dimension: Int = 256) {
     require(machine.perceptualMapping.isDefined,
       s"Machine ${machine.name} does not have a perceptual mapping")
     machines = machines + (machine.id -> machine)
+    rebuildEdgeCache()
   }
 
-  def removeMachine(machineId: String): Unit = { machines = machines - machineId }
+  def removeMachine(machineId: String): Unit = {
+    machines = machines - machineId
+    rebuildEdgeCache()
+  }
+
+  private def rebuildEdgeCache(): Unit = {
+    val machineList = machines.values.toList
+    cachedEdges = for {
+      sourceM <- machineList if sourceM.perceptualMapping.isDefined
+      targetM <- machineList if targetM.id != sourceM.id && targetM.perceptualMapping.isDefined
+      srcOut   = sourceM.perceptualMapping.get.output
+      tgtIn    = targetM.perceptualMapping.get.input
+      srcEnd   = srcOut.offset + srcOut.length
+      tgtEnd   = tgtIn.offset + tgtIn.length
+      if !(srcEnd <= tgtIn.offset || srcOut.offset >= tgtEnd)
+    } yield Json.obj(
+      "source"       -> Json.fromString(sourceM.id),
+      "target"       -> Json.fromString(targetM.id),
+      "sourceRegion" -> Json.obj("offset" -> Json.fromInt(srcOut.offset), "length" -> Json.fromInt(srcOut.length)),
+      "targetRegion" -> Json.obj("offset" -> Json.fromInt(tgtIn.offset),  "length" -> Json.fromInt(tgtIn.length)),
+      "overlap"      -> Json.fromBoolean(true)
+    )
+  }
   def getMachines: List[Machine]             = machines.values.toList
   def getPerceptualSpace: PerceptualSpace    = perceptualSpace
 
@@ -173,26 +197,9 @@ class PerceptualSpaceSimulator(dimension: Int = 256) {
       )
     }
 
-    val machineList = machines.values.toList
-    val edges = for {
-      sourceM <- machineList if sourceM.perceptualMapping.isDefined
-      targetM <- machineList if targetM.id != sourceM.id && targetM.perceptualMapping.isDefined
-      srcOut   = sourceM.perceptualMapping.get.output
-      tgtIn    = targetM.perceptualMapping.get.input
-      srcEnd   = srcOut.offset + srcOut.length
-      tgtEnd   = tgtIn.offset + tgtIn.length
-      if !(srcEnd <= tgtIn.offset || srcOut.offset >= tgtEnd)
-    } yield Json.obj(
-      "source"       -> Json.fromString(sourceM.id),
-      "target"       -> Json.fromString(targetM.id),
-      "sourceRegion" -> Json.obj("offset" -> Json.fromInt(srcOut.offset), "length" -> Json.fromInt(srcOut.length)),
-      "targetRegion" -> Json.obj("offset" -> Json.fromInt(tgtIn.offset),  "length" -> Json.fromInt(tgtIn.length)),
-      "overlap"      -> Json.fromBoolean(true)
-    )
-
     Json.obj(
       "nodes"                    -> Json.arr(nodes: _*),
-      "edges"                    -> Json.arr(edges: _*),
+      "edges"                    -> Json.arr(cachedEdges: _*),
       "perceptualSpaceDimension" -> Json.fromInt(dimension)
     )
   }

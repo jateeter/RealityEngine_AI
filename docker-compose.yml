@@ -171,11 +171,11 @@ services:
       timeout: 5s
       retries: 3
 
-  # Perception Engine Backend - accessed via TLS proxy at https://localhost:3004
+  # Perception Engine Backend (Scala/Akka) - accessed via TLS proxy at https://localhost:3004
   perception-engine-backend:
     build:
-      context: ./perception-engine/backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: scala/perception-engine/Dockerfile
     container_name: reality-engine-perception-backend
     environment:
       - PORT=3004

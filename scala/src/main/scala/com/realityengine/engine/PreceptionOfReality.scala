@@ -22,8 +22,16 @@ class PreceptionOfReality(
   val vectorDimension:       Int,
   val preprocessingEnabled:  Boolean = true
 ) {
-  type TransformFunction = Vector[Double] => Vector[Double]
+  // In-place transformer: mutates the pre-sized working array directly.
+  // Eliminates one Vector[Double] allocation per transformer per call.
+  type TransformFunction = Array[Double] => Unit
+
   private var transformers: List[TransformFunction] = Nil
+
+  // Pre-allocated working buffer — reused across perceive() calls.
+  // perceive() is called from a single thread (or synchronized externally),
+  // so sharing this array is safe.
+  private val workBuf: Array[Double] = new Array[Double](vectorDimension)
 
   if (preprocessingEnabled) addDefaultTransformers()
 
@@ -31,37 +39,41 @@ class PreceptionOfReality(
   def clearTransformers(): Unit = { transformers = Nil }
 
   def perceive(observation: RawObservation): ProcessedPerception = {
-    var vectorData       = observation.data
-    val transformations  = scala.collection.mutable.ListBuffer.empty[String]
+    // Single pass: copy input into pre-sized buffer (zero-pad or truncate),
+    // apply all transformers in-place, then snapshot once as immutable Vector.
+    val src    = observation.data
+    val srcLen = math.min(src.length, vectorDimension)
+    var i = 0
+    while (i < srcLen)            { workBuf(i) = src(i); i += 1 }
+    while (i < vectorDimension)   { workBuf(i) = 0.0;    i += 1 }
 
-    transformers.foreach { t => vectorData = t(vectorData) }
-
-    vectorData = ensureDimension(vectorData)
-    transformations += "dimension-normalization"
+    transformers.foreach(_(workBuf))
 
     ProcessedPerception(
-      inputVector          = vectorData,
+      inputVector          = workBuf.toVector,   // single allocation
       originalObservation  = observation,
       processingTimestamp  = System.currentTimeMillis(),
-      transformations      = transformations.toList
+      transformations      = List("dimension-normalization")
     )
   }
 
   def perceiveMultiple(observations: List[RawObservation]): List[ProcessedPerception] =
     observations.map(perceive)
 
-  private def ensureDimension(v: Vector[Double]): Vector[Double] = {
-    if (v.length == vectorDimension)      v
-    else if (v.length < vectorDimension)  v ++ Vector.fill(vectorDimension - v.length)(0.0)
-    else                                  v.take(vectorDimension)
-  }
-
   private def addDefaultTransformers(): Unit =
-    addTransformer { data =>
-      val mx   = math.max(data.max, 1.0)
-      val mn   = math.min(data.min, 0.0)
+    addTransformer { arr =>
+      // Find min/max in one pass
+      var mx = 1.0; var mn = 0.0; var i = 0
+      while (i < arr.length) {
+        if (arr(i) > mx) mx = arr(i)
+        if (arr(i) < mn) mn = arr(i)
+        i += 1
+      }
       val range = mx - mn
-      if (range == 0.0) data else data.map(v => (v - mn) / range)
+      if (range != 0.0) {
+        i = 0
+        while (i < arr.length) { arr(i) = (arr(i) - mn) / range; i += 1 }
+      }
     }
 
   def getConfig: Map[String, Any] = Map(

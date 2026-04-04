@@ -15,10 +15,24 @@ export class PerceptionEngine {
   private sources: Map<string, SourceConfig> = new Map();
   private testStep: Map<string, number> = new Map();
   private walkState: Map<string, number[]> = new Map();
-  // Persistent perceptual space: carries machine outputs forward between pushes.
-  // Sources overwrite their own regions; all other positions retain the values
-  // that the Reality Engine wrote back in the previous step's merge phase.
-  private persistentVector: number[] = new Array(256).fill(0);
+
+  // Typed array for the persistent perceptual space — avoids per-element boxing
+  // overhead of plain number[] and enables fast bulk copy via Float64Array.set().
+  private persistentVector: Float64Array = new Float64Array(256);
+
+  // Pre-allocated output buffer — reused by assembleVector() on every push tick
+  // so no heap allocation is needed per call.
+  private outBuf: Float64Array = new Float64Array(256);
+
+  // Active source IDs — kept in sync with sources.active so that advance() and
+  // assembleVector() skip paused/exhausted sources without iterating the full map.
+  private activeSources: Set<string> = new Set();
+
+  // Box-Muller spare: each pair (u1, u2) produces two independent normal samples.
+  // z1 is stored here and consumed on the next gaussian-noise element, halving
+  // the number of Math.random() calls per region.
+  private gaussianSpare: number | null = null;
+
   globalStep = 0;
   matchAlgorithm: MatchAlgorithm = 'gte';
 
@@ -32,6 +46,7 @@ export class PerceptionEngine {
     const id = uuidv4();
     const source = { ...config, id } as SourceConfig;
     this.sources.set(id, source);
+    if (source.active) this.activeSources.add(id);
 
     if (source.type === 'test') {
       this.testStep.set(id, 0);
@@ -46,6 +61,7 @@ export class PerceptionEngine {
   /** Restore a previously persisted source preserving its original ID. */
   restoreSource(source: SourceConfig): void {
     this.sources.set(source.id, source);
+    if (source.active) this.activeSources.add(source.id);
 
     if (source.type === 'test') {
       this.testStep.set(source.id, 0);
@@ -58,6 +74,7 @@ export class PerceptionEngine {
   removeSource(id: string): boolean {
     this.testStep.delete(id);
     this.walkState.delete(id);
+    this.activeSources.delete(id);
     return this.sources.delete(id);
   }
 
@@ -66,6 +83,8 @@ export class PerceptionEngine {
     if (!existing) return null;
     const updated = { ...existing, ...patch, id } as SourceConfig;
     this.sources.set(id, updated);
+    if (updated.active) this.activeSources.add(id);
+    else this.activeSources.delete(id);
     return updated;
   }
 
@@ -111,20 +130,24 @@ export class PerceptionEngine {
    * persistent base to the RE's post-merge state.
    */
   assembleVector(): number[] {
-    const out = [...this.persistentVector];
+    // Bulk copy via typed array: one native memcpy vs 256 individual JS writes.
+    this.outBuf.set(this.persistentVector);
 
-    for (const [id, src] of this.sources) {
-      if (!src.active) continue;
+    for (const id of this.activeSources) {
+      const src = this.sources.get(id);
+      if (!src) continue;
 
       const values = this.getSourceValues(id, src);
       const { offset, length } = src.region;
+      // Single pre-computed bound — eliminates double comparison per loop iteration.
+      const len = Math.min(length, values.length);
 
-      for (let i = 0; i < length && i < values.length; i++) {
-        out[offset + i] = Math.max(0, Math.min(1, values[i]));
+      for (let i = 0; i < len; i++) {
+        this.outBuf[offset + i] = Math.max(0, Math.min(1, values[i]));
       }
     }
 
-    return out;
+    return Array.from(this.outBuf);
   }
 
   /**
@@ -144,8 +167,11 @@ export class PerceptionEngine {
   advance(): void {
     this.globalStep++;
 
-    for (const [id, src] of this.sources) {
-      if (!src.active) continue;
+    // Iterate only active sources — skips paused/exhausted sources
+    // without touching the full sources map.
+    for (const id of this.activeSources) {
+      const src = this.sources.get(id);
+      if (!src) continue;
 
       if (src.type === 'test') {
         const current = this.testStep.get(id) ?? 0;
@@ -154,8 +180,9 @@ export class PerceptionEngine {
           if (src.loop) {
             this.testStep.set(id, 0);
           } else {
-            // Deactivate exhausted non-looping source
+            // Deactivate exhausted non-looping source and remove from active set.
             this.sources.set(id, { ...src, active: false });
+            this.activeSources.delete(id);
             this.testStep.set(id, 0);
           }
         } else {
@@ -189,13 +216,17 @@ export class PerceptionEngine {
 
   reset(): void {
     this.globalStep = 0;
-    this.persistentVector = new Array(256).fill(0);
+    this.persistentVector.fill(0);
+    this.gaussianSpare = null;
+
     for (const [id, src] of this.sources) {
       if (src.type === 'test') {
         this.testStep.set(id, 0);
         // Reactivate deactivated test sources
         if (!src.active) {
-          this.sources.set(id, { ...src, active: true });
+          const reactivated = { ...src, active: true };
+          this.sources.set(id, reactivated);
+          this.activeSources.add(id);
         }
       }
       if (src.type === 'simulated' && src.pattern === 'random-walk') {
@@ -282,11 +313,21 @@ export class PerceptionEngine {
       }
 
       case 'gaussian-noise': {
-        // Box-Muller transform
-        const u1 = Math.random();
+        // Consume the spare from the previous Box-Muller pair if available.
+        // Halves random() calls and Math.sqrt/log work for multi-element regions.
+        if (this.gaussianSpare !== null) {
+          const z = this.gaussianSpare;
+          this.gaussianSpare = null;
+          return dcOffset + amplitude * z;
+        }
+        // Box-Muller: produce two independent standard normals z0, z1.
+        // Store z1 as the spare for the next element.
+        const u1 = Math.max(Math.random(), 1e-10);
         const u2 = Math.random();
-        const z = Math.sqrt(-2 * Math.log(u1 + 1e-10)) * Math.cos(2 * Math.PI * u2);
-        return dcOffset + amplitude * z;
+        const mag = Math.sqrt(-2 * Math.log(u1));
+        const z0 = mag * Math.cos(2 * Math.PI * u2);
+        this.gaussianSpare = mag * Math.sin(2 * Math.PI * u2);
+        return dcOffset + amplitude * z0;
       }
 
       case 'binary':

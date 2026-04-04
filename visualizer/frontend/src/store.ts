@@ -89,12 +89,6 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
       localStorage.setItem('lastViewedMachineId', machineId);
 
-      // Update last accessed timestamp (best-effort — PUT requires full machine JSON so this may
-      // fail; wrap so it never aborts the sequence fetch below)
-      try {
-        await api.updateMachine(machineId, { metadata: { lastAccessedAt: Date.now() } });
-      } catch { /* non-fatal */ }
-
       const sequences = await api.getSequences();
       set({ sequences });
 
@@ -259,28 +253,79 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
 
     ws.onmessage = (event) => {
       try {
-        const message: WebSocketMessage = JSON.parse(event.data);
+        const message = JSON.parse(event.data);
+        // Schema guard: reject malformed messages before touching state.
+        if (typeof message !== 'object' || message === null || typeof message.type !== 'string') return;
 
         switch (message.type) {
           case 'perceptual-simulation-stepped': {
             const step = (message as any).step;
-            if (step) {
-              // Refresh sequences so CriticalEventGraphView sees live activation state
-              // (isActive, wasJustMatched, lastOutputVector) from the engine.
-              api.getSequences().then(sequences => {
-                const newOutputs: OutputVector[] = [];
-                for (const seq of sequences) {
-                  for (const node of seq.nodes) {
-                    if (node.wasJustMatched && node.lastOutputVector) {
-                      newOutputs.push(node.lastOutputVector as OutputVector);
-                    }
-                  }
-                }
-                const updates: { sequences: SequenceGraph[]; currentOutputVectors?: OutputVector[] } = { sequences };
-                if (newOutputs.length > 0) updates.currentOutputVectors = newOutputs;
-                set(updates);
-              }).catch(err => console.error('Error refreshing sequences after step:', err));
+            // Validate required step fields before applying to state.
+            if (
+              typeof step !== 'object' || step === null ||
+              typeof step.stepNumber !== 'number' ||
+              typeof step.machineResults !== 'object' || step.machineResults === null
+            ) break;
+
+            // Apply node activation state directly from the step payload.
+            // This eliminates the GET /api/viz/sequences round-trip that previously
+            // happened on every simulated step.
+
+            type SeqDelta = {
+              matched: Set<string>;
+              activated: Set<string>;
+              outputs: OutputVector[];
+            };
+            const deltas = new Map<string, SeqDelta>();
+            const newOutputs: OutputVector[] = [];
+
+            for (const mr of Object.values(step.machineResults as Record<string, any>)) {
+              const seqResults: Record<string, any> = (mr as any).transitionResult?.sequenceResults ?? {};
+              for (const [seqId, sr] of Object.entries(seqResults)) {
+                const outputs: OutputVector[] = (sr as any).assertedOutputs ?? [];
+                deltas.set(seqId, {
+                  matched:   new Set<string>((sr as any).matchedVectors   ?? []),
+                  activated: new Set<string>((sr as any).activatedVectors ?? []),
+                  outputs,
+                });
+                newOutputs.push(...outputs);
+              }
             }
+
+            // Skip the sequences map entirely if no sequences changed this step.
+            if (deltas.size === 0) {
+              if (newOutputs.length > 0) set({ currentOutputVectors: newOutputs });
+              break;
+            }
+
+            let changed = false;
+            const updatedSeqs = get().sequences.map(seq => {
+              const d = deltas.get(seq.sequenceId);
+              if (!d) return seq; // same reference — no re-render for this sequence
+              changed = true;
+              const updatedNodes = seq.nodes.map(node => {
+                const wasJustMatched = d.matched.has(node.id) && node.hasOutput;
+                // Transitional vectors (matched, not initial, no output) are deactivated.
+                const isDeactivated  = d.matched.has(node.id) && !node.isInitial && !node.hasOutput;
+                const isActivated    = d.activated.has(node.id);
+                return {
+                  ...node,
+                  wasJustMatched,
+                  lastOutputVector: wasJustMatched ? (d.outputs[0] ?? null) : null,
+                  isActive: isDeactivated ? false : isActivated ? true : node.isActive,
+                };
+              });
+              return {
+                ...seq,
+                nodes: updatedNodes,
+                stats: { ...seq.stats, activeVectors: updatedNodes.filter(n => n.isActive).length },
+              };
+            });
+
+            const updates: { sequences?: SequenceGraph[]; currentOutputVectors?: OutputVector[] } = {};
+            if (changed) updates.sequences = updatedSeqs;
+            if (newOutputs.length > 0) updates.currentOutputVectors = newOutputs;
+            if (updates.sequences !== undefined || updates.currentOutputVectors !== undefined) set(updates);
             break;
           }
 

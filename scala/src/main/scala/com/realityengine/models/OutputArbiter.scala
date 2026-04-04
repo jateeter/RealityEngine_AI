@@ -49,17 +49,26 @@ class OutputArbiter(private var rule: ArbiterRule = ArbiterRule.AND) {
     sequenceOutputs: Map[String, List[OutputVector]],
     totalSequences:  Int
   ): ArbiterDecision = {
-    val allOutputs           = sequenceOutputs.values.flatten.toList
-    val sequencesWithOutput  = sequenceOutputs.values.count(_.nonEmpty)
+    // Single pass: accumulate flattened output list and non-empty count together,
+    // avoiding the double iteration of the previous .flatten.toList then .count.
+    var sequencesWithOutput = 0
+    val allOutputs = List.newBuilder[OutputVector]
+    for (outs <- sequenceOutputs.values) {
+      if (outs.nonEmpty) {
+        sequencesWithOutput += 1
+        allOutputs ++= outs
+      }
+    }
+    val outputList = allOutputs.result()
 
     val shouldOutput = rule match {
       case ArbiterRule.AND         => sequencesWithOutput == totalSequences && totalSequences > 0
       case ArbiterRule.OR          => sequencesWithOutput > 0
-      case ArbiterRule.PASSTHROUGH => allOutputs.nonEmpty
+      case ArbiterRule.PASSTHROUGH => outputList.nonEmpty
     }
 
     val machineOutput =
-      if (shouldOutput && allOutputs.nonEmpty) Some(combineOutputs(allOutputs))
+      if (shouldOutput && outputList.nonEmpty) Some(combineOutputs(outputList))
       else None
 
     ArbiterDecision(

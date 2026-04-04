@@ -20,6 +20,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 import java.io.{File, FileInputStream}
 import java.nio.file.{Files, Paths}
+import scala.collection.concurrent.TrieMap
 
 // Routes — Akka HTTP route definitions mirroring all TypeScript /api/... endpoints.
 class Routes(
@@ -31,6 +32,22 @@ class Routes(
   private val perception = new PreceptionOfReality(
     sys.env.getOrElse("VECTOR_DIMENSION", "256").toIntOption.getOrElse(256))
   private var sampler: Option[RealitySampler] = None
+
+  // JSON file cache: path -> (lastModified, rawJson).
+  // Invalidated automatically when the file's mtime changes.
+  private val jsonFileCache = TrieMap.empty[String, (Long, String)]
+
+  private def readJsonFile(file: File): String = {
+    val mtime = file.lastModified()
+    val key   = file.getAbsolutePath
+    jsonFileCache.get(key) match {
+      case Some((cachedMtime, json)) if cachedMtime == mtime => json
+      case _ =>
+        val json = new String(Files.readAllBytes(file.toPath))
+        jsonFileCache.update(key, (mtime, json))
+        json
+    }
+  }
 
   // Staging buffer for chunk-based simulation configure protocol
   private var sequenceBuffer: Vector[Vector[Double]] = Vector.empty
@@ -82,7 +99,7 @@ class Routes(
       if (!file.exists()) { println(s"  ⚠ JSON file not found: $filename"); failed += 1 }
       else {
         Try {
-          val json    = new String(Files.readAllBytes(file.toPath))
+          val json    = readJsonFile(file)
           val baseName = filename.replaceAll("\\.json$", "").toLowerCase.replaceAll("[^a-z0-9]+", "-")
           val machine  = MachineLoader.loadFromJson(json, Some(s"machine-$baseName"))
           addMachineToSystem(machine)
@@ -122,12 +139,10 @@ class Routes(
               "qdrantUrl"         -> Json.fromString(sys.env.getOrElse("QDRANT_URL", "http://localhost:6333")),
               "collectionName"    -> Json.fromString(sys.env.getOrElse("COLLECTION_NAME", "reality-vectors"))
             )) } },
-            path("dimension") { put { entity(as[Json]) { body =>
-              val dim = body.hcursor.get[Int]("dimension").getOrElse(256)
+            path("dimension") { put { parameter("dimension".as[Int].?(256)) { dim =>
               complete(Json.obj("success" -> Json.fromBoolean(true), "dimension" -> Json.fromInt(dim)))
             } } },
-            path("threshold") { put { entity(as[Json]) { body =>
-              val t = body.hcursor.get[Double]("threshold").getOrElse(0.5)
+            path("threshold") { put { parameter("threshold".as[Double].?(0.5)) { t =>
               complete(Json.obj("success" -> Json.fromBoolean(true), "threshold" -> Json.fromDoubleOrNull(t)))
             } } }
           )
@@ -325,7 +340,7 @@ class Routes(
               val files = if (dir.exists()) dir.listFiles().filter(_.getName.endsWith(".json")).toList else Nil
               val machineList = files.flatMap { file =>
                 Try {
-                  val json = new String(Files.readAllBytes(file.toPath))
+                  val json = readJsonFile(file)
                   val root = io.circe.parser.parse(json).getOrElse(io.circe.Json.obj())
                   val m    = root.hcursor.downField("machine")
                   Json.obj(
@@ -345,7 +360,7 @@ class Routes(
                 val file = new File(machinesDir, if (name.endsWith(".json")) name else s"$name.json")
                 if (!file.exists()) complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString(s"Machine file not found: $name")))
                 else Try {
-                  val json    = new String(Files.readAllBytes(file.toPath))
+                  val json    = readJsonFile(file)
                   val baseName = name.replaceAll("\\.json$", "").toLowerCase.replaceAll("[^a-z0-9]+", "-")
                   val machine = MachineLoader.loadFromJson(json, Some(s"machine-$baseName"))
                   addMachineToSystem(machine)
@@ -385,6 +400,23 @@ class Routes(
             path(Segment) { id =>
               concat(
                 get    { engine.getMachine(id).fold(complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("Machine not found"))))(m => complete(Json.obj("machine" -> m.toJson))) },
+                patch  { entity(as[Json]) { body =>
+                  engine.getMachine(id).fold(
+                    complete(StatusCodes.NotFound -> Json.obj("error" -> Json.fromString("Machine not found")))
+                  ) { existing =>
+                    val c           = body.hcursor
+                    val newName     = c.get[String]("name").getOrElse(existing.name)
+                    val newDesc     = c.get[String]("description").getOrElse(existing.description)
+                    val metaPatch   = c.downField("metadata").as[Map[String, Json]].getOrElse(Map.empty)
+                    val newMetadata = existing.metadata ++ metaPatch
+                    val updated     = new Machine(newName, newDesc, newMetadata, existing.getArbiter.getRule, existing.perceptualMapping, id)
+                    updated.matchAlgorithm = existing.matchAlgorithm
+                    existing.getAllSequences.foreach(updated.addSequence)
+                    engine.removeMachine(id); simulator.removeMachine(id)
+                    addMachineToSystem(updated)
+                    complete(Json.obj("success" -> Json.fromBoolean(true), "machine" -> updated.toJson))
+                  }
+                } },
                 put    { entity(as[Json]) { body =>
                   Try(MachineLoader.loadFromJson(body.noSpaces, Some(id))) match {
                     case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))

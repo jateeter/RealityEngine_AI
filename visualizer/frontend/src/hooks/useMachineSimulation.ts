@@ -75,68 +75,44 @@ export const useMachineSimulation = () => {
   const [isDemoLoading, setIsDemoLoading] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
+  // O(1) deduplication — replaces the O(n) .some() scan on every step.
+  // Cleared on reset and kept in sync with stepHistory trimming.
+  const seenStepNumbers = useRef<Set<number>>(new Set());
 
   // ── Machine loading ────────────────────────────────────────────────────────
+  // Single expanded call replaces the previous N+(N×M) waterfall:
+  //   getMachines() → getMachine() × N → getSequence() × N×M
 
   const loadMachines = useCallback(async () => {
     try {
-      const machinesData = await api.getMachines();
+      const expanded = await api.getMachinesExpanded();
 
-      const detailedMachines = await Promise.all(
-        machinesData.map(async (machine: any) => {
-          try {
-            const details = await api.getMachine(machine.id);
-
-            const fullSequences = await Promise.all(
-              (details.sequenceIds || []).map(async (seqId: string) => {
-                try {
-                  const sequenceGraph = await api.getSequence(seqId);
-                  return {
-                    sequenceId: sequenceGraph.sequenceId,
-                    name: sequenceGraph.sequenceName,
-                    vectors: (sequenceGraph.nodes || []).map((n: any): VectorNodeLite => ({
-                      id: n.id,
-                      // Prefer semantic name from metadata, fall back to truncated UUID
-                      label: n.metadata?.name || n.metadata?.role || (n.label && !n.label.startsWith('V-') ? n.label : '') || n.id.slice(-8),
-                      isInitial: n.isInitial ?? false,
-                      hasOutput: n.hasOutput ?? (n.outputVectors?.length > 0 ? true : false),
-                      elements: n.elements ?? [],
-                    })),
-                    // Actual edges from nextVectorIds — drives the correct CES graph
-                    edges: (sequenceGraph.edges || []).map((e: any): VisMachineEdge => ({
-                      source: e.source,
-                      target: e.target,
-                    })),
-                    metadata: sequenceGraph.metadata,
-                  } as VisMachineSequence;
-                } catch {
-                  return null;
-                }
-              })
-            );
-
-            return {
-              id: machine.id,
-              name: machine.name,
-              isExample: machine.isExample || false,
-              sequences: fullSequences.filter(Boolean) as VisMachineSequence[],
-              status: 'idle' as const,
-              justFired: false,
-              inputRegion: details.perceptualMapping?.input,
-              outputRegion: details.perceptualMapping?.output,
-            } as VisMachine;
-          } catch {
-            return {
-              id: machine.id,
-              name: machine.name,
-              isExample: false,
-              sequences: [],
-              status: 'idle' as const,
-              justFired: false,
-            } as VisMachine;
-          }
-        })
-      );
+      const detailedMachines: VisMachine[] = expanded.map((machine: any) => ({
+        id: machine.id,
+        name: machine.name,
+        isExample: machine.isExample || false,
+        sequences: (machine.sequences || []).map((seq: any): VisMachineSequence => ({
+          sequenceId: seq.sequenceId,
+          name: seq.sequenceName,
+          vectors: (seq.nodes || []).map((n: any): VectorNodeLite => ({
+            id: n.id,
+            // Prefer semantic name from metadata, fall back to truncated UUID
+            label: n.metadata?.name || n.metadata?.role || (n.label && !n.label.startsWith('V-') ? n.label : '') || n.id.slice(-8),
+            isInitial: n.isInitial ?? false,
+            hasOutput: n.hasOutput ?? (n.outputVectors?.length > 0),
+            elements: n.elements ?? [],
+          })),
+          edges: (seq.edges || []).map((e: any): VisMachineEdge => ({
+            source: e.source,
+            target: e.target,
+          })),
+          metadata: seq.metadata,
+        })),
+        status: 'idle' as const,
+        justFired: false,
+        inputRegion: machine.perceptualMapping?.input,
+        outputRegion: machine.perceptualMapping?.output,
+      }));
 
       setMachines(detailedMachines);
     } catch (error) {
@@ -177,16 +153,41 @@ export const useMachineSimulation = () => {
     };
 
     setStepHistory((prev) => {
-      // Deduplicate — skip if this step was already applied (e.g. via WebSocket)
-      if (prev.some(r => r.stepNumber === record.stepNumber)) return prev;
+      // O(1) deduplication via Set — avoids O(n) .some() scan on every step.
+      if (seenStepNumbers.current.has(record.stepNumber)) return prev;
+      seenStepNumbers.current.add(record.stepNumber);
       const next = [...prev, record];
-      return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next;
+      if (next.length > MAX_HISTORY) {
+        const trimmed = next.slice(next.length - MAX_HISTORY);
+        // Rebuild Set to match trimmed history so it stays bounded at MAX_HISTORY entries.
+        seenStepNumbers.current.clear();
+        for (const r of trimmed) seenStepNumbers.current.add(r.stepNumber);
+        return trimmed;
+      }
+      return next;
     });
 
+    // Apply machine status + per-node activation state in one pass.
+    // Activation deltas are read directly from step.machineResults.transitionResult
+    // so no GET /api/viz/sequences round-trip is needed on every step.
     setMachines((prev) =>
       prev.map((m) => {
         const fired  = activeIds.includes(m.id);
         const result = machineResults[m.id];
+
+        // Build per-sequence delta from the raw step payload (typed as any since
+        // StepMachineResult omits transitionResult, which is present in the JSON).
+        type SeqDelta = { matched: Set<string>; activated: Set<string> };
+        const rawMr: any = (step.machineResults ?? {})[m.id];
+        const seqResults: Record<string, any> = rawMr?.transitionResult?.sequenceResults ?? {};
+        const seqDeltas = new Map<string, SeqDelta>();
+        for (const [seqId, sr] of Object.entries(seqResults)) {
+          seqDeltas.set(seqId, {
+            matched:   new Set<string>((sr as any).matchedVectors   ?? []),
+            activated: new Set<string>((sr as any).activatedVectors ?? []),
+          });
+        }
+
         return {
           ...m,
           status: fired ? ('processing' as const) : ('idle' as const),
@@ -195,42 +196,26 @@ export const useMachineSimulation = () => {
           latestOutputVector: fired
             ? (result?.outputVector ?? m.latestOutputVector)
             : m.latestOutputVector,
+          sequences: m.sequences.map((seq) => {
+            const d = seqDeltas.get(seq.sequenceId);
+            if (!d) return seq;
+            return {
+              ...seq,
+              vectors: seq.vectors.map((v) => {
+                const wasJustMatched = d.matched.has(v.id) && v.hasOutput;
+                const isDeactivated  = d.matched.has(v.id) && !v.isInitial && !v.hasOutput;
+                const isActivated    = d.activated.has(v.id);
+                return {
+                  ...v,
+                  wasJustMatched,
+                  isActive: isDeactivated ? false : isActivated ? true : (v.isActive ?? false),
+                };
+              }),
+            };
+          }),
         };
       })
     );
-
-    // Asynchronously fetch per-node activation state so individual CES nodes
-    // can be colored correctly (isActive = cyan, wasJustMatched = amber glow).
-    api.getSequences().then((sequenceGraphs) => {
-      const nodeStateBySeqId = new Map<string, Map<string, { isActive: boolean; wasJustMatched: boolean }>>();
-      for (const sg of sequenceGraphs as any[]) {
-        const nodeMap = new Map<string, { isActive: boolean; wasJustMatched: boolean }>();
-        for (const n of (sg.nodes || [])) {
-          nodeMap.set(n.id, {
-            isActive:       n.isActive       ?? false,
-            wasJustMatched: n.wasJustMatched ?? false,
-          });
-        }
-        nodeStateBySeqId.set(sg.sequenceId, nodeMap);
-      }
-      setMachines((prev) =>
-        prev.map((m) => ({
-          ...m,
-          sequences: m.sequences.map((seq) => {
-            const nodeMap = nodeStateBySeqId.get(seq.sequenceId);
-            if (!nodeMap) return seq;
-            return {
-              ...seq,
-              vectors: seq.vectors.map((v) => ({
-                ...v,
-                isActive:       nodeMap.get(v.id)?.isActive       ?? false,
-                wasJustMatched: nodeMap.get(v.id)?.wasJustMatched ?? false,
-              })),
-            };
-          }),
-        }))
-      );
-    }).catch(() => { /* per-node state is cosmetic — ignore errors */ });
   }, []);
 
   // ── WebSocket ──────────────────────────────────────────────────────────────
@@ -248,6 +233,7 @@ export const useMachineSimulation = () => {
             // Step data is in msg.step; msg.data only carries activeMachineIds
             applyStepResult(msg.step);
           } else if (msg.type === 'perceptual-simulation-reset') {
+            seenStepNumbers.current.clear();
             setStepHistory([]);
             setMachines((prev) =>
               prev.map((m) => ({
@@ -335,6 +321,7 @@ export const useMachineSimulation = () => {
         api.resetPerceptualSimulation(),
       ]);
       setIsSimulationRunning(false);
+      seenStepNumbers.current.clear();
       setStepHistory([]);
       setMachines((prev) =>
         prev.map((m) => ({

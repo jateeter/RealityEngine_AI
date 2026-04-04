@@ -33,7 +33,10 @@ class RealityEngine(
   private var sequences:         Map[String, CriticalEventSequence] = Map.empty
   private var machines:          Map[String, Machine]               = Map.empty
   private var checkpoints:       Map[String, Map[String, MachineCheckpoint]] = Map.empty
-  private var transitionHistory: List[TransitionResult]             = Nil
+  // Circular buffer: newest at index 0, oldest at the tail.
+  // prepend is O(1) amortized; removeLast is O(1) amortized.
+  private val transitionHistory: scala.collection.mutable.ArrayDeque[TransitionResult] =
+    scala.collection.mutable.ArrayDeque.empty
 
   val preceptionEngine = new PreceptionEngine(universalDimension)
 
@@ -120,15 +123,19 @@ class RealityEngine(
         s"sequencesWithOutput=${result.arbiterMetadata.sequencesWithOutput} " +
         s"shouldOutput=${result.arbiterMetadata.shouldOutput} ts=${result.timestamp}")
 
-    // Tag machineOutput metadata
+    // Tag machineOutput metadata.
+    // Static Json values computed once outside the per-output map.
+    val tagMachineId    = Json.fromString(machineId)
+    val tagMachineName  = Json.fromString(machine.name)
+    val tagDim          = Json.fromInt(universalInputSpace.length)
+    val tagMerged       = Json.fromBoolean(result.arbiterMetadata.shouldOutput && machine.perceptualMapping.isDefined)
     result.copy(machineOutput = result.machineOutput.map { ov =>
       ov.copy(metadata = ov.metadata ++
-        Map("machineId"   -> Json.fromString(machineId),
-            "machineName" -> Json.fromString(machine.name),
-            "preceptionUsed" -> Json.fromBoolean(true),
-            "universalSpaceDimension" -> Json.fromInt(universalInputSpace.length),
-            "outputMergedToPerceptualSpace" -> Json.fromBoolean(
-              result.arbiterMetadata.shouldOutput && machine.perceptualMapping.isDefined)))
+        Map("machineId"                    -> tagMachineId,
+            "machineName"                  -> tagMachineName,
+            "preceptionUsed"               -> RealityEngine.JsonTrue,
+            "universalSpaceDimension"      -> tagDim,
+            "outputMergedToPerceptualSpace"-> tagMerged))
     })
   }
 
@@ -138,45 +145,46 @@ class RealityEngine(
   def processUniversalInputForAllMachines(universalInputSpace: Vector[Double]): Map[String, MachineTransitionResult] = {
     val resolvedInputs = preceptionEngine.resolveInputsForMachines(universalInputSpace, machines)
 
-    // Phase 2: process each machine with its snapshot
-    val results = machines.flatMap { case (machineId, machine) =>
-      resolvedInputs.get(machineId).map { machineInput =>
-        try {
-          val result = machine.processInput(machineInput)
-          val tagged = result.copy(machineOutput = result.machineOutput.map { ov =>
-            ov.copy(metadata = ov.metadata ++
-              Map("machineId"   -> Json.fromString(machineId),
-                  "machineName" -> Json.fromString(machine.name),
-                  "preceptionUsed" -> Json.fromBoolean(true),
-                  "universalSpaceDimension" -> Json.fromInt(universalInputSpace.length)))
-          })
-          machineId -> tagged
-        } catch { case e: Exception =>
-          System.err.println(s"Error processing machine $machineId: ${e.getMessage}")
-          throw e
+    // Pre-compute the constant tag values once per call, not once per machine/output.
+    val tagDim = Json.fromInt(universalInputSpace.length)
+
+    // Phase 2: process each machine — carry machine reference so Phase 3 needs no Map lookup.
+    val resultPairs: Iterable[(Machine, String, MachineTransitionResult)] =
+      machines.flatMap { case (machineId, machine) =>
+        resolvedInputs.get(machineId).map { machineInput =>
+          try {
+            val result = machine.processInput(machineInput)
+            // Per-machine tag values computed once, shared across all outputs of this machine.
+            val tagMachineId   = Json.fromString(machineId)
+            val tagMachineName = Json.fromString(machine.name)
+            val tagged = result.copy(machineOutput = result.machineOutput.map { ov =>
+              ov.copy(metadata = ov.metadata ++
+                Map("machineId"              -> tagMachineId,
+                    "machineName"            -> tagMachineName,
+                    "preceptionUsed"         -> RealityEngine.JsonTrue,
+                    "universalSpaceDimension"-> tagDim))
+            })
+            (machine, machineId, tagged)
+          } catch { case e: Exception =>
+            System.err.println(s"Error processing machine $machineId: ${e.getMessage}")
+            throw e
+          }
         }
       }
-    }
 
-    // Phase 3: merge all outputs after all machines finished
-    results.foreach { case (machineId, result) =>
-      machines.get(machineId).foreach { machine =>
-        if (result.arbiterMetadata.shouldOutput) {
-          machine.perceptualMapping.foreach { mapping =>
-            result.sequenceResults.values.foreach { sr =>
-              sr.assertedOutputs.foreach { ao =>
-                try preceptionEngine.mergeOutputIntoPerceptualSpace(ao.vector, mapping)
-                catch { case e: Exception =>
-                  System.err.println(s"Failed to merge output for machine $machineId: ${e.getMessage}")
-                }
-              }
-            }
+    // Phase 3: merge all outputs — machine ref already in scope; single-pass flatten over outputs.
+    for ((machine, machineId, result) <- resultPairs if result.arbiterMetadata.shouldOutput) {
+      machine.perceptualMapping.foreach { mapping =>
+        result.sequenceResults.valuesIterator.flatMap(_.assertedOutputs).foreach { ao =>
+          try preceptionEngine.mergeOutputIntoPerceptualSpace(ao.vector, mapping)
+          catch { case e: Exception =>
+            System.err.println(s"Failed to merge output for machine $machineId: ${e.getMessage}")
           }
         }
       }
     }
 
-    results
+    resultPairs.map { case (_, machineId, result) => machineId -> result }.toMap
   }
 
   def getDiagnosticMapping(universalInputSpace: Vector[Double]): io.circe.Json =
@@ -303,13 +311,19 @@ class RealityEngine(
   }
 
   def getHistory(limit: Option[Int] = None): List[TransitionResult] =
-    limit.map(transitionHistory.take).getOrElse(transitionHistory)
+    limit.fold(transitionHistory.toList)(n => transitionHistory.take(n).toList)
 
-  def clearHistory(): Unit = { transitionHistory = Nil }
+  def clearHistory(): Unit = { transitionHistory.clear() }
 
   private def addToHistory(result: TransitionResult): Unit = {
-    transitionHistory = result :: transitionHistory
-    if (transitionHistory.length > maxHistorySize)
-      transitionHistory = transitionHistory.take(maxHistorySize)
+    transitionHistory.prepend(result)           // O(1) amortized — newest at front
+    if (transitionHistory.size > maxHistorySize)
+      transitionHistory.removeLast()            // O(1) amortized — evict oldest
   }
+}
+
+object RealityEngine {
+  // Singleton Json values shared across all tag-metadata calls.
+  // Avoids allocating Json.fromBoolean(true) on every machine output.
+  val JsonTrue: Json = Json.fromBoolean(true)
 }

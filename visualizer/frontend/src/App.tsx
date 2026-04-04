@@ -12,13 +12,21 @@ function App() {
     lastViewedMachineId,
     currentMachineId,
     setCurrentView,
-    loadMachine
+    loadMachine,
+    connectWebSocket,
+    disconnectWebSocket,
   } = useVisualizerStore();
 
   // Expose store to window for E2E testing
   useEffect(() => {
     (window as any).useVisualizerStore = useVisualizerStore;
   }, []);
+
+  // Single persistent WebSocket connection for the lifetime of the app
+  useEffect(() => {
+    connectWebSocket();
+    return () => disconnectWebSocket();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cleanup perceptual logger on unmount
   useEffect(() => {

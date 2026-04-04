@@ -213,9 +213,14 @@ class VectorStore(
       throw new RuntimeException(s"Failed to upsert points into $collection: ${resp.body}")
   }
 
-  private def normalizeVector(v: Vector[Double]): Vector[Double] = {
-    if (v.length < vectorDimension)      v ++ Vector.fill(vectorDimension - v.length)(0.0)
-    else if (v.length > vectorDimension) v.take(vectorDimension)
-    else                                  v
+  // Normalize in-place on a pre-sized Array[Double] (zero-initialized by the JVM).
+  // Avoids the Vector.fill + ++ or .take allocations of the previous implementation.
+  // Callers pass the result directly to .asJson — Array[Double] has a circe Encoder.
+  private def normalizeVector(v: Vector[Double]): Array[Double] = {
+    val arr = new Array[Double](vectorDimension)  // zero-filled by JVM
+    val len = math.min(v.length, vectorDimension)
+    var i = 0
+    while (i < len) { arr(i) = v(i); i += 1 }
+    arr
   }
 }

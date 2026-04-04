@@ -1,622 +1,589 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import axios from 'axios';
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 import * as http from 'http';
 import * as https from 'https';
 import { readFileSync, existsSync } from 'fs';
 
-/**
- * Visualization Backend Server
- *
- * This server acts as a proxy between the React frontend and the Reality Engine,
- * providing WebSocket support for real-time updates without modifying the core engine.
- */
-
-const app = express();
 const PORT = parseInt(process.env.VIZ_PORT || '3001', 10);
 const REALITY_ENGINE_URL = process.env.REALITY_ENGINE_URL || 'http://localhost:3000';
+// Comma-separated list of allowed browser origins (no trailing slash).
+const ALLOWED_ORIGINS: string[] = (
+  process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173,http://localhost:3001'
+).split(',').map(o => o.trim()).filter(Boolean);
 const certPath = process.env.TLS_CERT_PATH;
 const keyPath  = process.env.TLS_KEY_PATH;
 const tlsEnabled = !!(certPath && keyPath && existsSync(certPath) && existsSync(keyPath));
 
-// Middleware
-app.use(cors());
+const app = express();
+
+// ── CORS — restrict to configured origins ────────────────────────────────────
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  }
+}));
 app.use(express.json({ limit: '10mb' }));
 
-// Use HTTPS when TLS_CERT_PATH and TLS_KEY_PATH are set (dev outside Docker);
-// otherwise plain HTTP (Docker: TLS is terminated by the nginx tls-proxy).
 const server = tlsEnabled
   ? https.createServer({ cert: readFileSync(certPath!), key: readFileSync(keyPath!) }, app)
   : http.createServer(app);
 
-// Create WebSocket server
 const wss = new WebSocketServer({ server, path: '/ws' });
 
-// Store connected clients with heartbeat tracking
+// ── Rate limiting (per-IP in-memory token bucket) ─────────────────────────────
+interface RateBucket { count: number; resetAt: number }
+const rateBuckets = new Map<string, RateBucket>();
+const RATE_WINDOW_MS = 60_000;
+
+function rateLimit(max: number) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const ip = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+    const now = Date.now();
+    let bucket = rateBuckets.get(ip);
+    if (!bucket || bucket.resetAt < now) {
+      bucket = { count: 0, resetAt: now + RATE_WINDOW_MS };
+      rateBuckets.set(ip, bucket);
+    }
+    if (bucket.count >= max) {
+      res.status(429).json({ error: 'Too many requests' });
+      return;
+    }
+    bucket.count++;
+    next();
+  };
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, bucket] of rateBuckets) {
+    if (bucket.resetAt < now) rateBuckets.delete(ip);
+  }
+}, 5 * 60_000);
+
+app.use(rateLimit(200));
+
+// ── Input validation helpers ──────────────────────────────────────────────────
+
+const ID_RE = /^[a-zA-Z0-9_-]{1,128}$/;
+function isValidId(id: string): boolean {
+  return ID_RE.test(id);
+}
+
+function upstreamError(res: Response, error: any, context: string): void {
+  const status: number = (error.response?.status as number | undefined) ?? 500;
+  console.error(`[${context}] upstream error (${status}):`, error.message);
+  if (status === 404) {
+    res.status(404).json({ error: 'Not found' });
+  } else if (status >= 400 && status < 500) {
+    res.status(status).json({ error: 'Bad request' });
+  } else {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+// ── Cache — short-TTL, size-bounded, O(1) group invalidation ─────────────────
+const CACHE_TTL_MS = 500;
+const CACHE_MAX    = 200;
+interface CacheEntry { data: any; ts: number }
+const responseCache = new Map<string, CacheEntry>();
+const cacheIndex = new Map<string, Set<string>>();
+
+function getCached(key: string): any | null {
+  const entry = responseCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts < CACHE_TTL_MS) return entry.data;
+  responseCache.delete(key);
+  return null;
+}
+
+function setCached(key: string, data: any): void {
+  if (responseCache.size >= CACHE_MAX) {
+    const oldest = responseCache.keys().next().value;
+    if (oldest !== undefined) {
+      responseCache.delete(oldest);
+      for (const group of cacheIndex.values()) group.delete(oldest);
+    }
+  }
+  responseCache.set(key, { data, ts: Date.now() });
+  let pos = 0;
+  while (true) {
+    const idx = key.indexOf(':', pos);
+    if (idx < 0) break;
+    const prefix = key.slice(0, idx + 1);
+    let group = cacheIndex.get(prefix);
+    if (!group) { group = new Set(); cacheIndex.set(prefix, group); }
+    group.add(key);
+    pos = idx + 1;
+  }
+}
+
+function invalidateGroup(prefix: string): void {
+  const group = cacheIndex.get(prefix);
+  if (!group) return;
+  for (const key of group) responseCache.delete(key);
+  cacheIndex.delete(prefix);
+}
+
+setInterval(() => {
+  const cutoff = Date.now() - CACHE_TTL_MS;
+  for (const [key, entry] of responseCache) {
+    if (entry.ts < cutoff) {
+      responseCache.delete(key);
+      for (const group of cacheIndex.values()) group.delete(key);
+    }
+  }
+}, CACHE_TTL_MS * 4);
+
+// ── Concurrency-limited Promise.all ──────────────────────────────────────────
+async function pooled<T>(tasks: Array<() => Promise<T>>, limit: number): Promise<T[]> {
+  const results: T[] = new Array(tasks.length);
+  let next = 0;
+  async function worker(): Promise<void> {
+    while (next < tasks.length) {
+      const i = next++;
+      results[i] = await tasks[i]();
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
+  return results;
+}
+
+// ── Shared sequence→graph transform ──────────────────────────────────────────
+
+function transformSequenceToGraph(sequence: any): any {
+  const nodes: any[] = [];
+  const edges: any[] = [];
+  (sequence.vectors || []).forEach((vector: any) => {
+    nodes.push({
+      id: vector.id,
+      label: `V-${vector.id.substring(0, 8)}`,
+      isInitial: vector.isInitial,
+      isActive: vector.isActive || vector.state === 'ACTIVE',
+      hasOutput: vector.outputVectors && vector.outputVectors.length > 0,
+      wasJustMatched: vector.wasJustMatched || false,
+      lastOutputVector: vector.lastOutputVector || null,
+      elements: vector.elements,
+      metadata: vector.metadata,
+      outputVectors: vector.outputVectors || []
+    });
+    (vector.nextVectorIds || []).forEach((targetId: string) => {
+      edges.push({ id: `${vector.id}-${targetId}`, source: vector.id, target: targetId });
+    });
+  });
+  return {
+    sequenceId: sequence.id,
+    sequenceName: sequence.name,
+    metadata: sequence.metadata,
+    nodes,
+    edges,
+    stats: {
+      totalVectors: nodes.length,
+      activeVectors: nodes.filter((n: any) => n.isActive).length,
+      initialVectors: nodes.filter((n: any) => n.isInitial).length,
+      outputVectors: nodes.filter((n: any) => n.hasOutput).length
+    }
+  };
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+
 const clients = new Set<any>();
+const pendingPong = new Set<any>();
+const HEARTBEAT_INTERVAL = 30000;
 
-// Heartbeat interval to detect stale connections
-const HEARTBEAT_INTERVAL = 30000; // 30 seconds
-const HEARTBEAT_TIMEOUT = 35000; // 35 seconds
-
-wss.on('connection', (ws) => {
+wss.on('connection', (ws: WebSocket, req) => {
+  const origin = (req as any).headers?.origin as string | undefined;
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    ws.close(4001, 'Unauthorized');
+    return;
+  }
   console.log('WebSocket client connected');
   clients.add(ws);
-
-  // Mark connection as alive
-  (ws as any).isAlive = true;
-
-  // Setup pong handler to detect alive connections
-  ws.on('pong', () => {
-    (ws as any).isAlive = true;
-  });
-
-  ws.on('close', () => {
-    console.log('WebSocket client disconnected');
-    clients.delete(ws);
-  });
-
-  ws.on('error', (error) => {
-    console.error('WebSocket error:', error);
-    clients.delete(ws);
-  });
+  ws.on('pong', () => { pendingPong.delete(ws); });
+  ws.on('close', () => { console.log('WebSocket client disconnected'); pendingPong.delete(ws); clients.delete(ws); });
+  ws.on('error', (error) => { console.error('WebSocket error:', error); pendingPong.delete(ws); clients.delete(ws); });
 });
 
-// Heartbeat check - ping all clients periodically
 const heartbeatInterval = setInterval(() => {
-  clients.forEach((ws) => {
-    if ((ws as any).isAlive === false) {
-      console.log('Terminating stale WebSocket connection');
-      clients.delete(ws);
-      return ws.terminate();
-    }
-
-    (ws as any).isAlive = false;
-    ws.ping();
-  });
+  for (const ws of pendingPong) { console.log('Terminating stale WebSocket connection'); clients.delete(ws); ws.terminate(); }
+  pendingPong.clear();
+  for (const ws of clients) { pendingPong.add(ws); ws.ping(); }
 }, HEARTBEAT_INTERVAL);
 
-// Broadcast function to all connected clients
-function broadcast(data: any) {
+// All WS fan-out is non-blocking: ws.send() queues to the socket buffer.
+// Wrapping calls in setImmediate ensures the HTTP response is flushed first,
+// decoupling broadcast latency from the request/response critical path.
+function broadcast(data: any): void {
   const message = JSON.stringify(data);
   clients.forEach((client) => {
-    if (client.readyState === 1) { // OPEN
-      client.send(message);
-    }
+    if (client.readyState === 1) client.send(message);
   });
 }
 
-// Health check
-app.get('/health', (req: Request, res: Response) => {
-  res.json({
-    status: 'healthy',
-    service: 'reality-engine-visualizer',
-    timestamp: Date.now()
-  });
+// ── HTTP API ──────────────────────────────────────────────────────────────────
+
+app.get('/health', (_req: Request, res: Response) => {
+  res.json({ status: 'healthy', service: 'reality-engine-visualizer', timestamp: Date.now() });
 });
 
-// Log ingestion endpoint - receives frontend logs and forwards to Loki
-app.post('/api/logs/ingest', async (req: Request, res: Response) => {
-  try {
-    const { logs } = req.body;
-
-    if (!logs || !Array.isArray(logs)) {
-      return res.status(400).json({ error: 'Invalid logs format. Expected { logs: [...] }' });
-    }
-
-    // Convert logs to Loki format
-    const streams = logs.map((log: any) => ({
-      stream: {
-        app: 'reality-engine',
-        service: 'visualizer-frontend',
-        environment: 'production',
-        log_type: log.type || 'perceptual-sequence',
-        log_level: log.level || 'info',
-        queue_type: log.data?.queueType || 'unknown'
-      },
-      values: [
-        [
-          `${log.timestamp * 1000000}`, // Convert to nanoseconds
-          JSON.stringify({
-            message: log.message,
-            level: log.level,
-            type: log.type,
-            ...log.data
-          })
-        ]
-      ]
+// ── Passive step-notification endpoint ───────────────────────────────────────
+// The Perception Engine calls this asynchronously (fire-and-forget) after it has
+// pushed a vector directly to the Reality Engine.  The visualizer is NOT in the
+// perception loop critical path — this endpoint exists solely to fan out the
+// already-computed step result to connected frontend WebSocket clients.
+app.post('/api/perceive-notify', (req: Request, res: Response) => {
+  // Respond immediately so the PE is never kept waiting.
+  res.status(204).end();
+  const { step } = req.body;
+  if (step && typeof step.stepNumber === 'number') {
+    setImmediate(() => broadcast({
+      type: 'perceptual-simulation-stepped',
+      step,
+      data: { activeMachineIds: Object.keys(step.machineResults ?? {}) },
+      timestamp: Date.now()
     }));
-
-    // Send to Loki
-    const lokiUrl = process.env.LOKI_URL || 'http://loki:3100';
-    await axios.post(`${lokiUrl}/loki/api/v1/push`, { streams });
-
-    res.json({ success: true, logsIngested: logs.length });
-  } catch (error: any) {
-    console.error('Error ingesting logs to Loki:', error.message);
-    res.status(500).json({ error: error.message });
   }
 });
 
-// Proxy endpoint: Get all sequences with graph data
-app.get('/api/viz/sequences', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences`);
-    const sequences = response.data.sequences;
-
-    // Transform sequences into graph-ready format
-    const graphData = sequences.map((sequence: any) => {
-      const nodes: any[] = [];
-      const edges: any[] = [];
-
-      // Create nodes from vectors
-      sequence.vectors.forEach((vector: any) => {
-        nodes.push({
-          id: vector.id,
-          label: `V-${vector.id.substring(0, 8)}`,
-          isInitial: vector.isInitial,
-          isActive: vector.isActive || vector.state === 'ACTIVE',
-          hasOutput: vector.outputVectors && vector.outputVectors.length > 0,
-          wasJustMatched: vector.wasJustMatched || false,
-          lastOutputVector: vector.lastOutputVector || null,
-          elements: vector.elements,
-          metadata: vector.metadata,
-          outputVectors: vector.outputVectors || []
-        });
-
-        // Create edges from next vector connections
-        if (vector.nextVectorIds && vector.nextVectorIds.length > 0) {
-          vector.nextVectorIds.forEach((targetId: string) => {
-            edges.push({
-              id: `${vector.id}-${targetId}`,
-              source: vector.id,
-              target: targetId
-            });
-          });
-        }
-      });
-
-      return {
-        sequenceId: sequence.id,
-        sequenceName: sequence.name,
-        metadata: sequence.metadata,
-        nodes,
-        edges,
-        stats: {
-          totalVectors: nodes.length,
-          activeVectors: nodes.filter((n: any) => n.isActive).length,
-          initialVectors: nodes.filter((n: any) => n.isInitial).length,
-          outputVectors: nodes.filter((n: any) => n.hasOutput).length
-        }
-      };
-    });
-
-    res.json({ sequences: graphData });
-  } catch (error: any) {
-    console.error('Error fetching sequences:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Get specific sequence graph
-app.get('/api/viz/sequences/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences/${id}`);
-    const sequence = response.data.sequence;
-
-    const nodes: any[] = [];
-    const edges: any[] = [];
-
-    // Create nodes from vectors
-    sequence.vectors.forEach((vector: any) => {
-      nodes.push({
-        id: vector.id,
-        label: `V-${vector.id.substring(0, 8)}`,
-        isInitial: vector.isInitial,
-        isActive: vector.isActive || vector.state === 'ACTIVE',
-        hasOutput: vector.outputVectors && vector.outputVectors.length > 0,
-        wasJustMatched: vector.wasJustMatched || false,
-        lastOutputVector: vector.lastOutputVector || null,
-        elements: vector.elements,
-        metadata: vector.metadata,
-        outputVectors: vector.outputVectors || []
-      });
-
-      // Create edges from next vector connections
-      if (vector.nextVectorIds && vector.nextVectorIds.length > 0) {
-        vector.nextVectorIds.forEach((targetId: string) => {
-          edges.push({
-            id: `${vector.id}-${targetId}`,
-            source: vector.id,
-            target: targetId
-          });
-        });
-      }
-    });
-
-    const graphData = {
-      sequenceId: sequence.id,
-      sequenceName: sequence.name,
-      metadata: sequence.metadata,
-      nodes,
-      edges,
-      stats: {
-        totalVectors: nodes.length,
-        activeVectors: nodes.filter((n: any) => n.isActive).length,
-        initialVectors: nodes.filter((n: any) => n.isInitial).length,
-        outputVectors: nodes.filter((n: any) => n.hasOutput).length
-      }
-    };
-
-    res.json(graphData);
-  } catch (error: any) {
-    console.error('Error fetching sequence:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Load data center example
-app.get('/api/demo/data-center', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/data-center`);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'demo-loaded',
-      metadata: response.data.metadata,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error loading data center example:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Load multi-step sequences example
-app.get('/api/demo/multi-step', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/multi-step`);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'demo-loaded',
-      metadata: response.data.metadata,
-      machine: response.data.machine,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error loading multi-step sequences example:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Proxy endpoint: Load Kleene star example
-app.get('/api/demo/kleene-star', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/kleene-star`);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'demo-loaded',
-      metadata: response.data.metadata,
-      machine: response.data.machine,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error loading Kleene star example:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ===== Machine Management Endpoints =====
-
-// Get all machines - proxy to Reality Engine
-app.get('/api/machines', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error fetching machines:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get specific machine - proxy to Reality Engine
-app.get('/api/machines/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/${id}`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error fetching machine:', error.message);
-    if (error.response?.status === 404) {
-      res.status(404).json({ error: 'Machine not found' });
-    } else {
-      res.status(500).json({ error: error.message });
-    }
-  }
-});
-
-// Create new machine - proxy to Reality Engine
-app.post('/api/machines', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/machines`, req.body);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error creating machine:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Update machine - proxy to Reality Engine
-app.put('/api/machines/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const response = await axios.put(`${REALITY_ENGINE_URL}/api/machines/${id}`, req.body);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error updating machine:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Delete machine - proxy to Reality Engine
-app.delete('/api/machines/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const response = await axios.delete(`${REALITY_ENGINE_URL}/api/machines/${id}`);
-
-    res.json({ success: true });
-  } catch (error: any) {
-    console.error('Error deleting machine:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Machine JSON endpoints - proxy to Reality Engine
-
-// List available machine JSON files
-app.get('/api/machines/json/list', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/json/list`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error listing machine JSON files:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Load machine from JSON file
-app.get('/api/machines/json/:name', async (req: Request, res: Response) => {
-  try {
-    const { name } = req.params;
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/json/${name}`);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'machine-loaded',
-      machine: response.data.machine,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error loading machine from JSON:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Import machine from JSON
-app.post('/api/machines/json/import', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/machines/json/import`, req.body);
-
-    // Broadcast update to connected clients
-    broadcast({
-      type: 'machine-imported',
-      machine: response.data.machine,
-      timestamp: Date.now()
-    });
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error importing machine JSON:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Export machine to JSON
-app.get('/api/machines/:id/export', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const pretty = req.query.pretty || 'true';
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/${id}/export?pretty=${pretty}`);
-
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', response.headers['content-disposition'] || 'attachment; filename="machine.json"');
-    res.send(response.data);
-  } catch (error: any) {
-    console.error('Error exporting machine to JSON:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Machine Graph & Perceptual Space Simulation endpoints
-
-// Get machine graph visualization data
-app.get('/api/machine-graph', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machine-graph`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error getting machine graph:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Append a chunk to the server-side staging buffer
-app.post('/api/perceptual-simulation/configure/chunk', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(
-      `${REALITY_ENGINE_URL}/api/perceptual-simulation/configure/chunk`,
-      req.body,
-      { maxContentLength: Infinity, maxBodyLength: Infinity }
-    );
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error appending sequence chunk:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Commit the staged buffer into the PerceptualSpaceSimulator
-app.post('/api/perceptual-simulation/configure/commit', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/configure/commit`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error committing sequence config:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Start perceptual simulation
-app.post('/api/perceptual-simulation/start', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/start`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error starting perceptual simulation:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Stop perceptual simulation
-app.post('/api/perceptual-simulation/stop', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/stop`);
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error stopping perceptual simulation:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Step perceptual simulation
-app.post('/api/perceptual-simulation/step', async (req: Request, res: Response) => {
-  try {
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/step`);
-
-    // Broadcast the step result
-    if (response.data.success && response.data.step) {
-      const step = response.data.step;
-      broadcast({
-        type: 'perceptual-simulation-stepped',
-        step,
-        data: { activeMachineIds: Object.keys(step.machineResults ?? {}) },
-        timestamp: Date.now()
-      });
-    }
-
-    res.json(response.data);
-  } catch (error: any) {
-    console.error('Error stepping perceptual simulation:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
-});
-
-// Perception Engine push — accepts a pre-assembled 256-byte reality vector,
-// forwards to the Reality Engine, and broadcasts the result to all visualizer clients.
-// The Scala /api/perceive returns the SimulationStep directly (not wrapped in {success, step}),
-// so we treat the entire response body as the step object.
+// ── Legacy direct-perceive path ───────────────────────────────────────────────
+// Kept for backward-compatibility.  In production the PE calls RE directly and
+// notifies this server via /api/perceive-notify above.  If this path IS called
+// the response is sent before the WS broadcast so the caller is never blocked
+// by fan-out latency.
 app.post('/api/perceive', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceive`, req.body);
-
-    // RE returns step JSON directly: { stepNumber, timestamp, perceptualSpace, machineResults, ... }
     const step = response.data;
+    res.json({ success: true, step });
     if (step && typeof step.stepNumber === 'number') {
-      broadcast({
+      setImmediate(() => broadcast({
         type: 'perceptual-simulation-stepped',
         step,
         data: { activeMachineIds: Object.keys(step.machineResults ?? {}) },
         timestamp: Date.now()
-      });
+      }));
     }
-
-    // Return in the {success, step} envelope that the Perception Engine and other callers expect
-    res.json({ success: true, step });
   } catch (error: any) {
-    console.error('Error forwarding /api/perceive:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
+    upstreamError(res, error, 'perceive');
   }
 });
 
-// Reset perceptual simulation
-app.post('/api/perceptual-simulation/reset', async (req: Request, res: Response) => {
+// Log ingestion
+app.post('/api/logs/ingest', async (req: Request, res: Response) => {
+  try {
+    const { logs } = req.body;
+    if (!logs || !Array.isArray(logs)) {
+      return res.status(400).json({ error: 'Invalid logs format. Expected { logs: [...] }' });
+    }
+    const streams = logs.map((log: any) => ({
+      stream: {
+        app: 'reality-engine', service: 'visualizer-frontend', environment: 'production',
+        log_type: log.type || 'perceptual-sequence', log_level: log.level || 'info',
+        queue_type: log.data?.queueType || 'unknown'
+      },
+      values: [[
+        `${log.timestamp * 1000000}`,
+        JSON.stringify({ message: log.message, level: log.level, type: log.type, ...log.data })
+      ]]
+    }));
+    const lokiUrl = process.env.LOKI_URL || 'http://loki:3100';
+    await axios.post(`${lokiUrl}/loki/api/v1/push`, { streams });
+    res.json({ success: true, logsIngested: logs.length });
+  } catch (error: any) {
+    console.error('Error ingesting logs to Loki:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Sequence graph endpoints
+app.get('/api/viz/sequences', async (_req: Request, res: Response) => {
+  const cached = getCached('viz:sequences');
+  if (cached) { res.json(cached); return; }
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences`);
+    const graphData = { sequences: (response.data.sequences || []).map(transformSequenceToGraph) };
+    setCached('viz:sequences', graphData);
+    res.json(graphData);
+  } catch (error: any) { upstreamError(res, error, 'getSequences'); }
+});
+
+app.get('/api/viz/sequences/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (!isValidId(id)) { res.status(400).json({ error: 'Invalid id' }); return; }
+  const cacheKey = `viz:sequences:${id}`;
+  const cached = getCached(cacheKey);
+  if (cached) { res.json(cached); return; }
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/sequences/${id}`);
+    const graphData = transformSequenceToGraph(response.data.sequence);
+    setCached(cacheKey, graphData);
+    res.json(graphData);
+  } catch (error: any) { upstreamError(res, error, 'getSequence'); }
+});
+
+// Demo endpoints — respond first, broadcast change notification asynchronously
+app.get('/api/demo/data-center', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/data-center`);
+    invalidateGroup('machines:'); invalidateGroup('viz:sequences'); responseCache.delete('machine-graph');
+    res.json(response.data);
+    setImmediate(() => broadcast({ type: 'demo-loaded', metadata: response.data.metadata, timestamp: Date.now() }));
+  } catch (error: any) { upstreamError(res, error, 'loadDataCenterDemo'); }
+});
+
+app.get('/api/demo/multi-step', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/multi-step`);
+    invalidateGroup('machines:'); invalidateGroup('viz:sequences'); responseCache.delete('machine-graph');
+    res.json(response.data);
+    setImmediate(() => broadcast({ type: 'demo-loaded', metadata: response.data.metadata, machine: response.data.machine, timestamp: Date.now() }));
+  } catch (error: any) { upstreamError(res, error, 'loadMultiStepDemo'); }
+});
+
+app.get('/api/demo/kleene-star', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/demo/kleene-star`);
+    invalidateGroup('machines:'); invalidateGroup('viz:sequences'); responseCache.delete('machine-graph');
+    res.json(response.data);
+    setImmediate(() => broadcast({ type: 'demo-loaded', metadata: response.data.metadata, machine: response.data.machine, timestamp: Date.now() }));
+  } catch (error: any) { upstreamError(res, error, 'loadKleeneStarDemo'); }
+});
+
+// ── Machine management ────────────────────────────────────────────────────────
+
+app.get('/api/machines/json/list', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/json/list`);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'listMachineJSONFiles'); }
+});
+
+app.get('/api/machines/json/:name', async (req: Request, res: Response) => {
+  const { name } = req.params;
+  if (!isValidId(name)) { res.status(400).json({ error: 'Invalid name' }); return; }
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/json/${name}`);
+    invalidateGroup('machines:');
+    res.json(response.data);
+    setImmediate(() => broadcast({ type: 'machine-loaded', machine: response.data.machine, timestamp: Date.now() }));
+  } catch (error: any) { upstreamError(res, error, 'loadMachineFromJSON'); }
+});
+
+app.post('/api/machines/json/import', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/machines/json/import`, req.body);
+    invalidateGroup('machines:');
+    res.json(response.data);
+    setImmediate(() => broadcast({ type: 'machine-imported', machine: response.data.machine, timestamp: Date.now() }));
+  } catch (error: any) { upstreamError(res, error, 'importMachineJSON'); }
+});
+
+app.get('/api/machines/:id/export', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (!isValidId(id)) { res.status(400).json({ error: 'Invalid id' }); return; }
+  const pretty = req.query.pretty === 'false' ? 'false' : 'true';
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/${id}/export?pretty=${pretty}`);
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', response.headers['content-disposition'] || 'attachment; filename="machine.json"');
+    res.send(response.data);
+  } catch (error: any) { upstreamError(res, error, 'exportMachine'); }
+});
+
+app.get('/api/machines', rateLimit(20), async (req: Request, res: Response) => {
+  if (req.query.expand === 'sequences') {
+    const cacheKey = 'machines:expanded';
+    const cached = getCached(cacheKey);
+    if (cached) { res.json(cached); return; }
+    try {
+      const machinesResp = await axios.get(`${REALITY_ENGINE_URL}/api/machines`);
+      const machines: any[] = machinesResp.data.machines ?? [];
+      const expanded = await pooled(
+        machines.map((m: any) => async () => {
+          try {
+            const detailResp = await axios.get(`${REALITY_ENGINE_URL}/api/machines/${m.id}`);
+            const machine = detailResp.data.machine ?? detailResp.data;
+            const sequenceIds: string[] = machine.sequenceIds ?? [];
+            const sequences = await pooled(
+              sequenceIds.map((seqId: string) => async () => {
+                try {
+                  const seqResp = await axios.get(`${REALITY_ENGINE_URL}/api/sequences/${seqId}`);
+                  return transformSequenceToGraph(seqResp.data.sequence ?? seqResp.data);
+                } catch { return null; }
+              }),
+              8
+            );
+            return { id: machine.id, name: machine.name, isExample: machine.isExample ?? false, perceptualMapping: machine.perceptualMapping ?? null, sequences: sequences.filter(Boolean) };
+          } catch {
+            return { id: m.id, name: m.name, isExample: m.isExample ?? false, sequences: [] };
+          }
+        }),
+        8
+      );
+      const result = { machines: expanded };
+      setCached(cacheKey, result);
+      res.json(result);
+    } catch (error: any) { upstreamError(res, error, 'getMachinesExpanded'); }
+    return;
+  }
+  const cacheKey = 'machines:list';
+  const cached = getCached(cacheKey);
+  if (cached) { res.json(cached); return; }
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines`);
+    setCached(cacheKey, response.data);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'getMachines'); }
+});
+
+app.get('/api/machines/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (!isValidId(id)) { res.status(400).json({ error: 'Invalid id' }); return; }
+  const cacheKey = `machines:${id}`;
+  const cached = getCached(cacheKey);
+  if (cached) { res.json(cached); return; }
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines/${id}`);
+    setCached(cacheKey, response.data);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'getMachine'); }
+});
+
+app.post('/api/machines', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/machines`, req.body);
+    invalidateGroup('machines:');
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'createMachine'); }
+});
+
+app.patch('/api/machines/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (!isValidId(id)) { res.status(400).json({ error: 'Invalid id' }); return; }
+  try {
+    const response = await axios.patch(`${REALITY_ENGINE_URL}/api/machines/${id}`, req.body);
+    invalidateGroup('machines:');
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'patchMachine'); }
+});
+
+app.put('/api/machines/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (!isValidId(id)) { res.status(400).json({ error: 'Invalid id' }); return; }
+  try {
+    const response = await axios.put(`${REALITY_ENGINE_URL}/api/machines/${id}`, req.body);
+    invalidateGroup('machines:');
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'putMachine'); }
+});
+
+app.delete('/api/machines/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (!isValidId(id)) { res.status(400).json({ error: 'Invalid id' }); return; }
+  try {
+    await axios.delete(`${REALITY_ENGINE_URL}/api/machines/${id}`);
+    invalidateGroup('machines:');
+    res.json({ success: true });
+  } catch (error: any) { upstreamError(res, error, 'deleteMachine'); }
+});
+
+// ── Simulation endpoints ──────────────────────────────────────────────────────
+
+app.get('/api/machine-graph', async (_req: Request, res: Response) => {
+  const cached = getCached('machine-graph');
+  if (cached) { res.json(cached); return; }
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machine-graph`);
+    setCached('machine-graph', response.data);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'getMachineGraph'); }
+});
+
+app.post('/api/perceptual-simulation/configure/chunk', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/configure/chunk`, req.body, { maxContentLength: Infinity, maxBodyLength: Infinity });
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'appendChunk'); }
+});
+
+app.post('/api/perceptual-simulation/configure/commit', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/configure/commit`);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'commitConfig'); }
+});
+
+app.post('/api/perceptual-simulation/start', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/start`);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'startSimulation'); }
+});
+
+app.post('/api/perceptual-simulation/stop', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/stop`);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'stopSimulation'); }
+});
+
+// Manual step — respond before broadcasting so the UI button isn't blocked by fan-out.
+app.post('/api/perceptual-simulation/step', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/step`);
+    res.json(response.data);
+    if (response.data.success && response.data.step) {
+      const step = response.data.step;
+      setImmediate(() => broadcast({
+        type: 'perceptual-simulation-stepped',
+        step,
+        data: { activeMachineIds: Object.keys(step.machineResults ?? {}) },
+        timestamp: Date.now()
+      }));
+    }
+  } catch (error: any) { upstreamError(res, error, 'stepSimulation'); }
+});
+
+// Reset — respond before broadcasting.
+app.post('/api/perceptual-simulation/reset', async (_req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceptual-simulation/reset`);
-
-    broadcast({
-      type: 'perceptual-simulation-reset',
-      timestamp: Date.now()
-    });
-
     res.json(response.data);
-  } catch (error: any) {
-    console.error('Error resetting perceptual simulation:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
+    setImmediate(() => broadcast({ type: 'perceptual-simulation-reset', timestamp: Date.now() }));
+  } catch (error: any) { upstreamError(res, error, 'resetSimulation'); }
 });
 
-// Get perceptual simulation state
-app.get('/api/perceptual-simulation/state', async (req: Request, res: Response) => {
+app.get('/api/perceptual-simulation/state', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get(`${REALITY_ENGINE_URL}/api/perceptual-simulation/state`);
     res.json(response.data);
-  } catch (error: any) {
-    console.error('Error getting perceptual simulation state:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
+  } catch (error: any) { upstreamError(res, error, 'getSimulationState'); }
 });
 
-// Get perceptual simulation history
-app.get('/api/perceptual-simulation/history', async (req: Request, res: Response) => {
+app.get('/api/perceptual-simulation/history', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get(`${REALITY_ENGINE_URL}/api/perceptual-simulation/history`);
     res.json(response.data);
-  } catch (error: any) {
-    console.error('Error getting perceptual simulation history:', error.message);
-    res.status(error.response?.status || 500).json({ error: error.message });
-  }
+  } catch (error: any) { upstreamError(res, error, 'getSimulationHistory'); }
 });
 
-// Start server
+// ── Start server ─────────────────────────────────────────────────────────────
+
 server.listen(PORT, () => {
   const protocol = tlsEnabled ? 'https' : 'http';
   const wsProtocol = tlsEnabled ? 'wss' : 'ws';
   console.log(`Reality Engine Visualizer Backend running on port ${PORT} (${protocol.toUpperCase()})`);
   console.log(`WebSocket server available at ${wsProtocol}://localhost:${PORT}/ws`);
   console.log(`Proxying to Reality Engine at ${REALITY_ENGINE_URL}`);
+  console.log(`Allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully...');
-  clearInterval(heartbeatInterval);
-  server.close(() => process.exit(0));
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully...');
-  clearInterval(heartbeatInterval);
-  server.close(() => process.exit(0));
-});
+process.on('SIGTERM', () => { console.log('SIGTERM received, shutting down gracefully...'); clearInterval(heartbeatInterval); server.close(() => process.exit(0)); });
+process.on('SIGINT',  () => { console.log('SIGINT received, shutting down gracefully...');  clearInterval(heartbeatInterval); server.close(() => process.exit(0)); });

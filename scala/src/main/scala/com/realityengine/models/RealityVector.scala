@@ -59,56 +59,56 @@ class RealityVector(
     var totalScore = 0.0
     var i = 0
     while (i < elements.length) {
-      val elem       = elements(i)
-      val inputValue = inputVector(i)
-      val result     = compareElement(elem, inputValue, matchAlgorithmOverride)
-      if (!result.matched)
+      val elem         = elements(i)
+      val inputValue   = inputVector(i)
+      val effectiveType = matchAlgorithmOverride.orElse(elem.comparatorType).getOrElse(matchAlgorithm)
+      // Pre-extract threshold Option once before the match arm — avoids repeated field resolution.
+      val thr          = elem.threshold
+
+      // Inline comparison: returns (matched, score) without allocating a MatchResult per element.
+      val (elemMatched, elemScore): (Boolean, Double) = effectiveType match {
+        case ComparatorType.Equals =>
+          val m = elem.value == inputValue
+          (m, if (m) 1.0 else 0.0)
+
+        case ComparatorType.Threshold =>
+          val t    = thr.getOrElse(0.1)
+          val diff = math.abs(elem.value - inputValue)
+          val m    = diff <= t
+          (m, if (m) 1.0 - diff / t else 0.0)
+
+        case ComparatorType.Pattern =>
+          val sim  = 1.0 - math.abs(elem.value - inputValue)
+          val pthr = thr.getOrElse(0.5)
+          (sim >= pthr, sim)
+
+        case ComparatorType.Custom =>
+          // No custom comparator in JVM context; fall back to Equals
+          val m = elem.value == inputValue
+          (m, if (m) 1.0 else 0.0)
+
+        case ComparatorType.GTE =>
+          val gt        = thr.getOrElse(0.5)
+          val inputHigh = inputValue >= gt
+          val valueHigh = elem.value  >= gt
+          if (inputHigh != valueHigh) (false, 0.0)
+          else {
+            val score = if (inputHigh) {
+              if (gt < 1.0) (inputValue - gt) / (1.0 - gt) else 1.0
+            } else {
+              if (gt > 0.0) (gt - inputValue) / gt else 1.0
+            }
+            (true, math.max(0.0, math.min(1.0, score)))
+          }
+      }
+
+      if (!elemMatched)
         return MatchResult(matched = false, score = totalScore / elements.length,
           metadata = Map("failedAtIndex" -> Json.fromInt(i)))
-      totalScore += result.score
+      totalScore += elemScore
       i += 1
     }
     MatchResult(matched = true, score = totalScore / elements.length)
-  }
-
-  private def compareElement(elem: VectorElement, inputValue: Double,
-                              matchAlgorithmOverride: Option[ComparatorType]): MatchResult = {
-    val effectiveType = matchAlgorithmOverride.orElse(elem.comparatorType).getOrElse(matchAlgorithm)
-    effectiveType match {
-      case ComparatorType.Equals =>
-        val m = elem.value == inputValue
-        MatchResult(m, if (m) 1.0 else 0.0)
-
-      case ComparatorType.Threshold =>
-        val thr  = elem.threshold.getOrElse(0.1)
-        val diff = math.abs(elem.value - inputValue)
-        val m    = diff <= thr
-        MatchResult(m, if (m) 1.0 - diff / thr else 0.0)
-
-      case ComparatorType.Pattern =>
-        val sim    = 1.0 - math.abs(elem.value - inputValue)
-        val pthr   = elem.threshold.getOrElse(0.5)
-        MatchResult(sim >= pthr, sim)
-
-      case ComparatorType.Custom =>
-        // No custom comparator in JVM context; fall back to Equals
-        val m = elem.value == inputValue
-        MatchResult(m, if (m) 1.0 else 0.0)
-
-      case ComparatorType.GTE =>
-        val gteThresh = elem.threshold.getOrElse(0.5)
-        val inputHigh = inputValue >= gteThresh
-        val valueHigh = elem.value  >= gteThresh
-        if (inputHigh != valueHigh) MatchResult(matched = false, score = 0.0)
-        else {
-          val score = if (inputHigh) {
-            if (gteThresh < 1.0) (inputValue - gteThresh) / (1.0 - gteThresh) else 1.0
-          } else {
-            if (gteThresh > 0.0) (gteThresh - inputValue) / gteThresh else 1.0
-          }
-          MatchResult(matched = true, score = math.max(0.0, math.min(1.0, score)))
-        }
-    }
   }
 
   // ── Transition ───────────────────────────────────────────────────────────

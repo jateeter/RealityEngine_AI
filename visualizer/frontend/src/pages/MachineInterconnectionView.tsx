@@ -6,21 +6,14 @@
  * through the store's universal perception API.
  */
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useVisualizerStore } from '../store';
 import { MachineGraphView } from '../components/MachineGraphView';
 import { PerceptualSpaceView } from '../components/PerceptualSpaceView';
 import './MachineInterconnectionView.css';
 
 export const MachineInterconnectionView: React.FC = () => {
-  const { setCurrentView, connectWebSocket, disconnectWebSocket } = useVisualizerStore();
-
-  useEffect(() => {
-    connectWebSocket();
-    return () => {
-      disconnectWebSocket();
-    };
-  }, [connectWebSocket, disconnectWebSocket]);
+  const { setCurrentView } = useVisualizerStore();
 
   return (
     <div className="machine-interconnection-view">

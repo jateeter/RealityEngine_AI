@@ -23,16 +23,33 @@ class Machine(
   private var sequences: Map[String, CriticalEventSequence] = Map.empty
   private val arbiter = new OutputArbiter(arbiterRule)
 
+  // ── Pre-allocated processing buffers (Fix: avoid allocating on every processInput call) ──────
+
+  // Cleared and reused each call — never exposed outside processInput.
+  private val seqResultsBuffer   = new scala.collection.mutable.HashMap[String, SequenceResult]
+  private val seqOutputsBuffer   = new scala.collection.mutable.HashMap[String, List[OutputVector]]
+
+  // ── COW snapshot support (Fix: clone() is O(1); sequences copied lazily in processInput) ──────
+
+  // When isCow is true this Machine was produced by clone() and shares cowBase with its origin.
+  // The first processInput call materialises private copies of each sequence.
+  private var cowBase: Map[String, CriticalEventSequence] = Map.empty
+  private var isCow: Boolean = false
+
+  // Unified read accessor — transparently handles both normal and COW modes.
+  @inline private def effectiveSeqs: Map[String, CriticalEventSequence] =
+    if (isCow) cowBase else sequences
+
   // ── Sequence management ───────────────────────────────────────────────────
 
   def addSequence(seq: CriticalEventSequence): Unit    = { sequences = sequences + (seq.id -> seq) }
   def removeSequence(seqId: String): Unit              = { sequences = sequences - seqId }
-  def getSequence(seqId: String): Option[CriticalEventSequence] = sequences.get(seqId)
-  def getAllSequences: List[CriticalEventSequence]      = sequences.values.toList
-  def getSequenceCount: Int                            = sequences.size
+  def getSequence(seqId: String): Option[CriticalEventSequence] = effectiveSeqs.get(seqId)
+  def getAllSequences: List[CriticalEventSequence]      = effectiveSeqs.values.toList
+  def getSequenceCount: Int                            = effectiveSeqs.size
   def getTotalVectorCount: Int                         = getAllSequences.map(_.getAllVectors.length).sum
-  def getSequenceIds: List[String]                     = sequences.keys.toList
-  def hasSequence(seqId: String): Boolean              = sequences.contains(seqId)
+  def getSequenceIds: List[String]                     = effectiveSeqs.keys.toList
+  def hasSequence(seqId: String): Boolean              = effectiveSeqs.contains(seqId)
 
   def getArbiter: OutputArbiter = arbiter
   def setArbiterRule(r: ArbiterRule): Unit = arbiter.setRule(r)
@@ -41,28 +58,40 @@ class Machine(
 
   /**
    * Process an input vector through all sequences and resolve machine output.
+   *
+   * Hot path: result buffers are pre-allocated and reused across calls.
+   * COW: if this is a snapshot clone, each sequence is deep-copied before its
+   *      first transition so the origin machine's state is never modified.
    */
   def processInput(
     inputVector:            Vector[Double],
     matchAlgorithmOverride: Option[ComparatorType] = None
   ): MachineTransitionResult = {
-    // Phase 2: process all sequences
-    val seqResults     = scala.collection.mutable.Map.empty[String, SequenceResult]
-    val seqOutputsMap  = scala.collection.mutable.Map.empty[String, List[OutputVector]]
+    seqResultsBuffer.clear()
+    seqOutputsBuffer.clear()
 
-    for ((seqId, seq) <- sequences) {
-      val sr = seq.transition(inputVector, matchAlgorithmOverride)
-      seqResults(seqId)    = sr
-      seqOutputsMap(seqId) = sr.assertedOutputs
+    for ((seqId, seq) <- effectiveSeqs) {
+      // COW materialisation: clone this sequence into our own map before mutating it.
+      val ownSeq = if (isCow) {
+        val cloned = seq.clone()
+        sequences = sequences + (seqId -> cloned)
+        cloned
+      } else seq
+
+      val sr = ownSeq.transition(inputVector, matchAlgorithmOverride)
+      seqResultsBuffer(seqId)  = sr
+      seqOutputsBuffer(seqId)  = sr.assertedOutputs
     }
 
-    // Phase 3: arbiter
-    val decision = arbiter.arbitrate(seqOutputsMap.toMap, sequences.size)
+    // Once all sequences have been materialised the clone is fully owned.
+    if (isCow) { isCow = false; cowBase = Map.empty }
+
+    val decision = arbiter.arbitrate(seqOutputsBuffer.toMap, seqResultsBuffer.size)
 
     MachineTransitionResult(
       inputVector     = inputVector,
       timestamp       = System.currentTimeMillis(),
-      sequenceResults = seqResults.toMap,
+      sequenceResults = seqResultsBuffer.toMap,
       machineOutput   = decision.machineOutput,
       arbiterMetadata = ArbiterMetadata(
         rule                = ArbiterRule.serialize(decision.rule),
@@ -91,8 +120,13 @@ class Machine(
 
   def reset(): Unit = sequences.values.foreach(_.reset())
 
-  // ── Clone ─────────────────────────────────────────────────────────────────
+  // ── Clone (COW snapshot) ──────────────────────────────────────────────────
 
+  /**
+   * Returns a copy-on-write snapshot.  O(1): no sequences or vectors are
+   * allocated here.  Individual sequences are deep-copied lazily inside
+   * processInput, only when they are about to be mutated.
+   */
   override def clone(): Machine = {
     val clonedMapping = perceptualMapping.map(m =>
       PerceptualMapping(
@@ -102,7 +136,8 @@ class Machine(
     )
     val c = new Machine(name, description, metadata, arbiter.getRule, clonedMapping, id)
     c.matchAlgorithm = matchAlgorithm
-    sequences.values.foreach(seq => c.addSequence(seq.clone()))
+    c.cowBase = this.effectiveSeqs   // share reference — no deep copy
+    c.isCow   = true
     c
   }
 

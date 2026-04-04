@@ -36,9 +36,13 @@ class RealitySampler(
   engine:     RealityEngine,
   config:     SamplingConfig
 ) {
-  private var observationBuffer: Vector[RawObservation] = Vector.empty
-  private var sampleCount: Int                           = 0
-  private var running: Boolean                           = config.strategy != SamplingStrategy.MANUAL
+  // Bounded ring-buffer: append is O(1) amortized; removeHead is O(1) amortized.
+  // Replaces the previous Vector.:+ (O(log n)) + takeRight (copies entire buffer).
+  private val observationBuffer: scala.collection.mutable.ArrayDeque[RawObservation] =
+    scala.collection.mutable.ArrayDeque.empty
+
+  private var sampleCount: Int = 0
+  private var running: Boolean = config.strategy != SamplingStrategy.MANUAL
 
   def isRunning: Boolean = running
   def start(): Unit      = { running = true }
@@ -58,9 +62,9 @@ class RealitySampler(
   }
 
   def processBuffer(): List[TransitionResult] = {
-    val buf = observationBuffer
-    observationBuffer = Vector.empty
-    buf.toList.map(processSingle)
+    val results = observationBuffer.toList.map(processSingle)
+    observationBuffer.clear()
+    results
   }
 
   def generateQuantumFoamSample(dimension: Int): RawObservation =
@@ -75,14 +79,14 @@ class RealitySampler(
     Json.obj(
       "isRunning"   -> Json.fromBoolean(running),
       "sampleCount" -> Json.fromInt(sampleCount),
-      "bufferSize"  -> Json.fromInt(observationBuffer.length),
+      "bufferSize"  -> Json.fromInt(observationBuffer.size),
       "strategy"    -> Json.fromString(config.strategy.toString)
     )
   }
 
-  def clearBuffer(): Unit = { observationBuffer = Vector.empty }
+  def clearBuffer(): Unit = { observationBuffer.clear() }
   def reset(): Unit       = { sampleCount = 0; clearBuffer() }
-  def getBuffer: Vector[RawObservation] = observationBuffer
+  def getBuffer: Vector[RawObservation] = observationBuffer.toVector
 
   private def processSingle(observation: RawObservation): TransitionResult = {
     val perceived = perception.perceive(observation)
@@ -90,8 +94,8 @@ class RealitySampler(
   }
 
   private def addToBuffer(observation: RawObservation): Unit = {
-    observationBuffer = observationBuffer :+ observation
-    if (observationBuffer.length > config.maxBufferSize)
-      observationBuffer = observationBuffer.takeRight(config.maxBufferSize)
+    observationBuffer.append(observation)
+    if (observationBuffer.size > config.maxBufferSize)
+      observationBuffer.removeHead()
   }
 }

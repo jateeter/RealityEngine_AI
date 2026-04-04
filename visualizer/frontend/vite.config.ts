@@ -9,6 +9,9 @@ const tlsAvailable = existsSync(certPath) && existsSync(keyPath);
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    sourcemap: false,
+  },
   server: {
     port: 5173,
     https: tlsAvailable

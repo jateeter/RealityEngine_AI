@@ -90,6 +90,8 @@ export class PerceptualSequenceLogger {
   constructor(maxLogs: number = 1000) {
     this.maxLogs = maxLogs;
     this.startLokiFlushTimer();
+    // Flush remaining logs and stop the timer when the page closes.
+    window.addEventListener('beforeunload', () => this.destroy());
   }
 
   /**
@@ -203,7 +205,10 @@ export class PerceptualSequenceLogger {
     // Add to Loki buffer
     if (this.lokiEnabled) {
       this.lokiBuffer.push(entry);
-
+      // Cap buffer to prevent unbounded growth during Loki downtime.
+      if (this.lokiBuffer.length > 200) {
+        this.lokiBuffer = this.lokiBuffer.slice(-200);
+      }
       // Flush if buffer reaches threshold
       if (this.lokiBuffer.length >= this.lokiFlushSize) {
         this.flushToLoki();
