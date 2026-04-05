@@ -166,6 +166,20 @@ if [ "$EXISTING_CONTAINERS" -gt 0 ]; then
     echo ""
 fi
 
+# Kill any anonymous containers (e.g. from docker run diagnostics) that may
+# still be holding an flock() on the Qdrant WAL via the qdrant_storage volume.
+# On macOS Docker Desktop / VirtioFS the flock persists as long as ANY container
+# using the volume is alive — even containers not managed by this compose stack.
+QDRANT_IMG_CONTAINERS=$(docker ps -q \
+    --filter "ancestor=realityengine_ai-qdrant" \
+    --filter "ancestor=qdrant/qdrant:latest" 2>/dev/null)
+if [ -n "$QDRANT_IMG_CONTAINERS" ]; then
+    print_info "Stopping stale Qdrant container(s) outside compose stack..."
+    docker stop $QDRANT_IMG_CONTAINERS 2>/dev/null || true
+    docker rm   $QDRANT_IMG_CONTAINERS 2>/dev/null || true
+    sleep 1
+fi
+
 # Fresh start: remove the perception sources volume so the engine starts empty
 if [ "$FRESH_START" = true ]; then
     PERCEPTION_VOLUME=$(docker volume ls --format "{{.Name}}" | grep "_perception_sources_data$" | head -1)
