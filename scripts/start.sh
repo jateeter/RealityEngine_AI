@@ -143,11 +143,24 @@ EXISTING_CONTAINERS=$(docker ps -a --filter "name=reality-engine-" --format "{{.
 
 if [ "$EXISTING_CONTAINERS" -gt 0 ]; then
     print_info "Found $EXISTING_CONTAINERS existing container(s). Cleaning up to avoid conflicts..."
-    # Do NOT pass -v — named volumes (perception sources, Qdrant, Grafana) are preserved
+
+    # Gracefully stop Qdrant first (SIGTERM + 15s wait) so it can flush its WAL
+    # and release file locks before we remove the container.  Force-killing Qdrant
+    # (SIGKILL via docker rm -f) can leave flock() locks held on macOS Docker
+    # volumes momentarily, causing the next startup to fail with EAGAIN.
+    docker stop --time 15 reality-engine-qdrant 2>/dev/null || true
+
+    # Gracefully stop remaining services, then tear down the network.
+    # Do NOT pass -v — named volumes (perception sources, Qdrant, Grafana) are preserved.
     docker-compose down 2>/dev/null || true
 
-    # Force remove any stubborn containers (does not affect volumes)
+    # Force-remove any containers that docker-compose down could not reach
+    # (does not affect volumes).
     docker rm -f reality-engine-qdrant reality-engine-app reality-engine-visualizer-backend reality-engine-visualizer-frontend reality-engine-perception-backend reality-engine-perception-frontend reality-engine-tls-proxy 2>/dev/null || true
+
+    # Brief settle — on macOS Docker Desktop, VirtioFS file-lock release can
+    # lag by ~1 s after the container process exits.
+    sleep 2
 
     print_success "Old containers removed"
     echo ""
