@@ -52,16 +52,38 @@ fi
 # Load environment variables
 source .env
 
-# Check TLS certificates exist
-if [ ! -f certs/server.crt ] || [ ! -f certs/server.key ]; then
+# Check ALL required TLS certificate files exist.
+# server.crt / server.key — presented by each service to inbound connections
+# ca.crt                  — trusted CA used by Scala/Node services for outbound HTTPS
+# keystore.p12            — JVM keystore (Scala services), password: realityengine
+MISSING_CERTS=""
+for f in certs/server.crt certs/server.key certs/ca.crt certs/keystore.p12; do
+    [ ! -f "$f" ] && MISSING_CERTS="$MISSING_CERTS $f"
+done
+if [ -n "$MISSING_CERTS" ]; then
     echo ""
-    echo "Error: TLS certificates not found (certs/server.crt, certs/server.key)"
-    echo "Generate them first:"
+    echo "Error: required TLS certificate file(s) not found:"
+    for f in $MISSING_CERTS; do echo "  missing: $f"; done
+    echo ""
+    echo "Regenerate all certificates (run once per machine):"
     echo "  bash certs/generate-dev-certs.sh"
     echo ""
     exit 1
 fi
-print_success "TLS certificates found"
+# Verify the certificate covers all Docker service hostnames.
+# The Scala / Node services verify the peer cert by hostname, so the cert
+# MUST include SANs for every service name in the compose network.
+if ! openssl x509 -in certs/server.crt -noout -text 2>/dev/null | grep -q "DNS:qdrant"; then
+    echo ""
+    echo "Error: certs/server.crt is missing required Subject Alternative Names."
+    echo "The certificate must cover all Docker service hostnames (qdrant, reality-engine, etc.)."
+    echo ""
+    echo "Regenerate certificates:"
+    echo "  bash certs/generate-dev-certs.sh"
+    echo ""
+    exit 1
+fi
+print_success "TLS certificates valid"
 echo ""
 
 # Setup Loki Docker driver if needed
