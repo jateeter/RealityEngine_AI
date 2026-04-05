@@ -1,4 +1,4 @@
-FROM qdrant/qdrant:latest
+FROM qdrant/qdrant:v1.9.7
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
   CMD wget -qO- --no-check-certificate https://localhost:6333/readyz || exit 1

@@ -170,14 +170,47 @@ fi
 # still be holding an flock() on the Qdrant WAL via the qdrant_storage volume.
 # On macOS Docker Desktop / VirtioFS the flock persists as long as ANY container
 # using the volume is alive — even containers not managed by this compose stack.
-QDRANT_IMG_CONTAINERS=$(docker ps -q \
-    --filter "ancestor=realityengine_ai-qdrant" \
-    --filter "ancestor=qdrant/qdrant:latest" 2>/dev/null)
-if [ -n "$QDRANT_IMG_CONTAINERS" ]; then
-    print_info "Stopping stale Qdrant container(s) outside compose stack..."
-    docker stop $QDRANT_IMG_CONTAINERS 2>/dev/null || true
-    docker rm   $QDRANT_IMG_CONTAINERS 2>/dev/null || true
-    sleep 1
+# Kill ANY container (regardless of name or image) that has the qdrant storage
+# volume mounted.  On macOS Docker Desktop / VirtioFS an flock() held by any
+# container using the volume — including anonymous "docker run" diagnostics —
+# blocks the next Qdrant startup with EAGAIN.
+QDRANT_VOL=$(docker volume ls --format "{{.Name}}" | grep "_qdrant_storage$" | head -1)
+if [ -n "$QDRANT_VOL" ]; then
+    STALE_QDRANT=$(docker ps -q 2>/dev/null | \
+        xargs -I{} docker inspect {} \
+            --format '{{.Id}} {{range .Mounts}}{{.Name}} {{end}}' 2>/dev/null | \
+        grep "$QDRANT_VOL" | awk '{print $1}')
+    if [ -n "$STALE_QDRANT" ]; then
+        print_info "Stopping container(s) holding Qdrant WAL lock on $QDRANT_VOL..."
+        echo "$STALE_QDRANT" | xargs docker stop 2>/dev/null || true
+        echo "$STALE_QDRANT" | xargs docker rm   2>/dev/null || true
+        sleep 2
+    fi
+fi
+
+# Remove any Qdrant collections whose names don't match the configured
+# COLLECTION_NAME.  A name mismatch (e.g. reality_vectors vs reality-vectors)
+# causes Qdrant to panic on WAL init, triggering a rapid crash-restart loop
+# that makes the flock appear permanently held.
+COLLECTION_NAME_CFG="${COLLECTION_NAME:-reality-vectors}"
+QDRANT_VOL="${QDRANT_VOL:-$(docker volume ls --format "{{.Name}}" | grep "_qdrant_storage$" | head -1)}"
+if [ -n "$QDRANT_VOL" ]; then
+    STALE_COLLECTIONS=$(docker run --rm \
+        -v "$QDRANT_VOL":/data \
+        alpine:latest \
+        sh -c "ls /data/collections/ 2>/dev/null" | \
+        grep -v "^${COLLECTION_NAME_CFG}$" || true)
+    if [ -n "$STALE_COLLECTIONS" ]; then
+        print_warning "Removing stale Qdrant collection(s): $STALE_COLLECTIONS"
+        for COLL in $STALE_COLLECTIONS; do
+            docker run --rm \
+                -v "$QDRANT_VOL":/data \
+                alpine:latest \
+                rm -rf "/data/collections/$COLL" 2>/dev/null || true
+        done
+        print_success "Stale collections removed"
+        echo ""
+    fi
 fi
 
 # Fresh start: remove the perception sources volume so the engine starts empty
