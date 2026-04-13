@@ -52,7 +52,7 @@ object PerceptionJsonCodecs {
 
   implicit val decodeTestSourceConfig: Decoder[TestSourceConfig] = (c: HCursor) =>
     for {
-      id           <- c.get[String]("id")
+      id           <- c.getOrElse[String]("id")("")
       name         <- c.get[String]("name")
       region       <- c.get[Region]("region")
       active       <- c.get[Boolean]("active")
@@ -78,7 +78,7 @@ object PerceptionJsonCodecs {
 
   implicit val decodeSimulatedSourceConfig: Decoder[SimulatedSourceConfig] = (c: HCursor) =>
     for {
-      id        <- c.get[String]("id")
+      id        <- c.getOrElse[String]("id")("")
       name      <- c.get[String]("name")
       region    <- c.get[Region]("region")
       active    <- c.get[Boolean]("active")
@@ -103,7 +103,7 @@ object PerceptionJsonCodecs {
 
   implicit val decodeSensorSourceConfig: Decoder[SensorSourceConfig] = (c: HCursor) =>
     for {
-      id          <- c.get[String]("id")
+      id          <- c.getOrElse[String]("id")("")
       name        <- c.get[String]("name")
       region      <- c.get[Region]("region")
       active      <- c.get[Boolean]("active")

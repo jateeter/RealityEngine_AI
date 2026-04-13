@@ -1,0 +1,128 @@
+/* ============================================================
+   VisLegend — shared floating left-panel legend for all graph views.
+   Usage: wrap the graph canvas in a `position: relative` container,
+   then place <div class="vis-legend-panel [open]"> inside it.
+   ============================================================ */
+
+/* Container — sits on the left edge, vertically centered */
+.vis-legend-panel {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: row;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+/* Vertical tab button */
+.vis-legend-tab {
+  background: #0f131a;
+  border: 1px solid #1e2535;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  color: #64748b;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding: 14px 5px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.vis-legend-tab:hover {
+  background: #141c2b;
+  color: #94a3b8;
+}
+.vis-legend-panel.open .vis-legend-tab {
+  background: #131820;
+  color: #94a3b8;
+  border-color: #2a3450;
+}
+
+/* Slide-out content panel */
+.vis-legend-content {
+  overflow: hidden;
+  max-width: 0;
+  background: #0f131a;
+  border-top: 1px solid #1e2535;
+  border-right: 1px solid #1e2535;
+  border-bottom: 1px solid #1e2535;
+  border-radius: 0 4px 4px 0;
+  transition: max-width 0.2s ease;
+}
+.vis-legend-panel.open .vis-legend-content {
+  max-width: 200px;
+}
+
+/* Inner items wrapper */
+.vis-legend-items {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+/* Single legend row */
+.vis-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* Color dot */
+.vis-legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Ring variant (terminal node — dark fill + colored border) */
+.vis-legend-ring {
+  background: #111827 !important;
+  border: 2px solid;
+}
+
+/* Section divider within legend */
+.vis-legend-divider {
+  height: 1px;
+  background: #1e2535;
+  margin: 4px 0;
+}
+
+/* Dashed-line symbol for edges */
+.vis-legend-dash {
+  display: inline-block;
+  width: 24px;
+  height: 0;
+  border-top: 2px dashed #64748b;
+  flex-shrink: 0;
+}
+
+/* Reset-layout button — consistent across views */
+.vis-reset-layout-btn {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.vis-reset-layout-btn:hover {
+  background: rgba(148, 163, 184, 0.16);
+  color: #e2e8f0;
+}

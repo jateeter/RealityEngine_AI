@@ -1,7 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { VisMachine } from '../../hooks/useMachineSimulation';
 import { TobiasRenderer } from './TobiasRenderer';
 import './TobiasCanvas.css';
+
+export interface TobiasCanvasHandle {
+  clearLayout: () => void;
+}
 
 interface TobiasCanvasProps {
   machines: VisMachine[];
@@ -19,14 +23,18 @@ interface TobiasCanvasProps {
  *  - Forward data changes → renderer.setData()
  *  - No drawing state; all mutable state lives in TobiasRenderer
  */
-const TobiasCanvas: React.FC<TobiasCanvasProps> = ({
+const TobiasCanvas = forwardRef<TobiasCanvasHandle, TobiasCanvasProps>(({
   machines,
   selectedMachineId,
   onSelectMachine,
-}) => {
+}, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<TobiasRenderer | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    clearLayout: () => rendererRef.current?.clearLayout(),
+  }));
 
   // Create / destroy renderer
   useEffect(() => {
@@ -83,6 +91,7 @@ const TobiasCanvas: React.FC<TobiasCanvasProps> = ({
       <canvas ref={canvasRef} className="tobias-canvas" />
     </div>
   );
-};
+});
 
+TobiasCanvas.displayName = 'TobiasCanvas';
 export default TobiasCanvas;

@@ -34,6 +34,7 @@ export const PerceptualSpaceView: React.FC = () => {
   const [state, setState] = useState<PerceptualSpaceState | null>(null);
   const [activeRegions, setActiveRegions] = useState<ActiveRegion[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const ws = useVisualizerStore(state => state.ws);
 
   // Fetch initial state
@@ -87,7 +88,6 @@ export const PerceptualSpaceView: React.FC = () => {
   if (error) {
     return (
       <div className="perceptual-space-view error">
-        <h3>Perceptual Space (En)</h3>
         <div className="error-message">{error}</div>
       </div>
     );
@@ -96,7 +96,6 @@ export const PerceptualSpaceView: React.FC = () => {
   if (!state) {
     return (
       <div className="perceptual-space-view loading">
-        <h3>Perceptual Space (En)</h3>
         <div>Loading...</div>
       </div>
     );
@@ -134,66 +133,74 @@ export const PerceptualSpaceView: React.FC = () => {
 
   return (
     <div className="perceptual-space-view">
-      <div className="space-header">
-        <h3>Perceptual Space (En)</h3>
-        <div className="space-info">
-          <span>Dimension: {state.perceptualSpace.length}</span>
+      <button
+        className="space-toggle"
+        onClick={() => setExpanded(e => !e)}
+        aria-expanded={expanded}
+      >
+        <span className="space-toggle-label">Machine Inputs</span>
+        <span className="space-toggle-meta">
           {state.isRunning && <span className="running-indicator">Running</span>}
           <span>Step: {state.currentStep}</span>
-        </div>
-      </div>
+        </span>
+        <span className="space-toggle-icon">{expanded ? '▲' : '▼'}</span>
+      </button>
 
-      <div className="space-grid">
-        {Array.from({ length: numBlocks }).map((_, blockIndex) => {
-          const startIdx = blockIndex * blockSize;
-          const endIdx = Math.min(startIdx + blockSize, state.perceptualSpace.length);
-          const blockValues = state.perceptualSpace.slice(startIdx, endIdx);
+      {expanded && (
+        <>
+          <div className="space-grid">
+            {Array.from({ length: numBlocks }).map((_, blockIndex) => {
+              const startIdx = blockIndex * blockSize;
+              const endIdx = Math.min(startIdx + blockSize, state.perceptualSpace.length);
+              const blockValues = state.perceptualSpace.slice(startIdx, endIdx);
 
-          return (
-            <div key={blockIndex} className="space-block">
-              <div className="block-header">
-                <span>[{startIdx}:{endIdx}]</span>
-              </div>
-              <div className="block-cells">
-                {blockValues.map((value, cellIndex) => {
-                  const globalIndex = startIdx + cellIndex;
-                  const activeType = isInActiveRegion(globalIndex);
-                  const machineName = getMachineForDimension(globalIndex);
+              return (
+                <div key={blockIndex} className="space-block">
+                  <div className="block-header">
+                    <span>[{startIdx}:{endIdx}]</span>
+                  </div>
+                  <div className="block-cells">
+                    {blockValues.map((value, cellIndex) => {
+                      const globalIndex = startIdx + cellIndex;
+                      const activeType = isInActiveRegion(globalIndex);
+                      const machineName = getMachineForDimension(globalIndex);
 
-                  return (
-                    <div
-                      key={cellIndex}
-                      className={`space-cell ${activeType ? `active-${activeType}` : ''}`}
-                      title={`[${globalIndex}] = ${value.toFixed(2)}${machineName ? `\n${machineName}` : ''}`}
-                    >
-                      <div className="cell-index">{globalIndex}</div>
-                      <div className="cell-value">{value.toFixed(1)}</div>
-                      {machineName && (
-                        <div className="cell-machine">{machineName.substring(0, 10)}</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                      return (
+                        <div
+                          key={cellIndex}
+                          className={`space-cell ${activeType ? `active-${activeType}` : ''}`}
+                          title={`[${globalIndex}] = ${value.toFixed(2)}${machineName ? `\n${machineName}` : ''}`}
+                        >
+                          <div className="cell-index">{globalIndex}</div>
+                          <div className="cell-value">{value.toFixed(1)}</div>
+                          {machineName && (
+                            <div className="cell-machine">{machineName.substring(0, 10)}</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="space-legend">
+            <div className="legend-item">
+              <div className="legend-box active-input"></div>
+              <span>Input Region</span>
             </div>
-          );
-        })}
-      </div>
-
-      <div className="space-legend">
-        <div className="legend-item">
-          <div className="legend-box active-input"></div>
-          <span>Input Region</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-box active-output"></div>
-          <span>Output Region</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-box"></div>
-          <span>Inactive</span>
-        </div>
-      </div>
+            <div className="legend-item">
+              <div className="legend-box active-output"></div>
+              <span>Output Region</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-box"></div>
+              <span>Inactive</span>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -16,12 +16,13 @@ const ARROW_SIZE = 5;
 const HIT_EXTRA  = 5;                 // extra px around node for hover hit testing
 
 // Node state colours
-const COLOR_INITIAL  = '#3b82f6'; // blue   — isInitial (always armed, A+)
-const COLOR_TERMINAL = '#f59e0b'; // amber  — terminal / just-matched fill
-const COLOR_ACTIVE   = '#06b6d4'; // cyan   — currently queued / in pending-activations
-const COLOR_DEFAULT  = '#64748b'; // slate  — intermediate
-const COLOR_HOVER    = '#facc15'; // yellow — hover highlight
-const COLOR_NODE_BG  = '#111827'; // dark   — inactive terminal body (ring drawn separately)
+const COLOR_INITIAL        = '#3b82f6'; // blue        — isInitial (always armed, A+)
+const COLOR_INITIAL_MATCH  = '#93c5fd'; // light-blue  — initial node just matched this step
+const COLOR_TERMINAL       = '#f59e0b'; // amber       — terminal / just-matched fill
+const COLOR_ACTIVE         = '#06b6d4'; // cyan        — currently queued / in pending-activations
+const COLOR_DEFAULT        = '#64748b'; // slate       — intermediate
+const COLOR_HOVER          = '#facc15'; // yellow      — hover highlight
+const COLOR_NODE_BG        = '#111827'; // dark        — inactive terminal body (ring drawn separately)
 
 // ---------------------------------------------------------------------------
 // Internal types
@@ -35,8 +36,9 @@ interface InnerNode {
   iy: number;         // y in inner-graph coordinate space
   isInitial: boolean;
   hasOutput: boolean;
-  justFired: boolean; // wasJustMatched this step — amber glow
-  isActive: boolean;  // currently queued in pending-activations — cyan ring
+  justFired: boolean;             // wasJustMatched this step — amber glow (output emitted)
+  isActive: boolean;              // currently queued in pending-activations — cyan ring
+  wasJustInitialMatched: boolean; // initial node matched (A+ fired) this step — blue pulse
   elements: { value: number; comparatorType: string; threshold?: number }[];
 }
 
@@ -85,6 +87,7 @@ interface Viewport {
 export interface TobiasRendererOptions {
   canvas: HTMLCanvasElement;
   onSelectMachine: (id: string | null) => void;
+  storageKey?: string; // localStorage key for persisting card positions (default: 'tobias-layout')
 }
 
 // ---------------------------------------------------------------------------
@@ -147,12 +150,13 @@ function drawArrowHead(
 }
 
 function nodeColor(node: InnerNode, isHovered: boolean): string {
-  if (isHovered)       return COLOR_HOVER;
-  if (node.justFired)  return COLOR_TERMINAL; // amber fill  — just matched this step
-  if (node.isActive)   return COLOR_ACTIVE;   // cyan fill   — currently queued
-  if (node.isInitial)  return COLOR_INITIAL;  // blue fill   — always armed (A+)
-  if (node.hasOutput)  return COLOR_NODE_BG;  // dark fill   — terminal ring drawn separately
-  return COLOR_DEFAULT;                        // slate       — intermediate
+  if (isHovered)                    return COLOR_HOVER;
+  if (node.justFired)               return COLOR_TERMINAL;       // amber      — output emitted
+  if (node.isActive)                return COLOR_ACTIVE;         // cyan       — currently queued
+  if (node.wasJustInitialMatched)   return COLOR_INITIAL_MATCH;  // light-blue — A+ just fired
+  if (node.isInitial)               return COLOR_INITIAL;        // blue       — always armed (A+)
+  if (node.hasOutput)               return COLOR_NODE_BG;        // dark       — terminal ring drawn separately
+  return COLOR_DEFAULT;                                           // slate      — intermediate
 }
 
 // ---------------------------------------------------------------------------
@@ -205,6 +209,7 @@ export class TobiasRenderer {
   private readonly _ctx: CanvasRenderingContext2D;
   private readonly _dpr: number;
   private readonly _onSelectMachine: (id: string | null) => void;
+  private readonly _storageKey: string;
 
   private _cards: CardNode[] = [];
   private _outerEdges: OuterEdge[] = [];
@@ -224,6 +229,8 @@ export class TobiasRenderer {
   private _mouseDownX = 0;
   private _mouseDownY = 0;
   private _hasDragged = false;
+  private _lastClickTime = 0;
+  private _lastClickCardId: string | null = null;
 
   private _rafId = 0;
 
@@ -234,6 +241,7 @@ export class TobiasRenderer {
     this._ctx = ctx;
     this._dpr = window.devicePixelRatio || 1;
     this._onSelectMachine = opts.onSelectMachine;
+    this._storageKey = opts.storageKey ?? 'tobias-layout';
     this._bindEvents();
     this._rafId = requestAnimationFrame(this._loop);
   }
@@ -292,8 +300,11 @@ export class TobiasRenderer {
     const cssH = this._canvas.height / this._dpr;
     const cx = cssW / 2 || 400, cy = cssH / 2 || 300;
 
+    const savedLayout = this._loadLayout();
+
     this._cards = machines.map((machine): CardNode => {
       const existing = existingById.get(machine.id);
+      const saved    = savedLayout[machine.id];
 
       const existingSeqIds = existing?.machine.sequences.map(s => s.sequenceId).join('|') ?? '';
       const newSeqIds      = machine.sequences.map(s => s.sequenceId).join('|');
@@ -302,6 +313,9 @@ export class TobiasRenderer {
         : this._refreshNodeStates(existing.innerGraph, machine);
 
       const spread = 280;
+      // Restore pinned position from localStorage when no in-memory position exists
+      const pinnedFx = existing?.fx ?? saved?.fx ?? null;
+      const pinnedFy = existing?.fy ?? saved?.fy ?? null;
       return {
         id: machine.id,
         name: machine.name,
@@ -310,12 +324,12 @@ export class TobiasRenderer {
         h: HEADER_H + FOOTER_H + innerGraph.totalHeight + PAD * 2,
         headerH: HEADER_H,
         innerGraph,
-        x: existing?.x ?? cx + (Math.random() - 0.5) * spread,
-        y: existing?.y ?? cy + (Math.random() - 0.5) * spread,
+        x: existing?.x ?? saved?.fx ?? cx + (Math.random() - 0.5) * spread,
+        y: existing?.y ?? saved?.fy ?? cy + (Math.random() - 0.5) * spread,
         vx: existing?.vx ?? 0,
         vy: existing?.vy ?? 0,
-        fx: existing?.fx ?? null,
-        fy: existing?.fy ?? null,
+        fx: pinnedFx,
+        fy: pinnedFy,
       };
     });
 
@@ -325,10 +339,38 @@ export class TobiasRenderer {
 
   setSelectedId(id: string | null): void { this._selectedId = id; }
 
+  /** Remove all pinned positions from localStorage and allow force layout to run freely. */
+  clearLayout(): void {
+    try { localStorage.removeItem(this._storageKey); } catch { /* ignore */ }
+    for (const card of this._cards) { card.fx = null; card.fy = null; }
+    if (this._simulation) this._simulation.alpha(0.5).restart();
+  }
+
   destroy(): void {
     cancelAnimationFrame(this._rafId);
     this._simulation?.stop();
     this._unbindEvents();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Layout persistence helpers
+  // ---------------------------------------------------------------------------
+
+  private _loadLayout(): Record<string, { fx: number; fy: number }> {
+    try {
+      const raw = localStorage.getItem(this._storageKey);
+      return raw ? (JSON.parse(raw) as Record<string, { fx: number; fy: number }>) : {};
+    } catch { return {}; }
+  }
+
+  private _saveLayout(): void {
+    const layout: Record<string, { fx: number; fy: number }> = {};
+    for (const card of this._cards) {
+      if (card.fx != null && card.fy != null) {
+        layout[card.id] = { fx: card.fx, fy: card.fy };
+      }
+    }
+    try { localStorage.setItem(this._storageKey, JSON.stringify(layout)); } catch { /* ignore */ }
   }
 
   // ---------------------------------------------------------------------------
@@ -427,17 +469,18 @@ export class TobiasRenderer {
     const nodes: InnerNode[] = vectors.map(v => {
       const pos = posById.get(v.id) ?? { ix: INNER_W / 2, iy: yBase + BAND_H / 2 };
       const node: InnerNode = {
-        id:        v.id,
-        label:     v.label,
+        id:                    v.id,
+        label:                 v.label,
         seqIdx,
-        ix:        pos.ix,
-        iy:        pos.iy,
-        isInitial: v.isInitial,
-        hasOutput: v.hasOutput,
+        ix:                    pos.ix,
+        iy:                    pos.iy,
+        isInitial:             v.isInitial,
+        hasOutput:             v.hasOutput,
         // Per-node state takes priority; fall back to machine-level fire for backward compat
-        justFired: v.wasJustMatched ?? (machineFired && v.hasOutput),
-        isActive:  v.isActive ?? false,
-        elements:  v.elements,
+        justFired:             v.wasJustMatched         ?? (machineFired && v.hasOutput),
+        isActive:              v.isActive               ?? false,
+        wasJustInitialMatched: v.wasJustInitialMatched  ?? false,
+        elements:              v.elements,
       };
       innerById.set(v.id, node);
       return node;
@@ -486,12 +529,17 @@ export class TobiasRenderer {
    */
   private _refreshNodeStates(cache: InnerGraphCache, machine: VisMachine): InnerGraphCache {
     // Build per-node lookup from the sequences data
-    const nodeState = new Map<string, { isActive: boolean; wasJustMatched: boolean }>();
+    const nodeState = new Map<string, {
+      isActive: boolean;
+      wasJustMatched: boolean;
+      wasJustInitialMatched: boolean;
+    }>();
     for (const seq of machine.sequences) {
       for (const v of seq.vectors) {
         nodeState.set(v.id, {
-          isActive:       v.isActive       ?? false,
-          wasJustMatched: v.wasJustMatched ?? false,
+          isActive:              v.isActive              ?? false,
+          wasJustMatched:        v.wasJustMatched        ?? false,
+          wasJustInitialMatched: v.wasJustInitialMatched ?? false,
         });
       }
     }
@@ -504,7 +552,8 @@ export class TobiasRenderer {
         justFired: hasPerNodeData
           ? (state?.wasJustMatched ?? false)
           : (machine.justFired && n.hasOutput),
-        isActive: state?.isActive ?? false,
+        isActive:              state?.isActive              ?? false,
+        wasJustInitialMatched: state?.wasJustInitialMatched ?? false,
       };
     });
     return { ...cache, nodes: updatedNodes };
@@ -623,16 +672,20 @@ export class TobiasRenderer {
     ctx.save();
     ctx.translate(x, y);
 
-    const fired = node.machine.justFired;
+    const fired        = node.machine.justFired;       // output emitted this step
+    const initialMatch = node.machine.hasInitialMatch; // initial state matched this step
 
-    // Glow pass — drawn before fill so shadow bleeds outward only
+    // Glow pass — drawn before fill so shadow bleeds outward only.
+    // Priority: selected > output-fired (amber) > initial-matched (blue) > none
     if (isSelected) {
       ctx.shadowBlur  = 20;
       ctx.shadowColor = '#c864ff';
     } else if (fired) {
-      // Amber pulse: draw the border path twice so the outer glow is bright
       ctx.shadowBlur  = 30;
       ctx.shadowColor = '#f59e0b';
+    } else if (initialMatch) {
+      ctx.shadowBlur  = 22;
+      ctx.shadowColor = '#3b82f6';
     }
 
     // Card background
@@ -640,15 +693,23 @@ export class TobiasRenderer {
     ctx.fillStyle = '#101318';
     ctx.fill();
 
-    // Border — amber (output firing) takes priority over selection purple
+    // Border: output-fired=amber, initial-match=blue, selected=purple, else status
     if (fired) {
-      // Double-draw: first pass carries the glow; second pass gives crisp edge
+      // Double-draw: outer pass carries glow, inner gives crisp edge
       ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth   = 3;
       ctx.stroke();
       ctx.shadowBlur  = 0;
-      ctx.strokeStyle = '#fcd34d'; // amber-300 crisp inner line
+      ctx.strokeStyle = '#fcd34d'; // amber-300 crisp line
       ctx.lineWidth   = 1.5;
+      ctx.stroke();
+    } else if (initialMatch) {
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth   = 2.5;
+      ctx.stroke();
+      ctx.shadowBlur  = 0;
+      ctx.strokeStyle = '#93c5fd'; // blue-300 crisp inner line
+      ctx.lineWidth   = 1.2;
       ctx.stroke();
     } else {
       ctx.strokeStyle = isSelected ? '#c864ff' : statusColor(node.machine.status);
@@ -658,19 +719,28 @@ export class TobiasRenderer {
     }
 
     // Header strip
-    ctx.fillStyle = isSelected ? '#2d1040' : fired ? '#1a1200' : '#1a1f2e';
+    ctx.fillStyle = isSelected ? '#2d1040'
+                  : fired      ? '#1a1200'
+                  : initialMatch ? '#0c1a33'
+                  : '#1a1f2e';
     ctx.fillRect(0, 0, node.w, node.headerH);
 
     // Header/body separator
     ctx.beginPath();
     ctx.moveTo(0, node.headerH);
     ctx.lineTo(node.w, node.headerH);
-    ctx.strokeStyle = fired ? '#f59e0b44' : isSelected ? '#c864ff55' : '#2a3040';
+    ctx.strokeStyle = fired        ? '#f59e0b44'
+                    : initialMatch ? '#3b82f644'
+                    : isSelected   ? '#c864ff55'
+                    : '#2a3040';
     ctx.lineWidth   = 0.5;
     ctx.stroke();
 
     // Machine name
-    ctx.fillStyle    = isSelected ? '#e2b6ff' : fired ? '#fcd34d' : '#e2e8f0';
+    ctx.fillStyle    = isSelected   ? '#e2b6ff'
+                     : fired        ? '#fcd34d'
+                     : initialMatch ? '#93c5fd'
+                     : '#e2e8f0';
     ctx.font         = 'bold 10px monospace';
     ctx.textBaseline = 'middle';
     ctx.textAlign    = 'left';
@@ -782,9 +852,10 @@ export class TobiasRenderer {
       ctx.globalAlpha = isDimNode ? 0.18 : 1.0;
       const fill = nodeColor(node, isHovNode);
 
-      // Glow: amber for just-matched, cyan for actively queued
-      if (node.justFired)       { ctx.shadowBlur = 12; ctx.shadowColor = COLOR_TERMINAL; }
-      else if (node.isActive)   { ctx.shadowBlur = 8;  ctx.shadowColor = COLOR_ACTIVE; }
+      // Glow: amber for output-emitted, light-blue for initial-match, cyan for active
+      if (node.justFired)                { ctx.shadowBlur = 12; ctx.shadowColor = COLOR_TERMINAL; }
+      else if (node.wasJustInitialMatched) { ctx.shadowBlur = 14; ctx.shadowColor = COLOR_INITIAL_MATCH; }
+      else if (node.isActive)            { ctx.shadowBlur = 8;  ctx.shadowColor = COLOR_ACTIVE; }
 
       ctx.beginPath();
       ctx.arc(node.ix, node.iy, NODE_R, 0, Math.PI * 2);
@@ -813,8 +884,23 @@ export class TobiasRenderer {
         ctx.stroke();
       }
 
-      // Inner ring for isInitial (A+ visual hint)
-      if (node.isInitial && !isHovNode) {
+      // Bright outer ring when initial node just matched (A+ fired) — pulsed blue halo
+      if (node.wasJustInitialMatched && !isHovNode) {
+        ctx.beginPath();
+        ctx.arc(node.ix, node.iy, NODE_R + 3.5, 0, Math.PI * 2);
+        ctx.strokeStyle = COLOR_INITIAL_MATCH;
+        ctx.lineWidth   = 1.8;
+        ctx.globalAlpha = isDimNode ? 0.18 : 0.92;
+        ctx.stroke();
+        ctx.globalAlpha = isDimNode ? 0.10 : 0.30;
+        ctx.beginPath();
+        ctx.arc(node.ix, node.iy, NODE_R + 5.5, 0, Math.PI * 2);
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+
+      // Inner ring for isInitial (A+ visual hint) — subdued when not just matched
+      if (node.isInitial && !isHovNode && !node.wasJustInitialMatched) {
         ctx.beginPath();
         ctx.arc(node.ix, node.iy, NODE_R - 1.5, 0, Math.PI * 2);
         ctx.strokeStyle = '#93c5fd';
@@ -971,14 +1057,6 @@ export class TobiasRenderer {
     };
   }
 
-  private _hitTestHeader(wx: number, wy: number): CardNode | null {
-    for (const c of this._cards) {
-      const lx = (c.x ?? 0) - c.w / 2, ty = (c.y ?? 0) - c.h / 2;
-      if (wx >= lx && wx <= lx + c.w && wy >= ty && wy <= ty + c.headerH) return c;
-    }
-    return null;
-  }
-
   private _hitTestCard(wx: number, wy: number): CardNode | null {
     for (const c of this._cards) {
       const lx = (c.x ?? 0) - c.w / 2, ty = (c.y ?? 0) - c.h / 2;
@@ -1041,12 +1119,24 @@ export class TobiasRenderer {
     this._dragPrevX  = e.offsetX; this._dragPrevY  = e.offsetY;
     this._hasDragged = false;
     const wp = this._toWorld(e.offsetX, e.offsetY);
-    const hh = this._hitTestHeader(wp.x, wp.y);
-    if (hh) {
-      this._isDraggingCard = true; this._dragCardNode = hh;
-      hh.fx = hh.x ?? 0; hh.fy = hh.y ?? 0;
+    const hc = this._hitTestCard(wp.x, wp.y);
+    if (hc) {
+      this._isDraggingCard = true; this._dragCardNode = hc;
+      hc.fx = hc.x ?? 0; hc.fy = hc.y ?? 0;
       if (this._simulation) this._simulation.alphaTarget(0.3).restart();
       this._canvas.style.cursor = 'grabbing';
+
+      // Double-click anywhere on card = unpin so force layout can move it again
+      const now = Date.now();
+      if (now - this._lastClickTime < 300 && this._lastClickCardId === hc.id) {
+        hc.fx = null; hc.fy = null;
+        this._isDraggingCard = false; this._dragCardNode = null;
+        if (this._simulation) this._simulation.alpha(0.3).restart();
+        this._saveLayout();
+        this._canvas.style.cursor = 'pointer';
+      }
+      this._lastClickTime   = now;
+      this._lastClickCardId = hc.id;
     } else {
       this._isPanning = true;
       this._canvas.style.cursor = 'grab';
@@ -1066,9 +1156,7 @@ export class TobiasRenderer {
       const wp = this._toWorld(e.offsetX, e.offsetY);
       this._updateHover(wp.x, wp.y);
       const hc = this._hitTestCard(wp.x, wp.y);
-      this._canvas.style.cursor = hc
-        ? (this._hitTestHeader(wp.x, wp.y) ? 'pointer' : 'default')
-        : 'default';
+      this._canvas.style.cursor = hc ? 'pointer' : 'default';
     }
     this._dragPrevX = e.offsetX; this._dragPrevY = e.offsetY;
   };
@@ -1076,18 +1164,23 @@ export class TobiasRenderer {
   private _onMouseUp = (e: MouseEvent): void => {
     if (!this._hasDragged) {
       const wp = this._toWorld(e.offsetX, e.offsetY);
-      const hh = this._hitTestHeader(wp.x, wp.y);
-      if (hh) {
-        const newId = this._selectedId === hh.id ? null : hh.id;
+      const hc = this._hitTestCard(wp.x, wp.y);
+      if (hc) {
+        const newId = this._selectedId === hc.id ? null : hc.id;
         this._selectedId = newId;
         this._onSelectMachine(newId);
-      } else if (!this._hitTestCard(wp.x, wp.y)) {
+      } else {
         this._selectedId = null;
         this._onSelectMachine(null);
       }
     }
     if (this._isDraggingCard && this._dragCardNode) {
-      this._dragCardNode.fx = null; this._dragCardNode.fy = null;
+      if (this._hasDragged) {
+        // Pin the card at its dropped position so it stays put
+        this._dragCardNode.fx = this._dragCardNode.x ?? this._dragCardNode.fx;
+        this._dragCardNode.fy = this._dragCardNode.y ?? this._dragCardNode.fy;
+        this._saveLayout();
+      }
       this._dragCardNode = null;
       if (this._simulation) this._simulation.alphaTarget(0);
     }
@@ -1097,7 +1190,10 @@ export class TobiasRenderer {
 
   private _onMouseLeave = (): void => {
     if (this._isDraggingCard && this._dragCardNode) {
-      this._dragCardNode.fx = null; this._dragCardNode.fy = null;
+      // Pin at current position when drag leaves canvas
+      this._dragCardNode.fx = this._dragCardNode.x ?? this._dragCardNode.fx;
+      this._dragCardNode.fy = this._dragCardNode.y ?? this._dragCardNode.fy;
+      this._saveLayout();
       this._dragCardNode = null;
       if (this._simulation) this._simulation.alphaTarget(0);
     }

@@ -47,37 +47,6 @@ export const MachineInterconnectionView: React.FC = () => {
             <PerceptualSpaceView />
           </div>
         </div>
-
-        <div className="right-panel">
-          <div className="panel-section info-panel">
-            <h3>Architecture</h3>
-            <div className="info-content">
-              <h4>Perceptual Space (En)</h4>
-              <p>
-                The 256-dimensional shared reality representation. All machines view and modify
-                portions of this space based on their perceptual mappings.
-              </p>
-
-              <h4>Machine Input (Em)</h4>
-              <p>
-                Each machine extracts a continuous slice of En (defined by offset + length)
-                as its input vector. This is the machine's view of reality.
-              </p>
-
-              <h4>Machine Output (Ox)</h4>
-              <p>
-                When a machine produces output, it's merged back into En at the machine's
-                output region, updating the shared perception of reality.
-              </p>
-
-              <h4>Interconnection</h4>
-              <p>
-                Machines connect when one's output region overlaps with another's input region,
-                creating a data flow through the system.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

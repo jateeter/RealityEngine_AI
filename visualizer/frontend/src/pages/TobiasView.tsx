@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useVisualizerStore } from '../store';
 import { useMachineSimulation, StepRecord, VisMachine } from '../hooks/useMachineSimulation';
-import TobiasCanvas from '../components/tobias/TobiasCanvas';
-import { TobiasSequencesPanel } from '../components/tobias/TobiasSequencesPanel';
+import TobiasCanvas, { TobiasCanvasHandle } from '../components/tobias/TobiasCanvas';
 
 import './TobiasView.css';
 
@@ -296,13 +295,13 @@ const TobiasView: React.FC = () => {
     playSimulation,
     pauseSimulation,
     resetSimulation,
-    refreshMachines,
   } = useMachineSimulation();
 
-  const [sidebarOpen,       setSidebarOpen]       = useState(true);
-  const [legendOpen,        setLegendOpen]        = useState(false);
-  const [sequencesPanelOpen, setSequencesPanelOpen] = useState(false);
-  const [statusFilter,      setStatusFilter]      = useState<'all' | 'idle' | 'processing' | 'active'>('all');
+  const canvasRef = useRef<TobiasCanvasHandle>(null);
+
+  const [sidebarOpen,  setSidebarOpen]  = useState(true);
+  const [legendOpen,   setLegendOpen]   = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'idle' | 'processing' | 'active'>('all');
 
   const filteredMachines = useMemo(() => {
     if (statusFilter === 'all') return machines;
@@ -397,23 +396,19 @@ const TobiasView: React.FC = () => {
                 </button>
               </div>
 
-              {/* Section: Perceptual Engine ───────────────────── */}
+              {/* Section: Layout ──────────────────────────────── */}
               <div className="tbs-section">
-                <div className="tbs-section-title">Perceptual Engine</div>
+                <div className="tbs-section-title">Layout</div>
                 <button
                   className="tbs-demo-btn"
-                  onClick={() => setSequencesPanelOpen(true)}
-                  title="Manage input perception stream and review machine output streams"
+                  onClick={() => canvasRef.current?.clearLayout()}
+                  title="Clear all pinned card positions and let force layout run freely"
                 >
-                  📑 Sequences
+                  ⊹ Reset Layout
                 </button>
-                <button
-                  className="tbs-demo-btn tbs-demo-refresh"
-                  onClick={refreshMachines}
-                  title="Refresh machine list from backend"
-                >
-                  ↻ Refresh Machines
-                </button>
+                <div className="tbs-layout-hint">
+                  Drag header to pin. Double-click header to unpin.
+                </div>
               </div>
 
               {/* Section: Machine Filter ──────────────────────── */}
@@ -473,18 +468,26 @@ const TobiasView: React.FC = () => {
                 <div className="tbs-legend">
                   <div className="tbs-legend-item">
                     <span className="tbs-legend-dot" style={{ background: '#3b82f6' }} />
-                    <span>Start (isInitial)</span>
+                    <span>Start node (A+)</span>
+                  </div>
+                  <div className="tbs-legend-item">
+                    <span className="tbs-legend-dot" style={{ background: '#93c5fd' }} />
+                    <span>Start matched (A+ fired)</span>
+                  </div>
+                  <div className="tbs-legend-item">
+                    <span className="tbs-legend-dot" style={{ background: '#06b6d4' }} />
+                    <span>Queued / active</span>
                   </div>
                   <div className="tbs-legend-item">
                     <span
                       className="tbs-legend-dot tbs-legend-ring"
                       style={{ background: '#111827', borderColor: '#f59e0b' }}
                     />
-                    <span>Terminal (end)</span>
+                    <span>Terminal node (output)</span>
                   </div>
                   <div className="tbs-legend-item">
                     <span className="tbs-legend-dot" style={{ background: '#f59e0b' }} />
-                    <span>Active (fired)</span>
+                    <span>Output emitted</span>
                   </div>
                   <div className="tbs-legend-item">
                     <span className="tbs-legend-dot" style={{ background: '#64748b' }} />
@@ -495,6 +498,7 @@ const TobiasView: React.FC = () => {
             </div>
 
             <TobiasCanvas
+              ref={canvasRef}
               machines={filteredMachines}
               selectedMachineId={selectedMachineId}
               onSelectMachine={selectMachine}
@@ -510,14 +514,6 @@ const TobiasView: React.FC = () => {
 
         </div>
       </div>
-
-      {/* ── Sequences panel (modal) ───────────────────────────── */}
-      <TobiasSequencesPanel
-        isOpen={sequencesPanelOpen}
-        onClose={() => { setSequencesPanelOpen(false); refreshMachines(); }}
-        machines={machines}
-        stepHistory={stepHistory}
-      />
 
     </div>
   );

@@ -336,7 +336,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{app=\"reality-engine\", queue_type=\"input\"} |= \"\"",
+          "expr": "{app=\"reality-engine\", service=\"reality-engine\"} |= \"\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -373,7 +373,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{app=\"reality-engine\", queue_type=\"output\"} |= \"\"",
+          "expr": "{app=\"reality-engine\", service=\"perception-engine-backend\"} |= \"\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -605,7 +605,11 @@
   "refresh": "5s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["reality-engine", "logs", "monitoring"],
+  "tags": [
+    "reality-engine",
+    "logs",
+    "monitoring"
+  ],
   "templating": {
     "list": []
   },

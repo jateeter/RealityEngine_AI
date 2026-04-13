@@ -232,7 +232,7 @@ services:
         loki-max-backoff: "1000ms"
         loki-external-labels: "service=perception-engine-backend,environment=production,app=reality-engine"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://localhost:3004/api/health"]
+      test: ["CMD", "wget", "-qO-", "--no-check-certificate", "https://localhost:3004/api/health"]
       interval: 15s
       timeout: 5s
       retries: 3

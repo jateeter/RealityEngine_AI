@@ -90,7 +90,8 @@ class Routes(
       "RSFlipFlop.json", "RS2.json", "MultiStep.json", "DataCenterMonitoring.json",
       "KleeneStar.json", "AIPowerEfficiency.json", "AICoolingRegulator.json",
       "AICapacityThrottler.json", "AISecurityMonitor.json", "AIModelWellness.json",
-      "AIHardwareResilience.json"
+      "AIHardwareResilience.json", "NewPatientInflow.json", "DailyPatientCare.json",
+      "PatientWellness.json", "CareTransitionWorkflow.json"
     )
 
     var loaded = 0; var failed = 0

@@ -10,8 +10,9 @@ export interface VectorNodeLite {
   label: string;
   isInitial: boolean;
   hasOutput: boolean;
-  isActive?: boolean;        // node is currently queued / in pending-activations
-  wasJustMatched?: boolean;  // node matched on the most recent step
+  isActive?: boolean;               // node is currently queued / in pending-activations
+  wasJustMatched?: boolean;         // terminal node matched (output emitted) this step
+  wasJustInitialMatched?: boolean;  // initial node matched (A+ fired) this step
   elements: { value: number; comparatorType: string; threshold?: number }[];
 }
 
@@ -41,7 +42,8 @@ export interface VisMachine {
   // Latest step values
   latestInputVector?: number[];
   latestOutputVector?: number[] | null;
-  justFired: boolean;
+  justFired: boolean;         // a terminal node emitted output this step
+  hasInitialMatch: boolean;   // an initial node was matched this step (A+ fired)
 }
 
 export interface StepMachineResult {
@@ -100,6 +102,7 @@ export const useMachineSimulation = () => {
             label: n.metadata?.name || n.metadata?.role || (n.label && !n.label.startsWith('V-') ? n.label : '') || n.id.slice(-8),
             isInitial: n.isInitial ?? false,
             hasOutput: n.hasOutput ?? (n.outputVectors?.length > 0),
+            isActive: n.isActive ?? false,
             elements: n.elements ?? [],
           })),
           edges: (seq.edges || []).map((e: any): VisMachineEdge => ({
@@ -110,6 +113,7 @@ export const useMachineSimulation = () => {
         })),
         status: 'idle' as const,
         justFired: false,
+        hasInitialMatch: false,
         inputRegion: machine.perceptualMapping?.input,
         outputRegion: machine.perceptualMapping?.output,
       }));
@@ -188,12 +192,29 @@ export const useMachineSimulation = () => {
           });
         }
 
+        // Determine card-level event flags from the per-node deltas.
+        let hasOutputFired = false;
+        let hasInitialMatch = false;
+        if (fired) {
+          for (const seq of m.sequences) {
+            const d = seqDeltas.get(seq.sequenceId);
+            if (!d) continue;
+            for (const v of seq.vectors) {
+              if (d.matched.has(v.id)) {
+                if (v.hasOutput)  hasOutputFired  = true;
+                if (v.isInitial)  hasInitialMatch = true;
+              }
+            }
+          }
+        }
+
         return {
           ...m,
           status: fired ? ('processing' as const) : ('idle' as const),
-          justFired: fired,
+          justFired: hasOutputFired,
+          hasInitialMatch,
           latestInputVector:  result?.inputVector  ?? m.latestInputVector,
-          latestOutputVector: fired
+          latestOutputVector: hasOutputFired
             ? (result?.outputVector ?? m.latestOutputVector)
             : m.latestOutputVector,
           sequences: m.sequences.map((seq) => {
@@ -202,12 +223,14 @@ export const useMachineSimulation = () => {
             return {
               ...seq,
               vectors: seq.vectors.map((v) => {
-                const wasJustMatched = d.matched.has(v.id) && v.hasOutput;
-                const isDeactivated  = d.matched.has(v.id) && !v.isInitial && !v.hasOutput;
-                const isActivated    = d.activated.has(v.id);
+                const wasJustMatched        = d.matched.has(v.id) && v.hasOutput;
+                const wasJustInitialMatched = d.matched.has(v.id) && v.isInitial;
+                const isDeactivated         = d.matched.has(v.id) && !v.isInitial && !v.hasOutput;
+                const isActivated           = d.activated.has(v.id);
                 return {
                   ...v,
                   wasJustMatched,
+                  wasJustInitialMatched,
                   isActive: isDeactivated ? false : isActivated ? true : (v.isActive ?? false),
                 };
               }),
@@ -240,6 +263,7 @@ export const useMachineSimulation = () => {
                 ...m,
                 status: 'idle' as const,
                 justFired: false,
+                hasInitialMatch: false,
                 latestInputVector: undefined,
                 latestOutputVector: undefined,
               }))

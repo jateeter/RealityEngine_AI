@@ -6,9 +6,6 @@ server:
   http_tls_config:
     cert_file: /etc/loki/certs/server.crt
     key_file:  /etc/loki/certs/server.key
-  grpc_tls_config:
-    cert_file: /etc/loki/certs/server.crt
-    key_file:  /etc/loki/certs/server.key
 
 common:
   path_prefix: /loki

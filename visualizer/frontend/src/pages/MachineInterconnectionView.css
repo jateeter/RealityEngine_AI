@@ -61,7 +61,7 @@
 
 .view-layout {
   display: grid;
-  grid-template-columns: 1fr 500px;
+  grid-template-columns: 1fr;
   gap: 20px;
   padding: 20px;
   flex: 1;
@@ -128,10 +128,6 @@
 @media (max-width: 1400px) {
   .view-layout {
     grid-template-columns: 1fr;
-  }
-
-  .right-panel {
-    max-height: 600px;
   }
 }
 

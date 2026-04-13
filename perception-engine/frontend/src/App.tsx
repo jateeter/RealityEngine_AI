@@ -97,8 +97,17 @@ export default function App() {
   }, [state?.auto.running]);
 
   const handleAddSource = useCallback(async (config: Omit<SourceConfig, 'id'>) => {
-    await addSource(config);
-    setShowAddModal(false);
+    try {
+      await addSource(config);
+      // Explicitly refresh state — the WS broadcast may lose the race with the
+      // modal close animation, leaving the panel momentarily stale.
+      const updated = await getState();
+      setState(updated);
+    } catch (err) {
+      console.error('Failed to add source:', err);
+    } finally {
+      setShowAddModal(false);
+    }
   }, []);
 
   const handleDeleteSource = useCallback(async (id: string) => {

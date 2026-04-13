@@ -2,6 +2,64 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { useVisualizerStore } from '../store';
 import { VectorNode, OutputVector } from '../types';
+import './VisLegend.css';
+
+// ── Shared vis-palette (matches Tobias/MachineGraphView) ─────────────────────
+const C_INITIAL       = '#3b82f6'; // blue  — start / A+ node
+const C_ACTIVE        = '#06b6d4'; // cyan  — queued / active
+const C_FIRED         = '#f59e0b'; // amber — output just emitted
+const C_TERMINAL_REST = '#111827'; // dark  — terminal node, not yet fired
+const C_DEFAULT       = '#64748b'; // slate — intermediate
+
+const nodeColor = (d: { wasJustMatched?: boolean; isActive: boolean; isInitial: boolean; hasOutput: boolean }): string => {
+  if (d.wasJustMatched) return C_FIRED;
+  if (d.isActive)       return C_ACTIVE;
+  if (d.isInitial)      return C_INITIAL;
+  if (d.hasOutput)      return C_TERMINAL_REST;
+  return C_DEFAULT;
+};
+const nodeStroke = (d: { wasJustMatched?: boolean; isActive: boolean; isInitial: boolean; hasOutput: boolean }): string => {
+  if (d.wasJustMatched && d.isActive) return C_ACTIVE;
+  if (d.wasJustMatched)               return '#fbbf24';
+  if (d.isActive && d.hasOutput)      return C_ACTIVE;
+  if (d.hasOutput)                    return C_FIRED;
+  if (d.isActive)                     return '#0891b2';
+  if (d.isInitial)                    return '#2563eb';
+  return '#475569';
+};
+const nodeStrokeWidth = (d: { wasJustMatched?: boolean; isActive: boolean; hasOutput: boolean }): number => {
+  if (d.wasJustMatched && d.isActive) return 6;
+  if (d.wasJustMatched)               return 5;
+  if (d.hasOutput)                    return 4;
+  if (d.isActive)                     return 3;
+  return 2;
+};
+const nodeFilter = (d: { wasJustMatched?: boolean; isActive: boolean }): string => {
+  if (d.wasJustMatched && d.isActive) return `drop-shadow(0 0 10px ${C_FIRED}) drop-shadow(0 0 8px ${C_ACTIVE})`;
+  if (d.wasJustMatched)               return `drop-shadow(0 0 10px ${C_FIRED})`;
+  if (d.isActive)                     return `drop-shadow(0 0 6px ${C_ACTIVE})`;
+  return 'none';
+};
+
+// ── Layout persistence ────────────────────────────────────────────────────────
+const CEG_LAYOUT_PREFIX = 'ceg-graph-layout';
+
+function cegLayoutKey(machineId: string | null | undefined): string {
+  return `${CEG_LAYOUT_PREFIX}-${machineId ?? 'default'}`;
+}
+function loadCegLayout(machineId: string | null | undefined): Record<string, { fx: number; fy: number }> {
+  try {
+    const raw = localStorage.getItem(cegLayoutKey(machineId));
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+function saveCegLayout(nodes: d3.SimulationNodeDatum[], machineId: string | null | undefined): void {
+  const pins: Record<string, { fx: number; fy: number }> = {};
+  for (const n of nodes as any[]) {
+    if (n.fx != null && n.fy != null) pins[n.id] = { fx: n.fx, fy: n.fy };
+  }
+  try { localStorage.setItem(cegLayoutKey(machineId), JSON.stringify(pins)); } catch { /* ignore */ }
+}
 
 interface CriticalEventGraphViewProps {
   selectedSequenceId?: string | null;
@@ -52,7 +110,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
   const linkSelRef = useRef<d3.Selection<SVGLineElement, GraphLink, SVGGElement, unknown> | null>(null);
   const structuralKeyRef = useRef<string>('');
   const { sequences, currentMachine, setHighlightedOutputId } = useVisualizerStore();
-  const [legendHovered, setLegendHovered] = useState(false);
+  const [legendOpen, setLegendOpen] = useState(false);
   const [layoutResetKey, setLayoutResetKey] = useState(0);
 
   useEffect(() => {
@@ -62,6 +120,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
     if (layoutResetKey !== previousResetKeyRef.current) {
       nodePositionsRef.current.clear();
       zoomTransformRef.current = null;
+      try { localStorage.removeItem(cegLayoutKey(currentMachine?.id)); } catch { /* ignore */ }
       previousResetKeyRef.current = layoutResetKey;
     }
 
@@ -133,42 +192,14 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
     ) {
       const nodeById = new Map<string, GraphNode>(nodes.map(n => [n.id, n]));
       nodeSelRef.current
-        .attr('fill', d => {
-          const n = nodeById.get(d.id) ?? d;
-          if (n.wasJustMatched) return '#a855f7';
-          if (n.isActive) return '#22c55e';
-          if (n.isInitial) return '#3b82f6';
-          return '#64748b';
-        })
-        .attr('stroke', d => {
-          const n = nodeById.get(d.id) ?? d;
-          if (n.wasJustMatched && n.isActive) return '#22c55e';
-          if (n.wasJustMatched) return '#c084fc';
-          if (n.isActive && n.hasOutput) return '#22c55e';
-          if (n.hasOutput) return '#f59e0b';
-          if (n.isActive) return '#16a34a';
-          if (n.isInitial) return '#2563eb';
-          return '#475569';
-        })
-        .attr('stroke-width', d => {
-          const n = nodeById.get(d.id) ?? d;
-          if (n.wasJustMatched && n.isActive) return 6;
-          if (n.wasJustMatched) return 5;
-          if (n.hasOutput) return 4;
-          if (n.isActive) return 3;
-          return 2;
-        })
-        .style('filter', d => {
-          const n = nodeById.get(d.id) ?? d;
-          if (n.wasJustMatched && n.isActive) return 'drop-shadow(0 0 10px #a855f7) drop-shadow(0 0 8px #22c55e)';
-          if (n.wasJustMatched) return 'drop-shadow(0 0 10px #a855f7)';
-          if (n.isActive) return 'drop-shadow(0 0 6px #22c55e)';
-          return 'none';
-        });
+        .attr('fill', d => nodeColor(nodeById.get(d.id) ?? d))
+        .attr('stroke', d => nodeStroke(nodeById.get(d.id) ?? d))
+        .attr('stroke-width', d => nodeStrokeWidth(nodeById.get(d.id) ?? d))
+        .style('filter', d => nodeFilter(nodeById.get(d.id) ?? d));
       linkSelRef.current
         .attr('stroke', d => {
           const srcId = typeof d.source === 'object' ? (d.source as GraphNode).id : d.source as string;
-          return (nodeById.get(srcId)?.isActive ?? false) ? '#22c55e' : '#64748b';
+          return (nodeById.get(srcId)?.isActive ?? false) ? C_ACTIVE : '#64748b';
         })
         .attr('stroke-width', d => {
           const srcId = typeof d.source === 'object' ? (d.source as GraphNode).id : d.source as string;
@@ -225,7 +256,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       .attr('d', 'M0,-5L10,0L0,5')
       .attr('fill', '#64748b');
 
-    // Active arrow (green)
+    // Active arrow (cyan — matches C_ACTIVE)
     defs.append('marker')
       .attr('id', 'arrowhead-active')
       .attr('viewBox', '0 -5 10 10')
@@ -236,7 +267,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       .attr('orient', 'auto')
       .append('path')
       .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', '#22c55e');
+      .attr('fill', C_ACTIVE);
 
     // Calculate cluster centers
     const clusterIds = Object.keys(clusters);
@@ -253,20 +284,30 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
 
     // Assign cluster centers to nodes and restore positions if available
     let allNodesHavePositions = true;
+    const savedPins = loadCegLayout(currentMachine?.id);
     nodes.forEach(node => {
       if (node.cluster) {
         node.clusterCenter = clusterCenters[node.cluster];
       }
 
-      // Restore position from previous render if available
-      const savedPosition = nodePositionsRef.current.get(node.id);
-      if (savedPosition) {
-        node.x = savedPosition.x;
-        node.y = savedPosition.y;
-        node.fx = savedPosition.x; // Fix position temporarily
-        node.fy = savedPosition.y;
+      // Pinned positions (localStorage) take priority — kept fixed permanently
+      const pin = savedPins[node.id];
+      if (pin) {
+        node.x  = pin.fx;
+        node.y  = pin.fy;
+        node.fx = pin.fx;
+        node.fy = pin.fy;
       } else {
-        allNodesHavePositions = false;
+        // Restore transient position from previous render (in-memory only)
+        const savedPosition = nodePositionsRef.current.get(node.id);
+        if (savedPosition) {
+          node.x  = savedPosition.x;
+          node.y  = savedPosition.y;
+          node.fx = savedPosition.x;
+          node.fy = savedPosition.y;
+        } else {
+          allNodesHavePositions = false;
+        }
       }
     });
 
@@ -284,7 +325,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       .data(links)
       .join('line')
       .attr('class', 'link')
-      .attr('stroke', d => d.isActive ? '#22c55e' : '#64748b')
+      .attr('stroke', d => d.isActive ? C_ACTIVE : '#64748b')
       .attr('stroke-width', d => d.isActive ? 3 : 2)
       .attr('marker-end', d => d.isActive ? 'url(#arrowhead-active)' : 'url(#arrowhead)');
 
@@ -295,67 +336,23 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       .join('circle')
       .attr('class', 'node')
       .attr('r', 15)
-      .attr('fill', d => {
-        // Matched final events show purple
-        if (d.wasJustMatched) return '#a855f7';
-        // Active nodes (including active final events) show green
-        if (d.isActive) return '#22c55e';
-        // Initial nodes show blue
-        if (d.isInitial) return '#3b82f6';
-        // Inactive nodes show gray
-        return '#64748b';
-      })
-      .attr('stroke', d => {
-        // Active matched final events show green stroke (to indicate active state)
-        if (d.wasJustMatched && d.isActive) return '#22c55e';
-        // Inactive matched final events show purple stroke
-        if (d.wasJustMatched) return '#c084fc';
-        // Active final events show green stroke
-        if (d.isActive && d.hasOutput) return '#22c55e';
-        // Inactive final events show orange stroke
-        if (d.hasOutput) return '#f59e0b';
-        // Active non-final events show dark green stroke
-        if (d.isActive) return '#16a34a';
-        // Initial events show blue stroke
-        if (d.isInitial) return '#2563eb';
-        // Default gray stroke
-        return '#475569';
-      })
-      .attr('stroke-width', d => {
-        // Active matched events have thick green stroke
-        if (d.wasJustMatched && d.isActive) return 6;
-        // Inactive matched events have thick purple stroke
-        if (d.wasJustMatched) return 5;
-        // Final events have thicker stroke
-        if (d.hasOutput) return 4;
-        // Active events have medium stroke
-        if (d.isActive) return 3;
-        // Default stroke
-        return 2;
-      })
+      .attr('fill', d => nodeColor(d))
+      .attr('stroke', d => nodeStroke(d))
+      .attr('stroke-width', d => nodeStrokeWidth(d))
       .style('cursor', 'pointer')
       .style('filter', d => {
-        // Matched events have purple glow
-        if (d.wasJustMatched && d.isActive) {
-          // Active matched events have combined purple + green glow
-          return 'drop-shadow(0 0 10px #a855f7) drop-shadow(0 0 8px #22c55e)';
-        }
-        if (d.wasJustMatched) {
-          return 'drop-shadow(0 0 10px #a855f7)';
-        }
-        // Active nodes have subtle green glow
         if (d.isActive) {
-          return 'drop-shadow(0 0 6px #22c55e)';
+          return nodeFilter(d);
         }
         return 'none';
       });
 
-    // Apply drag behavior
+    // Apply drag behavior — pin on drop, double-click to unpin
     const dragBehavior = d3.drag<any, GraphNode>()
       .on('start', (event, d) => {
         if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
+        d.fx = d.x ?? 0;
+        d.fy = d.y ?? 0;
       })
       .on('drag', (event, d) => {
         d.fx = event.x;
@@ -363,11 +360,28 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       })
       .on('end', (event, d) => {
         if (!event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+        // Pin at dropped position and persist
+        d.fx = d.x ?? d.fx;
+        d.fy = d.y ?? d.fy;
+        saveCegLayout(nodes, currentMachine?.id);
       });
 
     node.call(dragBehavior as any);
+
+    // Double-click to unpin
+    let lastDblClickTime = 0;
+    let lastDblClickId: string | null = null;
+    node.on('dblclick', (_event, d: any) => {
+      const now = Date.now();
+      if (now - lastDblClickTime < 350 && lastDblClickId === d.id) {
+        d.fx = null;
+        d.fy = null;
+        simulation.alpha(0.3).restart();
+        saveCegLayout(nodes, currentMachine?.id);
+      }
+      lastDblClickTime = now;
+      lastDblClickId   = d.id;
+    });
 
     // Add hover behavior for final events with outputs
     node
@@ -558,9 +572,10 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
 
       // Build state badges
       const states = [];
-      if (d.isInitial) states.push('<span style="background: #3b82f6; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 600;">INITIAL</span>');
-      if (d.isActive) states.push('<span style="background: #22c55e; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 600;">ACTIVE</span>');
-      if (d.hasOutput) states.push('<span style="background: #f59e0b; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 600;">OUTPUT</span>');
+      if (d.isInitial)      states.push('<span style="background:#3b82f6;color:#fff;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:600;">INITIAL</span>');
+      if (d.isActive)       states.push('<span style="background:#06b6d4;color:#000;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:600;">ACTIVE</span>');
+      if (d.wasJustMatched) states.push('<span style="background:#f59e0b;color:#000;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:600;">FIRED</span>');
+      if (d.hasOutput)      states.push('<span style="background:#f59e0b;color:#000;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:600;">OUTPUT</span>');
 
       // Build comprehensive tooltip
       const tooltipContent = `
@@ -654,11 +669,11 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
 
       label.style('opacity', n => n.id === d.id ? 1 : 0.3);
     })
-    .on('mouseout', function() {
-      // Reset node
+    .on('mouseout', function(_event, d) {
+      // Reset node — restore correct glow based on state
       d3.select(this)
         .attr('r', 15)
-        .style('filter', 'none');
+        .style('filter', nodeFilter(d));
 
       // Hide tooltip with fade out
       tooltip
@@ -719,39 +734,26 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       applyPositions();
 
       node
-        .attr('fill', d => {
-          if (d.wasJustMatched) return '#a855f7';
-          if (d.isActive) return '#22c55e';
-          if (d.isInitial) return '#3b82f6';
-          return '#64748b';
-        })
-        .attr('stroke', d => {
-          if (d.wasJustMatched) return '#c084fc';
-          if (d.hasOutput) return '#f59e0b';
-          if (d.isActive) return '#16a34a';
-          if (d.isInitial) return '#2563eb';
-          return '#475569';
-        })
-        .attr('stroke-width', d => {
-          if (d.wasJustMatched) return 5;
-          if (d.hasOutput) return 4;
-          return 2;
-        })
-        .style('filter', d => d.wasJustMatched ? 'drop-shadow(0 0 10px #a855f7)' : 'none');
+        .attr('fill', d => nodeColor(d))
+        .attr('stroke', d => nodeStroke(d))
+        .attr('stroke-width', d => nodeStrokeWidth(d))
+        .style('filter', d => nodeFilter(d));
 
       // Update link colors based on active state
       link
-        .attr('stroke', d => d.isActive ? '#22c55e' : '#64748b')
+        .attr('stroke', d => d.isActive ? C_ACTIVE : '#64748b')
         .attr('stroke-width', d => d.isActive ? 3 : 2)
         .attr('marker-end', d => d.isActive ? 'url(#arrowhead-active)' : 'url(#arrowhead)');
 
-      // Stop simulation immediately to prevent any repositioning
+      // Stop simulation but keep fx/fy (respect pinned positions)
       simulation.alpha(0).stop();
 
-      // Unfix positions so nodes can still be dragged
+      // Unfix only non-pinned nodes
       nodes.forEach(n => {
-        n.fx = null;
-        n.fy = null;
+        if (!savedPins[n.id]) {
+          n.fx = null;
+          n.fy = null;
+        }
       });
     }
 
@@ -782,229 +784,58 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', background: '#0a0a0a' }}>
-      <svg ref={svgRef} style={{ width: '100%', height: '100%' }} />
+      <svg ref={svgRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
 
-      {/* Reset Layout Button */}
+      {/* Reset Layout — top-right, consistent with MachineGraphView header style */}
       <button
+        className="vis-reset-layout-btn"
         onClick={() => setLayoutResetKey(prev => prev + 1)}
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          padding: '8px 16px',
-          background: 'rgba(59, 130, 246, 0.1)',
-          border: '1px solid #3b82f6',
-          borderRadius: '6px',
-          color: '#3b82f6',
-          fontSize: '11px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          zIndex: 50,
-          letterSpacing: '0.5px',
-          textTransform: 'uppercase'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
-          e.currentTarget.style.boxShadow = '0 0 10px rgba(59, 130, 246, 0.3)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
+        style={{ position: 'absolute', top: '14px', right: '14px', zIndex: 50 }}
+        title="Clear pinned positions and let force layout run freely"
       >
-        Reset Layout
+        ⊹ Reset Layout
       </button>
 
-      {/* Slide-out Legend Panel */}
-      <div
-        onMouseEnter={() => setLegendHovered(true)}
-        onMouseLeave={() => setLegendHovered(false)}
-        style={{
-          position: 'absolute',
-          top: '50%',
-          right: legendHovered ? '0' : '-260px',
-          transform: 'translateY(-50%)',
-          width: '280px',
-          maxHeight: '80vh',
-          background: 'rgba(0, 0, 0, 0.95)',
-          border: '1px solid #3b82f6',
-          borderRight: 'none',
-          borderTopLeftRadius: '12px',
-          borderBottomLeftRadius: '12px',
-          boxShadow: legendHovered ? '-5px 0 20px rgba(59, 130, 246, 0.3)' : 'none',
-          transition: 'right 0.3s ease-out, box-shadow 0.3s ease-out',
-          zIndex: 100,
-          display: 'flex',
-          flexDirection: 'column'
-        }}
-      >
-        {/* Legend Tab Trigger */}
-        <div style={{
-          position: 'absolute',
-          left: '-40px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: '40px',
-          height: '100px',
-          background: 'rgba(0, 0, 0, 0.9)',
-          border: '1px solid #3b82f6',
-          borderRight: 'none',
-          borderTopLeftRadius: '8px',
-          borderBottomLeftRadius: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          boxShadow: legendHovered ? '-3px 0 10px rgba(59, 130, 246, 0.2)' : 'none',
-          transition: 'box-shadow 0.3s ease-out'
-        }}>
-          <div style={{
-            transform: 'rotate(-90deg)',
-            fontSize: '11px',
-            fontWeight: '700',
-            color: '#3b82f6',
-            letterSpacing: '1px',
-            whiteSpace: 'nowrap'
-          }}>
-            LEGEND
-          </div>
-        </div>
-
-        {/* Legend Content */}
-        <div style={{
-          padding: '20px',
-          color: '#fff',
-          fontSize: '12px',
-          overflowY: 'auto',
-          flex: 1
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '16px', fontSize: '15px', color: '#3b82f6' }}>
-            D3 Force Graph Legend
-          </div>
-
-          {/* Event States Section */}
-          <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #334155' }}>
-            <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Event States
+      {/* Floating left-side legend — same placement as Tobias */}
+      <div className={`vis-legend-panel${legendOpen ? ' open' : ''}`}>
+        <button
+          className="vis-legend-tab"
+          onClick={() => setLegendOpen(o => !o)}
+          title={legendOpen ? 'Hide legend' : 'Show legend'}
+        >
+          LEGEND
+        </button>
+        <div className="vis-legend-content">
+          <div className="vis-legend-items">
+            <div className="vis-legend-item">
+              <span className="vis-legend-dot" style={{ background: C_INITIAL }} />
+              <span>Start node (A+)</span>
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: '#22c55e',
-                border: '2px solid #16a34a',
-                marginRight: '8px',
-                boxShadow: '0 0 10px #22c55e',
-                flexShrink: 0
-              }} />
-              <span>Active Event</span>
+            <div className="vis-legend-item">
+              <span className="vis-legend-dot" style={{ background: C_ACTIVE }} />
+              <span>Queued / active</span>
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: '#3b82f6',
-                border: '2px solid #2563eb',
-                marginRight: '8px',
-                flexShrink: 0
-              }} />
-              <span>Initial Event (Root)</span>
+            <div className="vis-legend-item">
+              <span className="vis-legend-dot vis-legend-ring" style={{ borderColor: C_FIRED }} />
+              <span>Terminal (output)</span>
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: '#64748b',
-                border: '2px solid #475569',
-                marginRight: '8px',
-                flexShrink: 0
-              }} />
-              <span>Inactive Event</span>
+            <div className="vis-legend-item">
+              <span className="vis-legend-dot" style={{ background: C_FIRED }} />
+              <span>Output emitted</span>
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: '#64748b',
-                border: '4px solid #f59e0b',
-                marginRight: '8px',
-                flexShrink: 0
-              }} />
-              <span>Has Outputs</span>
+            <div className="vis-legend-item">
+              <span className="vis-legend-dot" style={{ background: C_DEFAULT }} />
+              <span>Intermediate</span>
             </div>
-          </div>
-
-          {/* Interactions Section */}
-          <div style={{ marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid #334155' }}>
-            <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Interactions
+            <div className="vis-legend-divider" />
+            <div className="vis-legend-item" style={{ color: '#64748b', fontSize: '10px' }}>
+              Scroll to zoom · Drag to pan
             </div>
-
-            <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: '1.5' }}>
-              <div style={{ marginBottom: '6px' }}>• Hover: View event details</div>
-              <div style={{ marginBottom: '6px' }}>• Drag nodes: Reposition</div>
-              <div style={{ marginBottom: '6px' }}>• Scroll: Zoom in/out</div>
-              <div>• Drag background: Pan</div>
+            <div className="vis-legend-item" style={{ color: '#64748b', fontSize: '10px' }}>
+              Drag node to pin
             </div>
-          </div>
-
-          {/* Transitions Section */}
-          <div>
-            <div style={{ fontSize: '11px', fontWeight: '600', color: '#94a3b8', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Transitions
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{
-                width: '30px',
-                height: '2px',
-                background: '#64748b',
-                marginRight: '8px',
-                position: 'relative'
-              }}>
-                <div style={{
-                  position: 'absolute',
-                  right: '-5px',
-                  top: '-3px',
-                  width: '0',
-                  height: '0',
-                  borderLeft: '5px solid #64748b',
-                  borderTop: '4px solid transparent',
-                  borderBottom: '4px solid transparent'
-                }} />
-              </div>
-              <span>Inactive Transition</span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div style={{
-                width: '30px',
-                height: '3px',
-                background: '#22c55e',
-                marginRight: '8px',
-                position: 'relative'
-              }}>
-                <div style={{
-                  position: 'absolute',
-                  right: '-5px',
-                  top: '-3px',
-                  width: '0',
-                  height: '0',
-                  borderLeft: '6px solid #22c55e',
-                  borderTop: '4.5px solid transparent',
-                  borderBottom: '4.5px solid transparent'
-                }} />
-              </div>
-              <span>Active Transition</span>
+            <div className="vis-legend-item" style={{ color: '#64748b', fontSize: '10px' }}>
+              Double-click to unpin
             </div>
           </div>
         </div>
