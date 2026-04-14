@@ -91,7 +91,7 @@ class Routes(
       "KleeneStar.json", "AIPowerEfficiency.json", "AICoolingRegulator.json",
       "AICapacityThrottler.json", "AISecurityMonitor.json", "AIModelWellness.json",
       "AIHardwareResilience.json", "NewPatientInflow.json", "DailyPatientCare.json",
-      "PatientWellness.json", "CareTransitionWorkflow.json"
+      "PatientWellness.json", "CareTransitionWorkflow.json", "WellnessAnalytics.json"
     )
 
     var loaded = 0; var failed = 0
