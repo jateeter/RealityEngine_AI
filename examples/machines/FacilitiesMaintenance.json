@@ -919,6 +919,145 @@
           {"event": "WA_TRANSITION_REVIEW", "signal": "—",               "note": "WellnessAnalytics Sequence 3 (wa-sustained-alert-facility) advances; if sustained: TRANSITION_REVIEW output → CareTransitionWorkflow"}
         ]
       }
+    ],
+
+    "testWorkstreams": [
+      {
+        "id": "ws-7day-residential-cycle",
+        "name": "7-Day Residential Maintenance Cycle",
+        "description": "A complete Monday-through-Sunday maintenance cycle for a single assisted living resident. The workstream follows one patient across all seven days with realistic daily visits, one mid-week deep clean, and a clinical escalation arc: hygiene concern (Tuesday) → safety hazard (Friday) → fall and inaccessibility event (Saturday) → post-fall wellness concern and downstream escalation (Sunday). Each day is an independent CES sequence pass. The seven outputs together compose a longitudinal picture of the patient's environmental and observational state.",
+        "patient": {
+          "id": "patient-ws-001",
+          "profile": "83-year-old assisted living resident, female; 2-year resident; mild cognitive decline noted at last quarterly assessment; independent ambulation with cane; hearing reduction (wears hearing aids, periodically uncharged); no prior fall history this admission",
+          "carePlan": "Daily aide check-in morning; nursing assessment twice weekly; maintenance daily visit 9:00-11:00 AM; weekly deep clean Wednesday"
+        },
+        "clinicalNarrative": "A normal week begins with a clear Monday visit. Tuesday reveals a hygiene deficit (soiled linens) suggesting the patient struggled with self-care overnight — possibly related to the mild cognitive decline or an unwitnessed incontinence episode. Wednesday's deep clean confirms the CNA hygiene follow-up resolved the immediate issue, and nutrition is satisfactory. Thursday is unremarkable. Friday a loose bath mat is found near the shower — the first structural fall-risk indicator. Saturday the unit is inaccessible; emergency access reveals the patient on the floor near the bathroom, conscious but unable to rise. EMS is activated. Sunday the patient returns from emergency department observation; the maintenance worker — who has been visiting weekly for two years — is not recognized. WELLNESS_CONCERN fires and routes to WellnessAnalytics as a FACILITY_ALERT, initiating the sustained-deterioration tracking sequence.",
+        "days": [
+          {
+            "day": 1,
+            "label": "Monday",
+            "visitType": "daily",
+            "expectedOutput": "DAILY_COMPLETE",
+            "clinicalContext": "Baseline visit; week starts normally. Patient rested well, room in order.",
+            "steps": [
+              {"event": "VISIT_ACTIVE", "signal": "[H,L,L,L,L,L,L,L]", "note": "9:07 AM — worker knocks and announces; patient responds promptly"},
+              {"event": "ACCESSIBLE",   "signal": "[H,H,L,L,L,L,L,L]", "note": "Patient opens door; greets worker by first name"},
+              {"event": "HYGIENE_OK",   "signal": "[H,H,H,L,L,L,L,L]", "note": "Bathroom clean; toilet flushed; linens fresh from weekend linen change; soap and paper stocked"},
+              {"event": "SPACE_OK",     "signal": "[H,H,H,H,L,L,L,L]", "note": "Pathways clear; cane in place beside bed; no hazards; furniture in standard position"},
+              {"event": "PATIENT_OK",   "signal": "[H,H,H,H,L,H,L,L]", "note": "Patient in good spirits; mentions watching the morning news; oriented and interactive"},
+              {"event": "DAILY_DONE",   "signal": "[H,H,H,H,L,H,H,L]", "note": "9:24 AM — routine tasks complete; log submitted; no concerns"}
+            ],
+            "postVisitActions": "None. Log filed. Next visit: Tuesday AM."
+          },
+          {
+            "day": 2,
+            "label": "Tuesday",
+            "visitType": "daily",
+            "expectedOutput": "HYGIENE_ALERT",
+            "clinicalContext": "Hygiene deficit detected. Patient likely had a nighttime incontinence episode and was unable or unwilling to manage it. First observable signal of a self-care gap.",
+            "steps": [
+              {"event": "VISIT_ACTIVE",      "signal": "[H,L,L,L,L,L,L,L]", "note": "9:05 AM — worker knocks; brief delay before patient answers"},
+              {"event": "ACCESSIBLE",        "signal": "[H,H,L,L,L,L,L,L]", "note": "Patient opens door in nightgown; appears self-conscious"},
+              {"event": "HYGIENE_CONCERN",   "signal": "[H,H,L,L,L,L,L,H]", "note": "Strong odor in room; soiled bed linens visible; bathroom shows evidence of incontinence — D7↑, D2 stays LOW; worker calmly offers to get help before cleaning"}
+            ],
+            "postVisitActions": "Worker verbally alerts charge nurse at 9:09 AM. CNA dispatched for personal hygiene assistance; linen change completed by 10:30 AM. Nurse documents incontinence episode in care record. No new orders placed — within care plan parameters. Incident noted for quarterly assessment review. Next visit: Wednesday (weekly deep clean)."
+          },
+          {
+            "day": 3,
+            "label": "Wednesday",
+            "visitType": "weekly",
+            "expectedOutput": "WEEKLY_COMPLETE",
+            "clinicalContext": "Weekly deep clean. CNA addressed Tuesday hygiene concern; patient has had fresh linens since 10:30 AM Tuesday. Nutrition assessment included. Patient mood improved from Tuesday.",
+            "steps": [
+              {"event": "VISIT_ACTIVE",      "signal": "[H,L,L,L,L,L,L,L]", "note": "9:12 AM — worker knocks with weekly supply cart; patient answers"},
+              {"event": "ACCESSIBLE",        "signal": "[H,H,L,L,L,L,L,L]", "note": "Patient opens door; appears better rested than Tuesday; says she feels 'much better'"},
+              {"event": "HYGIENE_OK",        "signal": "[H,H,H,L,L,L,L,L]", "note": "Full bathroom deep scrub; complete linen change (fresh set installed); personal care supplies fully restocked; no odor"},
+              {"event": "SPACE_OK",          "signal": "[H,H,H,H,L,L,L,L]", "note": "Room thoroughly cleaned; furniture inspected; floors treated; closet organized; no safety concerns"},
+              {"event": "NUTRITION_OK",      "signal": "[H,H,H,H,H,L,L,L]", "note": "Refrigerator: yogurt, fruit, water pitcher full — all fresh; pantry snacks adequate; meal tray from last night returned empty (patient ate dinner)"},
+              {"event": "PATIENT_OK_WEEKLY", "signal": "[H,H,H,H,H,H,L,L]", "note": "Patient chatted about her daughter's upcoming visit; recognized worker; oriented to day and month; appropriate affect"},
+              {"event": "DEEP_DONE",         "signal": "[H,H,H,H,H,H,H,L]", "note": "10:05 AM — full weekly checklist complete; supervisor copy submitted"}
+            ],
+            "postVisitActions": "Log filed. Nutrition within norms — no action. Hygiene concern from Tuesday resolved; notation added to ongoing care record. Next visit: Thursday AM."
+          },
+          {
+            "day": 4,
+            "label": "Thursday",
+            "visitType": "daily",
+            "expectedOutput": "DAILY_COMPLETE",
+            "clinicalContext": "Unremarkable daily visit. Patient in bathroom when worker arrived — hearing aid was in the charger, causing delayed response. Kleene-plus initial absorbs the extra knock attempt.",
+            "steps": [
+              {"event": "VISIT_ACTIVE", "signal": "[H,L,L,L,L,L,L,L]", "note": "9:08 AM — knock and announce; no immediate response"},
+              {"event": "VISIT_ACTIVE", "signal": "[H,L,L,L,L,L,L,L]", "note": "9:10 AM — second knock, louder; heard shuffling inside; Kleene+ loop"},
+              {"event": "ACCESSIBLE",   "signal": "[H,H,L,L,L,L,L,L]", "note": "Patient opens door; explains she was in the bathroom and hearing aid was charging; apologizes for the wait"},
+              {"event": "HYGIENE_OK",   "signal": "[H,H,H,L,L,L,L,L]", "note": "Bathroom tidy from post-shower use; linens acceptable; products stocked"},
+              {"event": "SPACE_OK",     "signal": "[H,H,H,H,L,L,L,L]", "note": "Pathways clear; cane beside bed; bath mat in place; no hazards observed"},
+              {"event": "PATIENT_OK",   "signal": "[H,H,H,H,L,H,L,L]", "note": "Patient alert; mentions her daughter called and is coming Saturday; looking forward to the visit"},
+              {"event": "DAILY_DONE",   "signal": "[H,H,H,H,L,H,H,L]", "note": "9:28 AM — routine tasks complete; note in log: hearing aid was charging, may benefit from backup or reminder system"}
+            ],
+            "postVisitActions": "Log filed. Hearing aid charging noted — CNA informed for follow-up on hearing aid management routine. Next visit: Friday AM."
+          },
+          {
+            "day": 5,
+            "label": "Friday",
+            "visitType": "daily",
+            "expectedOutput": "SAFETY_ALERT",
+            "clinicalContext": "Fall hazard identified. Loose bath mat in bathroom entry zone — the same zone where the patient showers independently. Patient reports the mat 'keeps sliding around.' This is the structural precondition for Saturday's fall event.",
+            "steps": [
+              {"event": "VISIT_ACTIVE",    "signal": "[H,L,L,L,L,L,L,L]", "note": "9:04 AM — knock and announce; patient answers promptly; expecting daughter tomorrow"},
+              {"event": "ACCESSIBLE",      "signal": "[H,H,L,L,L,L,L,L]", "note": "Patient opens door; animated and cheerful about the weekend visit"},
+              {"event": "HYGIENE_OK",      "signal": "[H,H,H,L,L,L,L,L]", "note": "Bathroom clean; linens acceptable; hygiene products stocked"},
+              {"event": "SPACE_CONCERN",   "signal": "[H,H,H,L,L,L,L,H]", "note": "Bath mat in bathroom entry is loose — slides easily; backing worn; patient mentions 'it moves when I step on it'; D7↑, D3 stays LOW; worker removes mat immediately and places wet floor sign"}
+            ],
+            "postVisitActions": "Worker removes loose bath mat and places it aside. Wet floor sign placed. Charge nurse notified at 9:11 AM. Work order submitted for non-slip bath mat replacement (priority: same day). Nurse documents fall hazard and removal in care record. Supervisor notified of work order. Patient advised not to use that area of the bathroom floor without the new mat. New non-slip mat delivered and installed by 2:00 PM. Next visit: Saturday AM."
+          },
+          {
+            "day": 6,
+            "label": "Saturday",
+            "visitType": "daily",
+            "expectedOutput": "INACCESSIBILITY_ALERT",
+            "clinicalContext": "Patient does not respond to repeated knocking. Light visible under door. Daughter's planned visit is today. Emergency access reveals patient on bathroom floor — conscious but unable to rise; likely fell stepping out of the shower near the bathroom entry zone (consistent with Friday's SAFETY_ALERT, occurring after the new mat was installed but before the patient fully adjusted to the updated layout). EMS activated. CareTransitionWorkflow Sequence 1 (acute hospital transfer) initiated.",
+            "steps": [
+              {"event": "VISIT_ACTIVE", "signal": "[H,L,L,L,L,L,L,L]", "note": "9:05 AM — knock and announce; no response; light visible under door"},
+              {"event": "VISIT_ACTIVE", "signal": "[H,L,L,L,L,L,L,L]", "note": "9:08 AM — second knock, louder; called patient by first name; no response; Kleene+ loop"},
+              {"event": "VISIT_ACTIVE", "signal": "[H,L,L,L,L,L,L,L]", "note": "9:11 AM — third knock; supervisor contacted by radio; told to attempt once more; water running noise heard faintly — possibly shower left on; Kleene+ loop"},
+              {"event": "INACCESSIBLE", "signal": "[H,L,L,L,L,L,L,H]", "note": "9:14 AM — inaccessibility threshold reached; D7↑, D1 stays LOW; charge nurse called immediately; worker stays at door"}
+            ],
+            "postVisitActions": "Charge nurse arrives at 9:17 AM with emergency key. Unit entered: patient found on bathroom floor near shower exit, conscious, alert, unable to rise; reporting hip pain. Shower running. EMS dispatched at 9:18 AM (activates CareTransitionWorkflow Sequence 1 — acute hospital transfer). Daughter notified by charge nurse at 9:20 AM. EMS arrives at 9:24 AM; patient transported to hospital ED. Incident report filed. Daughter meets patient at ED. X-ray ordered for hip. Maintenance log updated: inaccessibility → welfare check → fall found → EMS transport."
+          },
+          {
+            "day": 7,
+            "label": "Sunday",
+            "visitType": "daily",
+            "expectedOutput": "WELLNESS_CONCERN → WellnessAnalytics FACILITY_ALERT",
+            "clinicalContext": "Patient returned from ED late Saturday evening — hip X-ray showed no fracture; ED observation for 6 hours; discharged back to facility. Sunday visit reveals cognitive and affect change: patient does not recognize the maintenance worker she has known for two years. Post-fall disorientation and possible subconcussion effect. WELLNESS_CONCERN fires and is translated by the integration layer into a WellnessAnalytics FACILITY_ALERT cumulative vector, initiating longitudinal deterioration tracking.",
+            "steps": [
+              {"event": "VISIT_ACTIVE",    "signal": "[H,L,L,L,L,L,L,L]", "note": "9:10 AM — worker knocks; patient's daughter answers (she stayed overnight); invites worker in"},
+              {"event": "ACCESSIBLE",      "signal": "[H,H,L,L,L,L,L,L]", "note": "Unit entered; patient is in bed, awake; daughter present"},
+              {"event": "HYGIENE_OK",      "signal": "[H,H,H,L,L,L,L,L]", "note": "Bathroom tidy; daughter had helped with hygiene this morning; linens freshly changed by CNA upon return from ED"},
+              {"event": "SPACE_OK",        "signal": "[H,H,H,H,L,L,L,L]", "note": "New non-slip bath mat secured; pathways clear; no current fall hazards"},
+              {"event": "PATIENT_CONCERN", "signal": "[H,H,H,H,L,L,L,H]", "note": "Worker greets patient by name (2-year relationship); patient stares blankly and asks daughter 'Who is that?'; cannot recall worker's name or recognize her face; appears flat in affect and slightly confused about the day; D7↑, D5 stays LOW"}
+            ],
+            "postVisitActions": "Worker informs charge nurse immediately. Daughter confirms patient was 'not quite herself' since returning from ED. Nurse conducts cognitive assessment at 9:30 AM. Integration layer reads WELLNESS_CONCERN from perceptual bytes 250-255; queries patient record: facility resident, no prior WellnessAnalytics ALERT history → writes FACILITY_ALERT [H,H,H,L,L,L,L,L] to WellnessAnalytics input at offset 234. WellnessAnalytics Sequence 3 (wa-sustained-alert-facility) initial fires — baseline ALERT now in progress. Nurse contacts attending physician. Post-fall cognitive follow-up ordered. Family meeting scheduled for Monday.",
+            "workstreamConclusion": {
+              "summary": "The 7-day workstream produced 5 outputs across 7 visits: DAILY_COMPLETE × 3, WEEKLY_COMPLETE × 1, HYGIENE_ALERT × 1, SAFETY_ALERT × 1, INACCESSIBILITY_ALERT × 1, WELLNESS_CONCERN × 1. The sequence of SAFETY_ALERT (Friday) followed by INACCESSIBILITY_ALERT (Saturday) followed by WELLNESS_CONCERN (Sunday) represents the facility maintenance contribution to a complete fall-escalation-and-cognitive-reassessment arc — a clinical narrative that no single machine alone could have captured.",
+              "downstreamActivations": [
+                "DailyPatientCare: HYGIENE_ALERT (Tuesday) feeds bathroom-nonuse detection; SAFETY_ALERT (Friday) feeds fall detection",
+                "CareTransitionWorkflow: INACCESSIBILITY_ALERT (Saturday) → Sequence 1 acute hospital transfer (hip injury confirmed, no fracture)",
+                "WellnessAnalytics: WELLNESS_CONCERN (Sunday) → FACILITY_ALERT initial; longitudinal deterioration tracking begins"
+              ],
+              "perceptualSpaceBytesWritten": [250, 252, 253, 255, 254],
+              "seqOutputBytesMap": {
+                "byte_250_DAILY_COMPLETE": "Mon, Thu, Wed (partial — subsumed by WEEKLY_COMPLETE)",
+                "byte_251_WEEKLY_COMPLETE": "Wed",
+                "byte_252_HYGIENE_ALERT": "Tue",
+                "byte_253_SAFETY_ALERT": "Fri",
+                "byte_254_WELLNESS_CONCERN": "Sun",
+                "byte_255_INACCESSIBILITY_ALERT": "Sat"
+              }
+            }
+          }
+        ]
+      }
     ]
   }
 }
