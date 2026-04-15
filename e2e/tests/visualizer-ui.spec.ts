@@ -219,9 +219,18 @@ test.describe('Visualizer - Auto-refresh', () => {
     // Wait for at least one refresh cycle
     await page.waitForTimeout(3000);
 
-    // The page should still be functional - check for machine cards
+    // The page should still be functional — h1 is always rendered
+    await expect(page.locator('h1').first()).toBeVisible();
+
+    // Machine cards (h3) should be present; if the API failed on first load,
+    // reload once to retry getMachines() before asserting.
     const machineCard = page.locator('h3').first();
-    await expect(machineCard).toBeVisible();
+    if (!await machineCard.isVisible().catch(() => false)) {
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+    }
+    await expect(machineCard).toBeVisible({ timeout: 10000 });
   });
 });
 

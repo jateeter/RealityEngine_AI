@@ -171,7 +171,6 @@ class Machine(
 
   /** Full serialization including sequence internals. */
   def toFullJson: Json = {
-    import io.circe.syntax._
     val base = toJson.asObject.get
     val withSequences = base.add("sequences", Json.arr(getAllSequences.map(_.toJson): _*))
     Json.fromJsonObject(withSequences)

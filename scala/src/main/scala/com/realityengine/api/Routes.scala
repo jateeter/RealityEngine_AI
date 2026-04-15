@@ -4,22 +4,20 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
-import akka.stream.Materializer
 import com.realityengine.engine._
 import com.realityengine.models._
 import com.realityengine.services.MachineLoader
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.Json
 import io.circe.syntax._
-import io.circe.parser._
 import JsonProtocol._
 
 import akka.actor.Cancellable
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
-import java.io.{File, FileInputStream}
-import java.nio.file.{Files, Paths}
+import java.io.File
+import java.nio.file.Files
 import scala.collection.concurrent.TrieMap
 import com.realityengine.logging.{AuditConfig, AuditLogger}
 
@@ -276,7 +274,7 @@ class Routes(
             path("stats") { get { complete(Json.obj("stats" -> engine.getStats)) } },
             path("active") { get {
               val active = engine.getAllActiveVectors
-              complete(Json.obj("activeVectors" -> Json.fromFields(active.mapValues(vs => Json.arr(vs.map(_.toJson): _*)).toSeq)))
+              complete(Json.obj("activeVectors" -> Json.fromFields(active.view.mapValues(vs => Json.arr(vs.map(_.toJson): _*)).toSeq)))
             } },
             path("history") { get { parameter("limit".as[Int].?) { limit =>
               complete(Json.obj("history" -> engine.getHistory(limit).asJson))
@@ -385,7 +383,7 @@ class Routes(
             path("process-universal" / "all") { post { entity(as[Json]) { body =>
               val vec = body.hcursor.downField("universalInputSpace").as[Vector[Double]].getOrElse(Vector.empty)
               val results = engine.processUniversalInputForAllMachines(vec)
-              complete(Json.obj("results" -> Json.fromFields(results.mapValues(_.asJson).toSeq)))
+              complete(Json.obj("results" -> Json.fromFields(results.view.mapValues(_.asJson).toSeq)))
             } } },
             // Fixed: /machines/machine-graph
             pathEnd {

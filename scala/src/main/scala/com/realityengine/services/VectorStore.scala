@@ -6,7 +6,6 @@ import io.circe.Json
 import io.circe.syntax._
 import io.circe.parser._
 import scala.concurrent.{ExecutionContext, Future, blocking}
-import java.util.UUID
 
 /**
  * VectorStore — Qdrant REST API integration via sttp.
@@ -20,8 +19,6 @@ class VectorStore(
   vectorDimension: Int     = sys.env.getOrElse("VECTOR_DIMENSION", "256").toIntOption.getOrElse(256)
 )(implicit backend: SttpBackend[Identity, Any]) {
 
-  private var initialized = false
-
   private val seqCollection = s"${collectionName}_sequences"
 
   // ── Initialization ────────────────────────────────────────────────────────
@@ -30,7 +27,6 @@ class VectorStore(
     blocking {
       try {
         ensureCollection(collectionName)
-        initialized = true
         println("VectorStore initialized successfully")
       } catch { case e: Exception =>
         System.err.println(s"Failed to initialize VectorStore: ${e.getMessage}")

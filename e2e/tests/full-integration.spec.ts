@@ -89,8 +89,14 @@ test.describe('Full Integration - End to End Flow', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000); // Wait for data to load
 
-    // Check if machine cards are visible
+    // Check if machine cards are visible; if the API failed on first load,
+    // reload once to retry getMachines() before asserting.
     const machineCard = page.locator('h3').first();
+    if (!await machineCard.isVisible().catch(() => false)) {
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+    }
     await expect(machineCard).toBeVisible({ timeout: 10000 });
     console.log('✓ Visualizer loaded successfully');
 

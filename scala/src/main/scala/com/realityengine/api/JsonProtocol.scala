@@ -41,7 +41,7 @@ object JsonProtocol {
     Json.obj(
       "inputVector"     -> r.inputVector.asJson,
       "timestamp"       -> Json.fromLong(r.timestamp),
-      "sequenceResults" -> Json.fromFields(r.sequenceResults.mapValues(_.asJson).toSeq),
+      "sequenceResults" -> Json.fromFields(r.sequenceResults.view.mapValues(_.asJson).toSeq),
       "machineOutput"   -> r.machineOutput.asJson,
       "arbiterMetadata" -> r.arbiterMetadata.asJson
     )
@@ -85,7 +85,7 @@ object JsonProtocol {
       "stepNumber"      -> Json.fromInt(ss.stepNumber),
       "timestamp"       -> Json.fromLong(ss.timestamp),
       "perceptualSpace" -> ss.perceptualSpace.asJson,
-      "machineResults"  -> Json.fromFields(ss.machineResults.mapValues(_.asJson).toSeq),
+      "machineResults"  -> Json.fromFields(ss.machineResults.view.mapValues(_.asJson).toSeq),
       "activeRegions"   -> ss.activeRegions.asJson
     )
   }
