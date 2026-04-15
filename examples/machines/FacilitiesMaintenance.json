@@ -1058,6 +1058,178 @@
           }
         ]
       }
+    ],
+
+    "inputSequences": [
+      {
+        "name": "TC-01: Daily Routine — Single Visit, All Clear",
+        "description": "Standard daily visit: worker enters, hygiene and space pass, patient observed normal, tasks logged. → DAILY_COMPLETE",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.9, 0.1]
+        ]
+      },
+      {
+        "name": "TC-02: Daily Routine — Kleene+ (3 Knocks Before Entry)",
+        "description": "Three knock attempts before patient answers (hearing aid charging). Kleene+ initial absorbs repeated VISIT_ACTIVE events. → DAILY_COMPLETE",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.9, 0.1]
+        ]
+      },
+      {
+        "name": "TC-03: Weekly Deep Clean — Full Sequence with Nutrition Assessment",
+        "description": "Complete weekly visit including refrigerator/hydration inspection (D4) before patient observation. → WEEKLY_COMPLETE",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.1]
+        ]
+      },
+      {
+        "name": "TC-04: Hygiene Concern — Soiled Linens and Bathroom Odor",
+        "description": "Hygiene deficit found on entry — D7 rises, D2 stays LOW. → HYGIENE_ALERT → DailyPatientCare",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.9]
+        ]
+      },
+      {
+        "name": "TC-05: Safety Concern — Loose Rug and Wet Floor",
+        "description": "Hygiene passes; fall hazard found during space inspection — D7 rises, D3 stays LOW. → SAFETY_ALERT → DailyPatientCare",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.9]
+        ]
+      },
+      {
+        "name": "TC-06: Wellness Concern — Patient Does Not Recognize Familiar Worker",
+        "description": "Hygiene and space pass; patient observation raises welfare flag — D7 rises, D5 stays LOW. → WELLNESS_CONCERN → WellnessAnalytics",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.9]
+        ]
+      },
+      {
+        "name": "TC-07: Inaccessibility Alert — No Response After Four Attempts",
+        "description": "Unit inaccessible after four Kleene+ attempts — D7 rises, D1 stays LOW throughout. → INACCESSIBILITY_ALERT → CareTransitionWorkflow",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.9]
+        ]
+      },
+      {
+        "name": "TC-08: Wellness Concern Escalation — FM Portion to WellnessAnalytics",
+        "description": "Facilities-machine portion of the full pipeline test. Patient welfare concern observed; WELLNESS_CONCERN written to perceptual bytes 250-255. Integration layer translates to WellnessAnalytics FACILITY_ALERT_REPEAT. → WELLNESS_CONCERN",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.9]
+        ]
+      },
+      {
+        "name": "WS-Day1 (Mon): Daily Routine — Week Baseline",
+        "description": "7-day workstream Day 1. Normal daily visit; patient cheerful and alert. Week baseline established. → DAILY_COMPLETE",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.9, 0.1]
+        ]
+      },
+      {
+        "name": "WS-Day2 (Tue): Hygiene Concern — Overnight Incontinence",
+        "description": "7-day workstream Day 2. Soiled linens discovered; first observable self-care gap. → HYGIENE_ALERT → DailyPatientCare",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.9]
+        ]
+      },
+      {
+        "name": "WS-Day3 (Wed): Weekly Deep Clean — Post-Hygiene-Concern Follow-up",
+        "description": "7-day workstream Day 3. CNA resolved Tuesday hygiene concern; full deep clean including nutrition assessment passes. → WEEKLY_COMPLETE",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.1]
+        ]
+      },
+      {
+        "name": "WS-Day4 (Thu): Daily Routine — Kleene+ (Hearing Aid Charging)",
+        "description": "7-day workstream Day 4. Two knocks before patient answers (hearing aid was charging). All clear. → DAILY_COMPLETE",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.9, 0.9, 0.1]
+        ]
+      },
+      {
+        "name": "WS-Day5 (Fri): Safety Concern — Loose Bath Mat at Shower Exit",
+        "description": "7-day workstream Day 5. Loose bath mat found; structural fall-risk precondition for Saturday. → SAFETY_ALERT → DailyPatientCare",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.9]
+        ]
+      },
+      {
+        "name": "WS-Day6 (Sat): Inaccessibility — Patient Found Fallen",
+        "description": "7-day workstream Day 6. No response after three Kleene+ attempts; patient found on bathroom floor. → INACCESSIBILITY_ALERT → CareTransitionWorkflow Seq 1 (EMS/hospital)",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.9]
+        ]
+      },
+      {
+        "name": "WS-Day7 (Sun): Wellness Concern — Post-Fall Cognitive Change",
+        "description": "7-day workstream Day 7. Patient returned from ED; does not recognize familiar worker of 2 years. → WELLNESS_CONCERN → WellnessAnalytics FACILITY_ALERT",
+        "vectors": [
+          [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.1],
+          [0.9, 0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.9]
+        ]
+      }
     ]
   }
 }
