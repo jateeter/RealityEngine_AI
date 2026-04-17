@@ -214,10 +214,10 @@ if [ "$FRESH_START" = true ]; then
     echo ""
 fi
 
-# Clear Docker build cache to prevent stale builds
+# Clear Docker build cache (best-effort, 30s timeout each — never blocks startup)
 print_info "Clearing Docker build cache..."
-docker builder prune -f > /dev/null 2>&1
-docker image prune -f > /dev/null 2>&1
+timeout 30 docker builder prune -f > /dev/null 2>&1 || true
+timeout 30 docker image prune -f > /dev/null 2>&1 || true
 print_success "Docker cache cleared"
 echo ""
 
