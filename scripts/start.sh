@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # Reality Engine - Start Script
-# Starts all services (Qdrant + Reality Engine API)
+# Starts all Reality Engine services.
+# Qdrant is NOT managed here — it is the unified instance owned by localAIStack
+# (host port 4333).  Start localAIStack before running this script.
 
 set -e
 
@@ -73,10 +75,10 @@ fi
 # Verify the certificate covers all Docker service hostnames.
 # The Scala / Node services verify the peer cert by hostname, so the cert
 # MUST include SANs for every service name in the compose network.
-if ! openssl x509 -in certs/server.crt -noout -text 2>/dev/null | grep -q "DNS:qdrant"; then
+if ! openssl x509 -in certs/server.crt -noout -text 2>/dev/null | grep -q "DNS:reality-engine"; then
     echo ""
     echo "Error: certs/server.crt is missing required Subject Alternative Names."
-    echo "The certificate must cover all Docker service hostnames (qdrant, reality-engine, etc.)."
+    echo "The certificate must cover all Docker service hostnames (reality-engine, visualizer-backend, etc.)."
     echo ""
     echo "Regenerate certificates:"
     echo "  bash certs/generate-dev-certs.sh"
@@ -157,6 +159,23 @@ fi
 print_success "No port conflicts detected"
 echo ""
 
+# Verify localAIStack Qdrant (unified vector store) is reachable on host port 4333
+print_info "Checking unified Qdrant (localAIStack) at http://localhost:4333..."
+if ! curl -sf http://localhost:4333/healthz > /dev/null 2>&1 && \
+   ! curl -sf http://localhost:4333/collections > /dev/null 2>&1; then
+    echo ""
+    print_warning "localAIStack Qdrant is not reachable at http://localhost:4333"
+    echo ""
+    echo "The Reality Engine uses the localAIStack Qdrant as its unified vector store."
+    echo "Start localAIStack first, then retry:"
+    echo ""
+    echo "  cd ../localAIStack && ./scripts/start.sh"
+    echo ""
+    exit 1
+fi
+print_success "Unified Qdrant reachable at http://localhost:4333"
+echo ""
+
 # Clean up any existing containers with the same name
 print_info "Checking for existing containers..."
 
@@ -166,19 +185,13 @@ EXISTING_CONTAINERS=$(docker ps -a --filter "name=reality-engine-" --format "{{.
 if [ "$EXISTING_CONTAINERS" -gt 0 ]; then
     print_info "Found $EXISTING_CONTAINERS existing container(s). Cleaning up to avoid conflicts..."
 
-    # Gracefully stop Qdrant first (SIGTERM + 15s wait) so it can flush its WAL
-    # and release file locks before we remove the container.  Force-killing Qdrant
-    # (SIGKILL via docker rm -f) can leave flock() locks held on macOS Docker
-    # volumes momentarily, causing the next startup to fail with EAGAIN.
-    docker stop --time 15 reality-engine-qdrant 2>/dev/null || true
-
     # Gracefully stop remaining services, then tear down the network.
-    # Do NOT pass -v — named volumes (perception sources, Qdrant, Grafana) are preserved.
+    # Do NOT pass -v — named volumes (perception sources, Grafana) are preserved.
     docker-compose down 2>/dev/null || true
 
     # Force-remove any containers that docker-compose down could not reach
     # (does not affect volumes).
-    docker rm -f reality-engine-qdrant reality-engine-app reality-engine-visualizer-backend reality-engine-visualizer-frontend reality-engine-perception-backend reality-engine-perception-frontend reality-engine-tls-proxy 2>/dev/null || true
+    docker rm -f reality-engine-app reality-engine-visualizer-backend reality-engine-visualizer-frontend reality-engine-perception-backend reality-engine-perception-frontend reality-engine-tls-proxy 2>/dev/null || true
 
     # Brief settle — on macOS Docker Desktop, VirtioFS file-lock release can
     # lag by ~1 s after the container process exits.
@@ -186,53 +199,6 @@ if [ "$EXISTING_CONTAINERS" -gt 0 ]; then
 
     print_success "Old containers removed"
     echo ""
-fi
-
-# Kill any anonymous containers (e.g. from docker run diagnostics) that may
-# still be holding an flock() on the Qdrant WAL via the qdrant_storage volume.
-# On macOS Docker Desktop / VirtioFS the flock persists as long as ANY container
-# using the volume is alive — even containers not managed by this compose stack.
-# Kill ANY container (regardless of name or image) that has the qdrant storage
-# volume mounted.  On macOS Docker Desktop / VirtioFS an flock() held by any
-# container using the volume — including anonymous "docker run" diagnostics —
-# blocks the next Qdrant startup with EAGAIN.
-QDRANT_VOL=$(docker volume ls --format "{{.Name}}" | grep "_qdrant_storage$" | head -1)
-if [ -n "$QDRANT_VOL" ]; then
-    STALE_QDRANT=$(docker ps -q 2>/dev/null | \
-        xargs -I{} docker inspect {} \
-            --format '{{.Id}} {{range .Mounts}}{{.Name}} {{end}}' 2>/dev/null | \
-        grep "$QDRANT_VOL" | awk '{print $1}')
-    if [ -n "$STALE_QDRANT" ]; then
-        print_info "Stopping container(s) holding Qdrant WAL lock on $QDRANT_VOL..."
-        echo "$STALE_QDRANT" | xargs docker stop 2>/dev/null || true
-        echo "$STALE_QDRANT" | xargs docker rm   2>/dev/null || true
-        sleep 2
-    fi
-fi
-
-# Remove any Qdrant collections whose names don't match the configured
-# COLLECTION_NAME.  A name mismatch (e.g. reality_vectors vs reality-vectors)
-# causes Qdrant to panic on WAL init, triggering a rapid crash-restart loop
-# that makes the flock appear permanently held.
-COLLECTION_NAME_CFG="${COLLECTION_NAME:-reality-vectors}"
-QDRANT_VOL="${QDRANT_VOL:-$(docker volume ls --format "{{.Name}}" | grep "_qdrant_storage$" | head -1)}"
-if [ -n "$QDRANT_VOL" ]; then
-    STALE_COLLECTIONS=$(docker run --rm \
-        -v "$QDRANT_VOL":/data \
-        alpine:latest \
-        sh -c "ls /data/collections/ 2>/dev/null" | \
-        grep -v "^${COLLECTION_NAME_CFG}$" || true)
-    if [ -n "$STALE_COLLECTIONS" ]; then
-        print_warning "Removing stale Qdrant collection(s): $STALE_COLLECTIONS"
-        for COLL in $STALE_COLLECTIONS; do
-            docker run --rm \
-                -v "$QDRANT_VOL":/data \
-                alpine:latest \
-                rm -rf "/data/collections/$COLL" 2>/dev/null || true
-        done
-        print_success "Stale collections removed"
-        echo ""
-    fi
 fi
 
 # Fresh start: remove the perception sources volume so the engine starts empty
@@ -259,7 +225,7 @@ echo ""
 print_info "Building Docker services (no cache)..."
 docker-compose build --no-cache
 
-print_info "Starting Docker services (Qdrant, Visualizer Backend, Visualizer Frontend)..."
+print_info "Starting Docker services (Reality Engine, Visualizer, Perception Engine)..."
 docker-compose up -d
 
 if [ $? -ne 0 ]; then
@@ -278,9 +244,7 @@ fi
 print_success "Docker services started"
 
 echo ""
-# Note: Qdrant is an internal Docker service (no host port binding).
-# Its health is validated transitively — tls-proxy waits on reality-engine,
-# which depends on Qdrant being healthy before it starts.
+# Qdrant is the unified localAIStack instance (host:4333) — already verified above.
 
 # Wait for TLS proxy to be ready (it starts after all upstream services are healthy)
 print_info "Waiting for TLS proxy to be ready..."
@@ -443,7 +407,7 @@ echo "  - Perception Engine Backend:  https://localhost:3004"
 echo "  - Perception Engine Frontend: https://localhost:3005"
 echo "  - Grafana (Logs):             https://localhost:3002"
 echo "  - Loki (Log API):             http://localhost:3100  (internal, no TLS)"
-echo "  - Qdrant (internal only):     not accessible from host"
+echo "  - Qdrant (unified, via localAIStack): http://localhost:4333/dashboard"
 echo ""
 echo "  Note: Browser will warn about the self-signed certificate."
 echo "  To silence it: bash certs/generate-dev-certs.sh (see script for trust instructions)"
@@ -457,7 +421,7 @@ echo "  5. Run Simulation:          Observe perceptual space propagation in real
 echo "  6. View Logs in Grafana:    https://localhost:3002 (admin/admin)"
 echo ""
 echo "New Features:"
-echo "  - Universal Input Vector Display (256-byte perceptual space)"
+echo "  - Universal Input Vector Display (768-element perceptual space, unified with localAIStack)"
 echo "  - Machine interconnection visualization with perceptual mappings"
 echo "  - Random stream generator for universal perceptual space"
 echo "  - Real-time visualization of machine output overwrites"
@@ -466,7 +430,7 @@ echo "  - Perceptual sequence logging with detailed operation tracking"
 echo ""
 echo "Persistent Data (survives stop/start):"
 echo "  - Perception sources: Docker volume perception_sources_data"
-echo "  - Qdrant vector store: Docker volume qdrant_storage"
+echo "  - Qdrant vector store: localAIStack ./volumes/qdrant  (collections: localai_docs, reality-vectors)"
 echo "  - Grafana dashboards:  Docker volume grafana_data"
 echo ""
 echo "Useful Commands:"

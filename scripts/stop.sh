@@ -55,9 +55,10 @@ echo ""
 # Stop and remove Docker services
 # NOTE: docker-compose down WITHOUT -v intentionally preserves named volumes:
 #   perception_sources_data  — perception engine sources
-#   qdrant_storage           — Qdrant vector store
 #   grafana_data             — Grafana dashboards/config
-print_info "Stopping and removing Docker services (TLS proxy, Qdrant, Visualizer, Perception Engine)..."
+# NOTE: Qdrant is NOT a service in this stack — it is the unified localAIStack instance.
+#   Stopping the RE does NOT stop Qdrant.  Use localAIStack's stop.sh to stop Qdrant.
+print_info "Stopping and removing Docker services (TLS proxy, Reality Engine, Visualizer, Perception Engine)..."
 docker-compose down
 
 if [ $? -eq 0 ]; then
@@ -79,8 +80,9 @@ echo "=================================================="
 echo ""
 echo "Containers and build cache cleared. Persistent data preserved:"
 echo "  - Perception sources: volume perception_sources_data"
-echo "  - Qdrant vector store: volume qdrant_storage"
 echo "  - Grafana dashboards:  volume grafana_data"
+echo "  - Qdrant vector store: managed by localAIStack (./volumes/qdrant)"
+echo "    Run 'cd ../localAIStack && ./scripts/stop.sh' to also stop Qdrant."
 echo ""
 echo "To start again (restores perception sources): ./scripts/start.sh"
 echo "To start fresh (clears perception sources):   ./scripts/start.sh --fresh"

@@ -51,46 +51,21 @@ services:
       timeout: 5s
       retries: 3
 
-  # Qdrant Vector Database - internal only, no host port binding (TLS enabled)
-  qdrant:
-    build:
-      context: .
-      dockerfile: Dockerfile.qdrant
-    container_name: reality-engine-qdrant
-    volumes:
-      - qdrant_storage:/qdrant/storage
-      - ./config/qdrant.yaml:/qdrant/config/production.yaml:ro
-      - ./certs:/etc/qdrant/certs:ro
-    environment:
-      - QDRANT__SERVICE__GRPC_PORT=6334
-    restart: unless-stopped
-    networks:
-      - reality-network
-    logging:
-      driver: loki
-      options:
-        loki-url: "https://localhost:3100/loki/api/v1/push"
-        loki-tls-insecure-skip-verify: "true"
-        loki-batch-size: "400"
-        loki-retries: "2"
-        loki-max-backoff: "1000ms"
-        loki-external-labels: "service=qdrant,environment=production,app=reality-engine"
-    healthcheck:
-      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333'"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Reality Engine API (Scala/Akka HTTP) - accessed via TLS proxy at https://localhost:3000
+  # NOTE: Qdrant is NOT a service in this compose stack.  The Reality Engine connects
+  # to the unified Qdrant instance managed by localAIStack (host port 4333).
+  # Start localAIStack first:  cd ../localAIStack && ./scripts/start.sh
   reality-engine:
     build:
       context: .
       dockerfile: scala/Dockerfile
     container_name: reality-engine-app
     environment:
-      - QDRANT_URL=https://qdrant:6333
+      # Unified Qdrant: localAIStack exposes Qdrant on host port 4333.
+      # host.docker.internal resolves to the host from within this Docker network.
+      - QDRANT_URL=http://host.docker.internal:4333
       - COLLECTION_NAME=reality-vectors
-      - VECTOR_DIMENSION=${VECTOR_DIMENSION:-256}
+      - VECTOR_DIMENSION=${VECTOR_DIMENSION:-768}
       - PORT=3000
       - MACHINES_DIR=/app/examples/machines
       - KEYSTORE_PATH=/etc/certs/keystore.p12
@@ -100,13 +75,13 @@ services:
       - AUDIT_LOG_LEVEL=2
       - AUDIT_LOG_SERVICE=reality-engine
     depends_on:
-      qdrant:
-        condition: service_healthy
       loki:
         condition: service_healthy
     restart: unless-stopped
     networks:
       - reality-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./examples/machines:/app/examples/machines
       - ./certs:/etc/certs:ro
@@ -307,8 +282,6 @@ services:
       retries: 3
 
 volumes:
-  qdrant_storage:
-    driver: local
   loki_data:
     driver: local
   grafana_data:
