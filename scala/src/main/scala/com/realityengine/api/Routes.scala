@@ -84,33 +84,34 @@ class Routes(
     val dir = new File(machinesDir)
     if (!dir.exists()) { println(s"Machines directory not found: $machinesDir"); return }
 
-    val machinesToLoad = List(
-      "RSFlipFlop.json", "RS2.json", "MultiStep.json", "DataCenterMonitoring.json",
-      "KleeneStar.json", "AIPowerEfficiency.json", "AICoolingRegulator.json",
-      "AICapacityThrottler.json", "AISecurityMonitor.json", "AIModelWellness.json",
-      "AIHardwareResilience.json", "NewPatientInflow.json", "DailyPatientCare.json",
-      "PatientWellness.json", "CareTransitionWorkflow.json", "WellnessAnalytics.json",
-      "FacilitiesMaintenance.json"
-    )
+    // Auto-discover every .json file in the machines directory so newly-added
+    // example machines (DC*, AIWellnessCoach, future additions) get loaded
+    // without having to edit this list. Sorted for stable, reproducible
+    // startup logs.
+    val jsonFiles = Option(dir.listFiles((_, name) => name.toLowerCase.endsWith(".json")))
+      .getOrElse(Array.empty[File])
+      .sortBy(_.getName)
+
+    if (jsonFiles.isEmpty) {
+      println(s"No machine JSON files found in $machinesDir")
+      return
+    }
 
     var loaded = 0; var failed = 0
-    println("Loading example machines from JSON files on startup...")
+    println(s"Loading ${jsonFiles.length} example machines from $machinesDir...")
 
-    machinesToLoad.foreach { filename =>
-      val file = new File(dir, filename)
-      if (!file.exists()) { println(s"  ⚠ JSON file not found: $filename"); failed += 1 }
-      else {
-        Try {
-          val json    = readJsonFile(file)
-          val baseName = filename.replaceAll("\\.json$", "").toLowerCase.replaceAll("[^a-z0-9]+", "-")
-          val machine  = MachineLoader.loadFromJson(json, Some(s"machine-$baseName"))
-          addMachineToSystem(machine)
-          println(s"  ✓ ${machine.name} loaded from $filename")
-          loaded += 1
-        }.failed.foreach { e =>
-          println(s"  ✗ Failed to load $filename: ${e.getMessage}")
-          failed += 1
-        }
+    jsonFiles.foreach { file =>
+      val filename = file.getName
+      Try {
+        val json     = readJsonFile(file)
+        val baseName = filename.replaceAll("\\.json$", "").toLowerCase.replaceAll("[^a-z0-9]+", "-")
+        val machine  = MachineLoader.loadFromJson(json, Some(s"machine-$baseName"))
+        addMachineToSystem(machine)
+        println(s"  ✓ ${machine.name} loaded from $filename")
+        loaded += 1
+      }.failed.foreach { e =>
+        println(s"  ✗ Failed to load $filename: ${e.getMessage}")
+        failed += 1
       }
     }
     println(s"\nMachine loading complete: $loaded loaded, $failed failed")

@@ -1,0 +1,45 @@
+/**
+ * Shared CSS custom properties for visualizations.
+ *
+ * Mirrors src/styles/vizTheme.ts so component CSS files (legend panels,
+ * strips, badges) pick up the same tokens without duplicating hex values.
+ * Adjust brightness/contrast here and in vizTheme.ts together.
+ */
+
+:root {
+  /* Backgrounds */
+  --viz-bg-page:           #0a0a0a;
+  --viz-bg-panel:          #0f172a;
+  --viz-bg-card-idle:      #1e293b;
+  --viz-bg-card-connected: #475569;
+  --viz-bg-card-active:    #1e40af;
+
+  /* Text tiers — bumped one step brighter than the old slate-500/400/200 defaults */
+  --viz-text-primary:      #f1f5f9;  /* was #e2e8f0 (slate-200) */
+  --viz-text-secondary:    #cbd5e1;  /* was #94a3b8 (slate-400) */
+  --viz-text-muted:        #94a3b8;  /* was #64748b (slate-500) */
+  --viz-text-emphasis:     #ffffff;
+
+  /* Accents */
+  --viz-accent-input:      #7dd3fc;  /* sky-300 */
+  --viz-accent-output:     #f9a8d4;  /* pink-300 */
+  --viz-accent-current:    #93c5fd;  /* blue-300 */
+  --viz-accent-external:   #c084fc;  /* violet-400 */
+
+  /* Edges */
+  --viz-edge-idle:         #94a3b8;  /* slate-400 */
+  --viz-edge-active:       #60a5fa;  /* blue-400 */
+  --viz-edge-bridge:       #c084fc;  /* violet-400 */
+  --viz-edge-label:        #cbd5e1;  /* slate-300 */
+
+  /* Status */
+  --viz-status-active-fill:        #166534;
+  --viz-status-active-stroke:      #22c55e;
+  --viz-status-processing-fill:    #854d0e;
+  --viz-status-processing-stroke:  #eab308;
+
+  /* Outlines */
+  --viz-outline-idle:      #475569;
+  --viz-outline-focus:     #60a5fa;
+  --viz-outline-hover:     #facc15;
+}

@@ -7,7 +7,7 @@
       "category": "digital-logic",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
-      "eventSpace": "2D binary control signal at [60:62]: [1,0]=ALARM, [0,1]=SAFE",
+      "eventSpace": "2D binary control signal at [144:146]: [1,0]=ALARM, [0,1]=SAFE",
       "outputSpace": "2D binary at [100:102]: [1,0]=COOLING_ACTIVE, [0,1]=COOLING_OFF",
       "tags": [
         "flip-flop",
@@ -17,7 +17,7 @@
       ],
       "sequenceCount": 2,
       "role": "Latches thermal escalation alarm; downstream input to DCCriticalSynthesizer",
-      "upstreamMachine": "DCThermalEscalation (writes [60:62])",
+      "upstreamMachine": "DCThermalEscalation (writes [144:146])",
       "downstreamMachine": "DCCriticalSynthesizer (reads [100:102])",
       "singleTransitionAssumption": {
         "required": false,
@@ -29,7 +29,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 60,
+        "offset": 144,
         "length": 2
       },
       "output": {
@@ -45,7 +45,7 @@
           "description": "Activates cooling alarm when thermal escalation fires [1,0] control signal",
           "path": "[1,0] → [1,0]",
           "output": "[1,0]",
-          "trigger": "DCThermalEscalation EMERGENCY state fires [1,0] to bytes [60:62]"
+          "trigger": "DCThermalEscalation EMERGENCY state fires [1,0] to bytes [144:146]"
         },
         "vectors": [
           {
@@ -90,7 +90,7 @@
           "description": "Deactivates cooling alarm when safe-recovery signal [0,1] is received",
           "path": "[0,1] → [0,1]",
           "output": "[0,1]",
-          "trigger": "DCThermalEscalation SAFE state fires [0,1] to bytes [60:62]"
+          "trigger": "DCThermalEscalation SAFE state fires [0,1] to bytes [144:146]"
         },
         "vectors": [
           {

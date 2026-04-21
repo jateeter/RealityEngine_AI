@@ -1,5 +1,7 @@
 import * as d3 from 'd3';
 import type { VisMachine, VisMachineSequence } from '../../hooks/useMachineSimulation';
+import { classifyMachine, domainColor, DOMAINS, DOMAIN_ORDER, type DomainId } from '../machineDomains';
+import { vizTheme } from '../../styles/vizTheme';
 
 // ---------------------------------------------------------------------------
 // Layout constants
@@ -15,14 +17,15 @@ const NODE_R   = 5;
 const ARROW_SIZE = 5;
 const HIT_EXTRA  = 5;                 // extra px around node for hover hit testing
 
-// Node state colours
-const COLOR_INITIAL        = '#3b82f6'; // blue        — isInitial (always armed, A+)
-const COLOR_INITIAL_MATCH  = '#93c5fd'; // light-blue  — initial node just matched this step
-const COLOR_TERMINAL       = '#f59e0b'; // amber       — terminal / just-matched fill
-const COLOR_ACTIVE         = '#06b6d4'; // cyan        — currently queued / in pending-activations
-const COLOR_DEFAULT        = '#64748b'; // slate       — intermediate
-const COLOR_HOVER          = '#facc15'; // yellow      — hover highlight
-const COLOR_NODE_BG        = '#111827'; // dark        — inactive terminal body (ring drawn separately)
+// Node state colours — pulled from vizTheme where applicable so brightness
+// bumps in one place propagate here.
+const COLOR_INITIAL        = '#3b82f6';                 // blue          — isInitial (always armed, A+)
+const COLOR_INITIAL_MATCH  = vizTheme.accent.current;   // blue-300      — initial node just matched this step
+const COLOR_TERMINAL       = '#f59e0b';                 // amber         — terminal / just-matched fill
+const COLOR_ACTIVE         = '#06b6d4';                 // cyan          — currently queued / in pending-activations
+const COLOR_DEFAULT        = vizTheme.text.secondary;   // slate-300     — intermediate (was slate-500, too dim)
+const COLOR_HOVER          = vizTheme.outline.hover;    // yellow-400    — hover highlight
+const COLOR_NODE_BG        = '#111827';                 // dark          — inactive terminal body (ring drawn separately)
 
 // ---------------------------------------------------------------------------
 // Internal types
@@ -70,6 +73,8 @@ interface CardNode extends d3.SimulationNodeDatum {
   h: number;         // dynamic: HEADER_H + FOOTER_H + innerGraph.totalHeight + PAD*2
   headerH: number;
   innerGraph: InnerGraphCache;
+  domain: DomainId;       // classified domain — drives the left-edge color stripe
+  domainColor: string;    // cached domain color hex to avoid re-lookup on every draw
 }
 
 interface OuterEdge {
@@ -224,6 +229,15 @@ export class TobiasRenderer {
   private _isPanning = false;
   private _isDraggingCard = false;
   private _dragCardNode: CardNode | null = null;
+
+  // Domain-drag state: translate every card in the domain by the same delta
+  // so the whole hull bubble moves as one unit. Starting card positions are
+  // cached so we can compute absolute new positions from the mouse delta.
+  private _isDraggingDomain = false;
+  private _dragDomainId: DomainId | null = null;
+  private _dragDomainStartX = 0;
+  private _dragDomainStartY = 0;
+  private _dragDomainCardStarts: Map<string, { x: number; y: number }> = new Map();
   private _dragPrevX = 0;
   private _dragPrevY = 0;
   private _mouseDownX = 0;
@@ -288,6 +302,10 @@ export class TobiasRenderer {
         if (updated) {
           card.machine = updated;
           card.innerGraph = this._refreshNodeStates(card.innerGraph, updated);
+          // Refresh domain classification — metadata/name can change under hot reload.
+          const d = classifyMachine(updated).domain;
+          card.domain = d;
+          card.domainColor = domainColor(d);
         }
       }
       return;
@@ -296,9 +314,8 @@ export class TobiasRenderer {
     // ── Full rebuild: machine set or topology changed ──────────────────────
     if (this._simulation) { this._simulation.stop(); this._simulation = null; }
 
-    const cssW = this._canvas.width  / this._dpr;
-    const cssH = this._canvas.height / this._dpr;
-    const cx = cssW / 2 || 400, cy = cssH / 2 || 300;
+    const cssW = this._canvas.width  / this._dpr || 800;
+    const cssH = this._canvas.height / this._dpr || 600;
 
     const savedLayout = this._loadLayout();
 
@@ -312,10 +329,21 @@ export class TobiasRenderer {
         ? this._buildInnerGraph(machine)
         : this._refreshNodeStates(existing.innerGraph, machine);
 
-      const spread = 280;
       // Restore pinned position from localStorage when no in-memory position exists
       const pinnedFx = existing?.fx ?? saved?.fx ?? null;
       const pinnedFy = existing?.fy ?? saved?.fy ?? null;
+      const dom = classifyMachine(machine).domain;
+
+      // Seed near the domain anchor (not canvas center) so the simulation
+      // doesn't have to drag cards across the whole canvas before they
+      // reach their bubble. Small jitter keeps same-domain cards from
+      // stacking exactly on top of each other at t=0.
+      const anchorX = DOMAINS[dom].anchor.x * cssW;
+      const anchorY = DOMAINS[dom].anchor.y * cssH;
+      const jitter = 120;
+      const seedX = anchorX + (Math.random() - 0.5) * jitter;
+      const seedY = anchorY + (Math.random() - 0.5) * jitter;
+
       return {
         id: machine.id,
         name: machine.name,
@@ -324,8 +352,10 @@ export class TobiasRenderer {
         h: HEADER_H + FOOTER_H + innerGraph.totalHeight + PAD * 2,
         headerH: HEADER_H,
         innerGraph,
-        x: existing?.x ?? saved?.fx ?? cx + (Math.random() - 0.5) * spread,
-        y: existing?.y ?? saved?.fy ?? cy + (Math.random() - 0.5) * spread,
+        domain: dom,
+        domainColor: domainColor(dom),
+        x: existing?.x ?? saved?.fx ?? seedX,
+        y: existing?.y ?? saved?.fy ?? seedY,
         vx: existing?.vx ?? 0,
         vy: existing?.vy ?? 0,
         fx: pinnedFx,
@@ -599,14 +629,83 @@ export class TobiasRenderer {
     const cssW = this._canvas.width  / this._dpr || 800;
     const cssH = this._canvas.height / this._dpr || 600;
 
-    const linkData = this._outerEdges.map(e => ({ source: e.source.id, target: e.target.id }));
+    // Pre-resolved link data with domain flags. Same-domain links pull tight;
+    // cross-domain links barely pull so they don't tow cards out of their
+    // home bubble.
+    interface LinkDatum extends d3.SimulationLinkDatum<CardNode> { sameDomain: boolean; }
+    const linkData: LinkDatum[] = this._outerEdges.map(e => ({
+      source: e.source.id,
+      target: e.target.id,
+      sameDomain: e.source.domain === e.target.domain,
+    }));
 
+    // Inter-domain repel: push cross-domain card pairs apart by roughly
+    // the hull pad distance so domain bubbles never overlap. Same-domain
+    // cards skip this and rely on link/domainX/Y/collide to pack tightly.
+    // HULL_SEPARATION must exceed 2 * HULL_PAD (28) used in _drawDomainHulls
+    // so hulls have a visible gap even at rest.
+    const cards = this._cards;
+    const domainRepel = (alpha: number) => {
+      const HULL_SEPARATION = 100;
+      for (let i = 0; i < cards.length; i++) {
+        for (let j = i + 1; j < cards.length; j++) {
+          const a = cards[i], b = cards[j];
+          if (a.domain === b.domain) continue;
+          const ax = a.x ?? 0, ay = a.y ?? 0;
+          const bx = b.x ?? 0, by = b.y ?? 0;
+          const dx = bx - ax, dy = by - ay;
+          const dist = Math.hypot(dx, dy) || 0.0001;
+          const minDist = (Math.max(a.w, a.h) + Math.max(b.w, b.h)) / 2 + HULL_SEPARATION;
+          if (dist < minDist) {
+            const f = ((minDist - dist) / dist) * alpha * 0.8;
+            (a.vx as number) -= dx * f;
+            (a.vy as number) -= dy * f;
+            (b.vx as number) += dx * f;
+            (b.vy as number) += dy * f;
+          }
+        }
+      }
+    };
+
+    // Intra-domain cohesion: pull same-domain pairs toward their shared
+    // centroid each tick so clusters stay dense around the domain anchor
+    // even when linkless. This is what makes each hull genuinely function
+    // as a center-of-gravity per domain.
+    const domainCohesion = (alpha: number) => {
+      const centroids = new Map<DomainId, { x: number; y: number; n: number }>();
+      for (const c of cards) {
+        const cur = centroids.get(c.domain) ?? { x: 0, y: 0, n: 0 };
+        cur.x += c.x ?? 0; cur.y += c.y ?? 0; cur.n += 1;
+        centroids.set(c.domain, cur);
+      }
+      for (const entry of centroids.values()) {
+        if (entry.n === 0) continue;
+        entry.x /= entry.n; entry.y /= entry.n;
+      }
+      const PULL = 0.08;
+      for (const c of cards) {
+        const ctr = centroids.get(c.domain)!;
+        if (ctr.n < 2) continue;
+        (c.vx as number) += (ctr.x - (c.x ?? 0)) * alpha * PULL;
+        (c.vy as number) += (ctr.y - (c.y ?? 0)) * alpha * PULL;
+      }
+    };
+
+    // Per-domain anchor + centroid-cohesion forces give each domain a
+    // unique gravitational center. Cross-domain link pull is weak so
+    // connected cross-domain machines don't drag each other out of
+    // their home bubbles.
     this._simulation = d3.forceSimulation<CardNode>(this._cards)
-      .force('link', d3.forceLink<CardNode, d3.SimulationLinkDatum<CardNode>>(linkData)
-                       .id((d) => d.id).distance(280))
-      .force('charge', d3.forceManyBody<CardNode>().strength(-1000))
-      .force('center',  d3.forceCenter(cssW / 2, cssH / 2))
+      .force('link', d3.forceLink<CardNode, LinkDatum>(linkData)
+                       .id((d) => d.id)
+                       .distance(l => (l as LinkDatum).sameDomain ? 170 : 420)
+                       .strength(l => (l as LinkDatum).sameDomain ? 0.7 : 0.04))
+      .force('charge', d3.forceManyBody<CardNode>().strength(-800))
       .force('collide', d3.forceCollide<CardNode>((d) => Math.max(d.w, d.h) * 0.56))
+      .force('domainX', d3.forceX<CardNode>(d => DOMAINS[d.domain].anchor.x * cssW).strength(0.35))
+      .force('domainY', d3.forceY<CardNode>(d => DOMAINS[d.domain].anchor.y * cssH).strength(0.35))
+      .force('domainCohesion', domainCohesion)
+      .force('domainRepel', domainRepel)
       .alphaDecay(0.02);
   }
 
@@ -629,6 +728,11 @@ export class TobiasRenderer {
     ctx.translate(tx, ty);
     ctx.scale(scale, scale);
 
+    // Domain bubbles sit at the very back — behind edges and cards — so they
+    // read as a backdrop grouping rather than foreground shapes. They're
+    // pointer-passive anyway since hit testing is center-based on cards.
+    this._drawDomainHulls();
+
     for (const edge of this._outerEdges) this._drawOuterEdge(edge);
 
     for (const card of this._cards) {
@@ -638,6 +742,97 @@ export class TobiasRenderer {
       if (card.id === this._selectedId) this._drawCard(card, true);
     }
     ctx.restore();
+  }
+
+  /**
+   * Draw a filled, dashed-bordered bubble around each domain's cards.
+   *
+   * Approach: expand every card into its 4 corners (with a pad), run
+   * d3.polygonHull over all points per domain, then stroke the hull as a
+   * smoothed bezier loop (midpoint-anchor quadratic curves) so the resulting
+   * shape reads as a soft bubble instead of an angular polygon. Single-card
+   * domains are drawn as a padded rounded rect since a hull needs 3+ points.
+   */
+  private _drawDomainHulls(): void {
+    if (this._cards.length === 0) return;
+    const ctx = this._ctx;
+
+    const byDomain = new Map<DomainId, CardNode[]>();
+    for (const d of DOMAIN_ORDER) byDomain.set(d, []);
+    for (const c of this._cards) byDomain.get(c.domain)!.push(c);
+
+    const HULL_PAD = 28;
+
+    for (const domainId of DOMAIN_ORDER) {
+      const group = byDomain.get(domainId)!;
+      if (group.length === 0) continue;
+
+      const def = DOMAINS[domainId];
+
+      // Single-card domain: draw a soft padded rounded rect so the bubble
+      // still communicates grouping even with one member.
+      if (group.length === 1) {
+        const c = group[0];
+        const cx = c.x ?? 0, cy = c.y ?? 0;
+        const w = c.w + HULL_PAD * 2;
+        const h = c.h + HULL_PAD * 2;
+        ctx.save();
+        roundRectPath(ctx, cx - w / 2, cy - h / 2, w, h, 24);
+        ctx.fillStyle   = def.fill;
+        ctx.fill();
+        ctx.strokeStyle = def.color;
+        ctx.globalAlpha = 0.75;
+        ctx.lineWidth   = 2.5;
+        ctx.setLineDash([8, 6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+        continue;
+      }
+
+      // Multi-card domain: union of card-corner points → convex hull.
+      const pts: [number, number][] = [];
+      for (const c of group) {
+        const x = c.x ?? 0, y = c.y ?? 0;
+        const halfW = c.w / 2 + HULL_PAD;
+        const halfH = c.h / 2 + HULL_PAD;
+        pts.push([x - halfW, y - halfH]);
+        pts.push([x + halfW, y - halfH]);
+        pts.push([x + halfW, y + halfH]);
+        pts.push([x - halfW, y + halfH]);
+      }
+
+      const hull = d3.polygonHull(pts);
+      if (!hull || hull.length < 3) continue;
+
+      // Smooth the hull by anchoring quadratics at hull vertices, with the
+      // pen moving through midpoints — the classic "smoothed polygon" trick.
+      ctx.save();
+      ctx.beginPath();
+      const n = hull.length;
+      const mid = (i: number): [number, number] => {
+        const a = hull[i], b = hull[(i + 1) % n];
+        return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      };
+      const m0 = mid(0);
+      ctx.moveTo(m0[0], m0[1]);
+      for (let i = 0; i < n; i++) {
+        const v = hull[(i + 1) % n];
+        const m = mid((i + 1) % n);
+        ctx.quadraticCurveTo(v[0], v[1], m[0], m[1]);
+      }
+      ctx.closePath();
+
+      ctx.fillStyle   = def.fill;
+      ctx.fill();
+      ctx.strokeStyle = def.color;
+      ctx.globalAlpha = 0.75;
+      ctx.lineWidth   = 2.5;
+      ctx.setLineDash([8, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -736,11 +931,21 @@ export class TobiasRenderer {
     ctx.lineWidth   = 0.5;
     ctx.stroke();
 
+    // Domain stripe — persistent left-edge identity marker. Drawn after
+    // the border so status/fired borders don't overpaint it, but inside
+    // the card so the rounded outline still looks clean.
+    ctx.save();
+    roundRectPath(ctx, 0, 0, node.w, node.h, 8);
+    ctx.clip();
+    ctx.fillStyle = node.domainColor;
+    ctx.fillRect(0, 0, 3, node.h);
+    ctx.restore();
+
     // Machine name
     ctx.fillStyle    = isSelected   ? '#e2b6ff'
                      : fired        ? '#fcd34d'
-                     : initialMatch ? '#93c5fd'
-                     : '#e2e8f0';
+                     : initialMatch ? vizTheme.accent.current
+                     : vizTheme.text.primary;
     ctx.font         = 'bold 10px monospace';
     ctx.textBaseline = 'middle';
     ctx.textAlign    = 'left';
@@ -773,7 +978,7 @@ export class TobiasRenderer {
     const ctx = this._ctx;
 
     if (cache.nodes.length === 0) {
-      ctx.fillStyle = '#475569';
+      ctx.fillStyle = vizTheme.text.muted;
       ctx.font = '9px monospace';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
@@ -789,7 +994,7 @@ export class TobiasRenderer {
       const band = cache.seqBands[i];
 
       // Sequence index label (top-left of each band)
-      ctx.fillStyle    = '#4a5878';
+      ctx.fillStyle    = vizTheme.text.muted;
       ctx.font         = '7px monospace';
       ctx.textBaseline = 'top';
       ctx.textAlign    = 'left';
@@ -817,7 +1022,7 @@ export class TobiasRenderer {
         : false;
       const isDimmed = activeInnerNode ? !isHighlight : false;
 
-      const edgeColor = isHighlight ? COLOR_HOVER : '#8899b4';
+      const edgeColor = isHighlight ? COLOR_HOVER : vizTheme.edge.idle;
       ctx.globalAlpha = isDimmed ? 0.18 : 1.0;
       ctx.strokeStyle = edgeColor;
       ctx.lineWidth   = isHighlight ? 1.8 : 1.2;
@@ -903,7 +1108,7 @@ export class TobiasRenderer {
       if (node.isInitial && !isHovNode && !node.wasJustInitialMatched) {
         ctx.beginPath();
         ctx.arc(node.ix, node.iy, NODE_R - 1.5, 0, Math.PI * 2);
-        ctx.strokeStyle = '#93c5fd';
+        ctx.strokeStyle = vizTheme.accent.current;
         ctx.lineWidth   = 0.7;
         ctx.globalAlpha = isDimNode ? 0.18 : 0.45;
         ctx.stroke();
@@ -913,14 +1118,14 @@ export class TobiasRenderer {
       ctx.globalAlpha = isDimNode ? 0.18 : 1.0;
       ctx.beginPath();
       ctx.arc(node.ix, node.iy, NODE_R, 0, Math.PI * 2);
-      ctx.strokeStyle = '#1e293b';
+      ctx.strokeStyle = vizTheme.bg.cardIdle;
       ctx.lineWidth   = 0.8;
       ctx.stroke();
       ctx.globalAlpha = 1;
 
       // Label under hovered node
       if (isHovNode && node.label) {
-        ctx.fillStyle    = '#e2e8f0';
+        ctx.fillStyle    = vizTheme.text.primary;
         ctx.font         = '7px monospace';
         ctx.textBaseline = 'top';
         ctx.textAlign    = 'center';
@@ -929,7 +1134,7 @@ export class TobiasRenderer {
 
       // Small label always shown for terminal and initial nodes (when not hovering anything)
       if (!activeInnerNode && (node.isInitial || node.hasOutput)) {
-        ctx.fillStyle    = node.isInitial ? '#93c5fd' : COLOR_TERMINAL;
+        ctx.fillStyle    = node.isInitial ? vizTheme.accent.current : COLOR_TERMINAL;
         ctx.font         = '6px monospace';
         ctx.textBaseline = 'bottom';
         ctx.textAlign    = 'center';
@@ -973,7 +1178,7 @@ export class TobiasRenderer {
     ctx.beginPath();
     ctx.moveTo(0, footerY);
     ctx.lineTo(node.w, footerY);
-    ctx.strokeStyle = '#1e2535';
+    ctx.strokeStyle = vizTheme.outline.idle;
     ctx.lineWidth   = 0.5;
     ctx.stroke();
 
@@ -1011,7 +1216,7 @@ export class TobiasRenderer {
     const ov = m.latestOutputVector;
 
     if (!iv && !ov) {
-      ctx.fillStyle = '#283040';
+      ctx.fillStyle = vizTheme.text.muted;
       ctx.textAlign = 'center';
       ctx.fillText('awaiting data', node.w / 2, midY);
       return;
@@ -1020,7 +1225,7 @@ export class TobiasRenderer {
     if (iv && iv.length > 0) {
       const max = Math.min(iv.length, 8), gap = 7, startX = 6;
       ctx.textAlign = 'left';
-      ctx.fillStyle = '#374558';
+      ctx.fillStyle = vizTheme.text.muted;
       ctx.fillText('in', startX, midY);
       for (let i = 0; i < max; i++) {
         const v = Math.max(0, Math.min(1, iv[i]));
@@ -1034,7 +1239,7 @@ export class TobiasRenderer {
     if (ov && ov.length > 0) {
       const max = Math.min(ov.length, 4), gap = 7, endX = node.w - 6;
       ctx.textAlign = 'right';
-      ctx.fillStyle = '#374558';
+      ctx.fillStyle = vizTheme.text.muted;
       ctx.fillText('out', endX, midY);
       for (let i = 0; i < max; i++) {
         const v = Math.max(0, Math.min(1, ov[i]));
@@ -1061,6 +1266,24 @@ export class TobiasRenderer {
     for (const c of this._cards) {
       const lx = (c.x ?? 0) - c.w / 2, ty = (c.y ?? 0) - c.h / 2;
       if (wx >= lx && wx <= lx + c.w && wy >= ty && wy <= ty + c.h) return c;
+    }
+    return null;
+  }
+
+  /**
+   * Hit-test the domain hull region. Matches the HULL_PAD used in
+   * _drawDomainHulls: a click is inside a domain's bubble if it falls within
+   * any of that domain's card rects expanded by HULL_PAD. This is a close
+   * enough approximation of the smoothed polygon hull for drag interaction.
+   */
+  private _hitTestHull(wx: number, wy: number): DomainId | null {
+    const HULL_PAD = 28;
+    for (const c of this._cards) {
+      const lx = (c.x ?? 0) - c.w / 2 - HULL_PAD;
+      const ty = (c.y ?? 0) - c.h / 2 - HULL_PAD;
+      const rx = lx + c.w + HULL_PAD * 2;
+      const by = ty + c.h + HULL_PAD * 2;
+      if (wx >= lx && wx <= rx && wy >= ty && wy <= by) return c.domain;
     }
     return null;
   }
@@ -1138,8 +1361,32 @@ export class TobiasRenderer {
       this._lastClickTime   = now;
       this._lastClickCardId = hc.id;
     } else {
-      this._isPanning = true;
-      this._canvas.style.cursor = 'grab';
+      // No card hit — check if we clicked inside a domain hull bubble.
+      // If so, start a domain drag that moves all cards in that domain by
+      // the same delta, keeping same-domain clusters together.
+      const dom = this._hitTestHull(wp.x, wp.y);
+      if (dom) {
+        this._isDraggingDomain = true;
+        this._dragDomainId = dom;
+        this._dragDomainStartX = wp.x;
+        this._dragDomainStartY = wp.y;
+        this._dragDomainCardStarts.clear();
+        for (const c of this._cards) {
+          if (c.domain === dom) {
+            this._dragDomainCardStarts.set(c.id, { x: c.x ?? 0, y: c.y ?? 0 });
+            // Pin each card so the simulation's domain/link forces don't
+            // fight the drag. Pins are released (or re-set as the new
+            // resting position) on mouseup.
+            c.fx = c.x ?? 0;
+            c.fy = c.y ?? 0;
+          }
+        }
+        if (this._simulation) this._simulation.alphaTarget(0.1).restart();
+        this._canvas.style.cursor = 'grabbing';
+      } else {
+        this._isPanning = true;
+        this._canvas.style.cursor = 'grab';
+      }
     }
   };
 
@@ -1149,6 +1396,17 @@ export class TobiasRenderer {
     if (this._isDraggingCard && this._dragCardNode) {
       const wp = this._toWorld(e.offsetX, e.offsetY);
       this._dragCardNode.fx = wp.x; this._dragCardNode.fy = wp.y;
+    } else if (this._isDraggingDomain && this._dragDomainId) {
+      const wp = this._toWorld(e.offsetX, e.offsetY);
+      const dx = wp.x - this._dragDomainStartX;
+      const dy = wp.y - this._dragDomainStartY;
+      for (const c of this._cards) {
+        if (c.domain !== this._dragDomainId) continue;
+        const start = this._dragDomainCardStarts.get(c.id);
+        if (!start) continue;
+        c.fx = start.x + dx;
+        c.fy = start.y + dy;
+      }
     } else if (this._isPanning) {
       this._viewport.tx += e.offsetX - this._dragPrevX;
       this._viewport.ty += e.offsetY - this._dragPrevY;
@@ -1156,7 +1414,14 @@ export class TobiasRenderer {
       const wp = this._toWorld(e.offsetX, e.offsetY);
       this._updateHover(wp.x, wp.y);
       const hc = this._hitTestCard(wp.x, wp.y);
-      this._canvas.style.cursor = hc ? 'pointer' : 'default';
+      if (hc) {
+        this._canvas.style.cursor = 'pointer';
+      } else {
+        // Show a grab cursor over empty hull area so users know the bubble
+        // is draggable. Falls back to default cursor outside any hull.
+        const dom = this._hitTestHull(wp.x, wp.y);
+        this._canvas.style.cursor = dom ? 'grab' : 'default';
+      }
     }
     this._dragPrevX = e.offsetX; this._dragPrevY = e.offsetY;
   };
@@ -1184,7 +1449,22 @@ export class TobiasRenderer {
       this._dragCardNode = null;
       if (this._simulation) this._simulation.alphaTarget(0);
     }
-    this._isDraggingCard = false; this._isPanning = false;
+    if (this._isDraggingDomain && this._dragDomainId) {
+      if (this._hasDragged) {
+        // Pin every moved card at its new position so the whole bubble
+        // stays where the user placed it.
+        for (const c of this._cards) {
+          if (c.domain !== this._dragDomainId) continue;
+          c.fx = c.x ?? c.fx ?? null;
+          c.fy = c.y ?? c.fy ?? null;
+        }
+        this._saveLayout();
+      }
+      this._dragDomainId = null;
+      this._dragDomainCardStarts.clear();
+      if (this._simulation) this._simulation.alphaTarget(0);
+    }
+    this._isDraggingCard = false; this._isDraggingDomain = false; this._isPanning = false;
     this._canvas.style.cursor = 'default';
   };
 
@@ -1197,7 +1477,18 @@ export class TobiasRenderer {
       this._dragCardNode = null;
       if (this._simulation) this._simulation.alphaTarget(0);
     }
-    this._isDraggingCard = false; this._isPanning = false;
+    if (this._isDraggingDomain && this._dragDomainId) {
+      for (const c of this._cards) {
+        if (c.domain !== this._dragDomainId) continue;
+        c.fx = c.x ?? c.fx ?? null;
+        c.fy = c.y ?? c.fy ?? null;
+      }
+      this._saveLayout();
+      this._dragDomainId = null;
+      this._dragDomainCardStarts.clear();
+      if (this._simulation) this._simulation.alphaTarget(0);
+    }
+    this._isDraggingCard = false; this._isDraggingDomain = false; this._isPanning = false;
     this._hoveredCardId = null; this._hoveredInnerNodeId = null;
     this._canvas.style.cursor = 'default';
   };

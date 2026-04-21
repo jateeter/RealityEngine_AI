@@ -8,7 +8,7 @@
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "2D binary control signal at [66:68]: [1,0]=ALARM, [0,1]=SAFE",
-      "outputSpace": "2D binary at [104:106]: [1,0]=MEMORY_ALERT_ACTIVE, [0,1]=MEMORY_ALERT_OFF",
+      "outputSpace": "2D binary at [146:148]: [1,0]=MEMORY_ALERT_ACTIVE, [0,1]=MEMORY_ALERT_OFF",
       "tags": [
         "flip-flop",
         "digital-logic",
@@ -18,7 +18,7 @@
       "sequenceCount": 2,
       "role": "Latches memory pressure alarm; available for future synthesis machines",
       "upstreamMachine": "DCMemoryPressure (writes [66:68])",
-      "downstreamMachine": "Future DCCriticalSynthesizer extensions (reads [104:106])",
+      "downstreamMachine": "Future DCCriticalSynthesizer extensions (reads [146:148])",
       "singleTransitionAssumption": {
         "required": false,
         "scope": "not applicable — all event vectors are isInitial (combinatorial)",
@@ -33,7 +33,7 @@
         "length": 2
       },
       "output": {
-        "offset": 104,
+        "offset": 146,
         "length": 2
       }
     },

@@ -17,7 +17,10 @@
       }
     },
     "metadata": {
-      "domain": "AI Infrastructure Hardware Health",
+      "category": "data-center",
+      "domain": "Data Center — Hardware Health",
+      "tags": ["data-center", "hardware", "smart", "ecc", "network", "ai-workload"],
+      "rationale": "Disk SMART, ECC errors, and network fabric health are physical data-center hardware concerns.",
       "inputDimensions": [
         {
           "index": 0,

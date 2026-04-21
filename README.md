@@ -28,12 +28,19 @@ All services are exposed via a TLS-terminating nginx proxy. Start the stack, the
 # Generate dev TLS certificates (first time only)
 bash certs/generate-dev-certs.sh
 
-# Start all services
-./start.sh
+# Start the full universe (localAIStack + Reality Engine + integration verify)
+./startUniverse.sh
+
+# Or start fresh (wipe perception sources, rebuild RE images with --no-cache)
+./startUniverse.sh --fresh
 
 # Stop all services
-./stop.sh
+./scripts/stop.sh
 ```
+
+`startUniverse.sh` is the recommended entry point — it brings up Ollama, localAIStack (Qdrant + Redis + API), and all Reality Engine services, then verifies machine/sensor/Qdrant integration.
+
+If localAIStack is already running and you only need to (re)start Reality Engine services, use `./scripts/start.sh` instead.
 
 Browsers will warn about the self-signed certificate — add an exception or use `--ignore-certificate-errors` when running Playwright.
 

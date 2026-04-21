@@ -47,8 +47,16 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 
-# Visualizer (not needed in main app)
+# Visualizer, Perception Engine frontend, and orchestrator
+# (not needed for Scala builds — scala/ and examples/ are the only required paths)
 visualizer/
+perception-engine/
+langgraph-orchestrator/
+wiki/
+docs/
+e2e/
+e2e-report/
+scripts/
 
 # Temporary files
 tmp/

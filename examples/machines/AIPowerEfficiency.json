@@ -16,6 +16,12 @@
         "length": 6
       }
     },
+    "metadata": {
+      "category": "data-center",
+      "domain": "Data Center — Power / PUE",
+      "tags": ["data-center", "power", "pue", "carbon", "ai-workload"],
+      "rationale": "PUE, grid carbon intensity, and power draw are data-center facility concerns."
+    },
     "sequences": [
       {
         "id": "aipe-pue-escalation",

@@ -3,7 +3,7 @@
  * with highlighting for machine input/output regions and random generation
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import './UniversalInputVectorDisplay.css';
 
 interface VectorRegion {
@@ -24,6 +24,10 @@ export const UniversalInputVectorDisplay: React.FC<UniversalInputVectorDisplayPr
   currentVector,
   vectorRegions,
 }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const nonZeroCount = currentVector.filter(v => v !== 0).length;
+
   // Group bytes into chunks of 16 for display
   const bytesPerRow = 16;
   const rows = Math.ceil(256 / bytesPerRow);
@@ -60,15 +64,25 @@ export const UniversalInputVectorDisplay: React.FC<UniversalInputVectorDisplayPr
 
   return (
     <div className="universal-input-vector-display">
-      {/* Header */}
-      <div className="vector-header">
+      {/* Header (clickable to expand/collapse) */}
+      <button
+        type="button"
+        className="vector-header vector-header-toggle"
+        onClick={() => setExpanded(e => !e)}
+        aria-expanded={expanded}
+      >
         <div className="vector-title">
           <span className="vector-icon">🌐</span>
           Universal Perceptual Space (En)
         </div>
-        <div className="vector-dimension">256 bytes</div>
-      </div>
+        <div className="vector-header-meta">
+          <span className="vector-dimension">256 bytes</span>
+          <span className="vector-active-count">{nonZeroCount} active</span>
+          <span className="vector-toggle-icon">{expanded ? '▲' : '▼'}</span>
+        </div>
+      </button>
 
+      {expanded && (<>
       {/* Vector Display Grid */}
       <div className="vector-grid">
         {Array.from({ length: rows }).map((_, rowIndex) => (
@@ -134,6 +148,7 @@ export const UniversalInputVectorDisplay: React.FC<UniversalInputVectorDisplayPr
           )}
         </div>
       </div>
+      </>)}
     </div>
   );
 };

@@ -8,7 +8,7 @@
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "2D binary control signal at [72:74]: [1,0]=CRITICAL, [0,1]=ALL_CLEAR",
-      "outputSpace": "2D binary at [108:110]: [1,0]=CRITICAL_ALERT_ACTIVE, [0,1]=CRITICAL_ALERT_OFF",
+      "outputSpace": "2D binary at [148:150]: [1,0]=CRITICAL_ALERT_ACTIVE, [0,1]=CRITICAL_ALERT_OFF",
       "tags": [
         "flip-flop",
         "digital-logic",
@@ -18,12 +18,12 @@
       "sequenceCount": 2,
       "role": "Final-stage alert latch; represents the highest-severity combined failure state",
       "upstreamMachine": "DCCriticalSynthesizer (writes [72:74])",
-      "downstreamMachine": "External alert system / human operator (reads [108:110])",
+      "downstreamMachine": "External alert system / human operator (reads [148:150])",
       "singleTransitionAssumption": {
         "required": false,
         "scope": "not applicable — all event vectors are isInitial (combinatorial)",
         "compliant": true,
-        "notes": "Both CRITICAL and ALL_CLEAR events are isInitial. Combinatorial RS flip-flop; state persists via perceptual space value retention. The [108:110] byte region holds the current critical alert state and drives external alerting systems."
+        "notes": "Both CRITICAL and ALL_CLEAR events are isInitial. Combinatorial RS flip-flop; state persists via perceptual space value retention. The [148:150] byte region holds the current critical alert state and drives external alerting systems."
       }
     },
     "arbiterRule": "PASSTHROUGH",
@@ -33,7 +33,7 @@
         "length": 2
       },
       "output": {
-        "offset": 108,
+        "offset": 148,
         "length": 2
       }
     },

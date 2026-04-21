@@ -17,7 +17,9 @@
       }
     },
     "metadata": {
+      "category": "ai-pipeline",
       "domain": "AI Model Serving Health",
+      "tags": ["ai", "model-serving", "inference", "slo", "drift"],
       "inputDimensions": [
         {
           "index": 0,

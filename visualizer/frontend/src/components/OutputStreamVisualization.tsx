@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { OutputVector } from '../types';
 
 interface OutputStreamVisualizationProps {
@@ -11,6 +11,7 @@ const OutputStreamVisualization: React.FC<OutputStreamVisualizationProps> = ({
   outputVectors,
   highlightedOutputId
 }) => {
+  const [expanded, setExpanded] = useState(false);
   const historyRef = useRef<HTMLDivElement>(null);
   const outputRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const currentOutput = outputVectors.length > 0 ? outputVectors[outputVectors.length - 1] : null;
@@ -152,49 +153,86 @@ const OutputStreamVisualization: React.FC<OutputStreamVisualizationProps> = ({
 
   return (
     <div style={{
-      width: '220px',
+      width: expanded ? '220px' : '44px',
       height: '100%',
       background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
       borderLeft: '2px solid #f59e0b',
       display: 'flex',
       flexDirection: 'column',
-      padding: '20px',
-      boxShadow: 'inset 5px 0 15px rgba(245, 158, 11, 0.1)'
+      padding: expanded ? '20px' : '12px 6px',
+      boxShadow: 'inset 5px 0 15px rgba(245, 158, 11, 0.1)',
+      transition: 'width 0.2s ease, padding 0.2s ease',
+      overflow: 'hidden'
     }}>
-      {/* Header */}
-      <div style={{
-        marginBottom: '16px',
-        paddingBottom: '12px',
-        borderBottom: '2px solid #f59e0b'
-      }}>
+      {/* Header (clickable to expand/collapse) */}
+      <button
+        type="button"
+        onClick={() => setExpanded(e => !e)}
+        aria-expanded={expanded}
+        title={expanded ? 'Collapse output stream' : 'Expand output stream'}
+        style={{
+          marginBottom: expanded ? '16px' : '0',
+          paddingBottom: expanded ? '12px' : '0',
+          borderBottom: expanded ? '2px solid #f59e0b' : 'none',
+          background: 'transparent',
+          border: 'none',
+          color: '#f59e0b',
+          cursor: 'pointer',
+          textAlign: 'left',
+          padding: 0,
+          width: '100%',
+          display: 'flex',
+          flexDirection: expanded ? 'column' : 'column',
+          alignItems: expanded ? 'stretch' : 'center',
+          gap: '6px'
+        }}
+      >
         <div style={{
-          fontSize: '14px',
-          fontWeight: '700',
+          fontSize: expanded ? '14px' : '10px',
+          fontWeight: 700,
           color: '#f59e0b',
           textTransform: 'uppercase',
           letterSpacing: '1px',
-          marginBottom: '8px',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '6px',
+          writingMode: expanded ? 'horizontal-tb' : 'vertical-rl',
+          transform: expanded ? 'none' : 'rotate(180deg)'
         }}>
-          OUTPUT STREAM
-          <span style={{ fontSize: '18px' }}>→</span>
+          <span>OUTPUT</span>
+          <span style={{ fontSize: expanded ? '18px' : '12px' }}>→</span>
+          <span style={{
+            fontSize: '11px',
+            color: '#94a3b8',
+            fontFamily: 'monospace',
+            fontWeight: 400
+          }}>
+            {outputVectors.length}
+          </span>
         </div>
-        <div style={{
-          fontSize: '12px',
-          color: '#64748b',
-          fontFamily: 'monospace'
-        }}>
-          {outputVectors.length > 0 ? (
-            <>{outputVectors.length} output{outputVectors.length !== 1 ? 's' : ''}</>
-          ) : (
-            <>No outputs yet</>
-          )}
-        </div>
-      </div>
+        {expanded && (
+          <div style={{
+            fontSize: '12px',
+            color: '#64748b',
+            fontFamily: 'monospace',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span>
+              {outputVectors.length > 0
+                ? `${outputVectors.length} output${outputVectors.length !== 1 ? 's' : ''}`
+                : 'No outputs yet'}
+            </span>
+            <span style={{ color: '#f59e0b' }}>▲</span>
+          </div>
+        )}
+        {!expanded && (
+          <span style={{ fontSize: '10px', color: '#f59e0b', marginTop: '4px' }}>▼</span>
+        )}
+      </button>
 
-      {outputVectors.length === 0 ? (
+      {!expanded ? null : outputVectors.length === 0 ? (
         <div style={{
           padding: '20px',
           textAlign: 'center',

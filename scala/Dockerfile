@@ -8,11 +8,17 @@ WORKDIR /build
 COPY scala/project/ project/
 COPY scala/build.sbt ./
 
-RUN sbt update
+RUN --mount=type=cache,target=/root/.sbt,sharing=locked \
+    --mount=type=cache,target=/root/.ivy2,sharing=locked \
+    --mount=type=cache,target=/root/.cache/coursier,sharing=locked \
+    sbt update
 
 # Compile and assemble fat JAR
 COPY scala/src/ src/
-RUN sbt assembly
+RUN --mount=type=cache,target=/root/.sbt,sharing=locked \
+    --mount=type=cache,target=/root/.ivy2,sharing=locked \
+    --mount=type=cache,target=/root/.cache/coursier,sharing=locked \
+    sbt assembly
 
 # ── Stage 2: Runtime ────────────────────────────────────────────────────────
 FROM eclipse-temurin:17-jre-jammy

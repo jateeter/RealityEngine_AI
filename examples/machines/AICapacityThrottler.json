@@ -16,6 +16,12 @@
         "length": 6
       }
     },
+    "metadata": {
+      "category": "data-center",
+      "domain": "Data Center — AI Workload Capacity",
+      "tags": ["data-center", "capacity", "gpu", "throttling", "ai-workload"],
+      "rationale": "Manages AI-workload-driven GPU/memory saturation — a data-center infrastructure concern, not an AI-pipeline concern."
+    },
     "sequences": [
       {
         "id": "aict-capacity-escalation",

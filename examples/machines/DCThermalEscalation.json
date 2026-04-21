@@ -8,7 +8,7 @@
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "4D continuous sensor vector at [12:16]: [cpu_temp_norm, cpu_load_norm, cpu_throttle_norm, cpu_efficiency_norm]",
-      "outputSpace": "2D binary at [60:62]: [1,0]=THERMAL_ALARM, [0,1]=THERMAL_SAFE",
+      "outputSpace": "2D binary at [144:146]: [1,0]=THERMAL_ALARM, [0,1]=THERMAL_SAFE",
       "tags": [
         "monitoring",
         "data-center",
@@ -18,7 +18,7 @@
         "continuous"
       ],
       "sequenceCount": 2,
-      "downstreamMachine": "DCCoolingControlFF (reads [60:62])",
+      "downstreamMachine": "DCCoolingControlFF (reads [144:146])",
       "regularExpression": {
         "escalation": "NORMAL+ → WARM+ → HOT → CRITICAL+ → EMERGENCY → output[1,0]",
         "recovery": "SAFE+ → output[0,1]",
@@ -52,7 +52,7 @@
         "length": 4
       },
       "output": {
-        "offset": 60,
+        "offset": 144,
         "length": 2
       }
     },
@@ -241,7 +241,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "THERMAL EMERGENCY: Alarm signal [1,0] to DCCoolingControlFF at [60:62]",
+                  "description": "THERMAL EMERGENCY: Alarm signal [1,0] to DCCoolingControlFF at [144:146]",
                   "severity": "EMERGENCY",
                   "action": "DCCoolingControlFF will SET; emergency cooling activated"
                 }
@@ -286,7 +286,7 @@
               "role": "continuous-reset-plus",
               "cpu_temp_range": "0.15–0.45 (same as NORMAL)",
               "cpu_load_range": "0.17–0.53 (same as NORMAL)",
-              "semantics": "isInitial (A*A = A+): always active; fires [0,1] to [60:62] on each matching cycle. At least one safe sensor reading is required before any reset output is produced. SAFE* would be incorrect — it would imply output is possible without any sensor match."
+              "semantics": "isInitial (A*A = A+): always active; fires [0,1] to [144:146] on each matching cycle. At least one safe sensor reading is required before any reset output is produced. SAFE* would be incorrect — it would imply output is possible without any sensor match."
             },
             "outputVectors": [
               {
@@ -296,7 +296,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "THERMAL SAFE: Reset signal [0,1] to DCCoolingControlFF at [60:62]",
+                  "description": "THERMAL SAFE: Reset signal [0,1] to DCCoolingControlFF at [144:146]",
                   "severity": "INFO",
                   "action": "DCCoolingControlFF will RESET; normal cooling sufficient"
                 }
@@ -397,7 +397,7 @@
             "step_11": "no output (WARM: cooling in progress)",
             "step_12": "SAFE fires [0,1] (normal conditions restored)"
           },
-          "note": "Outputs at [60:62] persist between writes. After step 10 [1,0], bytes [60:62] hold [1,0] until step 12 fires [0,1]. DCCoolingControlFF will read [1,0] on steps 10-11, then read [0,1] at step 12."
+          "note": "Outputs at [144:146] persist between writes. After step 10 [1,0], bytes [144:146] hold [1,0] until step 12 fires [0,1]. DCCoolingControlFF will read [1,0] on steps 10-11, then read [0,1] at step 12."
         }
       },
       {

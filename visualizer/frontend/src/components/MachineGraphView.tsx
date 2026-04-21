@@ -8,6 +8,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as d3 from 'd3';
 import { useVisualizerStore } from '../store';
+import { classifyMachine, DOMAINS, DOMAIN_ORDER, DomainId } from './machineDomains';
+import { vizTheme } from '../styles/vizTheme';
 import './MachineGraphView.css';
 import './VisLegend.css';
 
@@ -18,6 +20,8 @@ interface MachineNode {
   inputMapping: { offset: number; length: number };
   outputMapping: { offset: number; length: number };
   metadata: Record<string, any>;
+  // Domain classification — drives cluster hulls and per-node color accents.
+  domain?: DomainId;
 }
 
 interface MachineEdge {
@@ -200,7 +204,9 @@ export const MachineGraphView: React.FC = () => {
     const savedLayout = loadLayout();
     const simNodes = graphData.nodes.map(n => {
       const saved = savedLayout[n.id];
+      const domain = classifyMachine(n).domain;
       return Object.assign({}, n, {
+        domain,
         x:  saved?.fx ?? undefined,
         y:  saved?.fy ?? undefined,
         fx: saved?.fx ?? null,
@@ -216,14 +222,131 @@ export const MachineGraphView: React.FC = () => {
       target: nodeById.get(e.target) ?? e.target,
     }));
 
+    // Domain anchors pull same-domain nodes toward a shared quadrant so the
+    // hulls emerge as visible bubbles rather than tangled blobs in the center.
     const simulation = d3.forceSimulation(simNodes)
       .force('link', d3.forceLink(simEdges).id((d: any) => d.id).distance(200))
       .force('charge', d3.forceManyBody().strength(-500))
-      .force('center', d3.forceCenter(innerWidth / 2, innerHeight / 2))
       .force('collision', d3.forceCollide().radius(80))
+      .force('domainX', d3.forceX<MachineNode & d3.SimulationNodeDatum>(
+        d => DOMAINS[(d.domain ?? 'general')].anchor.x * innerWidth,
+      ).strength(0.16))
+      .force('domainY', d3.forceY<MachineNode & d3.SimulationNodeDatum>(
+        d => DOMAINS[(d.domain ?? 'general')].anchor.y * innerHeight,
+      ).strength(0.16))
       .alphaDecay(0.02);
 
     simRef.current = simulation as any;
+
+    // ── Domain hull layer — sits behind edges and nodes ─────────────────────
+    // Insert the hull layer BEFORE the edges/nodes are appended so that it
+    // renders underneath without stealing pointer events from card hits.
+    const hullLayer = g.insert('g', ':first-child').attr('class', 'domain-hulls');
+
+    // Faint anchor labels so empty clusters are still identifiable.
+    const labelLayer = g.insert('g', ':first-child').attr('class', 'domain-labels');
+    labelLayer.selectAll('text')
+      .data(DOMAIN_ORDER)
+      .join('text')
+      .attr('x', d => DOMAINS[d].anchor.x * innerWidth)
+      .attr('y', d => DOMAINS[d].anchor.y * innerHeight - 110)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '18px')
+      .attr('font-weight', 700)
+      .attr('letter-spacing', '3px')
+      .attr('fill', d => DOMAINS[d].color)
+      .attr('opacity', 0.18)
+      .attr('pointer-events', 'none')
+      .text(d => DOMAINS[d].label.toUpperCase());
+
+    // Expand each card into its four corners so the hull wraps the card, not
+    // just its center point. Matches the pattern from MachineInterconnectionGraph
+    // but sized for this view's 160×100 cards with a 20px pad.
+    const HULL_PAD = 20;
+    const cornerPoints = (n: MachineNode & d3.SimulationNodeDatum): [number, number][] => {
+      const x = n.x ?? 0, y = n.y ?? 0;
+      const halfW = 80 + HULL_PAD;
+      const halfH = 50 + HULL_PAD;
+      return [
+        [x - halfW, y - halfH],
+        [x + halfW, y - halfH],
+        [x + halfW, y + halfH],
+        [x - halfW, y + halfH],
+      ];
+    };
+
+    // ── Domain hull drag — translate every machine in the domain together ───
+    let hullDragStarts: Map<string, { x: number; y: number }> = new Map();
+    let hullDragOrigin = { x: 0, y: 0 };
+    const hullDrag = d3.drag<SVGPathElement, { domainId: DomainId; hull: [number, number][] | null }>()
+      .on('start', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.05).restart();
+        hullDragStarts = new Map();
+        hullDragOrigin = { x: event.x, y: event.y };
+        for (const n of simNodes) {
+          if ((n.domain ?? 'general') === d.domainId) {
+            hullDragStarts.set(n.id, { x: n.x ?? 0, y: n.y ?? 0 });
+            n.fx = n.x ?? 0;
+            n.fy = n.y ?? 0;
+          }
+        }
+        (event.sourceEvent as Event)?.stopPropagation?.();
+      })
+      .on('drag', (event, d) => {
+        const dx = event.x - hullDragOrigin.x;
+        const dy = event.y - hullDragOrigin.y;
+        for (const n of simNodes) {
+          if ((n.domain ?? 'general') === d.domainId) {
+            const start = hullDragStarts.get(n.id);
+            if (!start) continue;
+            n.fx = start.x + dx;
+            n.fy = start.y + dy;
+          }
+        }
+      })
+      .on('end', (event) => {
+        if (!event.active) simulation.alphaTarget(0);
+        saveLayout(simNodes);
+      });
+
+    const drawHulls = () => {
+      const byDomain = new Map<DomainId, (MachineNode & d3.SimulationNodeDatum)[]>();
+      for (const d of DOMAIN_ORDER) byDomain.set(d, []);
+      for (const n of simNodes) byDomain.get((n.domain ?? 'general'))!.push(n);
+
+      const hullData = DOMAIN_ORDER
+        .map(domainId => {
+          const group = byDomain.get(domainId)!;
+          if (group.length === 0) return null;
+          const pts: [number, number][] = [];
+          for (const n of group) pts.push(...cornerPoints(n));
+          const hull = pts.length >= 3 ? d3.polygonHull(pts) : pts;
+          return { domainId, hull };
+        })
+        .filter((h): h is { domainId: DomainId; hull: [number, number][] | null } => h !== null);
+
+      const sel = hullLayer.selectAll<SVGPathElement, typeof hullData[number]>('path.domain-hull')
+        .data(hullData, (d: any) => d.domainId);
+
+      sel.exit().remove();
+
+      const enter = sel.enter().append('path')
+        .attr('class', 'domain-hull')
+        .attr('fill', d => DOMAINS[d.domainId].fill)
+        .attr('stroke', d => DOMAINS[d.domainId].color)
+        .attr('stroke-opacity', 0.75)
+        .attr('stroke-width', 2.5)
+        .attr('stroke-dasharray', '8,6')
+        .attr('pointer-events', 'all')
+        .style('cursor', 'grab')
+        .call(hullDrag as any);
+
+      enter.merge(sel as any).attr('d', d => {
+        if (!d.hull || d.hull.length === 0) return null;
+        const line = d3.line<[number, number]>().curve(d3.curveCatmullRomClosed.alpha(0.6));
+        return line(d.hull);
+      });
+    };
 
     // ── Edges ──────────────────────────────────────────────────────────────
     const link = g.append('g')
@@ -231,10 +354,10 @@ export const MachineGraphView: React.FC = () => {
       .data(simEdges)
       .join('line')
       .attr('class', 'edge')
-      .attr('stroke', '#999')
+      .attr('stroke', vizTheme.edge.idle)
       .attr('stroke-width', 2)
       .attr('stroke-dasharray', '5,5')
-      .attr('opacity', 0.6);
+      .attr('opacity', 0.75);
 
     const linkLabels = g.append('g')
       .selectAll<SVGTextElement, typeof simEdges[0]>('text')
@@ -242,7 +365,7 @@ export const MachineGraphView: React.FC = () => {
       .join('text')
       .attr('class', 'edge-label')
       .attr('font-size', '10px')
-      .attr('fill', '#666')
+      .attr('fill', vizTheme.edge.label)
       .text((d: any) => {
         const sr = d.sourceRegion ?? (d.source as any).outputMapping;
         const tr = d.targetRegion ?? (d.target as any).inputMapping;
@@ -266,30 +389,30 @@ export const MachineGraphView: React.FC = () => {
       .attr('x', -80)
       .attr('y', -50)
       .attr('rx', 8)
-      .attr('fill', '#64748b')
-      .attr('stroke', '#333')
-      .attr('stroke-width', 2);
+      .attr('fill', vizTheme.bg.cardIdle)
+      .attr('stroke', (d: MachineNode) => DOMAINS[(d.domain ?? 'general')].color)
+      .attr('stroke-width', 2.5);
 
     node.append('text')
       .attr('text-anchor', 'middle')
       .attr('y', -20)
       .attr('font-size', '14px')
       .attr('font-weight', 'bold')
-      .attr('fill', 'white')
+      .attr('fill', vizTheme.text.primary)
       .text((d: MachineNode) => d.name);
 
     node.append('text')
       .attr('text-anchor', 'middle')
       .attr('y', 0)
       .attr('font-size', '11px')
-      .attr('fill', '#a8dadc')
+      .attr('fill', vizTheme.accent.input)
       .text((d: MachineNode) => `In: [${d.inputMapping.offset}:${d.inputMapping.offset + d.inputMapping.length}]`);
 
     node.append('text')
       .attr('text-anchor', 'middle')
       .attr('y', 15)
       .attr('font-size', '11px')
-      .attr('fill', '#f1a1c1')
+      .attr('fill', vizTheme.accent.output)
       .text((d: MachineNode) => `Out: [${d.outputMapping.offset}:${d.outputMapping.offset + d.outputMapping.length}]`);
 
     const stepText = node.append<SVGTextElement>('text')
@@ -339,6 +462,8 @@ export const MachineGraphView: React.FC = () => {
 
     // ── Simulation tick ────────────────────────────────────────────────────
     simulation.on('tick', () => {
+      drawHulls();
+
       link
         .attr('x1', (d: any) => d.source.x)
         .attr('y1', (d: any) => d.source.y)
@@ -366,7 +491,7 @@ export const MachineGraphView: React.FC = () => {
 
     node.select<SVGRectElement>('rect')
       .attr('fill', (d: MachineNode) =>
-        currentStep?.machineResults[d.id] ? '#06b6d4' : '#64748b'
+        currentStep?.machineResults[d.id] ? '#06b6d4' : vizTheme.bg.cardIdle
       );
 
     if (stepText) {
@@ -437,7 +562,7 @@ export const MachineGraphView: React.FC = () => {
                 <span>Active machine</span>
               </div>
               <div className="vis-legend-item">
-                <span className="vis-legend-dot" style={{ background: '#64748b' }} />
+                <span className="vis-legend-dot" style={{ background: vizTheme.bg.cardIdle, border: `1px solid ${vizTheme.outline.idle}` }} />
                 <span>Idle machine</span>
               </div>
               <div className="vis-legend-divider" />
@@ -446,13 +571,13 @@ export const MachineGraphView: React.FC = () => {
                 <span>Data flow</span>
               </div>
               <div className="vis-legend-divider" />
-              <div className="vis-legend-item" style={{ color: '#64748b', fontSize: '10px' }}>
+              <div className="vis-legend-item" style={{ color: vizTheme.text.secondary, fontSize: '10px' }}>
                 Scroll to zoom · Drag to pan
               </div>
-              <div className="vis-legend-item" style={{ color: '#64748b', fontSize: '10px' }}>
+              <div className="vis-legend-item" style={{ color: vizTheme.text.secondary, fontSize: '10px' }}>
                 Drag node to pin
               </div>
-              <div className="vis-legend-item" style={{ color: '#64748b', fontSize: '10px' }}>
+              <div className="vis-legend-item" style={{ color: vizTheme.text.secondary, fontSize: '10px' }}>
                 Double-click to unpin
               </div>
             </div>

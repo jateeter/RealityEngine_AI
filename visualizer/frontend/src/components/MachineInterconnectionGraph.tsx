@@ -8,10 +8,17 @@
  * - Preception cycle indicators
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import './MachineInterconnectionGraph.css';
 import { useVisualizerStore } from '../store';
+import {
+  classifyMachine,
+  DOMAINS,
+  DOMAIN_ORDER,
+  DomainId,
+} from './machineDomains';
+import { vizTheme } from '../styles/vizTheme';
 
 interface Machine {
   id: string;
@@ -35,6 +42,9 @@ interface MachineNode extends d3.SimulationNodeDatum {
   isConnected: boolean;
   metadata?: Record<string, any>;
   sequenceCount?: number;
+  // Domain classification
+  domain: DomainId;
+  isExternal: boolean;
   // Runtime status
   status?: 'idle' | 'processing' | 'active';
   lastInput?: number[];
@@ -47,6 +57,10 @@ interface MachineLink {
   sourceRegion: { offset: number; length: number };
   targetRegion: { offset: number; length: number };
   overlapSize: number;
+  sourceDomain: DomainId;
+  targetDomain: DomainId;
+  crossDomain: boolean;
+  externalBridge: boolean;
 }
 
 interface PerceptualSpaceUpdate {
@@ -85,6 +99,36 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
     lastOutput?: number[];
   }>>({});
   const [currentStep, setCurrentStep] = useState<number>(0);
+
+  // Domain filter — each entry enables/disables a whole domain cluster.
+  const [enabledDomains, setEnabledDomains] = useState<Record<DomainId, boolean>>({
+    healthservices: true,
+    ai: true,
+    datacenter: true,
+    general: true,
+  });
+
+  // Classify every machine once per machine list change.
+  const classifications = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof classifyMachine>>();
+    for (const m of machines) map.set(m.id, classifyMachine(m));
+    return map;
+  }, [machines]);
+
+  // Domain membership counts for the legend.
+  const domainCounts = useMemo(() => {
+    const counts: Record<DomainId, number> = {
+      healthservices: 0, ai: 0, datacenter: 0, general: 0,
+    };
+    for (const c of classifications.values()) counts[c.domain]++;
+    return counts;
+  }, [classifications]);
+
+  const externalCount = useMemo(() => {
+    let n = 0;
+    for (const c of classifications.values()) if (c.isExternal) n++;
+    return n;
+  }, [classifications]);
 
   // Track container size with ResizeObserver
   useEffect(() => {
@@ -140,8 +184,13 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
     const { width, height } = dimensions;
 
-    // Filter machines that have perceptual mappings
-    const validMachines = machines.filter(m => m.perceptualMapping);
+    // Filter machines that have perceptual mappings AND whose domain is enabled.
+    const validMachines = machines.filter(m => {
+      if (!m.perceptualMapping) return false;
+      const cls = classifications.get(m.id);
+      if (!cls) return true;
+      return enabledDomains[cls.domain];
+    });
 
     if (validMachines.length === 0) {
       const svg = d3.select(svgRef.current);
@@ -150,7 +199,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         .attr('x', width / 2)
         .attr('y', height / 2)
         .attr('text-anchor', 'middle')
-        .attr('fill', '#64748b')
+        .attr('fill', vizTheme.text.secondary)
         .attr('font-size', '16px')
         .text('No machines with perceptual mappings configured');
       return;
@@ -183,9 +232,13 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
     // Convert machines to nodes — status starts idle; the separate update
     // effect applies live per-step status without rebuilding the simulation.
-    const cx = width / 2, cy = height / 2;
     const nodes: MachineNode[] = validMachines.map(m => {
       const saved = nodePositionsRef.current.get(m.id);
+      const cls = classifications.get(m.id) ?? { domain: 'general' as DomainId, isExternal: false, reason: 'missing' };
+      const anchor = DOMAINS[cls.domain].anchor;
+      // Seed unclassified-but-new nodes near their domain anchor instead of center
+      const seedX = anchor.x * width + (Math.random() - 0.5) * 180;
+      const seedY = anchor.y * height + (Math.random() - 0.5) * 180;
       return {
         id: m.id,
         name: m.name,
@@ -196,14 +249,18 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         isConnected: m.id === currentMachineId || connectedMachineIds.has(m.id),
         metadata: m.metadata,
         sequenceCount: m.sequenceCount,
+        domain: cls.domain,
+        isExternal: cls.isExternal,
         status: 'idle' as const,
         // Restore saved position so layout is preserved when topology changes
-        x: saved?.x ?? cx + (Math.random() - 0.5) * 400,
-        y: saved?.y ?? cy + (Math.random() - 0.5) * 400,
+        x: saved?.x ?? seedX,
+        y: saved?.y ?? seedY,
       };
     });
 
-    // Detect links
+    // Detect links — output(A) ∩ input(B) ⇒ A drives B.  Tag each link with
+    // its endpoints' domains so layout + styling can differentiate intra-
+    // vs cross-domain flow and highlight external bridges.
     const links: MachineLink[] = [];
     for (let i = 0; i < validMachines.length; i++) {
       const sourceM = validMachines[i];
@@ -223,12 +280,20 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
         if (overlapStart < overlapEnd) {
           const overlapSize = overlapEnd - overlapStart;
+          const srcCls = classifications.get(sourceM.id);
+          const tgtCls = classifications.get(targetM.id);
+          const sourceDomain: DomainId = srcCls?.domain ?? 'general';
+          const targetDomain: DomainId = tgtCls?.domain ?? 'general';
           links.push({
             source: sourceM.id,
             target: targetM.id,
             sourceRegion: sourceOutput,
             targetRegion: targetInput,
-            overlapSize
+            overlapSize,
+            sourceDomain,
+            targetDomain,
+            crossDomain: sourceDomain !== targetDomain,
+            externalBridge: !!(srcCls?.isExternal || tgtCls?.isExternal),
           });
         }
       }
@@ -240,6 +305,9 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
     svg.attr('width', width).attr('height', height);
 
     const g = svg.append('g');
+
+    // Domain hulls sit *behind* links and nodes so they don't steal clicks.
+    const hullLayer = g.append('g').attr('class', 'domain-hulls');
 
     // Add zoom — save transform so it survives topology rebuilds
     const zoom = d3.zoom<SVGSVGElement, unknown>()
@@ -254,42 +322,56 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       svg.call((zoom as any).transform, zoomTransformRef.current);
     }
 
-    // Create simulation
+    // Create simulation — intra-domain links pull harder than cross-domain.
     const simulation = d3.forceSimulation(nodes as any)
-      .force('link', d3.forceLink(links).id((d: any) => d.id).distance(250))
-      .force('charge', d3.forceManyBody().strength(-800))
-      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('link', d3.forceLink(links).id((d: any) => d.id)
+        .distance((l: any) => l.crossDomain ? 340 : 220)
+        .strength((l: any) => l.crossDomain ? 0.25 : 0.7))
+      .force('charge', d3.forceManyBody().strength(-900))
       .force('collision', d3.forceCollide().radius(120))
-      .force('x', d3.forceX(width / 2).strength(0.05))
-      .force('y', d3.forceY(height / 2).strength(0.05));
+      // Per-domain anchor forces replace the single center gravity.  Each node
+      // is pulled toward its domain's quadrant so clusters emerge naturally
+      // while the force-directed layout still resolves link overlaps.
+      .force('domainX', d3.forceX<MachineNode>(d => DOMAINS[d.domain].anchor.x * width).strength(0.18))
+      .force('domainY', d3.forceY<MachineNode>(d => DOMAINS[d.domain].anchor.y * height).strength(0.18));
 
     // Draw links
     const link = g.append('g').attr('class', 'links').selectAll('g').data(links).join('g');
+
+    const endpointNodes = (d: MachineLink) => {
+      const sId = typeof d.source === 'string' ? d.source : d.source.id;
+      const tId = typeof d.target === 'string' ? d.target : d.target.id;
+      return {
+        s: nodes.find(n => n.id === sId),
+        t: nodes.find(n => n.id === tId),
+      };
+    };
 
     const linkPath = link.append('path')
       .attr('class', 'link-path')
       .attr('fill', 'none')
       .attr('stroke', (d: MachineLink) => {
-        const sourceNode = nodes.find(n => n.id === (typeof d.source === 'string' ? d.source : d.source.id));
-        const targetNode = nodes.find(n => n.id === (typeof d.target === 'string' ? d.target : d.target.id));
-        if (sourceNode?.isCurrent || targetNode?.isCurrent) return '#3b82f6';
-        if (sourceNode?.isConnected && targetNode?.isConnected) return '#64748b';
-        return '#334155';
+        const { s, t } = endpointNodes(d);
+        if (s?.isCurrent || t?.isCurrent) return vizTheme.edge.active;
+        if (d.externalBridge) return vizTheme.edge.bridge;
+        if (!d.crossDomain) return DOMAINS[d.sourceDomain].color;
+        return vizTheme.edge.idle;
       })
       .attr('stroke-width', (d: MachineLink) => {
-        const sourceNode = nodes.find(n => n.id === (typeof d.source === 'string' ? d.source : d.source.id));
-        const targetNode = nodes.find(n => n.id === (typeof d.target === 'string' ? d.target : d.target.id));
-        return (sourceNode?.isCurrent || targetNode?.isCurrent) ? 3 : 2;
+        const { s, t } = endpointNodes(d);
+        if (s?.isCurrent || t?.isCurrent) return 3;
+        return d.crossDomain ? 1.5 : 2.2;
       })
+      .attr('stroke-dasharray', (d: MachineLink) =>
+        d.externalBridge ? '6,4' : d.crossDomain ? '3,3' : null)
       .attr('opacity', (d: MachineLink) => {
-        const sourceNode = nodes.find(n => n.id === (typeof d.source === 'string' ? d.source : d.source.id));
-        const targetNode = nodes.find(n => n.id === (typeof d.target === 'string' ? d.target : d.target.id));
-        return (!sourceNode?.isConnected || !targetNode?.isConnected) ? 0.2 : 0.7;
+        const { s, t } = endpointNodes(d);
+        if (!s?.isConnected || !t?.isConnected) return 0.22;
+        return d.crossDomain ? 0.55 : 0.8;
       })
       .attr('marker-end', (d: MachineLink) => {
-        const sourceNode = nodes.find(n => n.id === (typeof d.source === 'string' ? d.source : d.source.id));
-        const targetNode = nodes.find(n => n.id === (typeof d.target === 'string' ? d.target : d.target.id));
-        return (sourceNode?.isCurrent || targetNode?.isCurrent) ? 'url(#arrowhead-active)' : 'url(#arrowhead)';
+        const { s, t } = endpointNodes(d);
+        return (s?.isCurrent || t?.isCurrent) ? 'url(#arrowhead-active)' : 'url(#arrowhead)';
       });
 
     // Arrowheads
@@ -305,13 +387,13 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('orient', 'auto')
       .append('path')
       .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', markerType => markerType === 'arrowhead-active' ? '#3b82f6' : '#64748b');
+      .attr('fill', markerType => markerType === 'arrowhead-active' ? vizTheme.edge.active : vizTheme.edge.arrowhead);
 
     // Link labels
     const linkLabel = link.append('text')
       .attr('class', 'link-label')
       .attr('font-size', '10px')
-      .attr('fill', '#94a3b8')
+      .attr('fill', vizTheme.edge.label)
       .attr('text-anchor', 'middle')
       .text((d: MachineLink) =>
         `[${d.sourceRegion.offset}:${d.sourceRegion.offset + d.sourceRegion.length - 1}] → [${d.targetRegion.offset}:${d.targetRegion.offset + d.targetRegion.length - 1}]`
@@ -326,7 +408,9 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         .on('end', dragended) as any);
 
     // Node rectangles — data-field marker allows the update effect to patch
-    // colors in-place without a full simulation rebuild.
+    // colors in-place without a full simulation rebuild.  Border color
+    // encodes the machine's domain so the cluster remains identifiable even
+    // when nodes drift between force regions.
     node.append('rect')
       .attr('data-field', 'status-rect')
       .attr('width', 200)
@@ -334,13 +418,52 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('x', -100)
       .attr('y', -70)
       .attr('rx', 10)
-      .attr('fill', (d: MachineNode) => d.isCurrent ? '#1e40af' : d.isConnected ? '#475569' : '#1e293b')
-      .attr('stroke', (d: MachineNode) => d.isCurrent ? '#3b82f6' : d.isConnected ? '#64748b' : '#334155')
-      .attr('stroke-width', (d: MachineNode) => d.isCurrent ? 3 : 2)
-      .attr('opacity', (d: MachineNode) => d.isConnected ? 1 : 0.4)
+      .attr('fill', (d: MachineNode) => d.isCurrent ? vizTheme.bg.cardActive : d.isConnected ? vizTheme.bg.cardConnected : vizTheme.bg.cardIdle)
+      .attr('stroke', (d: MachineNode) => DOMAINS[d.domain].color)
+      .attr('stroke-width', (d: MachineNode) => d.isCurrent ? 4 : 2.5)
+      .attr('opacity', (d: MachineNode) => d.isConnected ? 1 : 0.7)
       .on('mouseover', showTooltip)
       .on('mousemove', moveTooltip)
       .on('mouseout', hideTooltip);
+
+    // Domain badge strip across the top of every node.
+    node.append('rect')
+      .attr('width', 200)
+      .attr('height', 6)
+      .attr('x', -100)
+      .attr('y', -70)
+      .attr('rx', 3)
+      .attr('fill', (d: MachineNode) => DOMAINS[d.domain].color)
+      .attr('opacity', 0.9);
+
+    // External-entity chip (localAIStack bridges).
+    node.filter((d: MachineNode) => d.isExternal)
+      .append('g')
+      .attr('class', 'external-chip')
+      .call(g => {
+        g.append('rect')
+          .attr('x', -96).attr('y', -64)
+          .attr('width', 66).attr('height', 14)
+          .attr('rx', 7)
+          .attr('fill', vizTheme.accent.externalFill)
+          .attr('opacity', 0.9);
+        g.append('text')
+          .attr('x', -63).attr('y', -54)
+          .attr('text-anchor', 'middle')
+          .attr('font-size', '9px')
+          .attr('font-weight', 700)
+          .attr('fill', vizTheme.text.emphasis)
+          .text('↯ EXTERNAL');
+      });
+
+    // Domain label chip (opposite corner from external chip).
+    node.append('text')
+      .attr('x', 94).attr('y', -54)
+      .attr('text-anchor', 'end')
+      .attr('font-size', '9px')
+      .attr('font-weight', 700)
+      .attr('fill', (d: MachineNode) => DOMAINS[d.domain].color)
+      .text((d: MachineNode) => DOMAINS[d.domain].short.toUpperCase());
 
     // Current machine indicator
     node.filter((d: MachineNode) => d.isCurrent)
@@ -351,7 +474,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('y', -75)
       .attr('rx', 12)
       .attr('fill', 'none')
-      .attr('stroke', '#60a5fa')
+      .attr('stroke', vizTheme.outline.focus)
       .attr('stroke-width', 2)
       .attr('stroke-dasharray', '5,5')
       .attr('opacity', 0.6);
@@ -362,7 +485,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('y', -40)
       .attr('font-size', '14px')
       .attr('font-weight', 'bold')
-      .attr('fill', (d: MachineNode) => d.isCurrent ? '#93c5fd' : '#e2e8f0')
+      .attr('fill', (d: MachineNode) => d.isCurrent ? vizTheme.accent.current : vizTheme.text.primary)
       .text((d: MachineNode) => {
         const maxLen = 20;
         return d.name.length > maxLen ? d.name.substring(0, maxLen) + '...' : d.name;
@@ -374,15 +497,15 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('cx', 85)
       .attr('cy', -60)
       .attr('r', 6)
-      .attr('fill', '#64748b')
-      .attr('opacity', 0.8);
+      .attr('fill', vizTheme.status.dotIdle)
+      .attr('opacity', 0.9);
 
     // Input mapping
     node.append('text')
       .attr('text-anchor', 'middle')
       .attr('y', -18)
       .attr('font-size', '11px')
-      .attr('fill', '#60a5fa')
+      .attr('fill', vizTheme.accent.input)
       .text((d: MachineNode) => `In: [${d.inputMapping.offset}:${d.inputMapping.offset + d.inputMapping.length - 1}]`);
 
     // Output mapping
@@ -390,7 +513,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('text-anchor', 'middle')
       .attr('y', -3)
       .attr('font-size', '11px')
-      .attr('fill', '#f472b6')
+      .attr('fill', vizTheme.accent.outputBright)
       .text((d: MachineNode) => `Out: [${d.outputMapping.offset}:${d.outputMapping.offset + d.outputMapping.length - 1}]`);
 
     // Last input vector — starts empty; filled by update effect
@@ -399,7 +522,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('text-anchor', 'middle')
       .attr('y', 15)
       .attr('font-size', '9px')
-      .attr('fill', '#94a3b8');
+      .attr('fill', vizTheme.text.secondary);
 
     // Last output vector — starts empty; filled by update effect
     node.append('text')
@@ -407,21 +530,122 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('text-anchor', 'middle')
       .attr('y', 30)
       .attr('font-size', '9px')
-      .attr('fill', '#f9a8d4');
+      .attr('fill', vizTheme.accent.output);
 
     // Sequence count
     node.append('text')
       .attr('text-anchor', 'middle')
       .attr('y', 50)
       .attr('font-size', '10px')
-      .attr('fill', '#64748b')
+      .attr('fill', vizTheme.text.secondary)
       .text((d: MachineNode) => d.sequenceCount ? `${d.sequenceCount} sequences` : '');
+
+    // Group nodes by domain for hull rendering.  Hulls are recomputed each
+    // tick so they deform smoothly as the force simulation settles.
+    const nodesByDomain = new Map<DomainId, MachineNode[]>();
+    for (const d of DOMAIN_ORDER) nodesByDomain.set(d, []);
+    for (const n of nodes) nodesByDomain.get(n.domain)!.push(n);
+
+    // Expand each node into corner points so the hull wraps card extents.
+    const HULL_PAD = 22;
+    const cornerPoints = (n: MachineNode): [number, number][] => {
+      const x = n.x ?? 0, y = n.y ?? 0;
+      const w = 100 + HULL_PAD, h = 70 + HULL_PAD;
+      return [[x - w, y - h], [x + w, y - h], [x + w, y + h], [x - w, y + h]];
+    };
+
+    // ── Domain hull drag — move all machines in the domain as one group ─────
+    let hullDragStarts: Map<string, { x: number; y: number }> = new Map();
+    let hullDragOrigin = { x: 0, y: 0 };
+    const hullDrag = d3.drag<SVGPathElement, { domainId: DomainId; hull: [number, number][] | null }>()
+      .on('start', (event, d) => {
+        if (!event.active) simulation.alphaTarget(0.05).restart();
+        hullDragStarts = new Map();
+        hullDragOrigin = { x: event.x, y: event.y };
+        for (const n of nodes) {
+          if (n.domain === d.domainId) {
+            hullDragStarts.set(n.id, { x: n.x ?? 0, y: n.y ?? 0 });
+            n.fx = n.x ?? 0;
+            n.fy = n.y ?? 0;
+          }
+        }
+        (event.sourceEvent as Event)?.stopPropagation?.();
+      })
+      .on('drag', (event, d) => {
+        const dx = event.x - hullDragOrigin.x;
+        const dy = event.y - hullDragOrigin.y;
+        for (const n of nodes) {
+          if (n.domain === d.domainId) {
+            const start = hullDragStarts.get(n.id);
+            if (!start) continue;
+            n.fx = start.x + dx;
+            n.fy = start.y + dy;
+          }
+        }
+      })
+      .on('end', (event) => {
+        if (!event.active) simulation.alphaTarget(0);
+        // Keep the domain pinned at its new position so the moved bubble "sticks"
+      });
+
+    const drawHulls = () => {
+      const hullData = DOMAIN_ORDER
+        .map(domainId => {
+          const group = nodesByDomain.get(domainId)!;
+          if (group.length === 0) return null;
+          const pts: [number, number][] = [];
+          for (const n of group) pts.push(...cornerPoints(n));
+          const hull = pts.length >= 3 ? d3.polygonHull(pts) : pts;
+          return { domainId, hull };
+        })
+        .filter((h): h is { domainId: DomainId; hull: [number, number][] | null } => h !== null);
+
+      const hullSel = hullLayer.selectAll<SVGPathElement, typeof hullData[number]>('path.domain-hull')
+        .data(hullData, (d: any) => d.domainId);
+
+      hullSel.exit().remove();
+
+      const hullEnter = hullSel.enter().append('path')
+        .attr('class', 'domain-hull')
+        .attr('fill', d => DOMAINS[d.domainId].fill)
+        .attr('stroke', d => DOMAINS[d.domainId].color)
+        .attr('stroke-opacity', 0.75)
+        .attr('stroke-width', 2.5)
+        .attr('stroke-dasharray', '8,6')
+        .attr('pointer-events', 'all')
+        .style('cursor', 'grab')
+        .call(hullDrag as any);
+
+      hullEnter.merge(hullSel as any).attr('d', d => {
+        if (!d.hull || d.hull.length === 0) return null;
+        const line = d3.line<[number, number]>().curve(d3.curveCatmullRomClosed.alpha(0.6));
+        return line(d.hull);
+      });
+    };
+
+    // Domain labels floating at the anchor points so empty clusters are still legible.
+    const domainLabelLayer = g.append('g').attr('class', 'domain-labels');
+    domainLabelLayer.selectAll('text')
+      .data(DOMAIN_ORDER)
+      .join('text')
+      .attr('class', 'domain-anchor-label')
+      .attr('x', d => DOMAINS[d].anchor.x * width)
+      .attr('y', d => DOMAINS[d].anchor.y * height - 120)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '20px')
+      .attr('font-weight', 700)
+      .attr('letter-spacing', '3px')
+      .attr('fill', d => DOMAINS[d].color)
+      .attr('opacity', 0.22)
+      .text(d => DOMAINS[d].label.toUpperCase());
 
     // Update simulation — also persist positions so rebuilds preserve layout
     simulation.on('tick', () => {
       for (const n of nodes) {
         if (n.x != null && n.y != null) nodePositionsRef.current.set(n.id, { x: n.x, y: n.y });
       }
+
+      drawHulls();
 
       linkPath.attr('d', (d: any) => {
         const dx = d.target.x - d.source.x;
@@ -464,6 +688,12 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
       let content = `
         <div class="tooltip-title">${d.name}</div>
+        <div class="tooltip-row">
+          <span class="tooltip-label">Domain:</span>
+          <span class="tooltip-value" style="color: ${DOMAINS[d.domain].color}">
+            ${DOMAINS[d.domain].label}${d.isExternal ? ' · External' : ''}
+          </span>
+        </div>
         <div class="tooltip-row">
           <span class="tooltip-label">Status:</span>
           <span class="tooltip-value">${d.status || 'idle'}</span>
@@ -549,7 +779,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
   // Intentionally excludes machineStatuses and perceptualSpace — per-step
   // status updates are applied in-place by the effect below.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [machines, currentMachineId, dimensions]);
+  }, [machines, currentMachineId, dimensions, classifications, enabledDomains]);
 
   // ── Lightweight per-step update — patches colors/text without rebuilding ──
   // Runs whenever machine statuses change (every WebSocket step) but never
@@ -564,25 +794,25 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
       d3.select(this).select('rect[data-field="status-rect"]')
         .attr('fill', () => {
-          if (status === 'active')     return '#166534';
-          if (status === 'processing') return '#854d0e';
-          if (d.isCurrent)             return '#1e40af';
-          if (d.isConnected)           return '#475569';
-          return '#1e293b';
+          if (status === 'active')     return vizTheme.status.activeFill;
+          if (status === 'processing') return vizTheme.status.processingFill;
+          if (d.isCurrent)             return vizTheme.bg.cardActive;
+          if (d.isConnected)           return vizTheme.bg.cardConnected;
+          return vizTheme.bg.cardIdle;
         })
+        // Idle nodes keep their domain color so clusters remain readable;
+        // active/processing override to convey runtime urgency.
         .attr('stroke', () => {
-          if (status === 'active')     return '#22c55e';
-          if (status === 'processing') return '#eab308';
-          if (d.isCurrent)             return '#3b82f6';
-          if (d.isConnected)           return '#64748b';
-          return '#334155';
+          if (status === 'active')     return vizTheme.status.activeStroke;
+          if (status === 'processing') return vizTheme.status.processingStroke;
+          return DOMAINS[d.domain].color;
         });
 
       d3.select(this).select('circle[data-field="status-dot"]')
         .attr('fill', () => {
-          if (status === 'active')     return '#22c55e';
-          if (status === 'processing') return '#eab308';
-          return '#64748b';
+          if (status === 'active')     return vizTheme.status.dotActive;
+          if (status === 'processing') return vizTheme.status.dotProcessing;
+          return vizTheme.status.dotIdle;
         });
 
       const iv = info?.lastInput;
@@ -628,30 +858,57 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         </div>
       )}
 
-      {/* Enhanced legend */}
+      {/* Domain legend — click to toggle a domain's nodes on/off */}
       <div className="graph-legend">
+        <div className="legend-section-title">Domains of Effect</div>
+        {DOMAIN_ORDER.map(domainId => {
+          const def = DOMAINS[domainId];
+          const enabled = enabledDomains[domainId];
+          const count = domainCounts[domainId];
+          return (
+            <button
+              key={domainId}
+              className={`legend-item legend-toggle ${enabled ? 'enabled' : 'disabled'}`}
+              onClick={() =>
+                setEnabledDomains(prev => ({ ...prev, [domainId]: !prev[domainId] }))
+              }
+              title={def.description}
+            >
+              <div
+                className="legend-box"
+                style={{ backgroundColor: def.fill, borderColor: def.color, borderWidth: 2 }}
+              />
+              <span className="legend-label">{def.label}</span>
+              <span className="legend-count">{count}</span>
+            </button>
+          );
+        })}
+
+        {externalCount > 0 && (
+          <div className="legend-item" title="Machines registered by an external stack (e.g. localAIStack)">
+            <div className="legend-box" style={{
+              borderColor: vizTheme.accent.externalFill,
+              backgroundColor: 'rgba(168, 85, 247, 0.28)',
+              borderStyle: 'dashed',
+              borderWidth: 2,
+            }} />
+            <span className="legend-label">External Bridge</span>
+            <span className="legend-count">{externalCount}</span>
+          </div>
+        )}
+
+        <div className="legend-divider" />
+        <div className="legend-section-title">Runtime</div>
         <div className="legend-item">
-          <div className="legend-box current-machine"></div>
-          <span>Current Machine</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-box connected-machine"></div>
-          <span>Connected</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-box" style={{ backgroundColor: '#166534', borderColor: '#22c55e' }}></div>
+          <div className="legend-box" style={{ backgroundColor: vizTheme.status.activeFill, borderColor: vizTheme.status.activeStroke }} />
           <span>Active (Output)</span>
         </div>
         <div className="legend-item">
-          <div className="legend-box" style={{ backgroundColor: '#854d0e', borderColor: '#eab308' }}></div>
+          <div className="legend-box" style={{ backgroundColor: vizTheme.status.processingFill, borderColor: vizTheme.status.processingStroke }} />
           <span>Processing</span>
         </div>
         <div className="legend-item">
-          <div className="legend-box disconnected-machine"></div>
-          <span>Idle</span>
-        </div>
-        <div className="legend-item">
-          <div className="legend-arrow"></div>
+          <div className="legend-arrow" />
           <span>Data Flow</span>
         </div>
       </div>

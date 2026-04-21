@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useVisualizerStore } from '../store';
 import CriticalEventGraphView from './CriticalEventGraphView';
 import OutputStreamVisualization from './OutputStreamVisualization';
@@ -6,6 +6,12 @@ import { MachineInterconnectionGraph } from './MachineInterconnectionGraph';
 import { PerceptualLogViewer } from './PerceptualLogViewer';
 import { api } from '../api';
 import { Machine } from '../types';
+import {
+  classifyMachine,
+  DOMAINS,
+  DOMAIN_ORDER,
+  DomainId,
+} from './machineDomains';
 
 interface MachineContainerViewProps {
   selectedSequenceId: string | null;
@@ -26,8 +32,27 @@ const MachineInputsStrip: React.FC<MachineInputsStripProps> = ({
   currentMachineId,
   step,
 }) => {
+  const [expanded, setExpanded] = useState(false);
   const mapped = machines.filter(m => m.perceptualMapping);
+
+  // Group machines by domain for rendering and counts.
+  const byDomain = useMemo(() => {
+    const groups: Record<DomainId, { machine: Machine; isExternal: boolean }[]> = {
+      healthservices: [], ai: [], datacenter: [], general: [],
+    };
+    for (const m of mapped) {
+      const cls = classifyMachine(m);
+      groups[cls.domain].push({ machine: m, isExternal: cls.isExternal });
+    }
+    return groups;
+  }, [mapped]);
+
   if (mapped.length === 0) return null;
+
+  const activeCount = mapped.filter(m => {
+    const { input } = m.perceptualMapping!;
+    return universalVector.slice(input.offset, input.offset + input.length).some(v => v > 0);
+  }).length;
 
   return (
     <div style={{
@@ -38,23 +63,88 @@ const MachineInputsStrip: React.FC<MachineInputsStripProps> = ({
       flexDirection: 'column',
       gap: '3px',
     }}>
-      {/* Strip header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        marginBottom: '2px',
-      }}>
+      {/* Strip header (clickable to expand/collapse) */}
+      <button
+        type="button"
+        onClick={() => setExpanded(e => !e)}
+        aria-expanded={expanded}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '2px',
+          background: 'transparent',
+          border: 'none',
+          padding: '2px 0',
+          cursor: 'pointer',
+          textAlign: 'left',
+          color: 'inherit',
+          width: '100%',
+        }}
+      >
         <span style={{ fontSize: '9px', color: '#475569', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
           Machine Inputs
         </span>
         <span style={{ fontSize: '9px', color: '#334155', fontFamily: 'monospace' }}>
           step {step}
         </span>
-      </div>
+        <span style={{ fontSize: '9px', color: '#475569', fontFamily: 'monospace' }}>
+          {mapped.length} machines{activeCount > 0 ? ` · ${activeCount} active` : ''}
+        </span>
+        <span style={{ fontSize: '9px', color: '#64748b', marginLeft: 'auto' }}>
+          {expanded ? '▲' : '▼'}
+        </span>
+      </button>
 
-      {/* One row per machine */}
-      {mapped.map(m => {
+      {expanded && (
+      <div style={{
+        maxHeight: '220px',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '3px',
+        paddingRight: '4px',
+        scrollbarWidth: 'thin',
+        scrollbarColor: '#475569 #1e293b',
+      }}>
+      {/* Rows grouped by domain.  Empty groups skipped. */}
+      {DOMAIN_ORDER.flatMap(domainId => {
+        const group = byDomain[domainId];
+        if (group.length === 0) return [];
+        const def = DOMAINS[domainId];
+        return [
+          <div
+            key={`hdr-${domainId}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 6px 2px 6px',
+              marginTop: '4px',
+              borderTop: `1px solid ${def.color}33`,
+              borderBottom: `1px solid ${def.color}22`,
+              background: def.fill,
+            }}
+          >
+            <span style={{
+              width: '8px', height: '8px', borderRadius: '2px',
+              background: def.color, flexShrink: 0,
+            }} />
+            <span style={{
+              fontSize: '9px',
+              fontWeight: 700,
+              color: def.color,
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+            }}>{def.label}</span>
+            <span style={{
+              fontSize: '9px',
+              color: '#475569',
+              fontFamily: 'monospace',
+            }}>{group.length}</span>
+          </div>,
+          ...group.map(({ machine: m, isExternal }) => {
         const { input, output } = m.perceptualMapping!;
         const inputVals = universalVector.slice(input.offset, input.offset + input.length);
         const outputVals = universalVector.slice(output.offset, output.offset + output.length);
@@ -72,15 +162,37 @@ const MachineInputsStrip: React.FC<MachineInputsStripProps> = ({
               padding: '2px 6px',
               borderRadius: '4px',
               background: isCurrent ? 'rgba(59, 130, 246, 0.08)' : 'transparent',
-              borderLeft: isCurrent ? '2px solid #3b82f6' : '2px solid transparent',
+              borderLeft: isCurrent
+                ? '2px solid #3b82f6'
+                : `2px solid ${def.color}55`,
             }}
           >
+            {/* External chip */}
+            {isExternal && (
+              <span
+                title="External bridge (localAIStack)"
+                style={{
+                  fontSize: '8px',
+                  fontWeight: 700,
+                  color: '#fff',
+                  background: '#a855f7',
+                  padding: '1px 4px',
+                  borderRadius: '2px',
+                  flexShrink: 0,
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                EXT
+              </span>
+            )}
+
             {/* Machine name */}
             <span style={{
               fontSize: '10px',
               fontWeight: isCurrent ? 700 : 400,
               color: isCurrent ? '#93c5fd' : '#64748b',
-              width: '180px',
+              width: isExternal ? '150px' : '180px',
               flexShrink: 0,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -172,7 +284,11 @@ const MachineInputsStrip: React.FC<MachineInputsStripProps> = ({
             )}
           </div>
         );
+      })
+        ];
       })}
+      </div>
+      )}
     </div>
   );
 };

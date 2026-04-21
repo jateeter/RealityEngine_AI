@@ -2,8 +2,19 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useVisualizerStore } from '../store';
 import { useMachineSimulation, StepRecord, VisMachine } from '../hooks/useMachineSimulation';
 import TobiasCanvas, { TobiasCanvasHandle } from '../components/tobias/TobiasCanvas';
+import TobiasAISequencePulse from '../components/tobias/TobiasAISequencePulse';
+import { classifyMachine, domainColor, DOMAINS, DOMAIN_ORDER, DomainId } from '../components/machineDomains';
 
 import './TobiasView.css';
+
+// Parse "#rrggbb" → "r,g,b" for use inside rgba(...) fill strings.
+function hexToRgbTriplet(hex: string): string {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `${r},${g},${b}`;
+}
 
 // ---------------------------------------------------------------------------
 // PerceptualSpaceBar
@@ -41,19 +52,22 @@ const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
     ctx.fillStyle = '#080c12';
     ctx.fillRect(0, 0, W, H);
 
-    // Pre-assign a hue per perceptual-space index based on which machine owns that region
-    const hues = new Uint16Array(DIM).fill(200); // default cyan
-    machines.forEach((m, i) => {
+    // Pre-assign a domain-colored rgb triplet per perceptual-space index based on
+    // which machine owns that region. Unowned regions fall back to slate.
+    const DEFAULT_TRIPLET = hexToRgbTriplet(DOMAINS.general.color);
+    const triplets = new Array<string>(DIM).fill(DEFAULT_TRIPLET);
+    machines.forEach(m => {
       if (!m.inputRegion) return;
-      const hue = (i * 53 + 170) % 360;
+      const d = classifyMachine(m).domain;
+      const triplet = hexToRgbTriplet(domainColor(d));
       const end = Math.min(DIM, m.inputRegion.offset + m.inputRegion.length);
-      for (let j = m.inputRegion.offset; j < end; j++) hues[j] = hue;
+      for (let j = m.inputRegion.offset; j < end; j++) triplets[j] = triplet;
     });
 
     const bw = W / DIM;
     for (let i = 0; i < DIM; i++) {
       const v = Math.max(0, Math.min(1, perceptualSpace[i] ?? 0));
-      ctx.fillStyle = `hsla(${hues[i]},75%,58%,${0.07 + v * 0.93})`;
+      ctx.fillStyle = `rgba(${triplets[i]},${0.10 + v * 0.85})`;
       ctx.fillRect(i * bw, 0, Math.max(bw, 1), H);
     }
 
@@ -83,12 +97,12 @@ const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
   const regionLabels = useMemo(
     () => machines
       .filter(m => m.inputRegion)
-      .map((m, i) => ({
-        id:    m.id,
-        name:  m.name.replace(/^DC/, '').slice(0, 10),
-        left:  (m.inputRegion!.offset / 256) * 100,
-        width: (m.inputRegion!.length  / 256) * 100,
-        hue:   (i * 53 + 170) % 360,
+      .map(m => ({
+        id:     m.id,
+        name:   m.name.replace(/^DC/, '').slice(0, 10),
+        left:   (m.inputRegion!.offset / 256) * 100,
+        width:  (m.inputRegion!.length  / 256) * 100,
+        domain: classifyMachine(m).domain,
       })),
     [machines],
   );
@@ -107,9 +121,9 @@ const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
               style={{
                 left:            `${r.left}%`,
                 width:           `${r.width}%`,
-                borderLeftColor: `hsla(${r.hue},75%,58%,0.5)`,
+                borderLeftColor: domainColor(r.domain),
               }}
-              title={machines.find(m => m.id === r.id)?.name}
+              title={`${machines.find(m => m.id === r.id)?.name} · ${DOMAINS[r.domain].label}`}
             >
               {r.name}
             </div>
@@ -302,11 +316,22 @@ const TobiasView: React.FC = () => {
   const [sidebarOpen,  setSidebarOpen]  = useState(true);
   const [legendOpen,   setLegendOpen]   = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'idle' | 'processing' | 'active'>('all');
+  const [domainFilter, setDomainFilter] = useState<'all' | DomainId>('all');
+
+  // Classify once per machine list change; both the filter predicate and the
+  // per-domain counts rely on the same classification.
+  const domainById = useMemo(
+    () => new Map(machines.map(m => [m.id, classifyMachine(m).domain])),
+    [machines],
+  );
 
   const filteredMachines = useMemo(() => {
-    if (statusFilter === 'all') return machines;
-    return machines.filter(m => m.status === statusFilter);
-  }, [machines, statusFilter]);
+    return machines.filter(m => {
+      if (statusFilter !== 'all' && m.status !== statusFilter) return false;
+      if (domainFilter !== 'all' && domainById.get(m.id) !== domainFilter) return false;
+      return true;
+    });
+  }, [machines, statusFilter, domainFilter, domainById]);
 
   const statusCounts = useMemo(
     () => machines.reduce(
@@ -315,6 +340,14 @@ const TobiasView: React.FC = () => {
     ),
     [machines],
   );
+
+  const domainCounts = useMemo(() => {
+    const counts: Record<DomainId, number> = {
+      healthservices: 0, ai: 0, datacenter: 0, general: 0,
+    };
+    for (const m of machines) counts[domainById.get(m.id) ?? 'general']++;
+    return counts;
+  }, [machines, domainById]);
 
   const latestStep       = stepHistory[stepHistory.length - 1];
   const latestStepNumber = latestStep?.stepNumber ?? null;
@@ -429,6 +462,33 @@ const TobiasView: React.FC = () => {
                 </div>
               </div>
 
+              {/* Section: Domain Filter ──────────────────────── */}
+              <div className="tbs-section">
+                <div className="tbs-section-title">Domain Filter</div>
+                <div className="tbs-filter">
+                  <button
+                    className={`tbs-filter-btn${domainFilter === 'all' ? ' active' : ''}`}
+                    onClick={() => setDomainFilter('all')}
+                  >
+                    All ({machines.length})
+                  </button>
+                  {DOMAIN_ORDER.map(d => (
+                    <button
+                      key={d}
+                      className={`tbs-filter-btn${domainFilter === d ? ' active' : ''}`}
+                      onClick={() => setDomainFilter(d)}
+                      title={DOMAINS[d].description}
+                      style={{
+                        borderLeft: `3px solid ${DOMAINS[d].color}`,
+                        paddingLeft: 6,
+                      }}
+                    >
+                      {DOMAINS[d].short} ({domainCounts[d]})
+                    </button>
+                  ))}
+                </div>
+              </div>
+
             </div>
           )}
         </aside>
@@ -504,6 +564,12 @@ const TobiasView: React.FC = () => {
               onSelectMachine={selectMachine}
             />
           </div>
+
+          {/* BELOW CANVAS: AI sequence-fire pulse readout (localAI observability) */}
+          <TobiasAISequencePulse
+            stepHistory={stepHistory}
+            machines={machines}
+          />
 
           {/* BOTTOM: condensed output stream with history expansion */}
           <OutputHistoryBar

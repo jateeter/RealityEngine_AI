@@ -1,0 +1,119 @@
+/* ============================================================
+   TobiasAISequencePulse — per-step AI sequence-fire readout
+   Sits between TobiasCanvas and OutputHistoryBar.
+   ============================================================ */
+
+.tobias-ai-pulse {
+  background:      #0c1017;
+  border-top:      1px solid #1e2535;
+  border-bottom:   1px solid #1e2535;
+  padding:         6px 10px 8px;
+  display:         flex;
+  flex-direction:  column;
+  gap:             4px;
+  font-size:       11px;
+  color:           #cbd5e1;
+  max-height:      180px;
+  overflow-y:      auto;
+}
+
+.tobias-ai-pulse-header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  font-size:       10px;
+  color:           #64748b;
+  letter-spacing:  0.08em;
+  text-transform:  uppercase;
+}
+
+.tobias-ai-pulse-title {
+  font-weight:     700;
+  color:           #94a3b8;
+}
+
+.tobias-ai-pulse-step {
+  font-variant-numeric: tabular-nums;
+  color:           #475569;
+}
+
+.tobias-ai-pulse-empty {
+  padding:         8px 0 2px;
+  color:           #64748b;
+  font-style:      italic;
+}
+
+.tobias-ai-pulse-rows {
+  display:         flex;
+  flex-direction:  column;
+  gap:             2px;
+}
+
+.tobias-ai-pulse-row {
+  display:         grid;
+  grid-template-columns: 120px auto 1fr;
+  align-items:     center;
+  gap:             10px;
+  padding:         2px 0;
+}
+
+.tobias-ai-pulse-name {
+  color:           #94a3b8;
+  font-weight:     600;
+  font-size:       11px;
+  white-space:     nowrap;
+  overflow:        hidden;
+  text-overflow:   ellipsis;
+}
+
+.tobias-ai-pulse-dots {
+  display:         flex;
+  gap:             4px;
+}
+
+.tobias-ai-pulse-dot {
+  width:           8px;
+  height:          8px;
+  border-radius:   50%;
+  background:      rgba(100, 116, 139, 0.20);
+  border:          1px solid rgba(100, 116, 139, 0.35);
+  transition:      background 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.tobias-ai-pulse-dot.hasFired {
+  background:      rgba(168, 85, 247, 0.55);
+  border-color:    rgba(168, 85, 247, 0.75);
+}
+
+.tobias-ai-pulse-dot.justFired {
+  background:      #fbbf24;
+  border-color:    #fde68a;
+  box-shadow:      0 0 8px rgba(251, 191, 36, 0.6);
+  animation:       tobiasAIpulse 900ms ease-out;
+}
+
+@keyframes tobiasAIpulse {
+  0%   { box-shadow: 0 0 14px rgba(251, 191, 36, 0.9); transform: scale(1.35); }
+  100% { box-shadow: 0 0 8px  rgba(251, 191, 36, 0.6); transform: scale(1.00); }
+}
+
+.tobias-ai-pulse-latest {
+  font-size:       11px;
+  color:           #64748b;
+  white-space:     nowrap;
+  overflow:        hidden;
+  text-overflow:   ellipsis;
+}
+
+.tobias-ai-pulse-latest-name.live {
+  color:           #fde68a;
+  font-weight:     600;
+}
+
+.tobias-ai-pulse-latest-name.stale {
+  color:           #64748b;
+}
+
+.tobias-ai-pulse-idle {
+  color:           #334155;
+}

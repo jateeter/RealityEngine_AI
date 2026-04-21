@@ -26,6 +26,16 @@ This will:
 
 ### Step 2: Start Services (1 minute)
 
+Recommended — bring up the whole stack (localAIStack + Reality Engine) in one command:
+
+```bash
+./startUniverse.sh
+# or, to wipe perception sources and rebuild images without cache:
+./startUniverse.sh --fresh
+```
+
+Reality-Engine-only (requires localAIStack already running on port 4333):
+
 ```bash
 ./scripts/start.sh
 ```
@@ -104,7 +114,11 @@ curl -X POST http://localhost:3000/api/vectors \
 ## Common Commands
 
 ```bash
-# Start services
+# Start full universe (localAIStack + Reality Engine)
+./startUniverse.sh              # cached build
+./startUniverse.sh --fresh      # wipe perception data + rebuild RE with --no-cache
+
+# Start Reality Engine only (localAIStack must already be running)
 ./scripts/start.sh
 
 # Stop services

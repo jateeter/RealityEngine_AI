@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './MachineInputFlowDisplay.css';
 
 interface MachineInputFlowDisplayProps {
@@ -27,6 +27,8 @@ export const MachineInputFlowDisplay: React.FC<MachineInputFlowDisplayProps> = (
   activeSequence,
   machineName
 }) => {
+  const [expanded, setExpanded] = useState(false);
+
   // Helper to format byte range
   const formatRange = (offset: number, length: number) => {
     return `[${offset}:${offset + length - 1}]`;
@@ -58,12 +60,25 @@ export const MachineInputFlowDisplay: React.FC<MachineInputFlowDisplayProps> = (
 
   return (
     <div className="machine-input-flow-display">
-      {/* Header */}
-      <div className="flow-header">
+      {/* Header (clickable to expand/collapse) */}
+      <button
+        type="button"
+        className="flow-header flow-header-toggle"
+        onClick={() => setExpanded(e => !e)}
+        aria-expanded={expanded}
+      >
         <span className="flow-icon">🔄</span>
         <span className="flow-title">Perceptual Input Flow: {machineName}</span>
-      </div>
+        <span className="flow-toggle-meta">
+          {hasInput && <span className="flow-badge flow-badge-input">input</span>}
+          {hasOutput && <span className="flow-badge flow-badge-output">output</span>}
+          {activeSequence && <span className="flow-badge flow-badge-seq">seq</span>}
+        </span>
+        <span className="flow-toggle-icon">{expanded ? '▲' : '▼'}</span>
+      </button>
 
+      {!expanded ? null : (
+      <div className="flow-scroll">
       {/* Step 1: Universal Perceptual Space (En) */}
       <div className="flow-step">
         <div className="step-label">
@@ -260,6 +275,8 @@ export const MachineInputFlowDisplay: React.FC<MachineInputFlowDisplayProps> = (
             </>
           )}
         </>
+      )}
+      </div>
       )}
     </div>
   );

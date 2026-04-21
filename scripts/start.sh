@@ -214,19 +214,39 @@ if [ "$FRESH_START" = true ]; then
     echo ""
 fi
 
-# Clear Docker build cache (best-effort, 30s timeout each — never blocks startup)
-print_info "Clearing Docker build cache..."
-timeout 30 docker builder prune -f > /dev/null 2>&1 || true
-timeout 30 docker image prune -f > /dev/null 2>&1 || true
-print_success "Docker cache cleared"
-echo ""
+# Use an isolated docker-container buildx builder to avoid VirtioFS deadlocks
+# on macOS Docker Desktop. The embedded BuildKit daemon (used by docker-compose v1
+# with DOCKER_BUILDKIT=1) deadlocks under VirtioFS, hanging indefinitely at
+# "load .dockerignore" / "load build definition from Dockerfile".
+# A docker-container builder runs buildkitd in its own container, bypassing
+# VirtioFS entirely. It also persists the --mount=type=cache sbt/Coursier dirs
+# across --fresh builds so only compilation runs, not dependency downloads.
+BUILDER_NAME="reality-engine-builder"
+if ! docker buildx inspect "$BUILDER_NAME" > /dev/null 2>&1; then
+    print_info "Creating isolated BuildKit builder (one-time setup)..."
+    docker buildx create --name "$BUILDER_NAME" --driver docker-container --bootstrap > /dev/null 2>&1
+    print_success "BuildKit builder ready"
+    echo ""
+fi
+docker buildx use "$BUILDER_NAME"
 
-# Build and start Docker services
-print_info "Building Docker services (no cache)..."
-docker-compose build --no-cache
+# Build Docker services (docker compose v2 required for docker-container builder)
+# --fresh: --no-cache forces all layers to rebuild (sbt recompiles from source),
+#          but BuildKit cache mounts (ivy2/coursier) persist — no re-download.
+# normal:  layer cache used — only changed layers rebuild.
+if [ "$FRESH_START" = true ]; then
+    print_info "Building Docker services (no cache)..."
+    docker compose build --no-cache
+else
+    print_info "Building Docker services..."
+    docker compose build
+fi
+
+# Restore default builder
+docker buildx use default > /dev/null 2>&1 || true
 
 print_info "Starting Docker services (Reality Engine, Visualizer, Perception Engine)..."
-docker-compose up -d
+docker compose up -d
 
 if [ $? -ne 0 ]; then
     echo ""

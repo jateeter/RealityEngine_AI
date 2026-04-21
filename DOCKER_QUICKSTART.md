@@ -6,10 +6,12 @@ Run the entire Reality Engine stack (9 services) with a single command.
 
 ```bash
 bash certs/generate-dev-certs.sh   # first time only
-./start.sh
+./startUniverse.sh
 ```
 
 Then open **https://localhost:5173** in your browser (accept the self-signed certificate warning).
+
+`startUniverse.sh` is the unified entry point — it brings up localAIStack (Ollama + Qdrant + Redis + API) and the Reality Engine stack, then verifies integration. Use `./startUniverse.sh --fresh` to wipe perception-source data and rebuild RE images without cache. If localAIStack is already running and you only need Reality Engine, use `./scripts/start.sh` instead.
 
 ## Prerequisites
 
@@ -20,10 +22,12 @@ Then open **https://localhost:5173** in your browser (accept the self-signed cer
 ## Commands
 
 ```bash
-./start.sh          # build (if needed) and start all services
-./stop.sh           # stop all services
-docker-compose ps   # check health status
-docker-compose logs -f <service>   # stream logs for one service
+./startUniverse.sh           # build (if needed) and start the full universe
+./startUniverse.sh --fresh   # wipe perception sources + rebuild RE with --no-cache
+./scripts/start.sh           # Reality Engine only (localAIStack must be running)
+./scripts/stop.sh            # stop all Reality Engine services
+docker compose ps            # check health status
+docker compose logs -f <service>   # stream logs for one service
 ```
 
 ## Services Started
@@ -60,9 +64,9 @@ To trust the certificate in Chrome/Firefox, import `certs/server.crt` into your 
 docker-compose build --no-cache <service>
 docker-compose up -d <service>
 
-# Rebuild everything
-docker-compose build --no-cache
-./start.sh
+# Rebuild everything (or use `./startUniverse.sh --fresh` which does this for you)
+docker compose build --no-cache
+./startUniverse.sh
 ```
 
 ## Useful Log Queries
