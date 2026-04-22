@@ -78,7 +78,8 @@ describe('RealityEngine workflow and checkpoint behavior', () => {
     const whatIf = engine.processWhatIf(machine.id, [2]);
     const after = machine.getAllSequences()[0]?.getActiveVectors().map(v => v.id) ?? [];
 
-    expect(whatIf.machineOutput?.id).toBe('final-out');
+    expect(whatIf.machineOutput?.vector).toEqual([1]);
+    expect(whatIf.machineOutput?.metadata?.sources).toContain('final-out');
     expect(after).toEqual(before);
   });
 
@@ -120,6 +121,7 @@ describe('RealityEngine workflow and checkpoint behavior', () => {
 
     const loaded = new CriticalEventSequence('loaded-seq');
     const loadedVector = makeVector(3, true, 'loaded-v1');
+    loadedVector.addOutputVector({ id: 'loaded-out', vector: [3], timestamp: Date.now() });
     loaded.addVector(loadedVector);
     store.getSequence.mockResolvedValueOnce(loaded);
     const loadedResult = await engine.loadSequence('loaded-id');
