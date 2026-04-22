@@ -45,7 +45,10 @@ describe('RealityEngine workflow and checkpoint behavior', () => {
 
     expect(result.machineOutput?.metadata?.machineId).toBe(machine.id);
     expect(result.machineOutput?.metadata?.machineName).toBe(machine.name);
-    expect(result.machineOutput?.metadata?.preceptionUsed).toBe(true);
+    expect(
+      result.machineOutput?.metadata?.preceptionUsed ??
+      result.machineOutput?.metadata?.perceptionUsed
+    ).toBe(true);
 
     const mergedRegion = engine.getPreceptionEngine().getPerceptualSpace().getRegion(5, 1);
     expect(mergedRegion).toEqual([0.9]);
