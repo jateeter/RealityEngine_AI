@@ -5,6 +5,7 @@
     "description": "RS flip-flop that latches the memory pressure alarm state. SET by DCMemoryPressure [1,0], RESET by healthy-memory signal [0,1].",
     "metadata": {
       "category": "digital-logic",
+      "domain": "Data Center — Memory / Alert Latch",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "2D binary control signal at [66:68]: [1,0]=ALARM, [0,1]=SAFE",

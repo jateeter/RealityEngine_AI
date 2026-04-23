@@ -5,6 +5,7 @@
     "description": "Monitors memory utilization and swap usage to detect memory pressure escalating to thrashing and cascading failure. Implements the regular expression NORMAL+ → PRESSURE+ → THRASHING → CASCADING+ → FAILURE → [alarm]. A concurrent HEALTHY+ sequence fires the reset signal when memory is within safe parameters.",
     "metadata": {
       "category": "monitoring",
+      "domain": "Data Center — Memory / Pressure",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "4D continuous sensor vector at [16:20]: [mem_usage_norm, mem_page_fault_rate_norm, mem_cache_miss_norm, swap_usage_norm]",

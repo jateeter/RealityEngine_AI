@@ -5,9 +5,8 @@
     "description": "Monitors CPU temperature and load to detect thermal runaway. Implements the regular expression pattern NORMAL+ → WARM+ → HOT → CRITICAL+ → EMERGENCY → [alarm]. A concurrent SAFE+ sequence fires the reset signal whenever conditions return to normal, enabling RS flip-flop recovery.",
     "metadata": {
       "category": "monitoring",
+      "domain": "Data Center — Thermal / Escalation",
       "author": "Reality Engine",
-      "created": "2026-02-27T00:00:00Z",
-      "eventSpace": "4D continuous sensor vector at [12:16]: [cpu_temp_norm, cpu_load_norm, cpu_throttle_norm, cpu_efficiency_norm]",
       "outputSpace": "2D binary at [144:146]: [1,0]=THERMAL_ALARM, [0,1]=THERMAL_SAFE",
       "tags": [
         "monitoring",

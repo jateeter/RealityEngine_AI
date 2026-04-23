@@ -17,10 +17,10 @@
       }
     },
     "metadata": {
-      "category": "ai-pipeline",
+      "category": "elder-care",
       "author": "Reality Engine",
       "created": "2026-04-20T00:00:00Z",
-      "domain": "AI-Driven Wellness Coaching — Health Services Bridge",
+      "domain": "Healthcare Operations — AI-Driven Wellness Coaching",
       "tags": ["ai", "wellness", "elder-care", "coaching", "multi-domain", "bridge", "patient", "clinical"],
       "crossDomain": {
         "reads": "healthservices (PatientWellness output region 210..218)",
