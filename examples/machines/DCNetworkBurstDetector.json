@@ -5,6 +5,7 @@
     "description": "Monitors network bandwidth utilization and packet loss to detect burst traffic and congestion events. Implements the regular expression BASELINE+ → ELEVATED+ → BURST → CONGESTION+ → OVERFLOW → [alarm]. A concurrent NORMAL_FLOW+ sequence fires the reset signal when network conditions are nominal.",
     "metadata": {
       "category": "monitoring",
+      "domain": "Data Center — Network / Burst Detection",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "4D continuous sensor vector at [20:24]: [bandwidth_util_norm, packet_loss_norm, latency_norm, queue_depth_norm]",

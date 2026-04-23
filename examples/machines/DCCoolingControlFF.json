@@ -5,6 +5,7 @@
     "description": "RS flip-flop that latches the thermal alarm state. SET by DCThermalEscalation [1,0], RESET by safe-recovery signal [0,1].",
     "metadata": {
       "category": "digital-logic",
+      "domain": "Data Center — Thermal / Cooling Control",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "2D binary control signal at [144:146]: [1,0]=ALARM, [0,1]=SAFE",

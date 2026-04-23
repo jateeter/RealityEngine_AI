@@ -5,6 +5,7 @@
     "description": "RS flip-flop that latches the multi-system critical alert state. SET by DCCriticalSynthesizer [1,0] when multiple alarms coexist, RESET when all clear.",
     "metadata": {
       "category": "digital-logic",
+      "domain": "Data Center — Critical Alert / Latch",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "2D binary control signal at [72:74]: [1,0]=CRITICAL, [0,1]=ALL_CLEAR",

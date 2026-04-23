@@ -5,6 +5,7 @@
     "description": "Complex critical event sequences demonstrating multi-dimensional dependencies, variable thresholds, and correlated failure patterns",
     "metadata": {
       "category": "monitoring",
+      "domain": "Data Center — Multi-Sensor Monitoring",
       "author": "Reality Engine",
       "created": "2026-02-02T00:00:00Z",
       "eventSpace": "8D continuous vectors: [CPU_TEMP, CPU_LOAD, NETWORK_BWTH, POWER_WATTS, STORAGE_USED, MEMORY_USED, DISK_IO, SECURITY_SCORE]",

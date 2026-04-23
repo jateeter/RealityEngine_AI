@@ -5,6 +5,7 @@
     "description": "RS flip-flop that latches the network burst alarm state. SET by DCNetworkBurstDetector [1,0], RESET by normal-flow signal [0,1].",
     "metadata": {
       "category": "digital-logic",
+      "domain": "Data Center — Network / Throttle Control",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
       "eventSpace": "2D binary control signal at [64:66]: [1,0]=ALARM, [0,1]=SAFE",
