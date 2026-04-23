@@ -139,7 +139,10 @@ Graph showing all machines and their perceptual space region overlaps (edges ind
 
 ## Machine JSON Files
 
-Machines are defined as JSON files in `examples/machines/`. Load via:
+Machines are defined as JSON files in `examples/machines/`. Every `*.json` in
+that directory is **auto-loaded at engine startup** (see
+`scala/.../Routes.scala::loadDefaultMachines`), so adding a new file and
+restarting the stack is all that's needed — no allowlist to edit.
 
 ```bash
 # Via API
@@ -149,6 +152,24 @@ curl -sk https://localhost:3000/api/machines/json/RS2
 ```
 
 Machine JSON format: see `data/rs-flipflop.json` for a complete example.
+
+### Upstream triggers (machine → local AI)
+
+Any machine can carry a `metadata.triggerConfig` block mapping sequence
+outputs to RAG status codes.  When the machine asserts that output, a
+GraphQL mutation is pushed into the local AI stack's `/graphql` endpoint
+(see `examples/triggers/` for the template and `localAIStack/services/api/
+routers/graphql_endpoint.py` for the receiver).
+
+The following in-home wellness machines ship pre-wired with triggers:
+
+- `MedicationAdherenceMonitor.json`
+- `FallDetection.json`
+- `SleepQualityMonitor.json`
+- `HydrationMonitor.json`
+- `DailyActivityMonitor.json`
+
+Plus the minimal example `RSFlipFlopTrigger.json` for smoke-testing.
 
 ---
 

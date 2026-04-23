@@ -5,7 +5,7 @@
 # Startup order (dependency-safe):
 #   1  Pre-flight     — docker compose v2, certs, orphaned container cleanup
 #   2  Ollama         — native LLM runtime
-#   3  Infrastructure — localAIStack Qdrant + Redis
+#   3  Infrastructure — localAIStack Qdrant + Redis + Loki + Grafana
 #   4  RealityEngine  — Scala/Akka stack (consumes Qdrant at :4333)
 #   5  localAIStack API — FastAPI lifespan hooks register sensors + machines in RE
 #   6  Integration    — verify machines, sensors, and Qdrant collections (with retry)
@@ -189,7 +189,7 @@ print(ms[0] if ms else '')" 2>/dev/null || echo "")
 done
 
 # =============================================================================
-hdr "3 · Infrastructure  (Qdrant + Redis)"
+hdr "3 · Infrastructure  (Qdrant + Redis + Loki + Grafana)"
 # =============================================================================
 
 # --fresh: clear RE perception volume before containers start
@@ -205,10 +205,21 @@ if [ "$FRESH_START" = true ]; then
     fi
 fi
 
-info "Starting Qdrant + Redis..."
-# Start only infrastructure services; API starts later so its lifespan hooks
-# fire against a live RealityEngine instance (see Phase 5)
-(cd "$LAS_DIR" && docker compose up -d qdrant redis) > /dev/null 2>&1
+info "Starting Loki + Grafana + Qdrant + Redis..."
+# Start infrastructure + logging services; API starts later so its lifespan hooks
+# fire against a live RealityEngine instance (see Phase 5).
+# Loki must come up before qdrant/redis/api because their log drivers push to it.
+(cd "$LAS_DIR" && docker compose up -d loki grafana qdrant redis) > /dev/null 2>&1
+
+# Loki: wait for /ready
+info "Waiting for Loki..."
+poll_http "http://localhost:4100/ready" "Loki ready" 30 "-sf" || \
+    die "Loki failed to start\n  Check:  docker logs localai_loki"
+
+# Grafana: wait for /api/health
+info "Waiting for Grafana..."
+poll_http "http://localhost:4002/api/health" "Grafana ready" 30 "-sf" || \
+    die "Grafana failed to start\n  Check:  docker logs localai_grafana"
 
 # Qdrant: wait for REST API to accept connections
 info "Waiting for Qdrant..."
@@ -305,8 +316,11 @@ hdr "5 · localAIStack API"
 #   bind_graph_topology()     → per-node topology sensors + machines
 
 info "Starting localAIStack API (lifespan hooks will register integration)..."
-# Use --wait on 'api' only: open-webui has no healthcheck and --wait would block
-(cd "$LAS_DIR" && docker compose up -d --force-recreate --wait \
+# --build ensures image rebuilds when services/api/requirements.txt or the
+# Dockerfile change (e.g. when strawberry-graphql is added); cache hits keep
+# this near-instant when nothing moved.
+# --wait on 'api' only: open-webui has no healthcheck and --wait would block.
+(cd "$LAS_DIR" && docker compose up -d --build --force-recreate --wait \
     --wait-timeout 120 api) > /dev/null 2>&1 || \
     die "localAIStack API failed to reach healthy state\n  Check:  docker logs localai_api"
 
@@ -538,13 +552,15 @@ printf "    %-30s %s\n" "API Docs (Swagger UI)"     "http://localhost:4000/docs"
 printf "    %-30s %s\n" "Open WebUI (Chat)"         "http://localhost:4080"
 printf "    %-30s %s\n" "Qdrant Dashboard"          "http://localhost:4333/dashboard"
 printf "    %-30s %s\n" "Ollama"                    "http://localhost:11434"
+printf "    %-30s %s\n" "Grafana (localAIStack)"    "http://localhost:4002"
+printf "    %-30s %s\n" "Loki API (localAIStack)"   "http://localhost:4100"
 echo ""
 echo "  RealityEngine"
 printf "    %-30s %s\n" "API"                       "https://localhost:3000"
 printf "    %-30s %s\n" "Visualizer"                "https://localhost:5173"
 printf "    %-30s %s\n" "Perception Engine API"     "https://localhost:3004"
 printf "    %-30s %s\n" "Perception Engine UI"      "https://localhost:3005"
-printf "    %-30s %s\n" "Grafana (Logs)"            "https://localhost:3002"
+printf "    %-30s %s\n" "Grafana (RE Logs)"         "https://localhost:3002"
 echo ""
 echo "  Note: RE endpoints use a self-signed TLS cert (browser will warn)"
 echo "        Silence it:  bash $RE_DIR/certs/generate-dev-certs.sh"

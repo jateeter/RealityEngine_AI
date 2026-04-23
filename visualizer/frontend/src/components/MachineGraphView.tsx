@@ -188,9 +188,18 @@ export const MachineGraphView: React.FC = () => {
     const innerHeight = height - margin.top  - margin.bottom;
 
     // ── Pan / zoom ─────────────────────────────────────────────────────────
+    // d3-drag doesn't stop mousedown propagation, so a pan would start in
+    // parallel with a hull-drag unless we teach zoom to ignore events whose
+    // target is a domain hull (or a node — existing drag handles those).
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.08, 4])
-      .filter(event => event.type !== 'dblclick')   // dblclick = unpin node
+      .filter(event => {
+        if (event.type === 'dblclick') return false;   // dblclick = unpin node
+        const t = event.target as Element | null;
+        if (t?.closest?.('.domain-hull')) return false;
+        if (t?.closest?.('g.node')) return false;
+        return true;
+      })
       .on('zoom', (event) => {
         outerG.attr('transform', event.transform);
         zoomTransformRef.current = event.transform;

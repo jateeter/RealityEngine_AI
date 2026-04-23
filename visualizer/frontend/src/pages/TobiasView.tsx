@@ -286,7 +286,8 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
  * Layout:
  *   header  (back button · title · step indicator · machine count)
  *   body (flex-row):
- *     sidebar (collapsible, LEFT) ← simulation controls + demo load + filter
+ *     sidebar (collapsible, LEFT) ← layout controls + machine/domain filters
+ *                                    (simulation controls live in the PE UI)
  *     sidebar-gutter              ← collapse toggle
  *     canvas-area (flex-1, flex-col):
  *       PerceptualSpaceBar  [INPUT STREAM]   — top  (~44px)
@@ -299,16 +300,14 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
 const TobiasView: React.FC = () => {
   const { setCurrentView } = useVisualizerStore();
 
+  // Simulation controls (play / pause / step / reset) now live exclusively
+  // in the Perception Engine visualization — Tobias is read-only for
+  // simulation state.  We still consume machines + stepHistory for display.
   const {
     machines,
     selectedMachineId,
-    isSimulationRunning,
     stepHistory,
     selectMachine,
-    stepSimulation,
-    playSimulation,
-    pauseSimulation,
-    resetSimulation,
   } = useMachineSimulation();
 
   const canvasRef = useRef<TobiasCanvasHandle>(null);
@@ -397,37 +396,6 @@ const TobiasView: React.FC = () => {
         <aside className={`tobias-sidebar${sidebarOpen ? '' : ' collapsed'}`}>
           {sidebarOpen && (
             <div className="tobias-sidebar-content">
-
-              {/* Section: Simulation Controls ─────────────────── */}
-              <div className="tbs-section">
-                <div className="tbs-section-title">Simulation Controls</div>
-                <div className="tbs-controls">
-                  {isSimulationRunning ? (
-                    <button className="tbs-ctrl-btn" onClick={pauseSimulation} title="Pause">⏸</button>
-                  ) : (
-                    <button className="tbs-ctrl-btn" onClick={playSimulation} title="Play">▶</button>
-                  )}
-                  <button
-                    className="tbs-ctrl-btn"
-                    onClick={stepSimulation}
-                    disabled={isSimulationRunning}
-                    title="Step"
-                  >⏭</button>
-                  <button
-                    className="tbs-ctrl-btn tbs-ctrl-reset"
-                    onClick={resetSimulation}
-                    title="Reset"
-                  >↺</button>
-                </div>
-                <button
-                  className="tbs-demo-btn tbs-step-single"
-                  onClick={stepSimulation}
-                  disabled={isSimulationRunning}
-                  title="Push one perception vector into the Reality Engine"
-                >
-                  ⏭ Single Step
-                </button>
-              </div>
 
               {/* Section: Layout ──────────────────────────────── */}
               <div className="tbs-section">

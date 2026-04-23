@@ -14,12 +14,13 @@ interface Props {
   onMatchAlgorithmChange: (algo: MatchAlgorithm) => void;
 }
 
-const INTERVAL_OPTIONS = [
-  { label: '500ms', value: 500 },
-  { label: '1s', value: 1000 },
-  { label: '2s', value: 2000 },
-  { label: '5s', value: 5000 },
-];
+// Slider bounds for the Auto Push flow-rate control.  0 ms deliberately
+// allowed so operators can exercise fully-asynchronous PE push behaviour
+// (timer fires with no delay between iterations).  100 ms step gives 0.1 s
+// resolution across the 0–10 s range.
+const INTERVAL_MIN_MS = 0;
+const INTERVAL_MAX_MS = 10_000;
+const INTERVAL_STEP_MS = 100;
 
 const MATCH_OPTIONS: { label: string; value: MatchAlgorithm; description: string }[] = [
   { label: '≥ GTE', value: 'gte', description: 'Greater-than-or-equal threshold state' },
@@ -87,15 +88,43 @@ export default function Header({
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
         <button style={btn} onClick={onPush}>▶ Push Once</button>
 
-        <select
-          value={autoIntervalMs}
-          onChange={e => onIntervalChange(Number(e.target.value))}
-          style={{ ...btn, padding: '5px 8px' }}
+        {/* Auto Push flow-rate slider — replaces the old dropdown.  Sits
+            between Push Once and Auto Push so the rate is visible next to
+            the button that consumes it.  0 s = fully async PE pushes. */}
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '3px 10px',
+            borderRadius: 4,
+            border: '1px solid #334155',
+            background: '#0f172a',
+          }}
+          title={
+            autoIntervalMs === 0
+              ? 'No delay between Auto Push iterations (fully asynchronous)'
+              : `${(autoIntervalMs / 1000).toFixed(1)} s between Auto Push iterations`
+          }
         >
-          {INTERVAL_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+          <span style={{
+            fontSize: 10, color: '#64748b', fontWeight: 700,
+            textTransform: 'uppercase', letterSpacing: 0.5,
+          }}>Delay</span>
+          <input
+            type="range"
+            min={INTERVAL_MIN_MS}
+            max={INTERVAL_MAX_MS}
+            step={INTERVAL_STEP_MS}
+            value={autoIntervalMs}
+            onChange={e => onIntervalChange(Number(e.target.value))}
+            style={{ width: 120, accentColor: '#38bdf8', cursor: 'pointer' }}
+          />
+          <span style={{
+            fontSize: 12, fontFamily: 'monospace', fontWeight: 600,
+            color: '#7dd3fc', minWidth: 42, textAlign: 'right',
+          }}>
+            {(autoIntervalMs / 1000).toFixed(1)} s
+          </span>
+        </div>
 
         {isAutoRunning ? (
           <button style={{ ...btn, background: '#7f1d1d', borderColor: '#991b1b', color: '#fca5a5' }} onClick={onAutoStop}>

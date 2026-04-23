@@ -309,9 +309,18 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
     // Domain hulls sit *behind* links and nodes so they don't steal clicks.
     const hullLayer = g.append('g').attr('class', 'domain-hulls');
 
-    // Add zoom — save transform so it survives topology rebuilds
+    // Add zoom — save transform so it survives topology rebuilds.
+    // Ignore mousedowns that originate on a hull or node so those drags win
+    // without a competing pan (d3-drag does not stop mousedown propagation).
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.3, 3])
+      .filter(event => {
+        if (event.type === 'dblclick') return false;
+        const t = event.target as Element | null;
+        if (t?.closest?.('.domain-hull')) return false;
+        if (t?.closest?.('g.node')) return false;
+        return true;
+      })
       .on('zoom', (event) => {
         zoomTransformRef.current = event.transform;
         g.attr('transform', event.transform);

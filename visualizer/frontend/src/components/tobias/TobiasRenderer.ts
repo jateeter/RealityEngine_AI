@@ -116,6 +116,54 @@ function statusColor(status: VisMachine['status']): string {
   }
 }
 
+// Per-domain bounding region, in CSS pixels.  Each region is centered on the
+// domain's anchor and sized to DOMAIN_REGION_EXTENT of the canvas on each
+// side, then clipped to the canvas itself.  At 0.45 the region spans 90% of
+// the canvas in each dimension — adjacent domains overlap heavily, giving
+// cards plenty of room to fan out without crowding, while still keeping the
+// hull anchored near its anchor so a bubble can't drift halfway across the
+// screen.
+//
+// Why this exists: without bounds the D3 charge force (-800) and cross-
+// domain repel pushed cards arbitrarily far, and since the hull is computed
+// directly from card positions, bubbles extended off the right edge
+// indefinitely as cards drifted.
+const DOMAIN_REGION_EXTENT = 0.45;
+function domainRegion(
+  domain: DomainId,
+  cssW: number,
+  cssH: number,
+): { minX: number; maxX: number; minY: number; maxY: number } {
+  const a = DOMAINS[domain].anchor;
+  const extentW = cssW * DOMAIN_REGION_EXTENT;
+  const extentH = cssH * DOMAIN_REGION_EXTENT;
+  return {
+    minX: Math.max(0,    a.x * cssW - extentW),
+    maxX: Math.min(cssW, a.x * cssW + extentW),
+    minY: Math.max(0,    a.y * cssH - extentH),
+    maxY: Math.min(cssH, a.y * cssH + extentH),
+  };
+}
+
+// Clamp (x, y) so a w×h card footprint centered there stays inside `r`.  If
+// the card is wider/taller than the region, it's centered rather than
+// producing a NaN clamp range.
+function clampToRegion(
+  x: number, y: number, w: number, h: number,
+  r: { minX: number; maxX: number; minY: number; maxY: number },
+): { x: number; y: number } {
+  const halfW = w / 2, halfH = h / 2;
+  const availW = r.maxX - r.minX;
+  const availH = r.maxY - r.minY;
+  const cx = availW >= w
+    ? Math.max(r.minX + halfW, Math.min(r.maxX - halfW, x))
+    : (r.minX + r.maxX) / 2;
+  const cy = availH >= h
+    ? Math.max(r.minY + halfH, Math.min(r.maxY - halfH, y))
+    : (r.minY + r.maxY) / 2;
+  return { x: cx, y: cy };
+}
+
 function roundRectPath(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, r: number,
@@ -238,6 +286,12 @@ export class TobiasRenderer {
   private _dragDomainStartX = 0;
   private _dragDomainStartY = 0;
   private _dragDomainCardStarts: Map<string, { x: number; y: number }> = new Map();
+
+  // Last-rendered hull polygon per domain, cached by _drawDomainHulls so
+  // _hitTestHull can do a true point-in-polygon test against the exact shape
+  // the user sees (plus a small single-card fallback rect).
+  private _hullPolygons: Map<DomainId, [number, number][]> = new Map();
+  private _hullRects: Map<DomainId, { lx: number; ty: number; rx: number; by: number }> = new Map();
   private _dragPrevX = 0;
   private _dragPrevY = 0;
   private _mouseDownX = 0;
@@ -337,29 +391,41 @@ export class TobiasRenderer {
       // Seed near the domain anchor (not canvas center) so the simulation
       // doesn't have to drag cards across the whole canvas before they
       // reach their bubble. Small jitter keeps same-domain cards from
-      // stacking exactly on top of each other at t=0.
+      // stacking exactly on top of each other at t=0.  Seeded coords are
+      // clamped to the domain quadrant below so jitter can't start a card
+      // in a neighbouring bubble's territory.
       const anchorX = DOMAINS[dom].anchor.x * cssW;
       const anchorY = DOMAINS[dom].anchor.y * cssH;
       const jitter = 120;
       const seedX = anchorX + (Math.random() - 0.5) * jitter;
       const seedY = anchorY + (Math.random() - 0.5) * jitter;
 
+      const cardH = HEADER_H + FOOTER_H + innerGraph.totalHeight + PAD * 2;
+      const region = domainRegion(dom, cssW, cssH);
+      const clampedSeed = clampToRegion(seedX, seedY, CARD_W, cardH, region);
+      const clampedPinFx = pinnedFx != null
+        ? clampToRegion(pinnedFx, pinnedFy ?? clampedSeed.y, CARD_W, cardH, region).x
+        : null;
+      const clampedPinFy = pinnedFy != null
+        ? clampToRegion(pinnedFx ?? clampedSeed.x, pinnedFy, CARD_W, cardH, region).y
+        : null;
+
       return {
         id: machine.id,
         name: machine.name,
         machine,
         w: CARD_W,
-        h: HEADER_H + FOOTER_H + innerGraph.totalHeight + PAD * 2,
+        h: cardH,
         headerH: HEADER_H,
         innerGraph,
         domain: dom,
         domainColor: domainColor(dom),
-        x: existing?.x ?? saved?.fx ?? seedX,
-        y: existing?.y ?? saved?.fy ?? seedY,
+        x: existing?.x ?? clampedPinFx ?? clampedSeed.x,
+        y: existing?.y ?? clampedPinFy ?? clampedSeed.y,
         vx: existing?.vx ?? 0,
         vy: existing?.vy ?? 0,
-        fx: pinnedFx,
-        fy: pinnedFy,
+        fx: clampedPinFx,
+        fy: clampedPinFy,
       };
     });
 
@@ -691,6 +757,21 @@ export class TobiasRenderer {
       }
     };
 
+    // Domain bounds: hard-clamp every unpinned card to its domain's region
+    // each tick so bubbles stay anchored near their anchor point and can't
+    // extend off-canvas.  Runs last so it overrides velocity accumulated by
+    // the other forces.  Pinned cards (fx/fy set) are clamped in the drag
+    // handlers instead.
+    const domainBounds = () => {
+      for (const c of cards) {
+        if (c.fx != null && c.fy != null) continue;
+        const r = domainRegion(c.domain, cssW, cssH);
+        const clamped = clampToRegion(c.x ?? 0, c.y ?? 0, c.w, c.h, r);
+        if (clamped.x !== c.x) { c.x = clamped.x; c.vx = 0; }
+        if (clamped.y !== c.y) { c.y = clamped.y; c.vy = 0; }
+      }
+    };
+
     // Per-domain anchor + centroid-cohesion forces give each domain a
     // unique gravitational center. Cross-domain link pull is weak so
     // connected cross-domain machines don't drag each other out of
@@ -706,6 +787,7 @@ export class TobiasRenderer {
       .force('domainY', d3.forceY<CardNode>(d => DOMAINS[d.domain].anchor.y * cssH).strength(0.35))
       .force('domainCohesion', domainCohesion)
       .force('domainRepel', domainRepel)
+      .force('domainBounds', domainBounds)
       .alphaDecay(0.02);
   }
 
@@ -763,6 +845,10 @@ export class TobiasRenderer {
 
     const HULL_PAD = 28;
 
+    // Refresh hit-test caches each frame so _hitTestHull matches what's drawn.
+    this._hullPolygons.clear();
+    this._hullRects.clear();
+
     for (const domainId of DOMAIN_ORDER) {
       const group = byDomain.get(domainId)!;
       if (group.length === 0) continue;
@@ -776,6 +862,10 @@ export class TobiasRenderer {
         const cx = c.x ?? 0, cy = c.y ?? 0;
         const w = c.w + HULL_PAD * 2;
         const h = c.h + HULL_PAD * 2;
+        this._hullRects.set(domainId, {
+          lx: cx - w / 2, ty: cy - h / 2,
+          rx: cx + w / 2, by: cy + h / 2,
+        });
         ctx.save();
         roundRectPath(ctx, cx - w / 2, cy - h / 2, w, h, 24);
         ctx.fillStyle   = def.fill;
@@ -804,6 +894,7 @@ export class TobiasRenderer {
 
       const hull = d3.polygonHull(pts);
       if (!hull || hull.length < 3) continue;
+      this._hullPolygons.set(domainId, hull);
 
       // Smooth the hull by anchoring quadratics at hull vertices, with the
       // pen moving through midpoints — the classic "smoothed polygon" trick.
@@ -1271,19 +1362,19 @@ export class TobiasRenderer {
   }
 
   /**
-   * Hit-test the domain hull region. Matches the HULL_PAD used in
-   * _drawDomainHulls: a click is inside a domain's bubble if it falls within
-   * any of that domain's card rects expanded by HULL_PAD. This is a close
-   * enough approximation of the smoothed polygon hull for drag interaction.
+   * Hit-test the domain hull region using the polygon/rect cached by the
+   * last _drawDomainHulls pass. This matches what the user sees instead of
+   * the old per-card-bbox approximation, so dragging in the space *between*
+   * cards in the same domain still starts a domain-drag.
    */
   private _hitTestHull(wx: number, wy: number): DomainId | null {
-    const HULL_PAD = 28;
-    for (const c of this._cards) {
-      const lx = (c.x ?? 0) - c.w / 2 - HULL_PAD;
-      const ty = (c.y ?? 0) - c.h / 2 - HULL_PAD;
-      const rx = lx + c.w + HULL_PAD * 2;
-      const by = ty + c.h + HULL_PAD * 2;
-      if (wx >= lx && wx <= rx && wy >= ty && wy <= by) return c.domain;
+    // Single-card domains: axis-aligned padded rect.
+    for (const [domainId, r] of this._hullRects) {
+      if (wx >= r.lx && wx <= r.rx && wy >= r.ty && wy <= r.by) return domainId;
+    }
+    // Multi-card domains: point-in-polygon against the convex hull.
+    for (const [domainId, poly] of this._hullPolygons) {
+      if (d3.polygonContains(poly, [wx, wy])) return domainId;
     }
     return null;
   }
@@ -1393,19 +1484,30 @@ export class TobiasRenderer {
   private _onMouseMove = (e: MouseEvent): void => {
     if (Math.hypot(e.offsetX - this._mouseDownX, e.offsetY - this._mouseDownY) > 3)
       this._hasDragged = true;
+    // Clamp all drag-driven pinning to the card's domain region so users
+    // can't drag a bubble off-canvas — this is what prevents the hull from
+    // "extending indefinitely" to the right when the user drags past the
+    // screen edge.  Regions overlap generously (see DOMAIN_REGION_EXTENT)
+    // so bubbles have room to move and cards stay visible.
+    const cssW = this._canvas.width  / this._dpr || 800;
+    const cssH = this._canvas.height / this._dpr || 600;
     if (this._isDraggingCard && this._dragCardNode) {
       const wp = this._toWorld(e.offsetX, e.offsetY);
-      this._dragCardNode.fx = wp.x; this._dragCardNode.fy = wp.y;
+      const r = domainRegion(this._dragCardNode.domain, cssW, cssH);
+      const clamped = clampToRegion(wp.x, wp.y, this._dragCardNode.w, this._dragCardNode.h, r);
+      this._dragCardNode.fx = clamped.x; this._dragCardNode.fy = clamped.y;
     } else if (this._isDraggingDomain && this._dragDomainId) {
       const wp = this._toWorld(e.offsetX, e.offsetY);
       const dx = wp.x - this._dragDomainStartX;
       const dy = wp.y - this._dragDomainStartY;
+      const r = domainRegion(this._dragDomainId, cssW, cssH);
       for (const c of this._cards) {
         if (c.domain !== this._dragDomainId) continue;
         const start = this._dragDomainCardStarts.get(c.id);
         if (!start) continue;
-        c.fx = start.x + dx;
-        c.fy = start.y + dy;
+        const clamped = clampToRegion(start.x + dx, start.y + dy, c.w, c.h, r);
+        c.fx = clamped.x;
+        c.fy = clamped.y;
       }
     } else if (this._isPanning) {
       this._viewport.tx += e.offsetX - this._dragPrevX;
