@@ -23,12 +23,6 @@ class Machine(
   private var sequences: Map[String, CriticalEventSequence] = Map.empty
   private val arbiter = new OutputArbiter(arbiterRule)
 
-  // ── Pre-allocated processing buffers (Fix: avoid allocating on every processInput call) ──────
-
-  // Cleared and reused each call — never exposed outside processInput.
-  private val seqResultsBuffer   = new scala.collection.mutable.HashMap[String, SequenceResult]
-  private val seqOutputsBuffer   = new scala.collection.mutable.HashMap[String, List[OutputVector]]
-
   // ── COW snapshot support (Fix: clone() is O(1); sequences copied lazily in processInput) ──────
 
   // When isCow is true this Machine was produced by clone() and shares cowBase with its origin.
@@ -59,16 +53,16 @@ class Machine(
   /**
    * Process an input vector through all sequences and resolve machine output.
    *
-   * Hot path: result buffers are pre-allocated and reused across calls.
    * COW: if this is a snapshot clone, each sequence is deep-copied before its
    *      first transition so the origin machine's state is never modified.
+   * Thread-safety: local buffers ensure no shared mutable state across concurrent calls.
    */
   def processInput(
     inputVector:            Vector[Double],
     matchAlgorithmOverride: Option[ComparatorType] = None
   ): MachineTransitionResult = {
-    seqResultsBuffer.clear()
-    seqOutputsBuffer.clear()
+    val seqResultsBuffer = new scala.collection.mutable.HashMap[String, SequenceResult]
+    val seqOutputsBuffer = new scala.collection.mutable.HashMap[String, List[OutputVector]]
 
     for ((seqId, seq) <- effectiveSeqs) {
       // COW materialisation: clone this sequence into our own map before mutating it.

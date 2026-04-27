@@ -383,8 +383,9 @@ class Routes(
             // Fixed: /machines/process-universal/all
             path("process-universal" / "all") { post { entity(as[Json]) { body =>
               val vec = body.hcursor.downField("universalInputSpace").as[Vector[Double]].getOrElse(Vector.empty)
-              val results = engine.processUniversalInputForAllMachines(vec)
-              complete(Json.obj("results" -> Json.fromFields(results.view.mapValues(_.asJson).toSeq)))
+              complete(engine.processUniversalInputForAllMachines(vec).map { results =>
+                Json.obj("results" -> Json.fromFields(results.view.mapValues(_.asJson).toSeq))
+              })
             } } },
             // Fixed: /machines/machine-graph
             pathEnd {
@@ -434,16 +435,18 @@ class Routes(
             },
             path(Segment / "process") { id => post { entity(as[Json]) { body =>
               val vec = body.hcursor.downField("inputVector").as[Vector[Double]].getOrElse(Vector.empty)
-              Try(engine.processMachineInput(id, vec)) match {
+              onComplete(engine.processMachineInput(id, vec)) {
                 case Success(r) => complete(r.asJson)
-                case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+                case Failure(e: NoSuchElementException)  => complete(StatusCodes.NotFound  -> Json.obj("error" -> Json.fromString(e.getMessage)))
+                case Failure(e)                          => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
               }
             } } },
             path(Segment / "process-universal") { id => post { entity(as[Json]) { body =>
               val vec = body.hcursor.downField("universalInputSpace").as[Vector[Double]].getOrElse(Vector.empty)
-              Try(engine.processUniversalInput(vec, id)) match {
+              onComplete(engine.processUniversalInput(vec, id)) {
                 case Success(r) => complete(r.asJson)
-                case Failure(e) => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
+                case Failure(e: NoSuchElementException)  => complete(StatusCodes.NotFound  -> Json.obj("error" -> Json.fromString(e.getMessage)))
+                case Failure(e)                          => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString(e.getMessage)))
               }
             } } },
             path(Segment / "whatif") { id => post { entity(as[Json]) { body =>
