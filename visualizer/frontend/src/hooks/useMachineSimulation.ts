@@ -32,6 +32,8 @@ export interface VisMachineSequence {
 export interface VisMachine {
   id: string;
   name: string;
+  description?: string;
+  metadata?: Record<string, any>;
   isExample: boolean;
   sequences: VisMachineSequence[];
   status: 'idle' | 'processing' | 'active';
@@ -92,6 +94,8 @@ export const useMachineSimulation = () => {
       const detailedMachines: VisMachine[] = expanded.map((machine: any) => ({
         id: machine.id,
         name: machine.name,
+        description: machine.description,
+        metadata: machine.metadata,
         isExample: machine.isExample || false,
         sequences: (machine.sequences || []).map((seq: any): VisMachineSequence => ({
           sequenceId: seq.sequenceId,

@@ -87,13 +87,19 @@ openssl x509 -in "$RE_DIR/certs/server.crt" -noout -text 2>/dev/null \
 ok "TLS certificates valid"
 
 # Loki Docker logging driver (required by all RE compose services)
-if ! docker plugin ls 2>/dev/null | grep -q "loki"; then
+# docker plugin ls grep only checks presence, not ENABLED state — use inspect instead.
+LOKI_ENABLED=$(docker plugin inspect loki --format '{{.Enabled}}' 2>/dev/null || echo "missing")
+if [ "$LOKI_ENABLED" = "missing" ]; then
     info "Installing Loki Docker logging driver..."
     docker plugin install grafana/loki-docker-driver:latest \
         --alias loki --grant-all-permissions 2>/dev/null || \
         die "Loki Docker driver installation failed\n  Run manually:  bash $RE_DIR/scripts/setup-loki-driver.sh"
+elif [ "$LOKI_ENABLED" = "false" ]; then
+    info "Enabling Loki Docker logging driver (was installed but disabled)..."
+    docker plugin enable loki 2>/dev/null || \
+        die "Loki Docker driver could not be enabled\n  Run manually:  docker plugin enable loki"
 fi
-ok "Loki Docker logging driver installed"
+ok "Loki Docker logging driver installed and enabled"
 
 # Block if local node processes hold RE ports (Docker would conflict)
 CONFLICTS=""
@@ -209,7 +215,10 @@ info "Starting Loki + Grafana + Qdrant + Redis..."
 # Start infrastructure + logging services; API starts later so its lifespan hooks
 # fire against a live RealityEngine instance (see Phase 5).
 # Loki must come up before qdrant/redis/api because their log drivers push to it.
-(cd "$LAS_DIR" && docker compose up -d loki grafana qdrant redis) > /dev/null 2>&1
+# stderr is captured to a temp file so a die() can surface the first failure lines.
+(cd "$LAS_DIR" && docker compose up -d loki grafana qdrant redis \
+    2>/tmp/infra_start_err.log) > /dev/null || \
+    die "docker compose up failed for infra services\n$(tail -5 /tmp/infra_start_err.log 2>/dev/null)\n  Run manually:  cd $LAS_DIR && docker compose up loki grafana qdrant redis"
 
 # Loki: wait for /ready
 info "Waiting for Loki..."
@@ -260,10 +269,12 @@ docker buildx use "$BUILDER" > /dev/null 2>&1
 
 if [ "$FRESH_START" = true ]; then
     info "Building RE images (no cache — sbt deps served from BuildKit cache mounts)..."
-    docker compose build --no-cache
+    docker compose build --no-cache || \
+        die "RE image build failed (no-cache)\n  Run:  docker compose build --no-cache"
 else
     info "Building RE images (cached)..."
-    docker compose build
+    docker compose build || \
+        die "RE image build failed\n  Run:  docker compose build  (or --no-cache to force rebuild)"
 fi
 
 docker buildx use default > /dev/null 2>&1 || true

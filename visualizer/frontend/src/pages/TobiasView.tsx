@@ -342,7 +342,7 @@ const TobiasView: React.FC = () => {
 
   const domainCounts = useMemo(() => {
     const counts: Record<DomainId, number> = {
-      healthservices: 0, ai: 0, datacenter: 0, general: 0,
+      healthservices: 0, ai: 0, datacenter: 0, agriculture: 0, communityservices: 0, general: 0,
     };
     for (const m of machines) counts[domainById.get(m.id) ?? 'general']++;
     return counts;
@@ -403,12 +403,12 @@ const TobiasView: React.FC = () => {
                 <button
                   className="tbs-demo-btn"
                   onClick={() => canvasRef.current?.clearLayout()}
-                  title="Clear all pinned card positions and let force layout run freely"
+                  title="Clear pinned bubble positions and restore the domain grid layout"
                 >
                   ⊹ Reset Layout
                 </button>
                 <div className="tbs-layout-hint">
-                  Drag header to pin. Double-click header to unpin.
+                  Click expands. Double-click opens live view. Drag bubbles to pin.
                 </div>
               </div>
 

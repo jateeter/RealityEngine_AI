@@ -17,10 +17,16 @@
       }
     },
     "metadata": {
-      "category": "data-center",
-      "domain": "Data Center — AI Workload Capacity",
-      "tags": ["data-center", "capacity", "gpu", "throttling", "ai-workload"],
-      "rationale": "Manages AI-workload-driven GPU/memory saturation — a data-center infrastructure concern, not an AI-pipeline concern."
+      "category": "ai-infrastructure",
+      "domain": "AI Infrastructure \u2014 AI Workload Capacity Throttling",
+      "tags": [
+        "data-center",
+        "capacity",
+        "gpu",
+        "throttling",
+        "ai-workload"
+      ],
+      "rationale": "Manages AI-workload-driven GPU/memory saturation \u2014 a data-center infrastructure concern, not an AI-pipeline concern."
     },
     "sequences": [
       {

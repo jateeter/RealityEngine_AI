@@ -17,9 +17,16 @@
       }
     },
     "metadata": {
-      "category": "data-center",
-      "domain": "Data Center — Infrastructure Security",
-      "tags": ["data-center", "security", "soc", "auth", "network", "ai-workload"],
+      "category": "ai-infrastructure",
+      "domain": "AI Infrastructure \u2014 Security Monitoring",
+      "tags": [
+        "data-center",
+        "security",
+        "soc",
+        "auth",
+        "network",
+        "ai-workload"
+      ],
       "rationale": "Auth anomalies, exfiltration detection, and network isolation are data-center security concerns.",
       "inputDimensions": [
         {

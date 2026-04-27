@@ -17,9 +17,15 @@
       }
     },
     "metadata": {
-      "category": "data-center",
-      "domain": "Data Center — Thermal / Cooling",
-      "tags": ["data-center", "cooling", "thermal", "hvac", "ai-workload"],
+      "category": "ai-infrastructure",
+      "domain": "AI Infrastructure \u2014 Thermal / Cooling Control",
+      "tags": [
+        "data-center",
+        "cooling",
+        "thermal",
+        "hvac",
+        "ai-workload"
+      ],
       "rationale": "Cooling is a physical data-center concern even when AI workloads drive the heat load."
     },
     "sequences": [

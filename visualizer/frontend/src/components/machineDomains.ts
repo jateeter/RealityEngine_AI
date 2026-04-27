@@ -5,13 +5,13 @@
  * components (interconnection graph, input strip, legend).
  *
  * Classification signals (first match wins):
- *   1. id prefix / name prefix  (e.g. "localai/", "DC", "AI")
- *   2. metadata.domain free-text (substring match against a keyword table)
- *   3. metadata.category         (enum match)
+ *   1. metadata.category         (enum match; explicit author override)
+ *   2. id prefix / name prefix  (e.g. "localai/", "DC", "AI")
+ *   3. metadata.domain free-text (substring match against a keyword table)
  *   4. metadata.tags             (any match against a keyword table)
  */
 
-export type DomainId = 'healthservices' | 'ai' | 'datacenter' | 'general';
+export type DomainId = 'healthservices' | 'ai' | 'datacenter' | 'agriculture' | 'communityservices' | 'general';
 
 export interface DomainDef {
   id: DomainId;
@@ -54,18 +54,36 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     anchor: { x: 0.22, y: 0.78 },
     description: 'DC monitoring, cooling, power, network, memory, thermal control',
   },
+  agriculture: {
+    id: 'agriculture',
+    label: 'Agriculture',
+    short: 'Ag',
+    color: '#84cc16',
+    fill: 'rgba(132, 204, 22, 0.20)',
+    anchor: { x: 0.50, y: 0.50 },
+    description: 'Indoor growing systems, crop monitoring, irrigation, climate control, harvest optimization',
+  },
+  communityservices: {
+    id: 'communityservices',
+    label: 'Community Services',
+    short: 'CS',
+    color: '#0ea5e9',
+    fill: 'rgba(14, 165, 233, 0.20)',
+    anchor: { x: 0.78, y: 0.50 },
+    description: 'Benefits eligibility, case management, service delivery compliance, referral networks, community outreach',
+  },
   general: {
     id: 'general',
     label: 'General / Primitives',
     short: 'Gen',
     color: '#94a3b8',
     fill: 'rgba(148, 163, 184, 0.18)',
-    anchor: { x: 0.78, y: 0.78 },
+    anchor: { x: 0.50, y: 0.78 },
     description: 'Digital logic primitives, pattern matching, generic state machines',
   },
 };
 
-export const DOMAIN_ORDER: DomainId[] = ['healthservices', 'ai', 'datacenter', 'general'];
+export const DOMAIN_ORDER: DomainId[] = ['healthservices', 'ai', 'datacenter', 'agriculture', 'communityservices', 'general'];
 
 // ── Keyword tables (all lowercase; matched against lowercased input) ──────────
 
@@ -86,6 +104,20 @@ const DC_KEYWORDS = [
   'data center', 'data-center', 'datacenter', 'monitoring', 'cooling',
   'thermal', 'network burst', 'network throttle', 'memory pressure',
   'memory alert', 'critical alert', 'dccriticalsynthesizer', 'power efficiency',
+];
+
+const AG_KEYWORDS = [
+  'agriculture', 'agricultural', 'indoor growing', 'indoor farm', 'greenhouse',
+  'hydroponics', 'irrigation', 'nutrient solution', 'photosynthesis', 'photoperiod',
+  'harvest', 'crop', 'plant growth', 'zone temperature', 'atmospheric co2',
+  'pest', 'ipm', 'yield optimization', 'grow cycle', 'growing system',
+];
+
+const CS_KEYWORDS = [
+  'community services', 'community-services', 'social services', 'social-services',
+  'benefits eligibility', 'case management', 'caseworker', 'service delivery',
+  'community outreach', 'referral network', 'qualification workflow', 'document signing',
+  'enrollment coordination', 'snap', 'liheap', 'community access', 'intake assessment',
 ];
 
 const GENERAL_KEYWORDS = [
@@ -138,12 +170,18 @@ export function classifyMachine(m: MinimalMachine): ClassifiedMachine {
   //    (e.g. "AI Cooling Regulator" is really a data-center concern).
   if (category === 'elder-care' || category === 'eldercare' || category === 'healthcare')
     return { domain: 'healthservices', isExternal, reason: `category=${category}` };
-  if (category === 'ai-pipeline' || category === 'ai-infrastructure' || category === 'ai')
+  if (category === 'ai-pipeline' || category === 'ai')
     return { domain: 'ai', isExternal, reason: `category=${category}` };
+  if (category === 'ai-infrastructure')
+    return { domain: 'datacenter', isExternal, reason: `category=${category}` };
   if (category === 'monitoring' || category === 'data-center' || category === 'datacenter')
     return { domain: 'datacenter', isExternal, reason: `category=${category}` };
   if (category === 'digital-logic' || category === 'state-machine' || category === 'pattern-matching')
     return { domain: 'general', isExternal, reason: `category=${category}` };
+  if (category === 'agriculture' || category === 'indoor-growing' || category === 'crop-management' || category === 'hydroponics')
+    return { domain: 'agriculture', isExternal, reason: `category=${category}` };
+  if (category === 'community-services' || category === 'social-services' || category === 'community-care')
+    return { domain: 'communityservices', isExternal, reason: `category=${category}` };
 
   // 2) Strong id/name prefixes
   if (name.startsWith('dc') || id.startsWith('dc')) {
@@ -152,19 +190,28 @@ export function classifyMachine(m: MinimalMachine): ClassifiedMachine {
   if (name.startsWith('ai') || id.startsWith('ai') || id.startsWith('localai/')) {
     return { domain: 'ai', isExternal, reason: 'id/name prefix "AI"/"localai"' };
   }
+  if (name.startsWith('ag') || id.startsWith('ag')) {
+    return { domain: 'agriculture', isExternal, reason: 'id/name prefix "Ag"' };
+  }
 
   // 3) metadata.domain free-text match
   if (metaDomain) {
+    if (anyKeyword(metaDomain, CS_KEYWORDS))
+      return { domain: 'communityservices', isExternal, reason: `metadata.domain ~ communityservices` };
     if (anyKeyword(metaDomain, HEALTH_KEYWORDS))
       return { domain: 'healthservices', isExternal, reason: `metadata.domain ~ health` };
     if (anyKeyword(metaDomain, AI_KEYWORDS))
       return { domain: 'ai', isExternal, reason: `metadata.domain ~ ai` };
     if (anyKeyword(metaDomain, DC_KEYWORDS))
       return { domain: 'datacenter', isExternal, reason: `metadata.domain ~ datacenter` };
+    if (anyKeyword(metaDomain, AG_KEYWORDS))
+      return { domain: 'agriculture', isExternal, reason: `metadata.domain ~ agriculture` };
   }
 
   // 4) tags
   for (const t of tags) {
+    if (anyKeyword(t, CS_KEYWORDS))
+      return { domain: 'communityservices', isExternal, reason: `tag=${t}` };
     if (anyKeyword(t, HEALTH_KEYWORDS))
       return { domain: 'healthservices', isExternal, reason: `tag=${t}` };
     if (anyKeyword(t, AI_KEYWORDS))
@@ -173,16 +220,22 @@ export function classifyMachine(m: MinimalMachine): ClassifiedMachine {
       return { domain: 'datacenter', isExternal, reason: `tag=${t}` };
     if (anyKeyword(t, GENERAL_KEYWORDS))
       return { domain: 'general', isExternal, reason: `tag=${t}` };
+    if (anyKeyword(t, AG_KEYWORDS))
+      return { domain: 'agriculture', isExternal, reason: `tag=${t}` };
   }
 
   // 5) description fallback
   const desc = (m.description ?? '').toLowerCase();
+  if (anyKeyword(desc, CS_KEYWORDS))
+    return { domain: 'communityservices', isExternal, reason: 'description ~ communityservices' };
   if (anyKeyword(desc, HEALTH_KEYWORDS))
     return { domain: 'healthservices', isExternal, reason: 'description ~ health' };
   if (anyKeyword(desc, AI_KEYWORDS))
     return { domain: 'ai', isExternal, reason: 'description ~ ai' };
   if (anyKeyword(desc, DC_KEYWORDS))
     return { domain: 'datacenter', isExternal, reason: 'description ~ datacenter' };
+  if (anyKeyword(desc, AG_KEYWORDS))
+    return { domain: 'agriculture', isExternal, reason: 'description ~ agriculture' };
 
   return { domain: 'general', isExternal, reason: 'unclassified fallback' };
 }

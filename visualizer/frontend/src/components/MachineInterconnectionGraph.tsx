@@ -105,6 +105,8 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
     healthservices: true,
     ai: true,
     datacenter: true,
+    agriculture: true,
+    communityservices: true,
     general: true,
   });
 
@@ -118,7 +120,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
   // Domain membership counts for the legend.
   const domainCounts = useMemo(() => {
     const counts: Record<DomainId, number> = {
-      healthservices: 0, ai: 0, datacenter: 0, general: 0,
+      healthservices: 0, ai: 0, datacenter: 0, agriculture: 0, communityservices: 0, general: 0,
     };
     for (const c of classifications.values()) counts[c.domain]++;
     return counts;

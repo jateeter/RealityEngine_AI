@@ -17,9 +17,15 @@
       }
     },
     "metadata": {
-      "category": "data-center",
-      "domain": "Data Center — AI Model Serving Health",
-      "tags": ["ai", "model-serving", "inference", "slo", "drift"],
+      "category": "ai-pipeline",
+      "domain": "AI Infrastructure \u2014 Model Serving Health",
+      "tags": [
+        "ai",
+        "model-serving",
+        "inference",
+        "slo",
+        "drift"
+      ],
       "inputDimensions": [
         {
           "index": 0,

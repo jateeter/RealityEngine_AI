@@ -1,99 +1,100 @@
-import * as d3 from 'd3';
 import type { VisMachine, VisMachineSequence } from '../../hooks/useMachineSimulation';
 import { classifyMachine, domainColor, DOMAINS, DOMAIN_ORDER, type DomainId } from '../machineDomains';
 import { vizTheme } from '../../styles/vizTheme';
 
 // ---------------------------------------------------------------------------
-// Layout constants
+// Inner-graph drawing constants (used in expanded card and live view)
 // ---------------------------------------------------------------------------
-const CARD_W   = 240;
-const HEADER_H = 24;
-const FOOTER_H = 22;
-const PAD      = 10;
-const INNER_W  = CARD_W - PAD * 2;   // 220 px available width per sequence band
-const BAND_H   = 74;                  // height of each sequence band
-const DIVIDER_H = 8;                  // vertical gap between bands
-const NODE_R   = 5;
+const INNER_W    = 220;   // inner graph coordinate width
+const BAND_H     = 60;    // height of each sequence band
+const DIVIDER_H  = 8;     // gap between bands
+const NODE_R     = 5;     // inner-graph node radius
 const ARROW_SIZE = 5;
-const HIT_EXTRA  = 5;                 // extra px around node for hover hit testing
+const HIT_EXTRA  = 5;
+const PAD        = 10;    // padding inside expanded card
 
-// Node state colours — pulled from vizTheme where applicable so brightness
-// bumps in one place propagate here.
-const COLOR_INITIAL        = '#3b82f6';                 // blue          — isInitial (always armed, A+)
-const COLOR_INITIAL_MATCH  = vizTheme.accent.current;   // blue-300      — initial node just matched this step
-const COLOR_TERMINAL       = '#f59e0b';                 // amber         — terminal / just-matched fill
-const COLOR_ACTIVE         = '#06b6d4';                 // cyan          — currently queued / in pending-activations
-const COLOR_DEFAULT        = vizTheme.text.secondary;   // slate-300     — intermediate (was slate-500, too dim)
-const COLOR_HOVER          = vizTheme.outline.hover;    // yellow-400    — hover highlight
-const COLOR_NODE_BG        = '#111827';                 // dark          — inactive terminal body (ring drawn separately)
+// Expanded-card header / footer heights
+const EXP_W      = 280;
+const EXP_HEADER = 28;
+const EXP_FOOTER = 22;
+
+// ---------------------------------------------------------------------------
+// Overview bubble constants
+// ---------------------------------------------------------------------------
+const BUBBLE_R      = 26;        // machine node circle radius
+const BUBBLE_LABEL  = 18;        // label area below bubble
+const BUBBLE_CELL_W = BUBBLE_R * 2 + 28;
+const BUBBLE_CELL_H = BUBBLE_R * 2 + BUBBLE_LABEL + 24;
+
+// ---------------------------------------------------------------------------
+// Domain panel constants
+// ---------------------------------------------------------------------------
+const CANVAS_PAD     = 20;
+const PANEL_GAP      = 20;
+const PANEL_INNER    = 16;   // inner padding of panel
+const PANEL_HDR      = 38;   // domain header bar height
+const PANEL_MIN_W    = 140;
+
+// ---------------------------------------------------------------------------
+// Expansion animation
+// ---------------------------------------------------------------------------
+const EXP_SPEED = 0.11;   // progress per frame at ~60 fps ≈ 150 ms total
+
+// ---------------------------------------------------------------------------
+// Live-view header bar height (drawn in screen-space above the graph)
+// ---------------------------------------------------------------------------
+const LIVE_HDR = 48;
+
+// ---------------------------------------------------------------------------
+// Colours
+// ---------------------------------------------------------------------------
+const COLOR_INITIAL        = '#3b82f6';
+const COLOR_INITIAL_MATCH  = vizTheme.accent.current;
+const COLOR_TERMINAL       = '#f59e0b';
+const COLOR_ACTIVE         = '#06b6d4';
+const COLOR_DEFAULT        = vizTheme.text.secondary;
+const COLOR_HOVER          = vizTheme.outline.hover;
+const COLOR_NODE_BG        = '#111827';
 
 // ---------------------------------------------------------------------------
 // Internal types
 // ---------------------------------------------------------------------------
 
 interface InnerNode {
-  id: string;
-  label: string;
-  seqIdx: number;     // which sequence band this node belongs to
-  ix: number;         // x in inner-graph coordinate space (origin = inner-area top-left)
-  iy: number;         // y in inner-graph coordinate space
-  isInitial: boolean;
-  hasOutput: boolean;
-  justFired: boolean;             // wasJustMatched this step — amber glow (output emitted)
-  isActive: boolean;              // currently queued in pending-activations — cyan ring
-  wasJustInitialMatched: boolean; // initial node matched (A+ fired) this step — blue pulse
+  id: string; label: string; seqIdx: number;
+  ix: number; iy: number;
+  isInitial: boolean; hasOutput: boolean;
+  justFired: boolean; isActive: boolean; wasJustInitialMatched: boolean;
   elements: { value: number; comparatorType: string; threshold?: number }[];
 }
 
-interface InnerEdge {
-  source: InnerNode;
-  target: InnerNode;
-  bend: number; // perpendicular offset for quadratic bezier
-}
+interface InnerEdge { source: InnerNode; target: InnerNode; bend: number; }
 
-interface SeqBand {
-  yStart: number; // top of the band in inner-graph space
-  yEnd: number;   // bottom of the band
-  name: string;   // sequence name (truncated for display)
-}
+interface SeqBand { yStart: number; yEnd: number; name: string; }
 
 interface InnerGraphCache {
-  nodes: InnerNode[];
-  edges: InnerEdge[];
+  nodes: InnerNode[]; edges: InnerEdge[];
   neighbors: Map<string, Set<string>>;
-  seqBands: SeqBand[];
-  totalHeight: number; // sum of all bands + dividers
+  seqBands: SeqBand[]; totalHeight: number;
 }
 
-interface CardNode extends d3.SimulationNodeDatum {
-  id: string;
-  name: string;
-  machine: VisMachine;
-  w: number;
-  h: number;         // dynamic: HEADER_H + FOOTER_H + innerGraph.totalHeight + PAD*2
-  headerH: number;
+interface MachineNode {
+  id: string; name: string; machine: VisMachine;
+  domain: DomainId; domainColor: string;
   innerGraph: InnerGraphCache;
-  domain: DomainId;       // classified domain — drives the left-edge color stripe
-  domainColor: string;    // cached domain color hex to avoid re-lookup on every draw
+  cardH: number;
 }
 
-interface OuterEdge {
-  source: CardNode;
-  target: CardNode;
-  overlapLength: number;
+interface OuterEdge { sourceId: string; targetId: string; overlapLength: number; }
+
+interface PanelDef {
+  domain: DomainId; label: string; color: string; fill: string;
+  x: number; y: number; w: number; h: number;
+  nodeCols: number; nodeCount: number;
 }
 
-interface Viewport {
-  tx: number;
-  ty: number;
-  scale: number;
-}
-
-export interface TobiasRendererOptions {
-  canvas: HTMLCanvasElement;
-  onSelectMachine: (id: string | null) => void;
-  storageKey?: string; // localStorage key for persisting card positions (default: 'tobias-layout')
-}
+interface BubblePos { cx: number; cy: number; }
+interface Viewport   { tx: number; ty: number; scale: number; }
 
 // ---------------------------------------------------------------------------
 // Pure helpers
@@ -101,10 +102,7 @@ export interface TobiasRendererOptions {
 
 function hashToUnit(str: string): number {
   let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
   return ((h >>> 0) % 10000) / 10000;
 }
 
@@ -114,54 +112,6 @@ function statusColor(status: VisMachine['status']): string {
     case 'processing': return '#a855f7';
     default:           return '#334155';
   }
-}
-
-// Per-domain bounding region, in CSS pixels.  Each region is centered on the
-// domain's anchor and sized to DOMAIN_REGION_EXTENT of the canvas on each
-// side, then clipped to the canvas itself.  At 0.45 the region spans 90% of
-// the canvas in each dimension — adjacent domains overlap heavily, giving
-// cards plenty of room to fan out without crowding, while still keeping the
-// hull anchored near its anchor so a bubble can't drift halfway across the
-// screen.
-//
-// Why this exists: without bounds the D3 charge force (-800) and cross-
-// domain repel pushed cards arbitrarily far, and since the hull is computed
-// directly from card positions, bubbles extended off the right edge
-// indefinitely as cards drifted.
-const DOMAIN_REGION_EXTENT = 0.45;
-function domainRegion(
-  domain: DomainId,
-  cssW: number,
-  cssH: number,
-): { minX: number; maxX: number; minY: number; maxY: number } {
-  const a = DOMAINS[domain].anchor;
-  const extentW = cssW * DOMAIN_REGION_EXTENT;
-  const extentH = cssH * DOMAIN_REGION_EXTENT;
-  return {
-    minX: Math.max(0,    a.x * cssW - extentW),
-    maxX: Math.min(cssW, a.x * cssW + extentW),
-    minY: Math.max(0,    a.y * cssH - extentH),
-    maxY: Math.min(cssH, a.y * cssH + extentH),
-  };
-}
-
-// Clamp (x, y) so a w×h card footprint centered there stays inside `r`.  If
-// the card is wider/taller than the region, it's centered rather than
-// producing a NaN clamp range.
-function clampToRegion(
-  x: number, y: number, w: number, h: number,
-  r: { minX: number; maxX: number; minY: number; maxY: number },
-): { x: number; y: number } {
-  const halfW = w / 2, halfH = h / 2;
-  const availW = r.maxX - r.minX;
-  const availH = r.maxY - r.minY;
-  const cx = availW >= w
-    ? Math.max(r.minX + halfW, Math.min(r.maxX - halfW, x))
-    : (r.minX + r.maxX) / 2;
-  const cy = availH >= h
-    ? Math.max(r.minY + halfH, Math.min(r.maxY - halfH, y))
-    : (r.minY + r.maxY) / 2;
-  return { x: cx, y: cy };
 }
 
 function roundRectPath(
@@ -184,9 +134,7 @@ function roundRectPath(
 
 function drawArrowHead(
   ctx: CanvasRenderingContext2D,
-  cx: number, cy: number,
-  tx: number, ty: number,
-  color: string,
+  cx: number, cy: number, tx: number, ty: number, color: string,
 ): void {
   const adx = tx - cx, ady = ty - cy;
   const alen = Math.hypot(adx, ady) || 1;
@@ -204,58 +152,47 @@ function drawArrowHead(
 
 function nodeColor(node: InnerNode, isHovered: boolean): string {
   if (isHovered)                    return COLOR_HOVER;
-  if (node.justFired)               return COLOR_TERMINAL;       // amber      — output emitted
-  if (node.isActive)                return COLOR_ACTIVE;         // cyan       — currently queued
-  if (node.wasJustInitialMatched)   return COLOR_INITIAL_MATCH;  // light-blue — A+ just fired
-  if (node.isInitial)               return COLOR_INITIAL;        // blue       — always armed (A+)
-  if (node.hasOutput)               return COLOR_NODE_BG;        // dark       — terminal ring drawn separately
-  return COLOR_DEFAULT;                                           // slate      — intermediate
+  if (node.justFired)               return COLOR_TERMINAL;
+  if (node.isActive)                return COLOR_ACTIVE;
+  if (node.wasJustInitialMatched)   return COLOR_INITIAL_MATCH;
+  if (node.isInitial)               return COLOR_INITIAL;
+  if (node.hasOutput)               return COLOR_NODE_BG;
+  return COLOR_DEFAULT;
 }
 
-// ---------------------------------------------------------------------------
-// BFS rank assignment for a sequence
-// Returns Map<vectorId, rank> where rank 0 = leftmost (initial/source nodes)
-// ---------------------------------------------------------------------------
 function bfsRanks(
   vectorIds: string[],
   edges: { source: string; target: string }[],
   initialIds: Set<string>,
 ): Map<string, number> {
   const ranks = new Map<string, number>();
-  // Build adjacency (exclude self-loops for rank purposes)
-  const adj = new Map<string, string[]>();
+  const adj   = new Map<string, string[]>();
   for (const id of vectorIds) adj.set(id, []);
-  for (const e of edges) {
-    if (e.source !== e.target) adj.get(e.source)?.push(e.target);
-  }
-
-  // BFS from initial nodes first, then any unvisited nodes
+  for (const e of edges) { if (e.source !== e.target) adj.get(e.source)?.push(e.target); }
   const starts = vectorIds.filter(id => initialIds.has(id));
   if (starts.length === 0 && vectorIds.length > 0) starts.push(vectorIds[0]);
-
   const queue: { id: string; rank: number }[] = starts.map(id => ({ id, rank: 0 }));
   while (queue.length > 0) {
     const { id, rank } = queue.shift()!;
     if (ranks.has(id)) continue;
     ranks.set(id, rank);
-    for (const nid of (adj.get(id) ?? [])) {
-      if (!ranks.has(nid)) queue.push({ id: nid, rank: rank + 1 });
-    }
+    for (const nid of (adj.get(id) ?? [])) { if (!ranks.has(nid)) queue.push({ id: nid, rank: rank + 1 }); }
   }
-
-  // Any nodes unreachable from BFS get the next available rank
   const maxRank = ranks.size > 0 ? Math.max(...ranks.values()) : 0;
   let extra = maxRank + 1;
-  for (const id of vectorIds) {
-    if (!ranks.has(id)) ranks.set(id, extra++);
-  }
-
+  for (const id of vectorIds) { if (!ranks.has(id)) ranks.set(id, extra++); }
   return ranks;
 }
 
 // ---------------------------------------------------------------------------
 // TobiasRenderer
 // ---------------------------------------------------------------------------
+
+export interface TobiasRendererOptions {
+  canvas: HTMLCanvasElement;
+  onSelectMachine: (id: string | null) => void;
+  storageKey?: string;
+}
 
 export class TobiasRenderer {
   private readonly _canvas: HTMLCanvasElement;
@@ -264,52 +201,63 @@ export class TobiasRenderer {
   private readonly _onSelectMachine: (id: string | null) => void;
   private readonly _storageKey: string;
 
-  private _cards: CardNode[] = [];
+  private _nodes: MachineNode[] = [];
   private _outerEdges: OuterEdge[] = [];
-  private _simulation: d3.Simulation<CardNode, never> | null = null;
 
+  private _cssW = 800;
+  private _cssH = 600;
+
+  // Shared viewport (pan / zoom) — used in both overview and live-view modes
   private _viewport: Viewport = { tx: 0, ty: 0, scale: 1 };
+  private _savedViewport: Viewport | null = null;  // restored on live-view exit
 
-  private _selectedId: string | null = null;
-  private _hoveredCardId: string | null = null;
+  // Domain panels and bubble positions
+  private _panels: PanelDef[] = [];
+  private _gridPos    = new Map<string, BubblePos>();   // computed grid center
+  private _pinnedPos  = new Map<string, BubblePos>();   // user-dragged overrides
+
+  // Expansion state: single-click opens the inner-graph overlay
+  private _expandedId: string | null = null;
+  private _expandT    = 0;     // 0 = collapsed, 1 = fully open
+  private _expandDir  = 0;     // +1 opening, -1 closing, 0 stable
+
+  // Live-view mode: double-click on a bubble for full-canvas sequence view
+  private _liveViewId: string | null = null;
+
+  // Hover / selection
+  private _hoveredCardId: string | null = null;      // reused by _drawInnerGraph
   private _hoveredInnerNodeId: string | null = null;
+  private _selectedId: string | null = null;
 
-  private _isPanning = false;
-  private _isDraggingCard = false;
-  private _dragCardNode: CardNode | null = null;
-
-  // Domain-drag state: translate every card in the domain by the same delta
-  // so the whole hull bubble moves as one unit. Starting card positions are
-  // cached so we can compute absolute new positions from the mouse delta.
-  private _isDraggingDomain = false;
-  private _dragDomainId: DomainId | null = null;
-  private _dragDomainStartX = 0;
-  private _dragDomainStartY = 0;
-  private _dragDomainCardStarts: Map<string, { x: number; y: number }> = new Map();
-
-  // Last-rendered hull polygon per domain, cached by _drawDomainHulls so
-  // _hitTestHull can do a true point-in-polygon test against the exact shape
-  // the user sees (plus a small single-card fallback rect).
-  private _hullPolygons: Map<DomainId, [number, number][]> = new Map();
-  private _hullRects: Map<DomainId, { lx: number; ty: number; rx: number; by: number }> = new Map();
-  private _dragPrevX = 0;
-  private _dragPrevY = 0;
+  // Drag / interaction
+  private _isPanning       = false;
+  private _isDraggingBubble = false;
+  private _dragNode: MachineNode | null = null;
+  private _dragStartWorldX = 0;
+  private _dragStartWorldY = 0;
+  private _dragNodeStartCX = 0;
+  private _dragNodeStartCY = 0;
   private _mouseDownX = 0;
   private _mouseDownY = 0;
   private _hasDragged = false;
   private _lastClickTime = 0;
-  private _lastClickCardId: string | null = null;
+  private _lastClickId: string | null = null;
 
   private _rafId = 0;
+
+  // ---------------------------------------------------------------------------
+  // Construction
+  // ---------------------------------------------------------------------------
 
   constructor(opts: TobiasRendererOptions) {
     this._canvas = opts.canvas;
     const ctx = opts.canvas.getContext('2d');
-    if (!ctx) throw new Error('TobiasRenderer: could not get 2D context');
-    this._ctx = ctx;
-    this._dpr = window.devicePixelRatio || 1;
+    if (!ctx) throw new Error('TobiasRenderer: no 2D context');
+    this._ctx         = ctx;
+    this._dpr         = window.devicePixelRatio || 1;
     this._onSelectMachine = opts.onSelectMachine;
-    this._storageKey = opts.storageKey ?? 'tobias-layout';
+    this._storageKey  = opts.storageKey ?? 'tobias-layout';
+    this._pinnedPos   = this._loadLayout();
     this._bindEvents();
     this._rafId = requestAnimationFrame(this._loop);
   }
@@ -319,476 +267,309 @@ export class TobiasRenderer {
   // ---------------------------------------------------------------------------
 
   resize(cssW: number, cssH: number): void {
+    if (cssW <= 0 || cssH <= 0) return;
     this._canvas.width  = Math.round(cssW * this._dpr);
     this._canvas.height = Math.round(cssH * this._dpr);
-    if (this._simulation) {
-      this._simulation
-        .force('center', d3.forceCenter(cssW / 2, cssH / 2))
-        .alpha(0.1).restart();
-    }
+    this._cssW = cssW;
+    this._cssH = cssH;
+    if (this._nodes.length > 0) this._computeLayout();
   }
 
   setData(machines: VisMachine[]): void {
-    const existingById = new Map(this._cards.map(c => [c.id, c]));
+    const existingById = new Map(this._nodes.map(n => [n.id, n]));
 
-    // ── Detect structural changes ──────────────────────────────────────────
-    // Only a full rebuild (+ simulation restart) is needed when the machine
-    // set or sequence topology changes.  Per-step state updates (justFired,
-    // latestInputVector, status) must NOT restart the simulation — doing so
-    // re-seeds D3's alpha every step and makes cards drift continuously.
-    const oldIdKey = this._cards.map(c => c.id).sort().join('|');
-    const newIdKey = machines.map(m => m.id).sort().join('|');
-    const idsChanged = oldIdKey !== newIdKey;
+    const oldKey = this._nodes.map(n => n.id).sort().join('|');
+    const newKey = machines.map(m => m.id).sort().join('|');
+    const idsChanged = oldKey !== newKey;
 
     const seqsChanged = !idsChanged && machines.some(m => {
       const ex = existingById.get(m.id);
       if (!ex) return true;
-      const oldS = ex.machine.sequences.map(s => s.sequenceId).sort().join('|');
-      const newS = m.sequences.map(s => s.sequenceId).sort().join('|');
-      return oldS !== newS;
+      return ex.machine.sequences.map(s => s.sequenceId).sort().join('|')
+          !== m.sequences.map(s => s.sequenceId).sort().join('|');
     });
 
     if (!idsChanged && !seqsChanged) {
-      // ── Fast path: state-only update — positions and D3 sim untouched ──
-      const machineById = new Map(machines.map(m => [m.id, m]));
-      for (const card of this._cards) {
-        const updated = machineById.get(card.id);
-        if (updated) {
-          card.machine = updated;
-          card.innerGraph = this._refreshNodeStates(card.innerGraph, updated);
-          // Refresh domain classification — metadata/name can change under hot reload.
-          const d = classifyMachine(updated).domain;
-          card.domain = d;
-          card.domainColor = domainColor(d);
+      const byId = new Map(machines.map(m => [m.id, m]));
+      for (const node of this._nodes) {
+        const upd = byId.get(node.id);
+        if (upd) {
+          node.machine    = upd;
+          node.innerGraph = this._refreshNodeStates(node.innerGraph, upd);
+          const d = classifyMachine(upd).domain;
+          node.domain     = d;
+          node.domainColor = domainColor(d);
         }
       }
       return;
     }
 
-    // ── Full rebuild: machine set or topology changed ──────────────────────
-    if (this._simulation) { this._simulation.stop(); this._simulation = null; }
-
-    const cssW = this._canvas.width  / this._dpr || 800;
-    const cssH = this._canvas.height / this._dpr || 600;
-
-    const savedLayout = this._loadLayout();
-
-    this._cards = machines.map((machine): CardNode => {
-      const existing = existingById.get(machine.id);
-      const saved    = savedLayout[machine.id];
-
-      const existingSeqIds = existing?.machine.sequences.map(s => s.sequenceId).join('|') ?? '';
-      const newSeqIds      = machine.sequences.map(s => s.sequenceId).join('|');
-      const innerGraph = (!existing || existingSeqIds !== newSeqIds)
-        ? this._buildInnerGraph(machine)
-        : this._refreshNodeStates(existing.innerGraph, machine);
-
-      // Restore pinned position from localStorage when no in-memory position exists
-      const pinnedFx = existing?.fx ?? saved?.fx ?? null;
-      const pinnedFy = existing?.fy ?? saved?.fy ?? null;
-      const dom = classifyMachine(machine).domain;
-
-      // Seed near the domain anchor (not canvas center) so the simulation
-      // doesn't have to drag cards across the whole canvas before they
-      // reach their bubble. Small jitter keeps same-domain cards from
-      // stacking exactly on top of each other at t=0.  Seeded coords are
-      // clamped to the domain quadrant below so jitter can't start a card
-      // in a neighbouring bubble's territory.
-      const anchorX = DOMAINS[dom].anchor.x * cssW;
-      const anchorY = DOMAINS[dom].anchor.y * cssH;
-      const jitter = 120;
-      const seedX = anchorX + (Math.random() - 0.5) * jitter;
-      const seedY = anchorY + (Math.random() - 0.5) * jitter;
-
-      const cardH = HEADER_H + FOOTER_H + innerGraph.totalHeight + PAD * 2;
-      const region = domainRegion(dom, cssW, cssH);
-      const clampedSeed = clampToRegion(seedX, seedY, CARD_W, cardH, region);
-      const clampedPinFx = pinnedFx != null
-        ? clampToRegion(pinnedFx, pinnedFy ?? clampedSeed.y, CARD_W, cardH, region).x
-        : null;
-      const clampedPinFy = pinnedFy != null
-        ? clampToRegion(pinnedFx ?? clampedSeed.x, pinnedFy, CARD_W, cardH, region).y
-        : null;
-
+    this._nodes = machines.map((m): MachineNode => {
+      const ex   = existingById.get(m.id);
+      const dom  = classifyMachine(m).domain;
+      const exSeq = ex?.machine.sequences.map(s => s.sequenceId).join('|') ?? '';
+      const newSeq = m.sequences.map(s => s.sequenceId).join('|');
+      const innerGraph = (!ex || exSeq !== newSeq)
+        ? this._buildInnerGraph(m)
+        : this._refreshNodeStates(ex.innerGraph, m);
       return {
-        id: machine.id,
-        name: machine.name,
-        machine,
-        w: CARD_W,
-        h: cardH,
-        headerH: HEADER_H,
+        id: m.id, name: m.name, machine: m,
+        domain: dom, domainColor: domainColor(dom),
         innerGraph,
-        domain: dom,
-        domainColor: domainColor(dom),
-        x: existing?.x ?? clampedPinFx ?? clampedSeed.x,
-        y: existing?.y ?? clampedPinFy ?? clampedSeed.y,
-        vx: existing?.vx ?? 0,
-        vy: existing?.vy ?? 0,
-        fx: clampedPinFx,
-        fy: clampedPinFy,
+        cardH: EXP_HEADER + EXP_FOOTER + innerGraph.totalHeight + PAD * 2,
       };
     });
 
-    this._outerEdges = this._buildOuterEdges(machines);
-    this._startOuterSimulation();
+    this._outerEdges = [];
+    for (const src of machines) {
+      if (!src.outputRegion) continue;
+      for (const tgt of machines) {
+        if (src.id === tgt.id || !tgt.inputRegion) continue;
+        const os = Math.max(src.outputRegion.offset, tgt.inputRegion.offset);
+        const oe = Math.min(
+          src.outputRegion.offset + src.outputRegion.length,
+          tgt.inputRegion.offset + tgt.inputRegion.length,
+        );
+        if (oe > os) this._outerEdges.push({ sourceId: src.id, targetId: tgt.id, overlapLength: oe - os });
+      }
+    }
+
+    this._computeLayout();
   }
 
   setSelectedId(id: string | null): void { this._selectedId = id; }
 
-  /** Remove all pinned positions from localStorage and allow force layout to run freely. */
   clearLayout(): void {
-    try { localStorage.removeItem(this._storageKey); } catch { /* ignore */ }
-    for (const card of this._cards) { card.fx = null; card.fy = null; }
-    if (this._simulation) this._simulation.alpha(0.5).restart();
+    this._pinnedPos.clear();
+    try { localStorage.removeItem(this._storageKey); } catch { /**/ }
+    this._computeLayout();
   }
 
   destroy(): void {
     cancelAnimationFrame(this._rafId);
-    this._simulation?.stop();
     this._unbindEvents();
   }
 
   // ---------------------------------------------------------------------------
-  // Layout persistence helpers
+  // Layout: N domain panels, each containing a bubble grid for its machines
   // ---------------------------------------------------------------------------
 
-  private _loadLayout(): Record<string, { fx: number; fy: number }> {
+  private _computeLayout(): void {
+    if (this._nodes.length === 0) {
+      this._panels = [];
+      this._gridPos.clear();
+      return;
+    }
+
+    const cssW = this._cssW;
+
+    // Determine which domains are actually present, preserving DOMAIN_ORDER
+    const present = new Set(this._nodes.map(n => n.domain));
+    const ordered = [
+      ...DOMAIN_ORDER.filter(d => present.has(d)),
+      ...[...present].filter(d => !DOMAIN_ORDER.includes(d as DomainId)),
+    ] as DomainId[];
+
+    const N        = ordered.length;
+    const panelCols = N <= 1 ? 1 : N <= 2 ? 2 : Math.min(3, Math.ceil(Math.sqrt(N)));
+    const panelRows = Math.ceil(N / panelCols);
+    const availW   = cssW - 2 * CANVAS_PAD - (panelCols - 1) * PANEL_GAP;
+    const panelW   = Math.max(PANEL_MIN_W, availW / panelCols);
+    const innerW   = panelW - 2 * PANEL_INNER;
+    const nodeCols = Math.max(1, Math.floor(innerW / BUBBLE_CELL_W));
+
+    this._panels = [];
+    this._gridPos.clear();
+
+    let domIdx = 0;
+    let rowY   = CANVAS_PAD;
+
+    for (let row = 0; row < panelRows; row++) {
+      const rowDomains = ordered.slice(domIdx, domIdx + panelCols);
+      domIdx += rowDomains.length;
+
+      // Uniform row height = tallest panel needed
+      let rowH = 0;
+      for (const dom of rowDomains) {
+        const cnt  = this._nodes.filter(n => n.domain === dom).length;
+        const nRow = Math.ceil(cnt / nodeCols);
+        const ph   = PANEL_HDR + nRow * BUBBLE_CELL_H + 2 * PANEL_INNER;
+        if (ph > rowH) rowH = ph;
+      }
+
+      for (let col = 0; col < rowDomains.length; col++) {
+        const dom     = rowDomains[col];
+        const def     = DOMAINS[dom] ?? { label: dom, color: '#94a3b8', fill: 'rgba(148,163,184,0.18)' };
+        const px      = CANVAS_PAD + col * (panelW + PANEL_GAP);
+        const py      = rowY;
+        const domNodes = this._nodes.filter(n => n.domain === dom);
+
+        this._panels.push({
+          domain: dom, label: (def as typeof def & { label?: string }).label ?? dom,
+          color: def.color, fill: def.fill,
+          x: px, y: py, w: panelW, h: rowH,
+          nodeCols, nodeCount: domNodes.length,
+        });
+
+        domNodes.forEach((node, idx) => {
+          const gc = idx % nodeCols;
+          const gr = Math.floor(idx / nodeCols);
+          this._gridPos.set(node.id, {
+            cx: px + PANEL_INNER + gc * BUBBLE_CELL_W + BUBBLE_CELL_W / 2,
+            cy: py + PANEL_HDR  + PANEL_INNER + gr * BUBBLE_CELL_H + BUBBLE_R + 4,
+          });
+        });
+      }
+
+      rowY += rowH + PANEL_GAP;
+    }
+  }
+
+  private _getBubblePos(id: string): BubblePos {
+    const pinned = this._pinnedPos.get(id);
+    // Guard against stale localStorage entries written by older renderers that
+    // used { fx, fy } keys instead of { cx, cy }.
+    if (pinned && typeof pinned.cx === 'number' && typeof pinned.cy === 'number') return pinned;
+    return this._gridPos.get(id) ?? { cx: 100, cy: 100 };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Persistence
+  // ---------------------------------------------------------------------------
+
+  private _loadLayout(): Map<string, BubblePos> {
     try {
       const raw = localStorage.getItem(this._storageKey);
-      return raw ? (JSON.parse(raw) as Record<string, { fx: number; fy: number }>) : {};
-    } catch { return {}; }
+      if (!raw) return new Map();
+      return new Map(Object.entries(JSON.parse(raw) as Record<string, BubblePos>));
+    } catch { return new Map(); }
   }
 
   private _saveLayout(): void {
-    const layout: Record<string, { fx: number; fy: number }> = {};
-    for (const card of this._cards) {
-      if (card.fx != null && card.fy != null) {
-        layout[card.id] = { fx: card.fx, fy: card.fy };
-      }
-    }
-    try { localStorage.setItem(this._storageKey, JSON.stringify(layout)); } catch { /* ignore */ }
+    const obj: Record<string, BubblePos> = {};
+    for (const [id, pos] of this._pinnedPos) obj[id] = pos;
+    try { localStorage.setItem(this._storageKey, JSON.stringify(obj)); } catch { /**/ }
   }
 
   // ---------------------------------------------------------------------------
-  // Inner graph construction
+  // Inner-graph construction
   // ---------------------------------------------------------------------------
 
-  /**
-   * Build the inner graph for a machine.
-   * Each CES sequence gets its own horizontal band, laid out left-to-right
-   * by BFS rank order (rank 0 = initial/source, increasing = further downstream).
-   * Sequences are independent — NO cross-sequence edges.
-   */
   private _buildInnerGraph(machine: VisMachine): InnerGraphCache {
-    const allNodes: InnerNode[]  = [];
-    const allEdges: InnerEdge[]  = [];
+    const allNodes: InnerNode[] = [];
+    const allEdges: InnerEdge[] = [];
     const neighbors = new Map<string, Set<string>>();
-    const seqBands: SeqBand[]    = [];
-
+    const seqBands: SeqBand[] = [];
     let yOffset = 0;
     const seqCount = machine.sequences.length;
 
     machine.sequences.forEach((seq, seqIdx) => {
-      const bandResult = this._layoutSequenceBand(seq, seqIdx, yOffset, machine.justFired);
+      const band = this._layoutSequenceBand(seq, seqIdx, yOffset, machine.justFired);
       seqBands.push({ yStart: yOffset, yEnd: yOffset + BAND_H, name: seq.name });
-
-      for (const n of bandResult.nodes) {
-        allNodes.push(n);
-        neighbors.set(n.id, new Set());
-      }
-      for (const e of bandResult.edges) {
+      for (const n of band.nodes) { allNodes.push(n); neighbors.set(n.id, new Set()); }
+      for (const e of band.edges) {
         allEdges.push(e);
         if (e.source.id !== e.target.id) {
           neighbors.get(e.source.id)?.add(e.target.id);
           neighbors.get(e.target.id)?.add(e.source.id);
         }
       }
-
       yOffset += BAND_H + (seqIdx < seqCount - 1 ? DIVIDER_H : 0);
     });
 
     const totalHeight = seqCount > 0
       ? seqCount * BAND_H + (seqCount - 1) * DIVIDER_H
-      : BAND_H; // fallback for empty machine
+      : BAND_H;
 
     return { nodes: allNodes, edges: allEdges, neighbors, seqBands, totalHeight };
   }
 
-  /**
-   * Layout a single sequence as a horizontal band using BFS rank assignment.
-   * Rank 0 = leftmost (initial nodes), higher rank = further right in flow.
-   * Nodes at the same rank are stacked vertically within the band.
-   * Self-loop edges are included when present in edge data; implicit self-loops
-   * are added for isInitial nodes that don't have an explicit one.
-   */
   private _layoutSequenceBand(
-    seq: VisMachineSequence,
-    seqIdx: number,
-    yBase: number,
-    machineFired: boolean,
+    seq: VisMachineSequence, seqIdx: number, yBase: number, machineFired: boolean,
   ): { nodes: InnerNode[]; edges: InnerEdge[] } {
     const { vectors, edges: seqEdges } = seq;
     if (vectors.length === 0) return { nodes: [], edges: [] };
 
-    // --- BFS rank assignment ---
     const initialIds = new Set(vectors.filter(v => v.isInitial).map(v => v.id));
-    const vectorIds  = vectors.map(v => v.id);
-    const ranks      = bfsRanks(vectorIds, seqEdges, initialIds);
+    const ranks      = bfsRanks(vectors.map(v => v.id), seqEdges, initialIds);
     const maxRank    = Math.max(0, ...ranks.values());
-
-    // Group vectors by rank, preserving definition order within each rank
-    const byRank = new Map<number, string[]>();
+    const byRank     = new Map<number, string[]>();
     for (const v of vectors) {
       const r = ranks.get(v.id) ?? 0;
       if (!byRank.has(r)) byRank.set(r, []);
       byRank.get(r)!.push(v.id);
     }
 
-    // --- Assign pixel positions ---
-    const xStep  = INNER_W / (maxRank + 1);
+    const xStep   = INNER_W / (maxRank + 1);
     const posById = new Map<string, { ix: number; iy: number }>();
-
     for (const [rank, ids] of byRank) {
-      const x     = (rank + 0.5) * xStep;
-      const count = ids.length;
+      const x = (rank + 0.5) * xStep;
       ids.forEach((id, i) => {
-        const y = yBase + ((i + 1) / (count + 1)) * BAND_H;
         posById.set(id, {
           ix: Math.max(NODE_R + 2, Math.min(INNER_W - NODE_R - 2, x)),
-          iy: Math.max(yBase + NODE_R + 2, Math.min(yBase + BAND_H - NODE_R - 2, y)),
+          iy: Math.max(yBase + NODE_R + 2, Math.min(yBase + BAND_H - NODE_R - 2,
+            yBase + ((i + 1) / (ids.length + 1)) * BAND_H)),
         });
       });
     }
 
-    // --- Build InnerNodes ---
-    const innerById   = new Map<string, InnerNode>();
+    const innerById = new Map<string, InnerNode>();
     const nodes: InnerNode[] = vectors.map(v => {
-      const pos = posById.get(v.id) ?? { ix: INNER_W / 2, iy: yBase + BAND_H / 2 };
+      const pos  = posById.get(v.id) ?? { ix: INNER_W / 2, iy: yBase + BAND_H / 2 };
       const node: InnerNode = {
-        id:                    v.id,
-        label:                 v.label,
-        seqIdx,
-        ix:                    pos.ix,
-        iy:                    pos.iy,
-        isInitial:             v.isInitial,
-        hasOutput:             v.hasOutput,
-        // Per-node state takes priority; fall back to machine-level fire for backward compat
-        justFired:             v.wasJustMatched         ?? (machineFired && v.hasOutput),
-        isActive:              v.isActive               ?? false,
-        wasJustInitialMatched: v.wasJustInitialMatched  ?? false,
-        elements:              v.elements,
+        id: v.id, label: v.label, seqIdx,
+        ix: pos.ix, iy: pos.iy,
+        isInitial: v.isInitial, hasOutput: v.hasOutput,
+        justFired:             v.wasJustMatched        ?? (machineFired && v.hasOutput),
+        isActive:              v.isActive              ?? false,
+        wasJustInitialMatched: v.wasJustInitialMatched ?? false,
+        elements: v.elements,
       };
       innerById.set(v.id, node);
       return node;
     });
 
-    // --- Build InnerEdges from actual sequence edges ---
     const edges: InnerEdge[] = [];
-    // Track which source→target pairs we've already added to avoid duplicates
-    const addedEdges = new Set<string>();
-
+    const added = new Set<string>();
     for (const e of seqEdges) {
-      const sNode = innerById.get(e.source);
-      const tNode = innerById.get(e.target);
-      if (!sNode || !tNode) continue;
-
+      const s = innerById.get(e.source), t = innerById.get(e.target);
+      if (!s || !t) continue;
       const key = `${e.source}→${e.target}`;
-      if (addedEdges.has(key)) continue;
-      addedEdges.add(key);
-
-      edges.push({
-        source: sNode,
-        target: tNode,
-        // Bend parallel edges so multiple arrows between same pair are visible
-        bend: (hashToUnit(key) - 0.5) * 34,
-      });
+      if (added.has(key)) continue;
+      added.add(key);
+      edges.push({ source: s, target: t, bend: (hashToUnit(key) - 0.5) * 34 });
     }
-
-    // --- Implicit self-loop for isInitial nodes without an explicit one ---
     for (const v of vectors) {
       if (v.isInitial) {
         const key = `${v.id}→${v.id}`;
-        if (!addedEdges.has(key)) {
-          const n = innerById.get(v.id)!;
-          edges.push({ source: n, target: n, bend: 0 });
-        }
+        if (!added.has(key)) { const n = innerById.get(v.id)!; edges.push({ source: n, target: n, bend: 0 }); }
       }
     }
-
     return { nodes, edges };
   }
 
-  /**
-   * Refresh only the dynamic per-step state (justFired, isActive) without re-running layout.
-   * Uses per-node isActive/wasJustMatched from machine.sequences when available;
-   * falls back to machine-level justFired flag for any node without per-node data.
-   */
   private _refreshNodeStates(cache: InnerGraphCache, machine: VisMachine): InnerGraphCache {
-    // Build per-node lookup from the sequences data
-    const nodeState = new Map<string, {
-      isActive: boolean;
-      wasJustMatched: boolean;
-      wasJustInitialMatched: boolean;
-    }>();
-    for (const seq of machine.sequences) {
-      for (const v of seq.vectors) {
-        nodeState.set(v.id, {
-          isActive:              v.isActive              ?? false,
-          wasJustMatched:        v.wasJustMatched        ?? false,
+    const stateMap = new Map<string, { isActive: boolean; wasJustMatched: boolean; wasJustInitialMatched: boolean }>();
+    for (const seq of machine.sequences)
+      for (const v of seq.vectors)
+        stateMap.set(v.id, {
+          isActive: v.isActive ?? false,
+          wasJustMatched: v.wasJustMatched ?? false,
           wasJustInitialMatched: v.wasJustInitialMatched ?? false,
         });
-      }
-    }
-
-    const hasPerNodeData = nodeState.size > 0;
-    const updatedNodes = cache.nodes.map((n): InnerNode => {
-      const state = nodeState.get(n.id);
-      return {
-        ...n,
-        justFired: hasPerNodeData
-          ? (state?.wasJustMatched ?? false)
-          : (machine.justFired && n.hasOutput),
-        isActive:              state?.isActive              ?? false,
-        wasJustInitialMatched: state?.wasJustInitialMatched ?? false,
-      };
-    });
-    return { ...cache, nodes: updatedNodes };
-  }
-
-  /**
-   * Build inter-machine edges from perceptual space output→input overlaps.
-   */
-  private _buildOuterEdges(machines: VisMachine[]): OuterEdge[] {
-    const edges: OuterEdge[] = [];
-    const cardById = new Map(this._cards.map(c => [c.id, c]));
-
-    for (const src of machines) {
-      if (!src.outputRegion) continue;
-      const srcStart = src.outputRegion.offset;
-      const srcEnd   = srcStart + src.outputRegion.length;
-
-      for (const tgt of machines) {
-        if (src.id === tgt.id || !tgt.inputRegion) continue;
-        const tgtStart = tgt.inputRegion.offset;
-        const tgtEnd   = tgtStart + tgt.inputRegion.length;
-
-        const overlapStart = Math.max(srcStart, tgtStart);
-        const overlapEnd   = Math.min(srcEnd, tgtEnd);
-        if (overlapEnd <= overlapStart) continue;
-
-        const srcCard = cardById.get(src.id);
-        const tgtCard = cardById.get(tgt.id);
-        if (srcCard && tgtCard) {
-          edges.push({ source: srcCard, target: tgtCard, overlapLength: overlapEnd - overlapStart });
-        }
-      }
-    }
-    return edges;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Outer D3 force simulation
-  // ---------------------------------------------------------------------------
-
-  private _startOuterSimulation(): void {
-    if (this._cards.length === 0) return;
-    const cssW = this._canvas.width  / this._dpr || 800;
-    const cssH = this._canvas.height / this._dpr || 600;
-
-    // Pre-resolved link data with domain flags. Same-domain links pull tight;
-    // cross-domain links barely pull so they don't tow cards out of their
-    // home bubble.
-    interface LinkDatum extends d3.SimulationLinkDatum<CardNode> { sameDomain: boolean; }
-    const linkData: LinkDatum[] = this._outerEdges.map(e => ({
-      source: e.source.id,
-      target: e.target.id,
-      sameDomain: e.source.domain === e.target.domain,
-    }));
-
-    // Inter-domain repel: push cross-domain card pairs apart by roughly
-    // the hull pad distance so domain bubbles never overlap. Same-domain
-    // cards skip this and rely on link/domainX/Y/collide to pack tightly.
-    // HULL_SEPARATION must exceed 2 * HULL_PAD (28) used in _drawDomainHulls
-    // so hulls have a visible gap even at rest.
-    const cards = this._cards;
-    const domainRepel = (alpha: number) => {
-      const HULL_SEPARATION = 100;
-      for (let i = 0; i < cards.length; i++) {
-        for (let j = i + 1; j < cards.length; j++) {
-          const a = cards[i], b = cards[j];
-          if (a.domain === b.domain) continue;
-          const ax = a.x ?? 0, ay = a.y ?? 0;
-          const bx = b.x ?? 0, by = b.y ?? 0;
-          const dx = bx - ax, dy = by - ay;
-          const dist = Math.hypot(dx, dy) || 0.0001;
-          const minDist = (Math.max(a.w, a.h) + Math.max(b.w, b.h)) / 2 + HULL_SEPARATION;
-          if (dist < minDist) {
-            const f = ((minDist - dist) / dist) * alpha * 0.8;
-            (a.vx as number) -= dx * f;
-            (a.vy as number) -= dy * f;
-            (b.vx as number) += dx * f;
-            (b.vy as number) += dy * f;
-          }
-        }
-      }
+    const hasPerNode = stateMap.size > 0;
+    return {
+      ...cache,
+      nodes: cache.nodes.map(n => {
+        const s = stateMap.get(n.id);
+        return {
+          ...n,
+          justFired:             hasPerNode ? (s?.wasJustMatched ?? false) : (machine.justFired && n.hasOutput),
+          isActive:              s?.isActive              ?? false,
+          wasJustInitialMatched: s?.wasJustInitialMatched ?? false,
+        };
+      }),
     };
-
-    // Intra-domain cohesion: pull same-domain pairs toward their shared
-    // centroid each tick so clusters stay dense around the domain anchor
-    // even when linkless. This is what makes each hull genuinely function
-    // as a center-of-gravity per domain.
-    const domainCohesion = (alpha: number) => {
-      const centroids = new Map<DomainId, { x: number; y: number; n: number }>();
-      for (const c of cards) {
-        const cur = centroids.get(c.domain) ?? { x: 0, y: 0, n: 0 };
-        cur.x += c.x ?? 0; cur.y += c.y ?? 0; cur.n += 1;
-        centroids.set(c.domain, cur);
-      }
-      for (const entry of centroids.values()) {
-        if (entry.n === 0) continue;
-        entry.x /= entry.n; entry.y /= entry.n;
-      }
-      const PULL = 0.08;
-      for (const c of cards) {
-        const ctr = centroids.get(c.domain)!;
-        if (ctr.n < 2) continue;
-        (c.vx as number) += (ctr.x - (c.x ?? 0)) * alpha * PULL;
-        (c.vy as number) += (ctr.y - (c.y ?? 0)) * alpha * PULL;
-      }
-    };
-
-    // Domain bounds: hard-clamp every unpinned card to its domain's region
-    // each tick so bubbles stay anchored near their anchor point and can't
-    // extend off-canvas.  Runs last so it overrides velocity accumulated by
-    // the other forces.  Pinned cards (fx/fy set) are clamped in the drag
-    // handlers instead.
-    const domainBounds = () => {
-      for (const c of cards) {
-        if (c.fx != null && c.fy != null) continue;
-        const r = domainRegion(c.domain, cssW, cssH);
-        const clamped = clampToRegion(c.x ?? 0, c.y ?? 0, c.w, c.h, r);
-        if (clamped.x !== c.x) { c.x = clamped.x; c.vx = 0; }
-        if (clamped.y !== c.y) { c.y = clamped.y; c.vy = 0; }
-      }
-    };
-
-    // Per-domain anchor + centroid-cohesion forces give each domain a
-    // unique gravitational center. Cross-domain link pull is weak so
-    // connected cross-domain machines don't drag each other out of
-    // their home bubbles.
-    this._simulation = d3.forceSimulation<CardNode>(this._cards)
-      .force('link', d3.forceLink<CardNode, LinkDatum>(linkData)
-                       .id((d) => d.id)
-                       .distance(l => (l as LinkDatum).sameDomain ? 170 : 420)
-                       .strength(l => (l as LinkDatum).sameDomain ? 0.7 : 0.04))
-      .force('charge', d3.forceManyBody<CardNode>().strength(-800))
-      .force('collide', d3.forceCollide<CardNode>((d) => Math.max(d.w, d.h) * 0.56))
-      .force('domainX', d3.forceX<CardNode>(d => DOMAINS[d.domain].anchor.x * cssW).strength(0.35))
-      .force('domainY', d3.forceY<CardNode>(d => DOMAINS[d.domain].anchor.y * cssH).strength(0.35))
-      .force('domainCohesion', domainCohesion)
-      .force('domainRepel', domainRepel)
-      .force('domainBounds', domainBounds)
-      .alphaDecay(0.02);
   }
 
   // ---------------------------------------------------------------------------
@@ -796,283 +577,380 @@ export class TobiasRenderer {
   // ---------------------------------------------------------------------------
 
   private _loop = (_ts: number): void => {
+    // Advance expansion animation
+    if (this._expandDir !== 0) {
+      this._expandT = Math.max(0, Math.min(1, this._expandT + this._expandDir * EXP_SPEED));
+      if (this._expandT <= 0 || this._expandT >= 1) this._expandDir = 0;
+    }
     this._draw();
     this._rafId = requestAnimationFrame(this._loop);
   };
 
+  // ---------------------------------------------------------------------------
+  // Drawing — top level
+  // ---------------------------------------------------------------------------
+
   private _draw(): void {
     const ctx = this._ctx;
-    const dpr = this._dpr;
     ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
     ctx.save();
-    ctx.scale(dpr, dpr);
+    ctx.scale(this._dpr, this._dpr);
+
+    // World-space pass (viewport transform applied inside)
+    ctx.save();
     const { tx, ty, scale } = this._viewport;
     ctx.translate(tx, ty);
     ctx.scale(scale, scale);
 
-    // Domain bubbles sit at the very back — behind edges and cards — so they
-    // read as a backdrop grouping rather than foreground shapes. They're
-    // pointer-passive anyway since hit testing is center-based on cards.
-    this._drawDomainHulls();
-
-    for (const edge of this._outerEdges) this._drawOuterEdge(edge);
-
-    for (const card of this._cards) {
-      if (card.id !== this._selectedId) this._drawCard(card, false);
+    if (this._liveViewId) {
+      this._drawLiveViewWorld();
+    } else {
+      this._drawOverviewWorld();
     }
-    for (const card of this._cards) {
-      if (card.id === this._selectedId) this._drawCard(card, true);
+
+    ctx.restore(); // end world space
+
+    // Screen-space overlays (no viewport transform)
+    if (this._liveViewId) {
+      this._drawLiveViewHUD();
+    } else if (this._expandedId && this._expandT > 0) {
+      this._drawExpandedOverlay();
     }
-    ctx.restore();
+
+    ctx.restore(); // end dpr scale
+  }
+
+  // ---------------------------------------------------------------------------
+  // Overview: panels + bubbles + edges
+  // ---------------------------------------------------------------------------
+
+  private _drawOverviewWorld(): void {
+    // Domain hull bubbles — drawn behind edges and nodes
+    for (const panel of this._panels) this._drawDomainHull(panel);
+
+    // Outer edges between machines
+    for (const edge of this._outerEdges) {
+      const sp = this._getBubblePos(edge.sourceId);
+      const tp = this._getBubblePos(edge.targetId);
+      const mx = (sp.cx + tp.cx) / 2, my = (sp.cy + tp.cy) / 2;
+      const dx = tp.cx - sp.cx, dy = tp.cy - sp.cy;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len, ny = dx / len;
+      const ctx = this._ctx;
+      ctx.beginPath();
+      ctx.moveTo(sp.cx, sp.cy);
+      ctx.quadraticCurveTo(mx + nx * 30, my + ny * 30, tp.cx, tp.cy);
+      ctx.strokeStyle = '#64c8ff';
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth   = Math.max(1, Math.min(3, edge.overlapLength / 4));
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      drawArrowHead(this._ctx, mx + nx * 30, my + ny * 30, tp.cx, tp.cy, 'rgba(100,200,255,0.7)');
+    }
+
+    // Bubbles — dim all when one is expanded
+    const dimmed = this._expandedId !== null && this._expandT > 0.15;
+    for (const node of this._nodes) {
+      const alpha = (dimmed && node.id !== this._expandedId) ? 0.28 : 1.0;
+      this._drawBubble(node, alpha);
+    }
   }
 
   /**
-   * Draw a filled, dashed-bordered bubble around each domain's cards.
-   *
-   * Approach: expand every card into its 4 corners (with a pad), run
-   * d3.polygonHull over all points per domain, then stroke the hull as a
-   * smoothed bezier loop (midpoint-anchor quadratic curves) so the resulting
-   * shape reads as a soft bubble instead of an angular polygon. Single-card
-   * domains are drawn as a padded rounded rect since a hull needs 3+ points.
+   * Draw a smooth hull bubble around all nodes in a domain.
+   * Positions are derived from current node centers so pinned nodes are
+   * included naturally.  Falls back to a fixed-size rounded rect when the
+   * domain has no positioned nodes yet.
    */
-  private _drawDomainHulls(): void {
-    if (this._cards.length === 0) return;
-    const ctx = this._ctx;
+  private _drawDomainHull(panel: PanelDef): void {
+    const ctx       = this._ctx;
+    const HULL_PAD  = 36;
+    const LABEL_H   = 28;
 
-    const byDomain = new Map<DomainId, CardNode[]>();
-    for (const d of DOMAIN_ORDER) byDomain.set(d, []);
-    for (const c of this._cards) byDomain.get(c.domain)!.push(c);
+    const domNodes  = this._nodes.filter(n => n.domain === panel.domain);
+    if (domNodes.length === 0) return;
 
-    const HULL_PAD = 28;
-
-    // Refresh hit-test caches each frame so _hitTestHull matches what's drawn.
-    this._hullPolygons.clear();
-    this._hullRects.clear();
-
-    for (const domainId of DOMAIN_ORDER) {
-      const group = byDomain.get(domainId)!;
-      if (group.length === 0) continue;
-
-      const def = DOMAINS[domainId];
-
-      // Single-card domain: draw a soft padded rounded rect so the bubble
-      // still communicates grouping even with one member.
-      if (group.length === 1) {
-        const c = group[0];
-        const cx = c.x ?? 0, cy = c.y ?? 0;
-        const w = c.w + HULL_PAD * 2;
-        const h = c.h + HULL_PAD * 2;
-        this._hullRects.set(domainId, {
-          lx: cx - w / 2, ty: cy - h / 2,
-          rx: cx + w / 2, by: cy + h / 2,
-        });
-        ctx.save();
-        roundRectPath(ctx, cx - w / 2, cy - h / 2, w, h, 24);
-        ctx.fillStyle   = def.fill;
-        ctx.fill();
-        ctx.strokeStyle = def.color;
-        ctx.globalAlpha = 0.75;
-        ctx.lineWidth   = 2.5;
-        ctx.setLineDash([8, 6]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
-        continue;
-      }
-
-      // Multi-card domain: union of card-corner points → convex hull.
-      const pts: [number, number][] = [];
-      for (const c of group) {
-        const x = c.x ?? 0, y = c.y ?? 0;
-        const halfW = c.w / 2 + HULL_PAD;
-        const halfH = c.h / 2 + HULL_PAD;
-        pts.push([x - halfW, y - halfH]);
-        pts.push([x + halfW, y - halfH]);
-        pts.push([x + halfW, y + halfH]);
-        pts.push([x - halfW, y + halfH]);
-      }
-
-      const hull = d3.polygonHull(pts);
-      if (!hull || hull.length < 3) continue;
-      this._hullPolygons.set(domainId, hull);
-
-      // Smooth the hull by anchoring quadratics at hull vertices, with the
-      // pen moving through midpoints — the classic "smoothed polygon" trick.
-      ctx.save();
-      ctx.beginPath();
-      const n = hull.length;
-      const mid = (i: number): [number, number] => {
-        const a = hull[i], b = hull[(i + 1) % n];
-        return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-      };
-      const m0 = mid(0);
-      ctx.moveTo(m0[0], m0[1]);
-      for (let i = 0; i < n; i++) {
-        const v = hull[(i + 1) % n];
-        const m = mid((i + 1) % n);
-        ctx.quadraticCurveTo(v[0], v[1], m[0], m[1]);
-      }
-      ctx.closePath();
-
-      ctx.fillStyle   = def.fill;
-      ctx.fill();
-      ctx.strokeStyle = def.color;
-      ctx.globalAlpha = 0.75;
-      ctx.lineWidth   = 2.5;
-      ctx.setLineDash([8, 6]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Card drawing
-  // ---------------------------------------------------------------------------
-
-  private _drawOuterEdge(edge: OuterEdge): void {
-    const ctx = this._ctx;
-    const sx = edge.source.x ?? 0, sy = edge.source.y ?? 0;
-    const tx = edge.target.x ?? 0, ty = edge.target.y ?? 0;
-    const mx = (sx + tx) / 2, my = (sy + ty) / 2;
-    const dx = tx - sx, dy = ty - sy;
-    const len = Math.hypot(dx, dy) || 1;
-    const nx = -dy / len, ny = dx / len;
-
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.quadraticCurveTo(mx + nx * 35, my + ny * 35, tx, ty);
-    ctx.strokeStyle = '#64c8ff';
-    ctx.globalAlpha = 0.6;
-    ctx.lineWidth   = Math.max(1, Math.min(3, edge.overlapLength / 4));
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-    drawArrowHead(ctx, mx + nx * 35, my + ny * 35, tx, ty, 'rgba(100,200,255,0.88)');
-  }
-
-  private _drawCard(node: CardNode, isSelected: boolean): void {
-    const ctx = this._ctx;
-    const cx = node.x ?? 0, cy = node.y ?? 0;
-    const x  = cx - node.w / 2, y = cy - node.h / 2;
+    // Bounding box over all node centers (grid or pinned positions)
+    const positions = domNodes.map(n => this._getBubblePos(n.id));
+    const minX = Math.min(...positions.map(p => p.cx)) - BUBBLE_R - HULL_PAD;
+    const maxX = Math.max(...positions.map(p => p.cx)) + BUBBLE_R + HULL_PAD;
+    const minY = Math.min(...positions.map(p => p.cy)) - BUBBLE_R - HULL_PAD - LABEL_H;
+    const maxY = Math.max(...positions.map(p => p.cy)) + BUBBLE_R + HULL_PAD;
+    const w = maxX - minX, h = maxY - minY;
 
     ctx.save();
-    ctx.translate(x, y);
 
-    const fired        = node.machine.justFired;       // output emitted this step
-    const initialMatch = node.machine.hasInitialMatch; // initial state matched this step
-
-    // Glow pass — drawn before fill so shadow bleeds outward only.
-    // Priority: selected > output-fired (amber) > initial-matched (blue) > none
-    if (isSelected) {
-      ctx.shadowBlur  = 20;
-      ctx.shadowColor = '#c864ff';
-    } else if (fired) {
-      ctx.shadowBlur  = 30;
-      ctx.shadowColor = '#f59e0b';
-    } else if (initialMatch) {
-      ctx.shadowBlur  = 22;
-      ctx.shadowColor = '#3b82f6';
-    }
-
-    // Card background
-    roundRectPath(ctx, 0, 0, node.w, node.h, 8);
-    ctx.fillStyle = '#101318';
+    // Soft fill
+    roundRectPath(ctx, minX, minY, w, h, 22);
+    ctx.fillStyle = panel.fill;
     ctx.fill();
 
-    // Border: output-fired=amber, initial-match=blue, selected=purple, else status
-    if (fired) {
-      // Double-draw: outer pass carries glow, inner gives crisp edge
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth   = 3;
-      ctx.stroke();
-      ctx.shadowBlur  = 0;
-      ctx.strokeStyle = '#fcd34d'; // amber-300 crisp line
-      ctx.lineWidth   = 1.5;
-      ctx.stroke();
-    } else if (initialMatch) {
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth   = 2.5;
-      ctx.stroke();
-      ctx.shadowBlur  = 0;
-      ctx.strokeStyle = '#93c5fd'; // blue-300 crisp inner line
-      ctx.lineWidth   = 1.2;
-      ctx.stroke();
-    } else {
-      ctx.strokeStyle = isSelected ? '#c864ff' : statusColor(node.machine.status);
-      ctx.lineWidth   = isSelected ? 2 : 1;
-      ctx.stroke();
-      ctx.shadowBlur  = 0;
-    }
+    // Dashed domain-color border
+    ctx.strokeStyle = panel.color;
+    ctx.globalAlpha = 0.6;
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([8, 6]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
 
-    // Header strip
-    ctx.fillStyle = isSelected ? '#2d1040'
-                  : fired      ? '#1a1200'
-                  : initialMatch ? '#0c1a33'
-                  : '#1a1f2e';
-    ctx.fillRect(0, 0, node.w, node.headerH);
+    // Domain label in top-left corner of hull
+    ctx.fillStyle    = panel.color;
+    ctx.font         = 'bold 11px monospace';
+    ctx.textBaseline = 'top';
+    ctx.textAlign    = 'left';
+    ctx.fillText(panel.label.toUpperCase(), minX + 14, minY + 10, w - 28);
 
-    // Header/body separator
+    // Machine count badge (right side)
+    ctx.textAlign   = 'right';
+    ctx.globalAlpha = 0.7;
+    ctx.fillText(`${panel.nodeCount}`, maxX - 14, minY + 10);
+    ctx.globalAlpha = 1;
+
+    ctx.restore();
+  }
+
+  private _drawBubble(node: MachineNode, alpha: number): void {
+    const ctx  = this._ctx;
+    const pos  = this._getBubblePos(node.id);
+    const isHovered  = this._hoveredCardId === node.id;
+    const isSelected = this._selectedId === node.id;
+    const fired      = node.machine.justFired;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Outer glow
+    if (fired)           { ctx.shadowBlur = 22; ctx.shadowColor = '#f59e0b'; }
+    else if (isSelected) { ctx.shadowBlur = 18; ctx.shadowColor = '#c864ff'; }
+    else if (isHovered)  { ctx.shadowBlur = 12; ctx.shadowColor = '#facc15'; }
+    else                 { ctx.shadowBlur = 6;  ctx.shadowColor = node.domainColor; }
+
+    // Circle body — use a visible mid-dark fill so the ring contrast reads clearly
     ctx.beginPath();
-    ctx.moveTo(0, node.headerH);
-    ctx.lineTo(node.w, node.headerH);
-    ctx.strokeStyle = fired        ? '#f59e0b44'
-                    : initialMatch ? '#3b82f644'
-                    : isSelected   ? '#c864ff55'
-                    : '#2a3040';
-    ctx.lineWidth   = 0.5;
+    ctx.arc(pos.cx, pos.cy, BUBBLE_R, 0, Math.PI * 2);
+    ctx.fillStyle = fired      ? '#2a1a00'
+                  : isSelected ? '#260d40'
+                  : '#1e2535';           // visible dark-blue, not near-black
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Domain-color ring — thick and bright so it reads at any panel alpha
+    ctx.strokeStyle = isHovered  ? '#facc15'
+                    : isSelected ? '#c864ff'
+                    : fired      ? '#f59e0b'
+                    : node.domainColor;
+    ctx.lineWidth   = isSelected || isHovered ? 3.5 : 2.5;
     ctx.stroke();
 
-    // Domain stripe — persistent left-edge identity marker. Drawn after
-    // the border so status/fired borders don't overpaint it, but inside
-    // the card so the rounded outline still looks clean.
+    // Status dot (center)
+    const dotR = 7;
+    ctx.beginPath();
+    ctx.arc(pos.cx, pos.cy, dotR, 0, Math.PI * 2);
+    ctx.fillStyle = statusColor(node.machine.status);
+    ctx.fill();
+
+    // Machine name label below bubble
+    const short = node.name.length > 22 ? node.name.slice(0, 20) + '…' : node.name;
+    ctx.fillStyle    = isHovered ? '#facc15' : vizTheme.text.primary;
+    ctx.font         = '9px monospace';
+    ctx.textBaseline = 'top';
+    ctx.textAlign    = 'center';
+    ctx.fillText(short, pos.cx, pos.cy + BUBBLE_R + 5, BUBBLE_CELL_W - 4);
+
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Expanded overlay — drawn in CSS-pixel (screen) space
+  // ---------------------------------------------------------------------------
+
+  private _drawExpandedOverlay(): void {
+    const node = this._nodes.find(n => n.id === this._expandedId);
+    if (!node) return;
+
+    const t      = this._expandT;
+    const vp     = this._viewport;
+    const pos    = this._getBubblePos(node.id);
+
+    // Bubble center in screen space
+    const bsx = pos.cx * vp.scale + vp.tx;
+    const bsy = pos.cy * vp.scale + vp.ty;
+
+    // Final expanded card dimensions (screen pixels)
+    const cardW = EXP_W;
+    const cardH = Math.min(node.cardH, this._cssH - 48);
+
+    // Clamp card center to keep it fully on-screen
+    const cx = Math.max(cardW / 2 + 12, Math.min(this._cssW - cardW / 2 - 12, bsx));
+    const cy = Math.max(cardH / 2 + 12, Math.min(this._cssH - cardH / 2 - 12, bsy));
+
+    const ctx = this._ctx;
     ctx.save();
-    roundRectPath(ctx, 0, 0, node.w, node.h, 8);
-    ctx.clip();
+
+    // Dimming scrim
+    if (t > 0.2) {
+      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.55, (t - 0.2) / 0.8 * 0.55)})`;
+      ctx.fillRect(0, 0, this._cssW, this._cssH);
+    }
+
+    // Scale-from-center zoom effect
+    const s = 0.08 + t * 0.92;  // 0.08 → 1.0
+    ctx.translate(cx, cy);
+    ctx.scale(s, s);
+    ctx.translate(-cx, -cy);
+
+    const x = cx - cardW / 2;
+    const y = cy - cardH / 2;
+
+    // Card background + border
+    roundRectPath(ctx, x, y, cardW, cardH, 10);
+    ctx.fillStyle = '#0e1219';
+    ctx.fill();
+    ctx.strokeStyle = node.domainColor;
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+    // Domain color stripe
+    roundRectPath(ctx, x, y, cardW, cardH, 10);
+    ctx.save(); ctx.clip();
     ctx.fillStyle = node.domainColor;
-    ctx.fillRect(0, 0, 3, node.h);
+    ctx.fillRect(x, y, 3, cardH);
     ctx.restore();
 
+    // Header
+    ctx.fillStyle = '#161c28';
+    ctx.fillRect(x, y, cardW, EXP_HEADER);
+    ctx.beginPath(); ctx.moveTo(x, y + EXP_HEADER); ctx.lineTo(x + cardW, y + EXP_HEADER);
+    ctx.strokeStyle = node.domainColor + '44'; ctx.lineWidth = 0.5; ctx.stroke();
+
     // Machine name
-    ctx.fillStyle    = isSelected   ? '#e2b6ff'
-                     : fired        ? '#fcd34d'
-                     : initialMatch ? vizTheme.accent.current
-                     : vizTheme.text.primary;
+    ctx.fillStyle    = vizTheme.text.primary;
     ctx.font         = 'bold 10px monospace';
     ctx.textBaseline = 'middle';
     ctx.textAlign    = 'left';
-    const nameText = node.name.length > 28 ? node.name.slice(0, 26) + '…' : node.name;
-    ctx.fillText(nameText, 8, node.headerH / 2, node.w - 16);
+    ctx.fillText(node.name, x + 8, y + EXP_HEADER / 2, cardW - 80);
 
-    // Inner graph area
-    const innerH = node.innerGraph.totalHeight;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(PAD, node.headerH + PAD, INNER_W, innerH);
-    ctx.clip();
-    ctx.translate(PAD, node.headerH + PAD);
-    this._drawInnerGraph(node.innerGraph, node.id);
-    ctx.restore();
+    // Hints
+    ctx.fillStyle = vizTheme.text.muted;
+    ctx.font      = '8px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('dbl-click: live', x + cardW - 6, y + EXP_HEADER / 2);
 
-    // Perceptual vector footer
-    this._drawFooter(node);
+    // Inner graph (fades in after the card shape appears)
+    if (t > 0.5) {
+      ctx.globalAlpha = (t - 0.5) / 0.5;
+
+      const innerH = node.innerGraph.totalHeight;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x + PAD, y + EXP_HEADER + PAD, INNER_W, Math.min(innerH, cardH - EXP_HEADER - EXP_FOOTER - PAD * 2));
+      ctx.clip();
+      ctx.translate(x + PAD, y + EXP_HEADER + PAD);
+      this._drawInnerGraph(node.innerGraph, node.id);
+      ctx.restore();
+
+      // Footer
+      const fy = y + cardH - EXP_FOOTER;
+      ctx.fillStyle = '#0d1017';
+      ctx.fillRect(x, fy, cardW, EXP_FOOTER);
+      ctx.beginPath(); ctx.moveTo(x, fy); ctx.lineTo(x + cardW, fy);
+      ctx.strokeStyle = vizTheme.outline.idle; ctx.lineWidth = 0.5; ctx.stroke();
+      this._drawFooterAt(node, x, y, cardW, cardH);
+
+      ctx.globalAlpha = 1;
+    }
+
     ctx.restore();
   }
 
-  /**
-   * Draw the inner graph:
-   * - Sequence band dividers with sequence index labels
-   * - Edges (self-loops + directed arcs)
-   * - Nodes colored by state (initial/terminal/fired/intermediate)
-   * - Node label shown near hovered node
-   */
+  private _drawFooterAt(node: MachineNode, cx: number, cy: number, cardW: number, cardH: number): void {
+    const ctx   = this._ctx;
+    const midY  = cy + cardH - EXP_FOOTER / 2;
+    const activeNodes = node.innerGraph.nodes.filter(n => n.isActive && !n.justFired);
+    const firedNodes  = node.innerGraph.nodes.filter(n => n.justFired);
+    ctx.font = '7px monospace'; ctx.textBaseline = 'middle';
+
+    if (activeNodes.length > 0) {
+      ctx.textAlign = 'left'; ctx.fillStyle = COLOR_ACTIVE; ctx.globalAlpha = 0.85;
+      ctx.fillText('▸ ' + activeNodes.slice(0, 3).map(n => n.label.slice(0, 9)).join(' '), cx + 4, midY, cardW / 2 - 6);
+      ctx.globalAlpha = 1;
+    }
+    if (firedNodes.length > 0) {
+      ctx.textAlign = 'right'; ctx.fillStyle = COLOR_TERMINAL; ctx.globalAlpha = 0.9;
+      ctx.fillText(firedNodes.slice(0, 3).map(n => n.label.slice(0, 9)).join(' ') + ' ↯', cx + cardW - 4, midY, cardW / 2 - 6);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Live view — world-space graph + screen-space HUD
+  // ---------------------------------------------------------------------------
+
+  private _drawLiveViewWorld(): void {
+    const node = this._nodes.find(n => n.id === this._liveViewId);
+    if (!node) return;
+
+    const ctx = this._ctx;
+
+    // Dark full-world background
+    ctx.fillStyle = '#090c10';
+    ctx.fillRect(-99999, -99999, 199999, 199999);
+
+    // Draw inner graph; positions are in inner-graph coord space (0…INNER_W × 0…totalH)
+    ctx.save();
+    this._drawInnerGraph(node.innerGraph, node.id);
+    ctx.restore();
+  }
+
+  private _drawLiveViewHUD(): void {
+    const node = this._nodes.find(n => n.id === this._liveViewId);
+    if (!node) return;
+    const ctx = this._ctx;
+
+    // Header bar
+    ctx.fillStyle = '#11161f';
+    ctx.fillRect(0, 0, this._cssW, LIVE_HDR);
+    ctx.strokeStyle = node.domainColor;
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath(); ctx.moveTo(0, LIVE_HDR); ctx.lineTo(this._cssW, LIVE_HDR); ctx.stroke();
+
+    // Back button
+    ctx.fillStyle = '#1e293b';
+    roundRectPath(ctx, 12, 12, 72, 24, 5);
+    ctx.fill();
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.fillStyle    = vizTheme.text.primary;
+    ctx.font         = 'bold 10px monospace';
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.fillText('← back', 22, 24);
+
+    // Domain stripe + name
+    ctx.fillStyle = node.domainColor;
+    ctx.fillRect(96, 16, 3, 16);
+    ctx.fillStyle    = vizTheme.text.primary;
+    ctx.font         = 'bold 12px monospace';
+    ctx.textAlign    = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(node.name, 107, 24, this._cssW - 120);
+
+    // Live indicator
+    const fired = node.machine.justFired;
+    ctx.fillStyle = fired ? '#f59e0b' : '#22c55e';
+    ctx.beginPath(); ctx.arc(this._cssW - 20, 24, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = vizTheme.text.muted; ctx.font = '8px monospace'; ctx.textAlign = 'right';
+    ctx.fillText(fired ? 'FIRED' : 'LIVE', this._cssW - 30, 24);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Inner-graph drawing (shared between expanded card and live view)
+  // ---------------------------------------------------------------------------
+
   private _drawInnerGraph(cache: InnerGraphCache, cardId: string): void {
     const ctx = this._ctx;
 
     if (cache.nodes.length === 0) {
-      ctx.fillStyle = vizTheme.text.muted;
-      ctx.font = '9px monospace';
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'center';
+      ctx.fillStyle = vizTheme.text.muted; ctx.font = '9px monospace';
+      ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
       ctx.fillText('no sequences', INNER_W / 2, cache.totalHeight / 2);
       return;
     }
@@ -1080,170 +958,106 @@ export class TobiasRenderer {
     const isCardHovered   = this._hoveredCardId === cardId;
     const activeInnerNode = isCardHovered ? this._hoveredInnerNodeId : null;
 
-    // ── Draw sequence band dividers ────────────────────────────────────────
+    // Sequence band dividers
     for (let i = 0; i < cache.seqBands.length; i++) {
       const band = cache.seqBands[i];
-
-      // Sequence index label (top-left of each band)
-      ctx.fillStyle    = vizTheme.text.muted;
-      ctx.font         = '7px monospace';
-      ctx.textBaseline = 'top';
-      ctx.textAlign    = 'left';
+      ctx.fillStyle = vizTheme.text.muted; ctx.font = '7px monospace';
+      ctx.textBaseline = 'top'; ctx.textAlign = 'left';
       ctx.fillText(`${i + 1}`, 1, band.yStart + 1);
-
-      // Divider line above this band (not above band 0)
       if (i > 0) {
         const divY = band.yStart - DIVIDER_H / 2;
-        ctx.beginPath();
-        ctx.moveTo(0, divY);
-        ctx.lineTo(INNER_W, divY);
-        ctx.strokeStyle = '#1a2233';
-        ctx.lineWidth   = 0.5;
-        ctx.setLineDash([4, 4]);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(0, divY); ctx.lineTo(INNER_W, divY);
+        ctx.strokeStyle = '#1a2233'; ctx.lineWidth = 0.5;
+        ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
       }
     }
 
-    // ── Draw edges ─────────────────────────────────────────────────────────
+    // Edges
     for (const edge of cache.edges) {
       const { source: s, target: t, bend } = edge;
-      const isHighlight = activeInnerNode
-        ? (s.id === activeInnerNode || t.id === activeInnerNode)
-        : false;
-      const isDimmed = activeInnerNode ? !isHighlight : false;
-
-      const edgeColor = isHighlight ? COLOR_HOVER : vizTheme.edge.idle;
-      ctx.globalAlpha = isDimmed ? 0.18 : 1.0;
-      ctx.strokeStyle = edgeColor;
-      ctx.lineWidth   = isHighlight ? 1.8 : 1.2;
+      const isHL  = activeInnerNode ? (s.id === activeInnerNode || t.id === activeInnerNode) : false;
+      const isDim = activeInnerNode ? !isHL : false;
+      ctx.globalAlpha = isDim ? 0.18 : 1;
+      ctx.strokeStyle = isHL ? COLOR_HOVER : vizTheme.edge.idle;
+      ctx.lineWidth   = isHL ? 1.8 : 1.2;
 
       if (s.id === t.id) {
-        // Self-loop: small arc above/to-the-side of the node
         this._drawSelfLoop(ctx, s);
       } else {
-        const mx  = (s.ix + t.ix) / 2, my = (s.iy + t.iy) / 2;
-        const dx  = t.ix - s.ix,   dy = t.iy - s.iy;
+        const mx = (s.ix + t.ix) / 2, my = (s.iy + t.iy) / 2;
+        const dx = t.ix - s.ix, dy = t.iy - s.iy;
         const len = Math.hypot(dx, dy) || 1;
-        const nx  = -dy / len,    ny = dx / len;
-        const cpx = mx + nx * bend, cpy = my + ny * bend;
-
-        ctx.beginPath();
-        ctx.moveTo(s.ix, s.iy);
-        ctx.quadraticCurveTo(cpx, cpy, t.ix, t.iy);
-        ctx.stroke();
-        drawArrowHead(ctx, cpx, cpy, t.ix, t.iy, edgeColor);
+        const cpx = mx + (-dy / len) * bend, cpy = my + (dx / len) * bend;
+        ctx.beginPath(); ctx.moveTo(s.ix, s.iy); ctx.quadraticCurveTo(cpx, cpy, t.ix, t.iy); ctx.stroke();
+        drawArrowHead(ctx, cpx, cpy, t.ix, t.iy, isHL ? COLOR_HOVER : vizTheme.edge.idle);
       }
       ctx.globalAlpha = 1;
     }
 
-    // ── Draw nodes ─────────────────────────────────────────────────────────
+    // Nodes
     for (const node of cache.nodes) {
-      const isHovNode  = node.id === activeInnerNode;
-      const isNeighbor = activeInnerNode
-        ? (cache.neighbors.get(activeInnerNode)?.has(node.id) ?? false)
-        : false;
-      const isDimNode  = activeInnerNode ? (!isHovNode && !isNeighbor) : false;
+      const isHov  = node.id === activeInnerNode;
+      const isNeig = activeInnerNode ? (cache.neighbors.get(activeInnerNode)?.has(node.id) ?? false) : false;
+      const isDim  = activeInnerNode ? (!isHov && !isNeig) : false;
+      ctx.globalAlpha = isDim ? 0.18 : 1;
+      const fill = nodeColor(node, isHov);
 
-      ctx.globalAlpha = isDimNode ? 0.18 : 1.0;
-      const fill = nodeColor(node, isHovNode);
-
-      // Glow: amber for output-emitted, light-blue for initial-match, cyan for active
-      if (node.justFired)                { ctx.shadowBlur = 12; ctx.shadowColor = COLOR_TERMINAL; }
+      if (node.justFired)               { ctx.shadowBlur = 12; ctx.shadowColor = COLOR_TERMINAL; }
       else if (node.wasJustInitialMatched) { ctx.shadowBlur = 14; ctx.shadowColor = COLOR_INITIAL_MATCH; }
-      else if (node.isActive)            { ctx.shadowBlur = 8;  ctx.shadowColor = COLOR_ACTIVE; }
+      else if (node.isActive)           { ctx.shadowBlur = 8;  ctx.shadowColor = COLOR_ACTIVE; }
 
-      ctx.beginPath();
-      ctx.arc(node.ix, node.iy, NODE_R, 0, Math.PI * 2);
-      ctx.fillStyle = fill;
-      ctx.fill();
-      ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(node.ix, node.iy, NODE_R, 0, Math.PI * 2);
+      ctx.fillStyle = fill; ctx.fill(); ctx.shadowBlur = 0;
 
-      // Outer ring for terminal nodes — amber ring is the permanent end-node marker.
-      // Inactive: ring on dark fill. Active (justFired): amber fill + ring + glow.
       if (node.hasOutput) {
-        ctx.beginPath();
-        ctx.arc(node.ix, node.iy, NODE_R + 2.5, 0, Math.PI * 2);
-        ctx.strokeStyle = COLOR_TERMINAL;
-        ctx.lineWidth   = node.justFired ? 1.5 : 1;
-        ctx.globalAlpha = isDimNode ? 0.18 : (node.justFired ? 0.9 : 0.7);
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(node.ix, node.iy, NODE_R + 2.5, 0, Math.PI * 2);
+        ctx.strokeStyle = COLOR_TERMINAL; ctx.lineWidth = node.justFired ? 1.5 : 1;
+        ctx.globalAlpha = isDim ? 0.18 : (node.justFired ? 0.9 : 0.7); ctx.stroke();
       }
-
-      // Cyan ring for actively queued (isActive) non-terminal nodes
       if (node.isActive && !node.justFired && !node.hasOutput) {
-        ctx.beginPath();
-        ctx.arc(node.ix, node.iy, NODE_R + 2, 0, Math.PI * 2);
-        ctx.strokeStyle = COLOR_ACTIVE;
-        ctx.lineWidth   = 1.2;
-        ctx.globalAlpha = isDimNode ? 0.18 : 0.8;
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(node.ix, node.iy, NODE_R + 2, 0, Math.PI * 2);
+        ctx.strokeStyle = COLOR_ACTIVE; ctx.lineWidth = 1.2;
+        ctx.globalAlpha = isDim ? 0.18 : 0.8; ctx.stroke();
+      }
+      if (node.wasJustInitialMatched && !isHov) {
+        ctx.beginPath(); ctx.arc(node.ix, node.iy, NODE_R + 3.5, 0, Math.PI * 2);
+        ctx.strokeStyle = COLOR_INITIAL_MATCH; ctx.lineWidth = 1.8;
+        ctx.globalAlpha = isDim ? 0.18 : 0.92; ctx.stroke();
+        ctx.globalAlpha = isDim ? 0.10 : 0.30;
+        ctx.beginPath(); ctx.arc(node.ix, node.iy, NODE_R + 5.5, 0, Math.PI * 2);
+        ctx.lineWidth = 2.5; ctx.stroke();
+      }
+      if (node.isInitial && !isHov && !node.wasJustInitialMatched) {
+        ctx.beginPath(); ctx.arc(node.ix, node.iy, NODE_R - 1.5, 0, Math.PI * 2);
+        ctx.strokeStyle = vizTheme.accent.current; ctx.lineWidth = 0.7;
+        ctx.globalAlpha = isDim ? 0.18 : 0.45; ctx.stroke();
       }
 
-      // Bright outer ring when initial node just matched (A+ fired) — pulsed blue halo
-      if (node.wasJustInitialMatched && !isHovNode) {
-        ctx.beginPath();
-        ctx.arc(node.ix, node.iy, NODE_R + 3.5, 0, Math.PI * 2);
-        ctx.strokeStyle = COLOR_INITIAL_MATCH;
-        ctx.lineWidth   = 1.8;
-        ctx.globalAlpha = isDimNode ? 0.18 : 0.92;
-        ctx.stroke();
-        ctx.globalAlpha = isDimNode ? 0.10 : 0.30;
-        ctx.beginPath();
-        ctx.arc(node.ix, node.iy, NODE_R + 5.5, 0, Math.PI * 2);
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-      }
-
-      // Inner ring for isInitial (A+ visual hint) — subdued when not just matched
-      if (node.isInitial && !isHovNode && !node.wasJustInitialMatched) {
-        ctx.beginPath();
-        ctx.arc(node.ix, node.iy, NODE_R - 1.5, 0, Math.PI * 2);
-        ctx.strokeStyle = vizTheme.accent.current;
-        ctx.lineWidth   = 0.7;
-        ctx.globalAlpha = isDimNode ? 0.18 : 0.45;
-        ctx.stroke();
-      }
-
-      // Node border
-      ctx.globalAlpha = isDimNode ? 0.18 : 1.0;
-      ctx.beginPath();
-      ctx.arc(node.ix, node.iy, NODE_R, 0, Math.PI * 2);
-      ctx.strokeStyle = vizTheme.bg.cardIdle;
-      ctx.lineWidth   = 0.8;
-      ctx.stroke();
+      ctx.globalAlpha = isDim ? 0.18 : 1;
+      ctx.beginPath(); ctx.arc(node.ix, node.iy, NODE_R, 0, Math.PI * 2);
+      ctx.strokeStyle = vizTheme.bg.cardIdle; ctx.lineWidth = 0.8; ctx.stroke();
       ctx.globalAlpha = 1;
 
-      // Label under hovered node
-      if (isHovNode && node.label) {
-        ctx.fillStyle    = vizTheme.text.primary;
-        ctx.font         = '7px monospace';
-        ctx.textBaseline = 'top';
-        ctx.textAlign    = 'center';
+      if (isHov && node.label) {
+        ctx.fillStyle = vizTheme.text.primary; ctx.font = '7px monospace';
+        ctx.textBaseline = 'top'; ctx.textAlign = 'center';
         ctx.fillText(node.label, node.ix, node.iy + NODE_R + 2, 60);
       }
-
-      // Small label always shown for terminal and initial nodes (when not hovering anything)
       if (!activeInnerNode && (node.isInitial || node.hasOutput)) {
-        ctx.fillStyle    = node.isInitial ? vizTheme.accent.current : COLOR_TERMINAL;
-        ctx.font         = '6px monospace';
-        ctx.textBaseline = 'bottom';
-        ctx.textAlign    = 'center';
-        ctx.globalAlpha  = 0.7;
+        ctx.fillStyle = node.isInitial ? vizTheme.accent.current : COLOR_TERMINAL;
+        ctx.font = '6px monospace'; ctx.textBaseline = 'bottom'; ctx.textAlign = 'center';
+        ctx.globalAlpha = 0.7;
         ctx.fillText(node.label.slice(0, 8), node.ix, node.iy - NODE_R - 1, 50);
-        ctx.globalAlpha  = 1;
+        ctx.globalAlpha = 1;
       }
     }
   }
 
-  /** Draw a self-loop arc above a node. */
   private _drawSelfLoop(ctx: CanvasRenderingContext2D, node: InnerNode): void {
-    const r  = 8;
-    const ox = node.ix, oy = node.iy;
+    const r = 8, ox = node.ix, oy = node.iy;
     ctx.beginPath();
     ctx.arc(ox + r, oy - r, r, Math.PI * 0.9, Math.PI * 2.1, false);
     ctx.stroke();
-    // Tiny arrowhead at the base of the self-loop
     ctx.beginPath();
     ctx.moveTo(ox, oy - NODE_R);
     ctx.lineTo(ox - 3, oy - NODE_R - 4);
@@ -1253,97 +1067,8 @@ export class TobiasRenderer {
     ctx.fill();
   }
 
-  /**
-   * Footer bar: shows active CES node names (cyan, left) and just-fired node
-   * names (amber, right).  Falls back to raw input/output vector dots when no
-   * per-node state has arrived yet.
-   */
-  private _drawFooter(node: CardNode): void {
-    const ctx = this._ctx;
-    const m = node.machine;
-    const footerY = node.h - FOOTER_H;
-
-    ctx.fillStyle = '#0d1017';
-    ctx.fillRect(0, footerY, node.w, FOOTER_H);
-
-    ctx.beginPath();
-    ctx.moveTo(0, footerY);
-    ctx.lineTo(node.w, footerY);
-    ctx.strokeStyle = vizTheme.outline.idle;
-    ctx.lineWidth   = 0.5;
-    ctx.stroke();
-
-    const midY = footerY + FOOTER_H / 2;
-    ctx.font = '7px monospace';
-    ctx.textBaseline = 'middle';
-
-    // Collect per-node CES states from the inner graph
-    const activeNodes  = node.innerGraph.nodes.filter(n => n.isActive && !n.justFired);
-    const firedNodes   = node.innerGraph.nodes.filter(n => n.justFired);
-
-    if (activeNodes.length > 0 || firedNodes.length > 0) {
-      // ── CES node mode: show node labels ─────────────────────────────────
-      if (activeNodes.length > 0) {
-        const labels = activeNodes.slice(0, 3).map(n => n.label.slice(0, 9)).join(' ');
-        ctx.textAlign = 'left';
-        ctx.fillStyle = COLOR_ACTIVE;
-        ctx.globalAlpha = 0.85;
-        ctx.fillText('▸ ' + labels, 4, midY, node.w / 2 - 6);
-        ctx.globalAlpha = 1;
-      }
-      if (firedNodes.length > 0) {
-        const labels = firedNodes.slice(0, 3).map(n => n.label.slice(0, 9)).join(' ');
-        ctx.textAlign = 'right';
-        ctx.fillStyle = COLOR_TERMINAL;
-        ctx.globalAlpha = 0.9;
-        ctx.fillText(labels + ' ↯', node.w - 4, midY, node.w / 2 - 6);
-        ctx.globalAlpha = 1;
-      }
-      return;
-    }
-
-    // ── Fallback: raw vector dots when no per-node state available ───────
-    const iv = m.latestInputVector;
-    const ov = m.latestOutputVector;
-
-    if (!iv && !ov) {
-      ctx.fillStyle = vizTheme.text.muted;
-      ctx.textAlign = 'center';
-      ctx.fillText('awaiting data', node.w / 2, midY);
-      return;
-    }
-
-    if (iv && iv.length > 0) {
-      const max = Math.min(iv.length, 8), gap = 7, startX = 6;
-      ctx.textAlign = 'left';
-      ctx.fillStyle = vizTheme.text.muted;
-      ctx.fillText('in', startX, midY);
-      for (let i = 0; i < max; i++) {
-        const v = Math.max(0, Math.min(1, iv[i]));
-        ctx.beginPath();
-        ctx.arc(startX + 16 + i * gap, midY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(100,200,255,${0.12 + v * 0.88})`;
-        ctx.fill();
-      }
-    }
-
-    if (ov && ov.length > 0) {
-      const max = Math.min(ov.length, 4), gap = 7, endX = node.w - 6;
-      ctx.textAlign = 'right';
-      ctx.fillStyle = vizTheme.text.muted;
-      ctx.fillText('out', endX, midY);
-      for (let i = 0; i < max; i++) {
-        const v = Math.max(0, Math.min(1, ov[i]));
-        ctx.beginPath();
-        ctx.arc(endX - 16 - (max - 1 - i) * gap, midY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(168,85,247,${0.12 + v * 0.88})`;
-        ctx.fill();
-      }
-    }
-  }
-
   // ---------------------------------------------------------------------------
-  // Coordinate helpers + hit testing
+  // Coordinate / hit-testing helpers
   // ---------------------------------------------------------------------------
 
   private _toWorld(cssX: number, cssY: number): { x: number; y: number } {
@@ -1353,44 +1078,95 @@ export class TobiasRenderer {
     };
   }
 
-  private _hitTestCard(wx: number, wy: number): CardNode | null {
-    for (const c of this._cards) {
-      const lx = (c.x ?? 0) - c.w / 2, ty = (c.y ?? 0) - c.h / 2;
-      if (wx >= lx && wx <= lx + c.w && wy >= ty && wy <= ty + c.h) return c;
+  private _hitTestBubble(wx: number, wy: number): MachineNode | null {
+    for (const node of this._nodes) {
+      const pos = this._getBubblePos(node.id);
+      if (Math.hypot(wx - pos.cx, wy - pos.cy) <= BUBBLE_R + HIT_EXTRA) return node;
     }
     return null;
   }
 
-  /**
-   * Hit-test the domain hull region using the polygon/rect cached by the
-   * last _drawDomainHulls pass. This matches what the user sees instead of
-   * the old per-card-bbox approximation, so dragging in the space *between*
-   * cards in the same domain still starts a domain-drag.
-   */
-  private _hitTestHull(wx: number, wy: number): DomainId | null {
-    // Single-card domains: axis-aligned padded rect.
-    for (const [domainId, r] of this._hullRects) {
-      if (wx >= r.lx && wx <= r.rx && wy >= r.ty && wy <= r.by) return domainId;
-    }
-    // Multi-card domains: point-in-polygon against the convex hull.
-    for (const [domainId, poly] of this._hullPolygons) {
-      if (d3.polygonContains(poly, [wx, wy])) return domainId;
-    }
-    return null;
+  /** Hit test whether a CSS-pixel point is inside the currently expanded overlay card. */
+  private _hitTestExpandedCard(cssX: number, cssY: number): boolean {
+    if (!this._expandedId || this._expandT < 0.5) return false;
+    const node = this._nodes.find(n => n.id === this._expandedId);
+    if (!node) return false;
+    const vp    = this._viewport;
+    const pos   = this._getBubblePos(node.id);
+    const bsx   = pos.cx * vp.scale + vp.tx;
+    const bsy   = pos.cy * vp.scale + vp.ty;
+    const cardW = EXP_W;
+    const cardH = Math.min(node.cardH, this._cssH - 48);
+    const cx    = Math.max(cardW / 2 + 12, Math.min(this._cssW - cardW / 2 - 12, bsx));
+    const cy    = Math.max(cardH / 2 + 12, Math.min(this._cssH - cardH / 2 - 12, bsy));
+    return cssX >= cx - cardW / 2 && cssX <= cx + cardW / 2
+        && cssY >= cy - cardH / 2 && cssY <= cy + cardH / 2;
   }
 
   private _updateHover(wx: number, wy: number): void {
-    const card = this._hitTestCard(wx, wy);
-    if (!card) { this._hoveredCardId = null; this._hoveredInnerNodeId = null; return; }
-    this._hoveredCardId = card.id;
-    const lx = (card.x ?? 0) - card.w / 2, ty = (card.y ?? 0) - card.h / 2;
-    const innerX = wx - lx - PAD;
-    const innerY = wy - ty - card.headerH - PAD;
+    const node = this._hitTestBubble(wx, wy);
+    if (!node) { this._hoveredCardId = null; this._hoveredInnerNodeId = null; return; }
+    this._hoveredCardId = node.id;
+
+    // Inner-node hover for the expanded card is handled in _updateExpandedHover (has CSS coords)
+    if (this._expandedId !== node.id) {
+      this._hoveredInnerNodeId = null;
+    }
+  }
+
+  /** Update inner-node hover for the expanded card (CSS-pixel mouse coords). */
+  private _updateExpandedHover(cssX: number, cssY: number): void {
+    if (!this._expandedId || this._expandT < 0.8) return;
+    const node = this._nodes.find(n => n.id === this._expandedId);
+    if (!node) return;
+    const vp    = this._viewport;
+    const pos   = this._getBubblePos(node.id);
+    const bsx   = pos.cx * vp.scale + vp.tx;
+    const bsy   = pos.cy * vp.scale + vp.ty;
+    const cardW = EXP_W;
+    const cardH = Math.min(node.cardH, this._cssH - 48);
+    const cardCX = Math.max(cardW / 2 + 12, Math.min(this._cssW - cardW / 2 - 12, bsx));
+    const cardCY = Math.max(cardH / 2 + 12, Math.min(this._cssH - cardH / 2 - 12, bsy));
+    // Inner-graph origin in screen coords
+    const igOriginX = cardCX - cardW / 2 + PAD;
+    const igOriginY = cardCY - cardH / 2 + EXP_HEADER + PAD;
+    const localX = cssX - igOriginX;
+    const localY = cssY - igOriginY;
     let hitId: string | null = null;
-    for (const n of card.innerGraph.nodes) {
-      if (Math.hypot(innerX - n.ix, innerY - n.iy) <= NODE_R + HIT_EXTRA) { hitId = n.id; break; }
+    for (const n of node.innerGraph.nodes) {
+      if (Math.hypot(localX - n.ix, localY - n.iy) <= NODE_R + HIT_EXTRA) { hitId = n.id; break; }
     }
     this._hoveredInnerNodeId = hitId;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Live view: enter / exit
+  // ---------------------------------------------------------------------------
+
+  private _enterLiveView(node: MachineNode): void {
+    this._savedViewport = { ...this._viewport };
+    this._liveViewId    = node.id;
+    this._expandedId    = null;
+    this._expandT       = 0;
+    this._expandDir     = 0;
+    // Frame the inner graph to fill the canvas below the HUD bar
+    const g    = node.innerGraph;
+    const avW  = this._cssW - 2 * PAD;
+    const avH  = this._cssH - LIVE_HDR - 2 * PAD;
+    const s    = Math.min(avW / Math.max(1, INNER_W), avH / Math.max(1, g.totalHeight), 5);
+    this._viewport = {
+      tx: (this._cssW - INNER_W * s) / 2,
+      ty: LIVE_HDR + (avH - g.totalHeight * s) / 2 + PAD,
+      scale: s,
+    };
+    this._hoveredCardId = node.id;  // keep inner-node hover active in live view
+  }
+
+  private _exitLiveView(): void {
+    this._liveViewId = null;
+    if (this._savedViewport) { this._viewport = this._savedViewport; this._savedViewport = null; }
+    this._hoveredCardId = null;
+    this._hoveredInnerNodeId = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -1420,7 +1196,7 @@ export class TobiasRenderer {
   private _onWheel = (e: WheelEvent): void => {
     e.preventDefault();
     const factor   = Math.pow(0.95, e.deltaY / 40);
-    const newScale = Math.max(0.1, Math.min(5, this._viewport.scale * factor));
+    const newScale = Math.max(0.1, Math.min(8, this._viewport.scale * factor));
     const worldX   = (e.offsetX - this._viewport.tx) / this._viewport.scale;
     const worldY   = (e.offsetY - this._viewport.ty) / this._viewport.scale;
     this._viewport.scale = newScale;
@@ -1429,169 +1205,117 @@ export class TobiasRenderer {
   };
 
   private _onMouseDown = (e: MouseEvent): void => {
-    this._mouseDownX = e.offsetX; this._mouseDownY = e.offsetY;
-    this._dragPrevX  = e.offsetX; this._dragPrevY  = e.offsetY;
+    this._mouseDownX = e.offsetX;
+    this._mouseDownY = e.offsetY;
     this._hasDragged = false;
-    const wp = this._toWorld(e.offsetX, e.offsetY);
-    const hc = this._hitTestCard(wp.x, wp.y);
-    if (hc) {
-      this._isDraggingCard = true; this._dragCardNode = hc;
-      hc.fx = hc.x ?? 0; hc.fy = hc.y ?? 0;
-      if (this._simulation) this._simulation.alphaTarget(0.3).restart();
-      this._canvas.style.cursor = 'grabbing';
 
-      // Double-click anywhere on card = unpin so force layout can move it again
-      const now = Date.now();
-      if (now - this._lastClickTime < 300 && this._lastClickCardId === hc.id) {
-        hc.fx = null; hc.fy = null;
-        this._isDraggingCard = false; this._dragCardNode = null;
-        if (this._simulation) this._simulation.alpha(0.3).restart();
-        this._saveLayout();
-        this._canvas.style.cursor = 'pointer';
-      }
-      this._lastClickTime   = now;
-      this._lastClickCardId = hc.id;
-    } else {
-      // No card hit — check if we clicked inside a domain hull bubble.
-      // If so, start a domain drag that moves all cards in that domain by
-      // the same delta, keeping same-domain clusters together.
-      const dom = this._hitTestHull(wp.x, wp.y);
-      if (dom) {
-        this._isDraggingDomain = true;
-        this._dragDomainId = dom;
-        this._dragDomainStartX = wp.x;
-        this._dragDomainStartY = wp.y;
-        this._dragDomainCardStarts.clear();
-        for (const c of this._cards) {
-          if (c.domain === dom) {
-            this._dragDomainCardStarts.set(c.id, { x: c.x ?? 0, y: c.y ?? 0 });
-            // Pin each card so the simulation's domain/link forces don't
-            // fight the drag. Pins are released (or re-set as the new
-            // resting position) on mouseup.
-            c.fx = c.x ?? 0;
-            c.fy = c.y ?? 0;
-          }
-        }
-        if (this._simulation) this._simulation.alphaTarget(0.1).restart();
-        this._canvas.style.cursor = 'grabbing';
+    // Live view: only check for back-button click
+    if (this._liveViewId) {
+      if (e.offsetX >= 12 && e.offsetX <= 84 && e.offsetY >= 12 && e.offsetY <= 36) {
+        this._exitLiveView();
       } else {
         this._isPanning = true;
-        this._canvas.style.cursor = 'grab';
       }
+      return;
+    }
+
+    const wp   = this._toWorld(e.offsetX, e.offsetY);
+    const node = this._hitTestBubble(wp.x, wp.y);
+
+    if (node) {
+      this._isDraggingBubble = true;
+      this._dragNode         = node;
+      const pos = this._getBubblePos(node.id);
+      this._dragNodeStartCX = pos.cx;
+      this._dragNodeStartCY = pos.cy;
+      this._dragStartWorldX = wp.x;
+      this._dragStartWorldY = wp.y;
+      this._canvas.style.cursor = 'grabbing';
+    } else if (this._expandedId && this._expandT > 0.5) {
+      // Click outside expanded card → collapse
+      if (!this._hitTestExpandedCard(e.offsetX, e.offsetY)) {
+        this._expandDir = -1;
+      }
+      // Otherwise click is inside the overlay — handled on mouseUp as a collapse toggle
+    } else {
+      this._isPanning = true;
+      this._canvas.style.cursor = 'grab';
     }
   };
 
   private _onMouseMove = (e: MouseEvent): void => {
-    if (Math.hypot(e.offsetX - this._mouseDownX, e.offsetY - this._mouseDownY) > 3)
-      this._hasDragged = true;
-    // Clamp all drag-driven pinning to the card's domain region so users
-    // can't drag a bubble off-canvas — this is what prevents the hull from
-    // "extending indefinitely" to the right when the user drags past the
-    // screen edge.  Regions overlap generously (see DOMAIN_REGION_EXTENT)
-    // so bubbles have room to move and cards stay visible.
-    const cssW = this._canvas.width  / this._dpr || 800;
-    const cssH = this._canvas.height / this._dpr || 600;
-    if (this._isDraggingCard && this._dragCardNode) {
+    const dist = Math.hypot(e.offsetX - this._mouseDownX, e.offsetY - this._mouseDownY);
+    if (dist > 3) this._hasDragged = true;
+
+    if (this._isDraggingBubble && this._dragNode) {
       const wp = this._toWorld(e.offsetX, e.offsetY);
-      const r = domainRegion(this._dragCardNode.domain, cssW, cssH);
-      const clamped = clampToRegion(wp.x, wp.y, this._dragCardNode.w, this._dragCardNode.h, r);
-      this._dragCardNode.fx = clamped.x; this._dragCardNode.fy = clamped.y;
-    } else if (this._isDraggingDomain && this._dragDomainId) {
-      const wp = this._toWorld(e.offsetX, e.offsetY);
-      const dx = wp.x - this._dragDomainStartX;
-      const dy = wp.y - this._dragDomainStartY;
-      const r = domainRegion(this._dragDomainId, cssW, cssH);
-      for (const c of this._cards) {
-        if (c.domain !== this._dragDomainId) continue;
-        const start = this._dragDomainCardStarts.get(c.id);
-        if (!start) continue;
-        const clamped = clampToRegion(start.x + dx, start.y + dy, c.w, c.h, r);
-        c.fx = clamped.x;
-        c.fy = clamped.y;
-      }
+      const dx = wp.x - this._dragStartWorldX;
+      const dy = wp.y - this._dragStartWorldY;
+      this._pinnedPos.set(this._dragNode.id, {
+        cx: this._dragNodeStartCX + dx,
+        cy: this._dragNodeStartCY + dy,
+      });
     } else if (this._isPanning) {
-      this._viewport.tx += e.offsetX - this._dragPrevX;
-      this._viewport.ty += e.offsetY - this._dragPrevY;
+      this._viewport.tx += e.movementX || 0;
+      this._viewport.ty += e.movementY || 0;
     } else {
       const wp = this._toWorld(e.offsetX, e.offsetY);
       this._updateHover(wp.x, wp.y);
-      const hc = this._hitTestCard(wp.x, wp.y);
-      if (hc) {
-        this._canvas.style.cursor = 'pointer';
-      } else {
-        // Show a grab cursor over empty hull area so users know the bubble
-        // is draggable. Falls back to default cursor outside any hull.
-        const dom = this._hitTestHull(wp.x, wp.y);
-        this._canvas.style.cursor = dom ? 'grab' : 'default';
-      }
+      this._updateExpandedHover(e.offsetX, e.offsetY);
+      const hovered = this._hitTestBubble(wp.x, wp.y);
+      this._canvas.style.cursor = hovered ? 'pointer' : 'default';
     }
-    this._dragPrevX = e.offsetX; this._dragPrevY = e.offsetY;
   };
 
-  private _onMouseUp = (e: MouseEvent): void => {
-    if (!this._hasDragged) {
-      const wp = this._toWorld(e.offsetX, e.offsetY);
-      const hc = this._hitTestCard(wp.x, wp.y);
-      if (hc) {
-        const newId = this._selectedId === hc.id ? null : hc.id;
-        this._selectedId = newId;
-        this._onSelectMachine(newId);
+  private _onMouseUp = (_e: MouseEvent): void => {
+    if (this._isDraggingBubble && this._dragNode) {
+      if (this._hasDragged) {
+        this._saveLayout();
       } else {
-        this._selectedId = null;
-        this._onSelectMachine(null);
-      }
-    }
-    if (this._isDraggingCard && this._dragCardNode) {
-      if (this._hasDragged) {
-        // Pin the card at its dropped position so it stays put
-        this._dragCardNode.fx = this._dragCardNode.x ?? this._dragCardNode.fx;
-        this._dragCardNode.fy = this._dragCardNode.y ?? this._dragCardNode.fy;
-        this._saveLayout();
-      }
-      this._dragCardNode = null;
-      if (this._simulation) this._simulation.alphaTarget(0);
-    }
-    if (this._isDraggingDomain && this._dragDomainId) {
-      if (this._hasDragged) {
-        // Pin every moved card at its new position so the whole bubble
-        // stays where the user placed it.
-        for (const c of this._cards) {
-          if (c.domain !== this._dragDomainId) continue;
-          c.fx = c.x ?? c.fx ?? null;
-          c.fy = c.y ?? c.fy ?? null;
+        // Plain click on bubble
+        const now = Date.now();
+        const isDouble = now - this._lastClickTime < 300 && this._lastClickId === this._dragNode.id;
+
+        if (isDouble) {
+          // Double-click → live sequence view
+          this._enterLiveView(this._dragNode);
+        } else if (this._expandedId === this._dragNode.id) {
+          // Click on already-expanded bubble → collapse
+          this._expandDir = -1;
+        } else {
+          // Click on different bubble → expand
+          this._expandedId = this._dragNode.id;
+          this._expandT    = 0;
+          this._expandDir  = 1;
+          this._selectedId = this._dragNode.id;
+          this._onSelectMachine(this._dragNode.id);
         }
-        this._saveLayout();
+
+        this._lastClickTime = now;
+        this._lastClickId   = this._dragNode.id;
       }
-      this._dragDomainId = null;
-      this._dragDomainCardStarts.clear();
-      if (this._simulation) this._simulation.alphaTarget(0);
+    } else if (this._isPanning && !this._hasDragged) {
+      // Click on background → collapse expanded card / deselect
+      if (this._expandedId) {
+        this._expandDir = -1;
+      }
+      this._selectedId = null;
+      this._onSelectMachine(null);
     }
-    this._isDraggingCard = false; this._isDraggingDomain = false; this._isPanning = false;
+
+    this._isDraggingBubble = false;
+    this._dragNode         = null;
+    this._isPanning        = false;
     this._canvas.style.cursor = 'default';
   };
 
   private _onMouseLeave = (): void => {
-    if (this._isDraggingCard && this._dragCardNode) {
-      // Pin at current position when drag leaves canvas
-      this._dragCardNode.fx = this._dragCardNode.x ?? this._dragCardNode.fx;
-      this._dragCardNode.fy = this._dragCardNode.y ?? this._dragCardNode.fy;
-      this._saveLayout();
-      this._dragCardNode = null;
-      if (this._simulation) this._simulation.alphaTarget(0);
-    }
-    if (this._isDraggingDomain && this._dragDomainId) {
-      for (const c of this._cards) {
-        if (c.domain !== this._dragDomainId) continue;
-        c.fx = c.x ?? c.fx ?? null;
-        c.fy = c.y ?? c.fy ?? null;
-      }
-      this._saveLayout();
-      this._dragDomainId = null;
-      this._dragDomainCardStarts.clear();
-      if (this._simulation) this._simulation.alphaTarget(0);
-    }
-    this._isDraggingCard = false; this._isDraggingDomain = false; this._isPanning = false;
-    this._hoveredCardId = null; this._hoveredInnerNodeId = null;
+    if (this._isDraggingBubble && this._dragNode && this._hasDragged) this._saveLayout();
+    this._isDraggingBubble   = false;
+    this._dragNode           = null;
+    this._isPanning          = false;
+    this._hoveredCardId      = null;
+    this._hoveredInnerNodeId = null;
     this._canvas.style.cursor = 'default';
   };
 }
