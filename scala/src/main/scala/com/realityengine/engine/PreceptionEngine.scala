@@ -37,13 +37,13 @@ class PreceptionEngine(val universalDimension: Int = 256) {
   /** Batch resolve for multiple machines from the same snapshot (input-atomic). */
   def resolveInputsForMachines(
     universalInputSpace: Vector[Double],
-    machines:            Map[String, Machine]
+    machines:            scala.collection.Map[String, Machine]
   ): Map[String, Vector[Double]] = {
     require(universalInputSpace.length == universalDimension,
       s"Universal input space must be $universalDimension bytes, got ${universalInputSpace.length}")
     perceptualSpace.setPerceptualVector(universalInputSpace)
 
-    machines.flatMap { case (machineId, machine) =>
+    machines.iterator.flatMap { case (machineId, machine) =>
       machine.perceptualMapping match {
         case Some(mapping) =>
           try Some(machineId -> perceptualSpace.extractMachineInput(mapping))
@@ -55,7 +55,7 @@ class PreceptionEngine(val universalDimension: Int = 256) {
           System.err.println(s"Machine $machineId (${machine.name}) has no perceptual mapping, skipping")
           None
       }
-    }
+    }.toMap
   }
 
   def mergeOutputIntoPerceptualSpace(outputVector: Vector[Double], mapping: PerceptualMapping): Unit =
@@ -73,7 +73,7 @@ class PreceptionEngine(val universalDimension: Int = 256) {
 
   def getDiagnosticMapping(
     universalInputSpace: Vector[Double],
-    machines:            Map[String, Machine]
+    machines:            scala.collection.Map[String, Machine]
   ): io.circe.Json = {
     import io.circe.Json
     import io.circe.syntax._

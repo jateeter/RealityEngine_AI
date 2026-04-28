@@ -6,8 +6,11 @@ import akka.util.Timeout
 import com.realityengine.actors.MachineActor
 import com.realityengine.models._
 import com.realityengine.services.VectorStore
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.atomic.AtomicInteger
 import io.circe.Json
 
 case class MachineCheckpoint(
@@ -29,9 +32,11 @@ case class MachineCheckpoint(
  *  - Checkpoint / what-if analytic workflows
  *  - Interface with VectorStore for persistence
  *
- * RC-1 fix: each Machine is owned by a MachineActor whose mailbox serialises
- * all processInput calls, eliminating the shared-mutable-buffer race condition.
- * Machines that belong to different actors process in parallel via Future.sequence.
+ * RC-1: each Machine is owned by a MachineActor whose FIFO mailbox serialises
+ *       processInput calls per machine; cross-machine processing is parallel.
+ * RC-2: all top-level registries use TrieMap (lock-free reads, atomic CAS
+ *       writes) instead of unsynchronised var reassignment. The legacy history
+ *       deque uses ConcurrentLinkedDeque + AtomicInteger size counter.
  */
 class RealityEngine(
   val vectorStore:        VectorStore,
@@ -42,14 +47,19 @@ class RealityEngine(
 
   import RealityEngine.askTimeout
 
-  private var sequences:    Map[String, CriticalEventSequence] = Map.empty
-  private var machines:     Map[String, Machine]               = Map.empty
-  private var machineActors: Map[String, ActorRef]             = Map.empty
-  private var checkpoints:  Map[String, Map[String, MachineCheckpoint]] = Map.empty
+  // ── Thread-safe registries (RC-2) ─────────────────────────────────────────
+  // TrieMap: lock-free reads via a RDCSS snapshot; writes use CAS.
+  // Machine registration is rare; reads during processing dominate → ideal fit.
 
-  // Circular buffer: newest at index 0, oldest at the tail.
-  private val transitionHistory: scala.collection.mutable.ArrayDeque[TransitionResult] =
-    scala.collection.mutable.ArrayDeque.empty
+  private val sequences:    TrieMap[String, CriticalEventSequence]                 = TrieMap.empty
+  private val machines:     TrieMap[String, Machine]                                = TrieMap.empty
+  private val machineActors: TrieMap[String, ActorRef]                              = TrieMap.empty
+  private val checkpoints:  TrieMap[String, TrieMap[String, MachineCheckpoint]]    = TrieMap.empty
+
+  // ConcurrentLinkedDeque: thread-safe prepend/pollLast; AtomicInteger tracks
+  // approximate size so we can cap without taking a global lock.
+  private val transitionHistory = new ConcurrentLinkedDeque[TransitionResult]()
+  private val historySize       = new AtomicInteger(0)
 
   val preceptionEngine = new PreceptionEngine(universalDimension)
 
@@ -65,11 +75,11 @@ class RealityEngine(
   def addSequence(seq: CriticalEventSequence): Unit = {
     val (valid, errors) = seq.validate()
     require(valid, s"Invalid sequence: ${errors.mkString(", ")}")
-    sequences = sequences + (seq.id -> seq)
+    sequences.put(seq.id, seq)
     println(s"Added sequence: ${seq.name} (${seq.id})")
   }
 
-  def removeSequence(sequenceId: String): Unit = { sequences = sequences - sequenceId }
+  def removeSequence(sequenceId: String): Unit = sequences.remove(sequenceId)
   def getSequence(id: String): Option[CriticalEventSequence] = sequences.get(id)
   def getAllSequences: List[CriticalEventSequence] = sequences.values.toList
 
@@ -77,34 +87,27 @@ class RealityEngine(
 
   def addMachine(machine: Machine): Unit = {
     val actor = system.actorOf(MachineActor.props(machine))
-    machines      = machines      + (machine.id -> machine)
-    machineActors = machineActors + (machine.id -> actor)
+    machines.put(machine.id, machine)
+    machineActors.put(machine.id, actor)
     machine.getAllSequences.foreach(addSequence)
     println(s"Added machine: ${machine.name} (${machine.id}) with ${machine.getSequenceCount} sequences")
   }
 
-  def removeMachine(machineId: String): Boolean = {
-    machines.get(machineId) match {
+  def removeMachine(machineId: String): Boolean =
+    machines.remove(machineId) match {
       case None => false
       case Some(machine) =>
-        machine.getSequenceIds.foreach(removeSequence)
-        machineActors.get(machineId).foreach(system.stop)
-        machines      = machines      - machineId
-        machineActors = machineActors - machineId
+        machine.getSequenceIds.foreach(sequences.remove)
+        machineActors.remove(machineId).foreach(system.stop)
         true
     }
-  }
 
   def getMachine(id: String): Option[Machine]  = machines.get(id)
   def getAllMachines: List[Machine]             = machines.values.toList
 
   // ── Processing ────────────────────────────────────────────────────────────
 
-  /**
-   * Process a machine-dimension input vector through a specific machine via
-   * the PreceptionEngine.
-   */
-  def processMachineInput(machineId: String, inputVector: Vector[Double]): Future[MachineTransitionResult] = {
+  def processMachineInput(machineId: String, inputVector: Vector[Double]): Future[MachineTransitionResult] =
     machines.get(machineId) match {
       case None => Future.failed(new NoSuchElementException(s"Machine not found: $machineId"))
       case Some(machine) =>
@@ -122,17 +125,12 @@ class RealityEngine(
             }
         }
     }
-  }
 
-  /**
-   * Process a full universal input space through one specific machine.
-   * Routes through the machine's actor mailbox for per-machine atomicity.
-   */
-  def processUniversalInput(universalInputSpace: Vector[Double], machineId: String): Future[MachineTransitionResult] = {
+  def processUniversalInput(universalInputSpace: Vector[Double], machineId: String): Future[MachineTransitionResult] =
     machines.get(machineId) match {
       case None => Future.failed(new NoSuchElementException(s"Machine not found: $machineId"))
       case Some(machine) =>
-        val actor       = machineActors(machineId)
+        val actor        = machineActors(machineId)
         val machineInput = preceptionEngine.resolveInputEventVectorForMachine(universalInputSpace, machine)
 
         val tagMachineId   = Json.fromString(machineId)
@@ -169,12 +167,11 @@ class RealityEngine(
           })
         }
     }
-  }
 
   /**
    * Process universal input through ALL machines in parallel across actors.
    *
-   * Phase 1: snapshot all machine inputs (sequential, prevents read-your-own-write
+   * Phase 1: snapshot all machine inputs (sequential — prevents read-your-own-write
    *          within a single cycle).
    * Phase 2: dispatch ProcessInput to every machine actor simultaneously; each
    *          actor's FIFO mailbox serialises intra-machine calls.
@@ -185,8 +182,8 @@ class RealityEngine(
     val resolvedInputs = preceptionEngine.resolveInputsForMachines(universalInputSpace, machines)
     val tagDim         = Json.fromInt(universalInputSpace.length)
 
-    val askFutures: Iterable[Future[(Machine, String, MachineTransitionResult)]] =
-      machines.flatMap { case (machineId, machine) =>
+    val askFutures: List[Future[(Machine, String, MachineTransitionResult)]] =
+      machines.iterator.flatMap { case (machineId, machine) =>
         for {
           machineInput <- resolvedInputs.get(machineId)
           actor        <- machineActors.get(machineId)
@@ -208,7 +205,7 @@ class RealityEngine(
             throw e
           }
         }
-      }
+      }.toList
 
     Future.sequence(askFutures).map { triples =>
       // Phase 3: merge all outputs — sequential within this callback.
@@ -231,12 +228,6 @@ class RealityEngine(
 
   // ── What-if ───────────────────────────────────────────────────────────────
 
-  // What-if operations clone the machine and call processInput on the clone —
-  // no actor routing needed since the clone is a throwaway private copy.
-  // Note: the clone reflects machine definition state (sequences, vectors) but
-  // not live actor-owned runtime state (active vector pointers). This is an
-  // accepted approximation for the starting-point implementation.
-
   def processWhatIf(machineId: String, inputVector: Vector[Double]): MachineTransitionResult = {
     val machine = machines.getOrElse(machineId, throw new NoSuchElementException(s"Machine not found: $machineId"))
     machine.clone().processInput(inputVector)
@@ -250,22 +241,16 @@ class RealityEngine(
 
   // ── Checkpoints ───────────────────────────────────────────────────────────
 
-  // Checkpoint snapshots are taken from the machine definition in the `machines`
-  // map. In the starting-point implementation this is the same Machine instance
-  // the actor holds (shared reference). For full correctness the actor should be
-  // asked for a live snapshot via GetSnapshot; that is a follow-on step.
-
   def createCheckpoint(machineId: String, label: Option[String] = None): String = {
     val machine = machines.getOrElse(machineId, throw new NoSuchElementException(s"Machine not found: $machineId"))
     val cpId    = s"cp-${System.currentTimeMillis()}-${java.util.UUID.randomUUID().toString.take(9)}"
     val cp      = MachineCheckpoint(cpId, machineId, machine.name, label, System.currentTimeMillis(), machine.clone())
-    val bucket  = checkpoints.getOrElse(machineId, Map.empty)
-    checkpoints = checkpoints + (machineId -> (bucket + (cpId -> cp)))
+    checkpoints.getOrElseUpdate(machineId, TrieMap.empty).put(cpId, cp)
     cpId
   }
 
   def listCheckpoints(machineId: String): List[MachineCheckpoint] =
-    checkpoints.getOrElse(machineId, Map.empty).values.toList
+    checkpoints.get(machineId).fold(List.empty[MachineCheckpoint])(_.values.toList)
 
   def restoreCheckpoint(machineId: String, checkpointId: String): Unit = {
     val cp = checkpoints.get(machineId).flatMap(_.get(checkpointId))
@@ -274,16 +259,8 @@ class RealityEngine(
     addMachine(cp.snapshot.clone())
   }
 
-  def deleteCheckpoint(machineId: String, checkpointId: String): Boolean = {
-    checkpoints.get(machineId) match {
-      case None => false
-      case Some(bucket) =>
-        if (bucket.contains(checkpointId)) {
-          checkpoints = checkpoints + (machineId -> (bucket - checkpointId))
-          true
-        } else false
-    }
-  }
+  def deleteCheckpoint(machineId: String, checkpointId: String): Boolean =
+    checkpoints.get(machineId).exists(_.remove(checkpointId).isDefined)
 
   // ── Legacy sequence-level processing ─────────────────────────────────────
 
@@ -308,10 +285,10 @@ class RealityEngine(
   // ── Sequences active vectors ──────────────────────────────────────────────
 
   def getAllActiveVectors: Map[String, List[RealityVector]] =
-    sequences.flatMap { case (seqId, seq) =>
-      val active = seq.getActiveVectors
-      if (active.nonEmpty) Some(seqId -> active) else None
-    }
+    sequences.iterator
+      .map { case (seqId, seq) => seqId -> seq.getActiveVectors }
+      .filter { case (_, active) => active.nonEmpty }
+      .toMap
 
   def resetAllSequences(): Unit = {
     machineActors.values.foreach(_ ! MachineActor.Reset)
@@ -320,7 +297,7 @@ class RealityEngine(
   }
 
   def resetSequence(sequenceId: String): Boolean =
-    sequences.get(sequenceId).map { seq => seq.reset(); true }.getOrElse(false)
+    sequences.get(sequenceId).exists { seq => seq.reset(); true }
 
   // ── VectorStore bridge ────────────────────────────────────────────────────
 
@@ -361,22 +338,31 @@ class RealityEngine(
     )
   }
 
-  def getHistory(limit: Option[Int] = None): List[TransitionResult] =
-    limit.fold(transitionHistory.toList)(n => transitionHistory.take(n).toList)
+  def getHistory(limit: Option[Int] = None): List[TransitionResult] = {
+    import scala.jdk.CollectionConverters._
+    val iter = transitionHistory.iterator.asScala
+    limit.fold(iter.toList)(n => iter.take(n).toList)
+  }
 
-  def clearHistory(): Unit = { transitionHistory.clear() }
+  def clearHistory(): Unit = {
+    transitionHistory.clear()
+    historySize.set(0)
+  }
 
   private def addToHistory(result: TransitionResult): Unit = {
-    transitionHistory.prepend(result)
-    if (transitionHistory.size > maxHistorySize)
-      transitionHistory.removeLast()
+    transitionHistory.addFirst(result)
+    // Size cap is approximate: two concurrent addToHistory calls may both see
+    // the counter exceed maxHistorySize and each remove one extra element.
+    // The legacy history path is not latency-critical; occasional ±1 overshoot
+    // is acceptable.
+    if (historySize.incrementAndGet() > maxHistorySize) {
+      transitionHistory.pollLast()
+      historySize.decrementAndGet()
+    }
   }
 }
 
 object RealityEngine {
   val JsonTrue: Json = Json.fromBoolean(true)
-
-  // Ask timeout for MachineActor interactions. Machine processing is fast
-  // (microseconds), so 5 s is a generous safety margin.
   implicit val askTimeout: Timeout = Timeout(5.seconds)
 }
