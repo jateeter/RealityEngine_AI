@@ -6,7 +6,6 @@ import com.realityengine.api.Routes
 import com.realityengine.engine.{PerceptualSpaceSimulator, RealityEngine}
 import com.realityengine.logging.{AuditConfig, AuditLogger}
 import com.realityengine.services.VectorStore
-import sttp.client3.HttpURLConnectionBackend
 
 import java.io.{File, FileInputStream}
 import java.security.{KeyStore, SecureRandom}
@@ -46,13 +45,11 @@ object Main extends App {
     if (tlsEnabled) Some(buildSslContext(keystorePath, keystorePassword, caCertPath))
     else None
 
-  // Set as JVM-wide default so sttp's HttpURLConnectionBackend trusts our CA
-  // for all outgoing HTTPS calls (Qdrant REST API, etc.).
+  // Set as JVM-wide default so the Akka HTTP client (AkkaHttpBackend) trusts
+  // our CA for all outgoing HTTPS calls (Qdrant REST API, etc.).
   sslContext.foreach(SSLContext.setDefault)
 
   // ── Engine bootstrap ──────────────────────────────────────────────────────
-
-  implicit val sttpBackend = HttpURLConnectionBackend()
 
   val vectorStore  = new VectorStore()
   val engine       = new RealityEngine(vectorStore)

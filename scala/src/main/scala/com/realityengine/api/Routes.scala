@@ -18,6 +18,7 @@ import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 import java.io.File
 import java.nio.file.Files
+import java.util.concurrent.atomic.AtomicReference
 import scala.collection.concurrent.TrieMap
 import com.realityengine.logging.{AuditConfig, AuditLogger}
 
@@ -31,7 +32,7 @@ class Routes(
 
   private val perception = new PreceptionOfReality(
     sys.env.getOrElse("VECTOR_DIMENSION", "256").toIntOption.getOrElse(256))
-  private var sampler: Option[RealitySampler] = None
+  private val sampler = new AtomicReference[Option[RealitySampler]](None)
 
   // JSON file cache: path -> (lastModified, rawJson).
   // Invalidated automatically when the file's mtime changes.
@@ -50,15 +51,14 @@ class Routes(
   }
 
   // Staging buffer for chunk-based simulation configure protocol
-  private var sequenceBuffer: Vector[Vector[Double]] = Vector.empty
-  private var sequenceBufferConfig: Option[(RegionMapping, Long, Option[Int])] = None
+  private val sequenceBuffer = new AtomicReference[Vector[Vector[Double]]](Vector.empty)
+  private val sequenceBufferConfig = new AtomicReference[Option[(RegionMapping, Long, Option[Int])]](None)
 
   // Auto-play scheduler
-  private var autoPlayTask: Option[Cancellable] = None
+  private val autoPlayTask = new AtomicReference[Option[Cancellable]](None)
 
   private def cancelAutoPlay(): Unit = {
-    autoPlayTask.foreach(_.cancel())
-    autoPlayTask = None
+    autoPlayTask.getAndSet(None).foreach(_.cancel())
   }
 
   private def startAutoPlay(delayMs: Long): Unit = {
@@ -69,7 +69,7 @@ class Routes(
         case Some(_) => ()
       }
     }
-    autoPlayTask = Some(task)
+    autoPlayTask.set(Some(task))
   }
 
   implicit val exceptionHandler: ExceptionHandler = ExceptionHandler {
@@ -309,13 +309,13 @@ class Routes(
                 case _              => SamplingStrategy.MANUAL
               }.getOrElse(SamplingStrategy.MANUAL)
               val intervalMs = body.hcursor.get[Long]("intervalMs").toOption
-              if (sampler.isEmpty) sampler = Some(new RealitySampler(perception, engine,
-                SamplingConfig(strat, intervalMs)))
-              sampler.get.start()
-              complete(Json.obj("success" -> Json.fromBoolean(true), "stats" -> sampler.get.getStats))
+              if (sampler.get().isEmpty) sampler.compareAndSet(None, Some(new RealitySampler(perception, engine,
+                SamplingConfig(strat, intervalMs))))
+              sampler.get().get.start()
+              complete(Json.obj("success" -> Json.fromBoolean(true), "stats" -> sampler.get().get.getStats))
             } } },
             path("stop") { post {
-              sampler.foreach(_.stop())
+              sampler.get().foreach(_.stop())
               complete(Json.obj("success" -> Json.fromBoolean(true)))
             } },
             path("sample") { post { entity(as[Json]) { body =>
@@ -323,12 +323,12 @@ class Routes(
               val source = body.hcursor.get[String]("source").toOption
               val meta   = body.hcursor.downField("metadata").as[Map[String, Json]].getOrElse(Map.empty)
               val obs    = PreceptionOfReality.createObservation(data, source, meta)
-              if (sampler.isEmpty) sampler = Some(new RealitySampler(perception, engine, SamplingConfig(SamplingStrategy.MANUAL)))
-              val result = sampler.get.sample(obs)
+              if (sampler.get().isEmpty) sampler.compareAndSet(None, Some(new RealitySampler(perception, engine, SamplingConfig(SamplingStrategy.MANUAL))))
+              val result = sampler.get().get.sample(obs)
               complete(Json.obj("success" -> Json.fromBoolean(true), "result" -> result.asJson))
             } } },
             path("stats") { get {
-              val statsJson = sampler.map(_.getStats).getOrElse(Json.obj("isRunning" -> Json.fromBoolean(false), "sampleCount" -> Json.fromInt(0), "bufferSize" -> Json.fromInt(0), "strategy" -> Json.fromString("MANUAL")))
+              val statsJson = sampler.get().map(_.getStats).getOrElse(Json.obj("isRunning" -> Json.fromBoolean(false), "sampleCount" -> Json.fromInt(0), "bufferSize" -> Json.fromInt(0), "strategy" -> Json.fromString("MANUAL")))
               complete(Json.obj("stats" -> statsJson))
             } }
           )
@@ -500,8 +500,8 @@ class Routes(
           concat(
             path("configure" / "chunk") { post { entity(as[Json]) { body =>
               val chunk = body.hcursor.downField("vectors").as[Vector[Vector[Double]]].getOrElse(Vector.empty)
-              if (body.hcursor.downField("reset").as[Boolean].getOrElse(false)) sequenceBuffer = Vector.empty
-              sequenceBuffer = sequenceBuffer ++ chunk
+              if (body.hcursor.downField("reset").as[Boolean].getOrElse(false)) sequenceBuffer.set(Vector.empty)
+              val newLen = sequenceBuffer.updateAndGet(_ ++ chunk).length
               // Accept config from nested "config" field OR top-level fields (backwards compat)
               val cfgSrc = body.hcursor.downField("config").as[Json].toOption.getOrElse(body)
               val c = cfgSrc.hcursor
@@ -512,17 +512,17 @@ class Routes(
                 val iLen = src.downField("inputRegion").get[Int]("length").getOrElse(1)
                 val delay = src.get[Long]("stepDelayMs").getOrElse(100L)
                 val maxS  = src.get[Int]("maxSteps").toOption
-                sequenceBufferConfig = Some((RegionMapping(iOff, iLen), delay, maxS))
+                sequenceBufferConfig.set(Some((RegionMapping(iOff, iLen), delay, maxS)))
               }
-              complete(Json.obj("success" -> Json.fromBoolean(true), "bufferedVectors" -> Json.fromInt(sequenceBuffer.length)))
+              complete(Json.obj("success" -> Json.fromBoolean(true), "bufferedVectors" -> Json.fromInt(newLen)))
             } } },
             path("configure" / "commit") { post {
-              sequenceBufferConfig match {
+              sequenceBufferConfig.get() match {
                 case None => complete(StatusCodes.BadRequest -> Json.obj("error" -> Json.fromString("No config buffered. Send a chunk with config first.")))
                 case Some((region, delay, maxS)) =>
-                  val cfg = SimulationConfig(sequenceBuffer, region, delay, maxS)
+                  val cfg = SimulationConfig(sequenceBuffer.get(), region, delay, maxS)
                   simulator.configure(cfg)
-                  sequenceBuffer = Vector.empty; sequenceBufferConfig = None
+                  sequenceBuffer.set(Vector.empty); sequenceBufferConfig.set(None)
                   complete(Json.obj("success" -> Json.fromBoolean(true)))
               }
             } },

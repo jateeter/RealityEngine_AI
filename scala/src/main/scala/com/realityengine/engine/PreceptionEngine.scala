@@ -20,8 +20,8 @@ class PreceptionEngine(val universalDimension: Int = 256) {
   ): Vector[Double] = {
     require(universalInputSpace.length == universalDimension,
       s"Universal input space must be $universalDimension bytes, got ${universalInputSpace.length}")
-    perceptualSpace.setPerceptualVector(universalInputSpace)
-    perceptualSpace.extractMachineInput(perceptualMapping)
+    val RegionMapping(offset, length) = perceptualMapping.input
+    universalInputSpace.slice(offset, offset + length)
   }
 
   def resolveInputEventVectorForMachine(
@@ -41,13 +41,14 @@ class PreceptionEngine(val universalDimension: Int = 256) {
   ): Map[String, Vector[Double]] = {
     require(universalInputSpace.length == universalDimension,
       s"Universal input space must be $universalDimension bytes, got ${universalInputSpace.length}")
-    perceptualSpace.setPerceptualVector(universalInputSpace)
 
     machines.iterator.flatMap { case (machineId, machine) =>
       machine.perceptualMapping match {
         case Some(mapping) =>
-          try Some(machineId -> perceptualSpace.extractMachineInput(mapping))
-          catch { case e: Exception =>
+          try {
+            val RegionMapping(offset, length) = mapping.input
+            Some(machineId -> universalInputSpace.slice(offset, offset + length))
+          } catch { case e: Exception =>
             System.err.println(s"Failed to resolve input for machine $machineId: ${e.getMessage}")
             None
           }

@@ -55,6 +55,8 @@ class RealityEngine(
   private val machines:     TrieMap[String, Machine]                                = TrieMap.empty
   private val machineActors: TrieMap[String, ActorRef]                              = TrieMap.empty
   private val checkpoints:  TrieMap[String, TrieMap[String, MachineCheckpoint]]    = TrieMap.empty
+  // T-6: per-machine (inputHash, lastResult) — skips actor ask for quiet machines on identical input
+  private val inputCache:   TrieMap[String, (Int, MachineTransitionResult)]        = TrieMap.empty
 
   // ConcurrentLinkedDeque: thread-safe prepend/pollLast; AtomicInteger tracks
   // approximate size so we can cap without taking a global lock.
@@ -99,6 +101,7 @@ class RealityEngine(
       case Some(machine) =>
         machine.getSequenceIds.foreach(sequences.remove)
         machineActors.remove(machineId).foreach(system.stop)
+        inputCache.remove(machineId)
         true
     }
 
@@ -188,21 +191,29 @@ class RealityEngine(
           machineInput <- resolvedInputs.get(machineId)
           actor        <- machineActors.get(machineId)
         } yield {
+          val inputHash      = machineInput.hashCode
           val tagMachineId   = Json.fromString(machineId)
           val tagMachineName = Json.fromString(machine.name)
 
-          (actor ? MachineActor.ProcessInput(machineInput)).mapTo[MachineActor.ProcessInputResult].map { pr =>
-            val tagged = pr.result.copy(machineOutput = pr.result.machineOutput.map { ov =>
-              ov.copy(metadata = ov.metadata ++
-                Map("machineId"               -> tagMachineId,
-                    "machineName"             -> tagMachineName,
-                    "preceptionUsed"          -> RealityEngine.JsonTrue,
-                    "universalSpaceDimension" -> tagDim))
-            })
-            (machine, machineId, tagged)
-          }.recover { case e: Exception =>
-            System.err.println(s"Error processing machine $machineId: ${e.getMessage}")
-            throw e
+          inputCache.get(machineId) match {
+            case Some((h, cached)) if h == inputHash && !cached.arbiterMetadata.shouldOutput =>
+              Future.successful((machine, machineId, cached))
+            case _ =>
+              (actor ? MachineActor.ProcessInput(machineInput)).mapTo[MachineActor.ProcessInputResult].map { pr =>
+                val tagged = pr.result.copy(machineOutput = pr.result.machineOutput.map { ov =>
+                  ov.copy(metadata = ov.metadata ++
+                    Map("machineId"               -> tagMachineId,
+                        "machineName"             -> tagMachineName,
+                        "preceptionUsed"          -> RealityEngine.JsonTrue,
+                        "universalSpaceDimension" -> tagDim))
+                })
+                if (!tagged.arbiterMetadata.shouldOutput) inputCache.put(machineId, (inputHash, tagged))
+                else inputCache.remove(machineId)
+                (machine, machineId, tagged)
+              }.recover { case e: Exception =>
+                System.err.println(s"Error processing machine $machineId: ${e.getMessage}")
+                throw e
+              }
           }
         }
       }.toList
@@ -293,6 +304,7 @@ class RealityEngine(
   def resetAllSequences(): Unit = {
     machineActors.values.foreach(_ ! MachineActor.Reset)
     sequences.values.foreach(_.reset())
+    inputCache.clear()
     println("All sequences reset to initial state")
   }
 
@@ -312,9 +324,7 @@ class RealityEngine(
       optSeq
     }
 
-  def searchVectors(queryVector: Vector[Double], limit: Int = 10, threshold: Option[Double] = None)(
-    implicit ec: ExecutionContext
-  ): Future[List[(RealityVector, Double)]] =
+  def searchVectors(queryVector: Vector[Double], limit: Int = 10, threshold: Option[Double] = None): Future[List[(RealityVector, Double)]] =
     vectorStore.searchSimilar(queryVector, limit, threshold)
 
   // ── Stats ─────────────────────────────────────────────────────────────────
@@ -359,6 +369,8 @@ class RealityEngine(
       transitionHistory.pollLast()
       historySize.decrementAndGet()
     }
+    if (verboseLogging && result.totalOutputs.nonEmpty)
+      println(s"""{"level":"info","event":"transition","outputs":${result.totalOutputs.length},"ts":${result.timestamp}}""")
   }
 }
 

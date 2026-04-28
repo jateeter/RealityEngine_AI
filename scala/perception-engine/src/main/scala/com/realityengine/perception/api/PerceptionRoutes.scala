@@ -16,6 +16,7 @@ import sttp.client3._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import com.realityengine.perception.logging.{AuditConfig, AuditLogger}
 
 class PerceptionRoutes(
@@ -31,9 +32,12 @@ class PerceptionRoutes(
   // dedicated blocking dispatcher when needed — see doPush).
   private val sttpBackend = HttpURLConnectionBackend()
 
-  private var autoTimer: Option[akka.actor.Cancellable] = None
-  private var autoIntervalMs: Long = 1000L
-  private var lastPush: Option[Long] = None
+  // RC-5: thread-safe timer and state refs
+  private val autoTimer    = new AtomicReference[Option[akka.actor.Cancellable]](None)
+  @volatile private var autoIntervalMs: Long = 1000L
+  private val lastPush     = new AtomicReference[Option[Long]](None)
+  // A-1: prevents push cycles from stacking when doPush takes longer than the interval
+  private val pushInFlight = new AtomicBoolean(false)
 
   // ── Auto-push scheduler ───────────────────────────────────────────────────
 
@@ -42,17 +46,18 @@ class PerceptionRoutes(
     autoIntervalMs = intervalMs
     import scala.concurrent.duration._
     val delay = intervalMs.millis
-    autoTimer = Some(system.scheduler.scheduleWithFixedDelay(delay, delay) { () =>
-      doPush()
-    })
+    autoTimer.set(Some(system.scheduler.scheduleWithFixedDelay(delay, delay) { () =>
+      if (pushInFlight.compareAndSet(false, true)) {
+        doPush().onComplete { _ => pushInFlight.set(false) }
+      }
+    }))
   }
 
   def stopAuto(): Unit = {
-    autoTimer.foreach(_.cancel())
-    autoTimer = None
+    autoTimer.getAndSet(None).foreach(_.cancel())
   }
 
-  def isAutoRunning: Boolean = autoTimer.isDefined
+  def isAutoRunning: Boolean = autoTimer.get().isDefined
 
   // ── Push ──────────────────────────────────────────────────────────────────
 
@@ -65,8 +70,9 @@ class PerceptionRoutes(
       "matchAlgorithm" -> algoStr.asJson,
     ).noSpaces
 
+    // T-2: push directly to Reality Engine (was perceptionTargetUrl / visualizer-backend)
     val request = basicRequest
-      .post(uri"$perceptionTargetUrl/api/perceive")
+      .post(uri"$realityEngineUrl/api/perceive")
       .contentType("application/json")
       .body(bodyJson)
       .response(asString)
@@ -75,19 +81,19 @@ class PerceptionRoutes(
       case resp if resp.isSuccess =>
         engine.advance()
         val ts = System.currentTimeMillis()
-        lastPush = Some(ts)
+        lastPush.set(Some(ts))
 
         val parsed = resp.body.toOption
           .flatMap(b => io.circe.parser.parse(b).toOption)
           .getOrElse(Json.Null)
 
-        // Carry forward post-merge perceptual space
-        parsed.hcursor.downField("step").get[Vector[Double]]("perceptualSpace") match {
+        // RE returns SimulationStep directly (perceptualSpace at top level)
+        parsed.hcursor.get[Vector[Double]]("perceptualSpace") match {
           case Right(ps) if ps.length == 256 => engine.updateFromPerceptualSpace(ps)
           case _                             =>
         }
 
-        val stepJson = parsed.hcursor.downField("step").focus
+        val stepJson = Some(parsed)
 
         val result = PushResult(
           success    = true,
@@ -115,7 +121,7 @@ class PerceptionRoutes(
   private def broadcastState(): Unit =
     broadcast(Json.obj(
       "type"  -> "state-update".asJson,
-      "state" -> encodeEngineState(engine.getState(lastPush, AutoConfig(isAutoRunning, autoIntervalMs))),
+      "state" -> encodeEngineState(engine.getState(lastPush.get(), AutoConfig(isAutoRunning, autoIntervalMs))),
     ))
 
   private def broadcast(json: Json): Unit =
@@ -128,7 +134,7 @@ class PerceptionRoutes(
 
   private def resetAndBroadcast(): Unit = {
     engine.reset()
-    lastPush = None
+    lastPush.set(None)
     broadcastState()
   }
 
@@ -143,7 +149,7 @@ class PerceptionRoutes(
 
     // ── State ───────────────────────────────────────────────────────────────
     path("api" / "state") {
-      get { complete(engine.getState(lastPush, AutoConfig(isAutoRunning, autoIntervalMs))) }
+      get { complete(engine.getState(lastPush.get(), AutoConfig(isAutoRunning, autoIntervalMs))) }
     },
 
     // ── Push ────────────────────────────────────────────────────────────────
@@ -288,7 +294,7 @@ class PerceptionRoutes(
         handleWebSocketMessages {
           // Send current state immediately after subscription is registered
           val flow = WsBroadcastActor.buildWsFlow(broadcastActor)
-          val state = engine.getState(lastPush, AutoConfig(isAutoRunning, autoIntervalMs))
+          val state = engine.getState(lastPush.get(), AutoConfig(isAutoRunning, autoIntervalMs))
           val initMsg = Json.obj("type" -> "state-update".asJson, "state" -> state.asJson).noSpaces
           broadcastActor ! WsBroadcastActor.BroadcastMsg(initMsg)
           flow
