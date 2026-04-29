@@ -4,7 +4,7 @@
     "name": "Multi-Step State Machine",
     "description": "Demonstrates 3-step critical event sequences with state transitions and binary outputs",
     "metadata": {
-      "category": "state-machine",
+      "category": "digital-logic",
       "author": "Reality Engine",
       "created": "2026-02-02T00:00:00Z",
       "eventSpace": "3D binary vectors: 000-111",

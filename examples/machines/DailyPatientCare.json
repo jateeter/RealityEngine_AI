@@ -4,7 +4,7 @@
     "name": "DailyPatientCare",
     "description": "Ongoing daily patient care monitoring for an assisted living eldercare community. Recognizes normal daily routines (morning hygiene, meals, medications, evening wind-down) and detects anomalies including fall events, bathroom non-use, missed medications, and nighttime wandering.",
     "metadata": {
-      "category": "elder-care",
+      "category": "healthcare",
       "author": "Reality Engine",
       "created": "2026-04-08T00:00:00Z",
       "domain": "Healthcare Operations — Assisted Living Daily Care",

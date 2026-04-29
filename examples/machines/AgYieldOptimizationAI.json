@@ -4,7 +4,7 @@
     "name": "Ag Yield Optimization AI",
     "description": "AI-augmented yield optimization engine that synthesizes nutrient cycle quality, IPM pest pressure, and harvest readiness signals across the entire agricultural deployment. Implements corrective strategies: when nutrient lockout co-occurs with pest pressure, triggers emergency intervention; when harvest approaches with clear IPM status, optimizes the final push for peak yield; monitors recovery trajectories to forecast adjusted harvest windows. Reads outputs from AgNutrientCycleOptimizer [284:288], AgIPMPestAlertMonitor [288:292], and AgHarvestReadinessAssessor [292:296]. Cross-domain: this machine bridges the Agriculture and AI domains.",
     "metadata": {
-      "category": "ai-pipeline",
+      "category": "ai-services",
       "domain": "Agriculture — AI Yield Optimization",
       "author": "Reality Engine",
       "outputSpace": "6D binary at [296:302]: [1,0,0,0,0,0]=EMERGENCY_INTERVENTION, [0,1,0,0,0,0]=CORRECTIVE_ACTION, [0,0,1,0,0,0]=OPTIMIZE_HARVEST, [0,0,0,1,0,0]=YIELD_FORECAST_UPDATE, [0,0,0,0,1,0]=NOMINAL_MONITORING, [0,0,0,0,0,1]=PEAK_YIELD_CONFIRMED",

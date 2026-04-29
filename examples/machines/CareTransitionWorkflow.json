@@ -4,7 +4,7 @@
     "name": "CareTransitionWorkflow",
     "description": "Models patient readiness for changes in living situation across three care transition scenarios: (1) non-assisted home/community living to acute hospital admission for life-threatening conditions; (2) acute hospital discharge to a rehabilitation facility as a transitional environment; (3) rehabilitation facility discharge to assisted living for the next phase of life. Produces transition-specific readiness outputs with embedded external communication requirements.",
     "metadata": {
-      "category": "elder-care",
+      "category": "healthcare",
       "author": "Reality Engine",
       "created": "2026-04-13T00:00:00Z",
       "domain": "Healthcare Operations — Care Level Transition Management",

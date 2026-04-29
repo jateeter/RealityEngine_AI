@@ -4,7 +4,7 @@
     "name": "Data Center Monitoring",
     "description": "Complex critical event sequences demonstrating multi-dimensional dependencies, variable thresholds, and correlated failure patterns",
     "metadata": {
-      "category": "monitoring",
+      "category": "data-center",
       "domain": "Data Center — Multi-Sensor Monitoring",
       "author": "Reality Engine",
       "created": "2026-02-02T00:00:00Z",

@@ -4,7 +4,7 @@
     "name": "PatientWellness",
     "description": "Holistic wellness monitoring for assisted living residents across six dimensions: mental acuity, anxiety, stress, socialization, nutrition, and exercise. Produces a four-level wellness metric (OPTIMAL / GOOD / ALERT / CRITICAL) routed into the perceptual resolution space for longitudinal tracking and intervention planning. Sequences are calibrated to age-group norms for the 65-74, 75-84, and 85+ cohorts.",
     "metadata": {
-      "category": "elder-care",
+      "category": "healthcare",
       "author": "Reality Engine",
       "created": "2026-04-12T00:00:00Z",
       "domain": "Healthcare Operations — Resident Wellness Assessment",

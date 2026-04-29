@@ -4,7 +4,7 @@
     "name": "NewPatientInflow",
     "description": "New patient evaluation workflow for an elder care assisted living organization. Detects structured intake sequences and classifies each candidate as ACCEPTED or PROVISIONAL_REJECT.",
     "metadata": {
-      "category": "elder-care",
+      "category": "healthcare",
       "author": "Reality Engine",
       "created": "2026-04-09T00:00:00Z",
       "domain": "Healthcare Intake — Assisted Living",

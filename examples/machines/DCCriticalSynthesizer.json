@@ -4,7 +4,7 @@
     "name": "DC Critical Synthesizer",
     "description": "Monitors the combined flip-flop states of CoolingControlFF and NetworkThrottleFF. When both thermal and network alarms are simultaneously active, fires a combined critical alert. Implements multi-dimensional failure correlation.",
     "metadata": {
-      "category": "monitoring",
+      "category": "data-center",
       "domain": "Data Center — Critical Alert / Synthesizer",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",

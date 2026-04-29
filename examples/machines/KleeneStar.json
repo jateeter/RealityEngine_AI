@@ -4,7 +4,7 @@
     "name": "Kleene Star Operator",
     "description": "Demonstrates Kleene star (*) operator in critical event sequences - zero or more repetitions with alternation. Note: initial (isInitial) trigger vectors implement A*A = A+ semantics — at least one match of the trigger is required before successors are armed.",
     "metadata": {
-      "category": "pattern-matching",
+      "category": "digital-logic",
       "author": "Reality Engine",
       "created": "2026-02-02T00:00:00Z",
       "eventSpace": "3D binary vectors: 000-111",

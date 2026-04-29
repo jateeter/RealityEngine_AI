@@ -4,7 +4,7 @@
     "name": "WellnessAnalytics",
     "description": "Analytics layer that consumes PatientWellness four-level metric outputs and detects longitudinal anomaly patterns — sustained deterioration, rapid decline, and recovery. Routes clinical decisions to downstream machines: NewPatientInflow (for community-dwelling patients requiring initial assisted living evaluation) and CareTransitionWorkflow (for facility residents requiring care level changes). Produces six routing outputs covering both community and facility escalation paths.",
     "metadata": {
-      "category": "elder-care",
+      "category": "healthcare",
       "author": "Reality Engine",
       "created": "2026-04-13T00:00:00Z",
       "domain": "Healthcare Analytics — Wellness Monitoring and Care Routing",
