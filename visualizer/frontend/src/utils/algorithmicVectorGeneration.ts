@@ -2,13 +2,15 @@
  * Algorithmic Vector Generation Utilities
  *
  * Generates universal perceptual input vectors using various algorithmic patterns.
- * All vectors are 256 bytes (universal perceptual space dimension).
+ * All vectors span the configured perceptual space dimension (PERCEPTUAL_DIM).
  */
+
+import { PERCEPTUAL_DIM } from '../constants';
 
 /**
  * Generate a sequence of vectors using sine wave pattern
  */
-export function generateSineWave(count: number, dimension: number = 256): number[][] {
+export function generateSineWave(count: number, dimension: number = PERCEPTUAL_DIM): number[][] {
   const vectors: number[][] = [];
   const frequency = 0.1; // Controls wave frequency
   const amplitude = 1.0; // Max amplitude
@@ -30,7 +32,7 @@ export function generateSineWave(count: number, dimension: number = 256): number
 /**
  * Generate a sequence of vectors using square wave pattern
  */
-export function generateSquareWave(count: number, dimension: number = 256): number[][] {
+export function generateSquareWave(count: number, dimension: number = PERCEPTUAL_DIM): number[][] {
   const vectors: number[][] = [];
   const period = 10; // Wave period
 
@@ -51,7 +53,7 @@ export function generateSquareWave(count: number, dimension: number = 256): numb
 /**
  * Generate a sequence of vectors using sawtooth pattern
  */
-export function generateSawtooth(count: number, dimension: number = 256): number[][] {
+export function generateSawtooth(count: number, dimension: number = PERCEPTUAL_DIM): number[][] {
   const vectors: number[][] = [];
   const period = 20; // Ramp period
 
@@ -124,7 +126,7 @@ function perlin(x: number, y: number): number {
 /**
  * Generate a sequence of vectors using Perlin noise
  */
-export function generatePerlinNoise(count: number, dimension: number = 256): number[][] {
+export function generatePerlinNoise(count: number, dimension: number = PERCEPTUAL_DIM): number[][] {
   const vectors: number[][] = [];
   const scale = 0.05; // Noise scale
 
@@ -146,7 +148,7 @@ export function generatePerlinNoise(count: number, dimension: number = 256): num
 /**
  * Generate a sequence of vectors using Fibonacci sequence
  */
-export function generateFibonacci(count: number, dimension: number = 256): number[][] {
+export function generateFibonacci(count: number, dimension: number = PERCEPTUAL_DIM): number[][] {
   const vectors: number[][] = [];
   const phi = (1 + Math.sqrt(5)) / 2; // Golden ratio
 
@@ -167,7 +169,7 @@ export function generateFibonacci(count: number, dimension: number = 256): numbe
 /**
  * Generate a sequence of vectors using linear ramp
  */
-export function generateLinearRamp(count: number, dimension: number = 256): number[][] {
+export function generateLinearRamp(count: number, dimension: number = PERCEPTUAL_DIM): number[][] {
   const vectors: number[][] = [];
 
   for (let t = 0; t < count; t++) {
@@ -188,7 +190,7 @@ export function generateLinearRamp(count: number, dimension: number = 256): numb
 /**
  * Generate a sequence of vectors using exponential growth
  */
-export function generateExponential(count: number, dimension: number = 256): number[][] {
+export function generateExponential(count: number, dimension: number = PERCEPTUAL_DIM): number[][] {
   const vectors: number[][] = [];
   const base = 1.05; // Exponential base
 
@@ -213,7 +215,7 @@ export function generateExponential(count: number, dimension: number = 256): num
 export function generateAlgorithmicVectors(
   pattern: string,
   count: number,
-  dimension: number = 256
+  dimension: number = PERCEPTUAL_DIM
 ): number[][] {
   switch (pattern) {
     case 'sine-wave':

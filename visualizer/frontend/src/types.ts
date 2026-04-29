@@ -143,3 +143,49 @@ export interface VectorSequenceItem {
   source: 'algorithmic' | 'random' | 'manual' | 'override';
   metadata?: any;
 }
+
+// ===== Perception Engine Source Types =====
+
+export interface PERegion {
+  offset: number;
+  length: number;
+}
+
+export interface PETestSource {
+  type: 'test';
+  id: string;
+  name: string;
+  region: PERegion;
+  active: boolean;
+  machineId: string;
+  machineName: string;
+  sequenceName: string;
+  inputs: number[][];
+  loop: boolean;
+}
+
+export interface PESimulatedSource {
+  type: 'simulated';
+  id: string;
+  name: string;
+  region: PERegion;
+  active: boolean;
+  pattern: string;
+  frequency: number;
+  amplitude: number;
+  dcOffset: number;
+}
+
+export interface PESensorSource {
+  type: 'sensor';
+  id: string;
+  name: string;
+  region: PERegion;
+  active: boolean;
+  sensorId: string;
+  lastValue: number[];
+  lastUpdated: number | null;
+  ttlMs: number;
+}
+
+export type PESource = PETestSource | PESimulatedSource | PESensorSource;

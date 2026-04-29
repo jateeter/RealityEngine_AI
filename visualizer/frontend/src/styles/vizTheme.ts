@@ -41,11 +41,11 @@ export const vizTheme = {
   },
 
   edge: {
-    idle:           '#94a3b8',   // slate-400 (was #64748b / #8899b4)
+    idle:           '#e2e8f0',   // slate-200 — off-white for dotted connectors
     active:         '#60a5fa',   // blue-400
     bridge:         '#c084fc',   // violet-400 for cross-domain bridge edges
     label:          '#cbd5e1',   // slate-300
-    arrowhead:      '#94a3b8',
+    arrowhead:      '#e2e8f0',   // slate-200 — matches idle edge color
   },
 
   status: {

@@ -4,6 +4,7 @@ import { useMachineSimulation, StepRecord, VisMachine } from '../hooks/useMachin
 import TobiasCanvas, { TobiasCanvasHandle } from '../components/tobias/TobiasCanvas';
 import TobiasAISequencePulse from '../components/tobias/TobiasAISequencePulse';
 import { classifyMachine, domainColor, DOMAINS, DOMAIN_ORDER, DomainId } from '../components/machineDomains';
+import { PERCEPTUAL_DIM } from '../constants';
 
 import './TobiasView.css';
 
@@ -18,7 +19,7 @@ function hexToRgbTriplet(hex: string): string {
 
 // ---------------------------------------------------------------------------
 // PerceptualSpaceBar
-// Condensed canvas heatmap of the full 256-element global perceptual space.
+// Condensed canvas heatmap of the full global perceptual space.
 // Machine input regions are color-coded and labeled.
 // SEQUENCES button opens the sequence management panel.
 // ---------------------------------------------------------------------------
@@ -46,7 +47,7 @@ const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const DIM = 256;
+    const DIM = PERCEPTUAL_DIM;
     const H   = canvas.height;
 
     ctx.fillStyle = '#080c12';
@@ -100,8 +101,8 @@ const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
       .map(m => ({
         id:     m.id,
         name:   m.name.replace(/^DC/, '').slice(0, 10),
-        left:   (m.inputRegion!.offset / 256) * 100,
-        width:  (m.inputRegion!.length  / 256) * 100,
+        left:   (m.inputRegion!.offset / PERCEPTUAL_DIM) * 100,
+        width:  (m.inputRegion!.length  / PERCEPTUAL_DIM) * 100,
         domain: classifyMachine(m).domain,
       })),
     [machines],

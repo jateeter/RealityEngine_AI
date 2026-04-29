@@ -1,10 +1,11 @@
 /**
- * UniversalInputVectorDisplay - Shows the 256-element universal perceptual input space
+ * UniversalInputVectorDisplay - Shows the universal perceptual input space
  * with highlighting for machine input/output regions and random generation
  */
 
 import React, { useState } from 'react';
 import './UniversalInputVectorDisplay.css';
+import { PERCEPTUAL_DIM } from '../constants';
 
 interface VectorRegion {
   offset: number;
@@ -30,7 +31,7 @@ export const UniversalInputVectorDisplay: React.FC<UniversalInputVectorDisplayPr
 
   // Group bytes into chunks of 16 for display
   const bytesPerRow = 16;
-  const rows = Math.ceil(256 / bytesPerRow);
+  const rows = Math.ceil(PERCEPTUAL_DIM / bytesPerRow);
 
   // Find which region(s) a byte belongs to
   const getByteRegions = (index: number): VectorRegion[] => {
@@ -76,7 +77,7 @@ export const UniversalInputVectorDisplay: React.FC<UniversalInputVectorDisplayPr
           Universal Perceptual Space (En)
         </div>
         <div className="vector-header-meta">
-          <span className="vector-dimension">256 bytes</span>
+          <span className="vector-dimension">{PERCEPTUAL_DIM}D</span>
           <span className="vector-active-count">{nonZeroCount} active</span>
           <span className="vector-toggle-icon">{expanded ? '▲' : '▼'}</span>
         </div>
@@ -94,7 +95,7 @@ export const UniversalInputVectorDisplay: React.FC<UniversalInputVectorDisplayPr
             <div className="row-bytes">
               {Array.from({ length: bytesPerRow }).map((_, colIndex) => {
                 const byteIndex = rowIndex * bytesPerRow + colIndex;
-                if (byteIndex >= 256) return null;
+                if (byteIndex >= PERCEPTUAL_DIM) return null;
 
                 const value = currentVector[byteIndex] || 0;
                 const regions = getByteRegions(byteIndex);

@@ -5,8 +5,11 @@ import {
   OutputVector,
   MachineCreateRequest,
   MachineUpdateRequest,
+  PESource,
+  PETestSource,
 } from './types';
-import { api } from './api';
+import { api, perceptionEngineApi } from './api';
+import { PERCEPTUAL_DIM } from './constants';
 
 interface VisualizerState {
   // View state
@@ -27,6 +30,9 @@ interface VisualizerState {
   currentOutputVectors: OutputVector[];
   highlightedOutputId: string | null;
 
+  // PE source state — test sources created from machine inputSequences
+  peSources: PESource[];
+
   // View actions
   setCurrentView: (view: 'selection' | 'administration' | 'interconnection' | 'tobias') => void;
 
@@ -36,6 +42,11 @@ interface VisualizerState {
   createMachine: (request: MachineCreateRequest) => Promise<Machine>;
   updateMachine: (machineId: string, request: MachineUpdateRequest) => Promise<void>;
   deleteMachine: (machineId: string) => Promise<void>;
+
+  // PE source actions
+  togglePeSource: (sourceId: string, active: boolean) => Promise<void>;
+  setAllPeSourcesActive: (active: boolean) => Promise<void>;
+  refreshPeSources: () => Promise<void>;
 
   // Machine JSON actions
   listMachineJSONFiles: () => Promise<any[]>;
@@ -68,6 +79,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   ws: null,
   currentOutputVectors: [],
   highlightedOutputId: null,
+  peSources: [],
 
   // View actions
   setCurrentView: (view) => set({ currentView: view }),
@@ -103,6 +115,55 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         } catch (error) {
           console.error('Could not load example data for machine:', error);
         }
+      }
+
+      // Create PE TestSources from the machine's inputSequences.
+      // Only machines whose entire input region fits within the configured
+      // perceptual space dimension can be driven by the PE.
+      const mapping = machine.perceptualMapping?.input;
+      const inRange = mapping && (mapping.offset + mapping.length <= PERCEPTUAL_DIM);
+      if (inRange && machine.metadata?.inputSequences?.length) {
+        try {
+          const region = mapping!;
+          const inputSeqs: Array<{ name: string; vectors: number[][] }> =
+            machine.metadata.inputSequences;
+
+          // Remove any existing TestSources for this machine, then recreate
+          const existing: PESource[] = await perceptionEngineApi.getSources();
+          await Promise.all(
+            existing
+              .filter((s): s is PETestSource => s.type === 'test' && s.machineId === machineId)
+              .map(s => perceptionEngineApi.deleteSource(s.id).catch(() => {}))
+          );
+
+          await Promise.all(
+            inputSeqs.map(seq =>
+              perceptionEngineApi.addSource({
+                type:         'test',
+                name:         seq.name,
+                region,
+                active:       true,
+                machineId,
+                machineName:  machine.name,
+                sequenceName: seq.name,
+                inputs:       seq.vectors,
+                loop:         true,
+              })
+            )
+          );
+
+          // Refresh full source list so other types survive
+          const allSources: PESource[] = await perceptionEngineApi.getSources();
+          set({ peSources: allSources });
+        } catch (err) {
+          console.error('Could not create PE sources for machine:', err);
+          // Non-fatal: PE may not be running
+        }
+      } else {
+        // Still refresh sources so panel reflects current state
+        perceptionEngineApi.getSources()
+          .then(sources => set({ peSources: sources }))
+          .catch(() => {});
       }
     } catch (error) {
       console.error('Error loading machine:', error);
@@ -151,6 +212,42 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
     } catch (error) {
       console.error('Error deleting machine:', error);
       throw error;
+    }
+  },
+
+  // PE source actions
+  togglePeSource: async (sourceId: string, active: boolean) => {
+    try {
+      await perceptionEngineApi.updateSource(sourceId, { active });
+      set(state => ({
+        peSources: state.peSources.map(s => s.id === sourceId ? { ...s, active } : s),
+      }));
+    } catch (err) {
+      console.error('Failed to toggle PE source:', err);
+    }
+  },
+
+  setAllPeSourcesActive: async (active: boolean) => {
+    const { peSources } = get();
+    const testSources = peSources.filter((s): s is PETestSource => s.type === 'test');
+    try {
+      await Promise.all(testSources.map(s => perceptionEngineApi.updateSource(s.id, { active })));
+      set(state => ({
+        peSources: state.peSources.map(s =>
+          s.type === 'test' ? { ...s, active } : s
+        ),
+      }));
+    } catch (err) {
+      console.error('Failed to set all PE sources:', err);
+    }
+  },
+
+  refreshPeSources: async () => {
+    try {
+      const sources: PESource[] = await perceptionEngineApi.getSources();
+      set({ peSources: sources });
+    } catch {
+      // PE not reachable — leave state as-is
     }
   },
 

@@ -38,6 +38,26 @@ export const perceptionEngineApi = {
     const response = await http.post(`${PE_BASE_URL}/reset`);
     return response.data;
   },
+
+  // Source management
+  async getSources(): Promise<any[]> {
+    const response = await http.get(`${PE_BASE_URL}/sources`);
+    return response.data.sources ?? [];
+  },
+
+  async addSource(config: object): Promise<any> {
+    const response = await http.post(`${PE_BASE_URL}/sources`, config);
+    return response.data.source;
+  },
+
+  async updateSource(id: string, patch: object): Promise<any> {
+    const response = await http.patch(`${PE_BASE_URL}/sources/${id}`, patch);
+    return response.data.source;
+  },
+
+  async deleteSource(id: string): Promise<void> {
+    await http.delete(`${PE_BASE_URL}/sources/${id}`);
+  },
 };
 
 export const api = {

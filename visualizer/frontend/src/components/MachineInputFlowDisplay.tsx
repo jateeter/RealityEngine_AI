@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import './MachineInputFlowDisplay.css';
+import { PERCEPTUAL_DIM } from '../constants';
 
 interface MachineInputFlowDisplayProps {
-  // Universal perceptual space vector (256 bytes)
+  // Universal perceptual space vector
   universalVector: number[];
   // Machine's input region mapping
   inputMapping: { offset: number; length: number };
@@ -87,7 +88,7 @@ export const MachineInputFlowDisplay: React.FC<MachineInputFlowDisplayProps> = (
         </div>
         <div className="step-content en-display">
           <div className="en-info">
-            <span className="en-dimension">256 bytes</span>
+            <span className="en-dimension">{PERCEPTUAL_DIM}D</span>
             <span className="en-range-highlight">
               Input region: <span className="range-tag input-range">{formatRange(inputMapping.offset, inputMapping.length)}</span>
             </span>

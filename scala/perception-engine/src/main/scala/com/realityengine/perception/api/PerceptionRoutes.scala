@@ -89,8 +89,8 @@ class PerceptionRoutes(
 
         // RE returns SimulationStep directly (perceptualSpace at top level)
         parsed.hcursor.get[Vector[Double]]("perceptualSpace") match {
-          case Right(ps) if ps.length == 256 => engine.updateFromPerceptualSpace(ps)
-          case _                             =>
+          case Right(ps) if ps.length == engine.vectorDimension => engine.updateFromPerceptualSpace(ps)
+          case _                                                =>
         }
 
         val stepJson = Some(parsed)

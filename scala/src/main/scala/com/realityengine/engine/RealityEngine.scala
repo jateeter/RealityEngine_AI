@@ -41,7 +41,7 @@ case class MachineCheckpoint(
 class RealityEngine(
   val vectorStore:        VectorStore,
   val maxHistorySize:     Int     = 1000,
-  val universalDimension: Int     = 256,
+  val universalDimension: Int     = sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768),
   val verboseLogging:     Boolean = false
 )(implicit system: ActorSystem, ec: ExecutionContext) {
 

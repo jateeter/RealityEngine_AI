@@ -83,7 +83,9 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
   currentMachineId,
   machines
 }) => {
-  const { ws } = useVisualizerStore();
+  const { ws, loadMachine } = useVisualizerStore();
+  const loadMachineRef = useRef(loadMachine);
+  useEffect(() => { loadMachineRef.current = loadMachine; }, [loadMachine]);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -393,8 +395,8 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 25)
       .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
+      .attr('markerWidth', 10)
+      .attr('markerHeight', 10)
       .attr('orient', 'auto')
       .append('path')
       .attr('d', 'M0,-5L10,0L0,5')
@@ -416,7 +418,10 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       .call(d3.drag<any, MachineNode>()
         .on('start', dragstarted)
         .on('drag', dragged)
-        .on('end', dragended) as any);
+        .on('end', dragended) as any)
+      .on('dblclick', (_event: any, d: MachineNode) => {
+        loadMachineRef.current(d.id);
+      });
 
     // Node rectangles — data-field marker allows the update effect to patch
     // colors in-place without a full simulation rebuild.  Border color

@@ -103,7 +103,10 @@ export const MachineGraphView: React.FC = () => {
   // Incrementing this forces a full layout rebuild (Reset Layout)
   const [layoutEpoch, setLayoutEpoch] = useState(0);
 
-  const ws = useVisualizerStore(state => state.ws);
+  const ws          = useVisualizerStore(state => state.ws);
+  const loadMachine = useVisualizerStore(state => state.loadMachine);
+  const loadMachineRef = useRef(loadMachine);
+  useEffect(() => { loadMachineRef.current = loadMachine; }, [loadMachine]);
 
   // ── Data fetch ─────────────────────────────────────────────────────────────
   const fetchGraphData = useCallback(async () => {
@@ -181,6 +184,21 @@ export const MachineGraphView: React.FC = () => {
     const margin = { top: 40, right: 40, bottom: 40, left: 40 };
     svg.attr('width', width).attr('height', height);
 
+    // Arrowhead markers for directed edges
+    svg.append('defs').selectAll('marker')
+      .data(['mgv-arrow', 'mgv-arrow-active'])
+      .join('marker')
+      .attr('id', t => t)
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 10)
+      .attr('refY', 0)
+      .attr('markerWidth', 10)
+      .attr('markerHeight', 10)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', t => t === 'mgv-arrow-active' ? vizTheme.edge.active : vizTheme.edge.arrowhead);
+
     // Outer group owned by zoom/pan; inner group owns margin translation
     const outerG = svg.append('g');
     const g      = outerG.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -194,7 +212,7 @@ export const MachineGraphView: React.FC = () => {
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.08, 4])
       .filter(event => {
-        if (event.type === 'dblclick') return false;   // dblclick = unpin node
+        if (event.type === 'dblclick') return false;   // dblclick = navigate to machine
         const t = event.target as Element | null;
         if (t?.closest?.('.domain-hull')) return false;
         if (t?.closest?.('g.node')) return false;
@@ -359,14 +377,16 @@ export const MachineGraphView: React.FC = () => {
 
     // ── Edges ──────────────────────────────────────────────────────────────
     const link = g.append('g')
-      .selectAll<SVGLineElement, typeof simEdges[0]>('line')
+      .selectAll<SVGPathElement, typeof simEdges[0]>('path')
       .data(simEdges)
-      .join('line')
+      .join('path')
       .attr('class', 'edge')
+      .attr('fill', 'none')
       .attr('stroke', vizTheme.edge.idle)
       .attr('stroke-width', 2)
       .attr('stroke-dasharray', '5,5')
-      .attr('opacity', 0.75);
+      .attr('opacity', 0.85)
+      .attr('marker-end', 'url(#mgv-arrow)');
 
     const linkLabels = g.append('g')
       .selectAll<SVGTextElement, typeof simEdges[0]>('text')
@@ -432,10 +452,7 @@ export const MachineGraphView: React.FC = () => {
 
     stepTextRef.current = stepText as any;
 
-    // ── Drag — pin on drop, double-click to unpin ──────────────────────────
-    let lastClickTime = 0;
-    let lastClickId: string | null = null;
-
+    // ── Drag — pin on drop ────────────────────────────────────────────────
     const drag = d3.drag<SVGGElement, MachineNode & d3.SimulationNodeDatum>()
       .on('start', (event, d) => {
         if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -448,7 +465,6 @@ export const MachineGraphView: React.FC = () => {
       })
       .on('end', (event, d) => {
         if (!event.active) simulation.alphaTarget(0);
-        // Pin at dropped position
         d.fx = d.x ?? d.fx;
         d.fy = d.y ?? d.fy;
         saveLayout(simNodes);
@@ -456,28 +472,27 @@ export const MachineGraphView: React.FC = () => {
 
     node.call(drag as any);
 
-    // Double-click to unpin
-    node.on('dblclick', (_event, d: any) => {
-      const now = Date.now();
-      if (now - lastClickTime < 350 && lastClickId === d.id) {
-        d.fx = null;
-        d.fy = null;
-        simulation.alpha(0.3).restart();
-        saveLayout(simNodes);
-      }
-      lastClickTime = now;
-      lastClickId   = d.id;
+    // Double-click — navigate to that machine's interconnect view
+    node.on('dblclick', (_event: any, d: any) => {
+      loadMachineRef.current(d.id);
     });
 
     // ── Simulation tick ────────────────────────────────────────────────────
+    // Card half-dims (px): width=160 → halfW=80, height=100 → halfH=50.
+    // Pull endpoints ~84px from each center so arrows land at card edges.
+    const CARD_PAD = 84;
     simulation.on('tick', () => {
       drawHulls();
 
-      link
-        .attr('x1', (d: any) => d.source.x)
-        .attr('y1', (d: any) => d.source.y)
-        .attr('x2', (d: any) => d.target.x)
-        .attr('y2', (d: any) => d.target.y);
+      link.attr('d', (d: any) => {
+        const sx = d.source.x ?? 0, sy = d.source.y ?? 0;
+        const tx = d.target.x ?? 0, ty = d.target.y ?? 0;
+        const dx = tx - sx, dy = ty - sy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const pad = Math.min(CARD_PAD, dist * 0.4);
+        const ux = dx / dist, uy = dy / dist;
+        return `M${sx + ux * pad},${sy + uy * pad}L${tx - ux * pad},${ty - uy * pad}`;
+      });
 
       linkLabels
         .attr('x', (d: any) => (d.source.x + d.target.x) / 2)
@@ -518,7 +533,6 @@ export const MachineGraphView: React.FC = () => {
   if (error) {
     return (
       <div className="machine-graph-view error">
-        <h2>Machine Graph View</h2>
         <div className="error-message">{error}</div>
       </div>
     );
@@ -527,35 +541,20 @@ export const MachineGraphView: React.FC = () => {
   if (!graphData) {
     return (
       <div className="machine-graph-view loading">
-        <h2>Machine Graph View</h2>
         <div>Loading machine graph...</div>
       </div>
     );
   }
 
+  const domainCounts = DOMAIN_ORDER.reduce((acc, d) => {
+    acc[d] = graphData.nodes.filter(n => classifyMachine(n).domain === d).length;
+    return acc;
+  }, {} as Record<DomainId, number>);
+
   return (
     <div className="machine-graph-view" ref={containerRef}>
-      <div className="graph-header">
-        <h2>Machine Graph View</h2>
-        <div className="graph-info">
-          <span>Machines: {graphData.nodes.length}</span>
-          <span>Connections: {graphData.edges.length}</span>
-          <span>Perceptual Space: {graphData.perceptualSpaceDimension}D</span>
-          {currentStep && (
-            <span className="step-indicator">Step: {currentStep.stepNumber}</span>
-          )}
-        </div>
-        <button
-          className="vis-reset-layout-btn"
-          onClick={handleResetLayout}
-          title="Clear pinned positions and let force layout run freely"
-        >
-          ⊹ Reset Layout
-        </button>
-      </div>
-
       <div className="machine-graph-svg-wrapper">
-        {/* Floating left-side legend — same placement as Tobias */}
+        {/* Floating left-side legend */}
         <div className={`vis-legend-panel${legendOpen ? ' open' : ''}`}>
           <button
             className="vis-legend-tab"
@@ -580,15 +579,30 @@ export const MachineGraphView: React.FC = () => {
                 <span>Data flow</span>
               </div>
               <div className="vis-legend-divider" />
+              {DOMAIN_ORDER.filter(d => domainCounts[d] > 0).map(d => (
+                <div key={d} className="vis-legend-item">
+                  <span className="vis-legend-dot" style={{ background: DOMAINS[d].color }} />
+                  <span style={{ flex: 1 }}>{DOMAINS[d].label}</span>
+                  <span style={{ color: DOMAINS[d].color, fontWeight: 700, fontSize: '10px', marginLeft: 6 }}>
+                    {domainCounts[d]}
+                  </span>
+                </div>
+              ))}
+              <div className="vis-legend-divider" />
               <div className="vis-legend-item" style={{ color: vizTheme.text.secondary, fontSize: '10px' }}>
                 Scroll to zoom · Drag to pan
               </div>
               <div className="vis-legend-item" style={{ color: vizTheme.text.secondary, fontSize: '10px' }}>
-                Drag node to pin
+                Drag node to pin · Dbl-click to open
               </div>
-              <div className="vis-legend-item" style={{ color: vizTheme.text.secondary, fontSize: '10px' }}>
-                Double-click to unpin
-              </div>
+              <div className="vis-legend-divider" />
+              <button
+                className="vis-reset-layout-btn"
+                onClick={handleResetLayout}
+                title="Clear pinned positions and let force layout run freely"
+              >
+                ⊹ Reset Layout
+              </button>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import type { VisMachine, StepRecord } from '../../hooks/useMachineSimulation';
 import { api } from '../../api';
 import './TobiasSequencesPanel.css';
+import { PERCEPTUAL_DIM } from '../../constants';
 
 // ---------------------------------------------------------------------------
 // Vector generation helpers
@@ -13,7 +14,7 @@ function generateVectors(
   count: number,
   region: { offset: number; length: number },
 ): number[][] {
-  const DIM = 256;
+  const DIM = PERCEPTUAL_DIM;
   const { offset, length } = region;
   const end = Math.min(offset + length, DIM);
 
@@ -92,14 +93,14 @@ export const TobiasSequencesPanel: React.FC<TobiasSequencesPanelProps> = ({
   const [pattern, setPattern]       = useState('sine-wave');
   const [vecCount, setVecCount]     = useState(100);
   const [regOffset, setRegOffset]   = useState(0);
-  const [regLength, setRegLength]   = useState(256);
+  const [regLength, setRegLength]   = useState(PERCEPTUAL_DIM);
   const [isLoading, setIsLoading]   = useState(false);
   const [loadStatus, setLoadStatus] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // Output filter
   const [outputMachineId, setOutputMachineId] = useState<string>('');
 
-  const effectiveLength = Math.min(regLength, 256 - regOffset);
+  const effectiveLength = Math.min(regLength, PERCEPTUAL_DIM - regOffset);
 
   const handleGenerate = useCallback(async () => {
     setIsLoading(true);
@@ -247,7 +248,7 @@ export const TobiasSequencesPanel: React.FC<TobiasSequencesPanelProps> = ({
                     className="tsp-input"
                     type="number"
                     min={1}
-                    max={256 - regOffset}
+                    max={PERCEPTUAL_DIM - regOffset}
                     value={regLength}
                     onChange={e => setRegLength(Number(e.target.value))}
                   />
@@ -256,7 +257,7 @@ export const TobiasSequencesPanel: React.FC<TobiasSequencesPanelProps> = ({
 
               <div className="tsp-region-note">
                 Target region: <code>[{regOffset}:{regOffset + effectiveLength}]</code>
-                {' — '}{effectiveLength} of 256 dimensions
+                {' — '}{effectiveLength} of {PERCEPTUAL_DIM} dimensions
               </div>
 
               {/* Quick-select machine input region */}

@@ -29,11 +29,6 @@ export const MachineInterconnectionView: React.FC = () => {
             </button>
             <h1>Machine Interconnection View</h1>
           </div>
-          <p className="view-description">
-            Visualize machines as computational nodes connected through a shared 256-dimensional
-            perceptual space (En). Watch reality vectors flow through the system as machines
-            process inputs and generate outputs.
-          </p>
         </div>
       </div>
 

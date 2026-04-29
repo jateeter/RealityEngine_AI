@@ -15,42 +15,9 @@
   align-items: center;
 }
 
-.graph-header {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.graph-header h2 {
-  margin: 0;
-  font-size: 24px;
-  color: #61dafb;
-  flex-shrink: 0;
-}
-
-.graph-info {
-  display: flex;
-  gap: 8px;
-  font-size: 14px;
-  color: #999;
-  flex: 1;
-  flex-wrap: wrap;
-}
-
-/* Reset layout button now uses shared .vis-reset-layout-btn from VisLegend.css */
-
-.graph-info span {
-  padding: 4px 12px;
-  background-color: #2a2a2a;
-  border-radius: 4px;
-}
-
-.step-indicator {
-  background-color: #4a90e2 !important;
-  color: white !important;
-  font-weight: bold;
+/* Widen legend panel for domain labels (overrides VisLegend.css 200px default) */
+.machine-graph-view .vis-legend-panel.open .vis-legend-content {
+  max-width: 240px;
 }
 
 .machine-graph-svg-wrapper {

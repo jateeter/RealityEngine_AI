@@ -9,7 +9,7 @@ import io.circe.Json
  * Manages a shared PerceptualSpace and orchestrates the 3-phase
  * snapshot → process → merge loop over all registered machines.
  */
-class PerceptualSpaceSimulator(dimension: Int = 256) {
+class PerceptualSpaceSimulator(dimension: Int = sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768)) {
   private val perceptualSpace    = new PerceptualSpace(dimension)
   private var machines:          Map[String, Machine] = Map.empty
   private var history:           List[SimulationStep] = Nil

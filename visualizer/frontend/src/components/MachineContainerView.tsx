@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useVisualizerStore } from '../store';
+import { PERCEPTUAL_DIM } from '../constants';
 import CriticalEventGraphView from './CriticalEventGraphView';
 import OutputStreamVisualization from './OutputStreamVisualization';
 import { MachineInterconnectionGraph } from './MachineInterconnectionGraph';
 import { PerceptualLogViewer } from './PerceptualLogViewer';
+import { MachinePESourcesPanel } from './MachinePESourcesPanel';
 import { api } from '../api';
 import { Machine } from '../types';
 import {
@@ -308,7 +310,7 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
   const [allMachines, setAllMachines] = useState(machines);
 
   // Universal Perceptual Space state — updated passively via WebSocket
-  const [currentUniversalVector, setCurrentUniversalVector] = useState<number[]>(new Array(256).fill(0));
+  const [currentUniversalVector, setCurrentUniversalVector] = useState<number[]>(new Array(PERCEPTUAL_DIM).fill(0));
   const [currentStep, setCurrentStep] = useState(0);
 
   // Log viewer modal state
@@ -343,7 +345,7 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
             setCurrentStep(prev => prev + 1);
           }
         } else if (data.type === 'perceptual-simulation-reset') {
-          setCurrentUniversalVector(new Array(256).fill(0));
+          setCurrentUniversalVector(new Array(PERCEPTUAL_DIM).fill(0));
           setCurrentStep(0);
         }
       } catch (error) {
@@ -473,6 +475,11 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
               </button>
             </div>
           </div>
+
+          {/* PE Test Sources Panel */}
+          {currentMachine && (
+            <MachinePESourcesPanel machineId={currentMachine.id} />
+          )}
 
           {/* Machine Inputs Strip */}
           <MachineInputsStrip

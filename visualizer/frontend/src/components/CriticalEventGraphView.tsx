@@ -10,6 +10,7 @@ const C_ACTIVE        = '#06b6d4'; // cyan  — queued / active
 const C_FIRED         = '#f59e0b'; // amber — output just emitted
 const C_TERMINAL_REST = '#111827'; // dark  — terminal node, not yet fired
 const C_DEFAULT       = '#64748b'; // slate — intermediate
+const C_EDGE_IDLE     = '#e2e8f0'; // slate-200 — off-white for idle directed edges
 
 const nodeColor = (d: { wasJustMatched?: boolean; isActive: boolean; isInitial: boolean; hasOutput: boolean }): string => {
   if (d.wasJustMatched) return C_FIRED;
@@ -199,7 +200,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       linkSelRef.current
         .attr('stroke', d => {
           const srcId = typeof d.source === 'object' ? (d.source as GraphNode).id : d.source as string;
-          return (nodeById.get(srcId)?.isActive ?? false) ? C_ACTIVE : '#64748b';
+          return (nodeById.get(srcId)?.isActive ?? false) ? C_ACTIVE : C_EDGE_IDLE;
         })
         .attr('stroke-width', d => {
           const srcId = typeof d.source === 'object' ? (d.source as GraphNode).id : d.source as string;
@@ -249,12 +250,12 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 25)
       .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
+      .attr('markerWidth', 10)
+      .attr('markerHeight', 10)
       .attr('orient', 'auto')
       .append('path')
       .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', '#64748b');
+      .attr('fill', C_EDGE_IDLE);
 
     // Active arrow (cyan — matches C_ACTIVE)
     defs.append('marker')
@@ -262,8 +263,8 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       .attr('viewBox', '0 -5 10 10')
       .attr('refX', 25)
       .attr('refY', 0)
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
+      .attr('markerWidth', 10)
+      .attr('markerHeight', 10)
       .attr('orient', 'auto')
       .append('path')
       .attr('d', 'M0,-5L10,0L0,5')
@@ -325,7 +326,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
       .data(links)
       .join('line')
       .attr('class', 'link')
-      .attr('stroke', d => d.isActive ? C_ACTIVE : '#64748b')
+      .attr('stroke', d => d.isActive ? C_ACTIVE : C_EDGE_IDLE)
       .attr('stroke-width', d => d.isActive ? 3 : 2)
       .attr('marker-end', d => d.isActive ? 'url(#arrowhead-active)' : 'url(#arrowhead)');
 
@@ -741,7 +742,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
 
       // Update link colors based on active state
       link
-        .attr('stroke', d => d.isActive ? C_ACTIVE : '#64748b')
+        .attr('stroke', d => d.isActive ? C_ACTIVE : C_EDGE_IDLE)
         .attr('stroke-width', d => d.isActive ? 3 : 2)
         .attr('marker-end', d => d.isActive ? 'url(#arrowhead-active)' : 'url(#arrowhead)');
 

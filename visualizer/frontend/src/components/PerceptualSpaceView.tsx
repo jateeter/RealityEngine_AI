@@ -1,5 +1,5 @@
 /**
- * PerceptualSpaceView - Visualization of the 256-dimensional perceptual space
+ * PerceptualSpaceView - Visualization of the perceptual space
  *
  * Shows active regions, machine I/O mappings, and current values
  */
@@ -101,7 +101,7 @@ export const PerceptualSpaceView: React.FC = () => {
     );
   }
 
-  // Group the 256-dimensional space into blocks of 16 for visualization
+  // Group the perceptual space into blocks of 16 for visualization
   const blockSize = 16;
   const numBlocks = Math.ceil(state.perceptualSpace.length / blockSize);
 

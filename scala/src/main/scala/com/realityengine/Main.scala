@@ -53,7 +53,7 @@ object Main extends App {
 
   val vectorStore  = new VectorStore()
   val engine       = new RealityEngine(vectorStore)
-  val simulator    = new PerceptualSpaceSimulator(256)
+  val simulator    = new PerceptualSpaceSimulator(sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768))
 
   simulator.setOnStepComplete { (_, spaceVector) =>
     engine.preceptionEngine.getPerceptualSpace.setPerceptualVector(spaceVector)

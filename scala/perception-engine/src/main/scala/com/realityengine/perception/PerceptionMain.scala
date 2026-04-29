@@ -59,8 +59,9 @@ object PerceptionMain extends App {
 
   // ── Engine bootstrap ──────────────────────────────────────────────────────
 
+  val vectorDimension = sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768)
   val store   = new SourceStore(dataPath)
-  val engine  = new PerceptionEngine
+  val engine  = new PerceptionEngine(vectorDimension)
 
   if (!isFresh) {
     val loaded = store.load()

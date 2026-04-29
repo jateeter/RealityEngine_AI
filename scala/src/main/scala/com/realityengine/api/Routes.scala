@@ -31,7 +31,7 @@ class Routes(
 )(implicit system: ActorSystem, ec: ExecutionContext) {
 
   private val perception = new PreceptionOfReality(
-    sys.env.getOrElse("VECTOR_DIMENSION", "256").toIntOption.getOrElse(256))
+    sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768))
   private val sampler = new AtomicReference[Option[RealitySampler]](None)
 
   // JSON file cache: path -> (lastModified, rawJson).
@@ -137,12 +137,12 @@ class Routes(
         pathPrefix("config") {
           concat(
             pathEnd { get { complete(Json.obj(
-              "vectorDimension"   -> Json.fromInt(sys.env.getOrElse("VECTOR_DIMENSION", "256").toIntOption.getOrElse(256)),
+              "vectorDimension"   -> Json.fromInt(sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768)),
               "matchThreshold"    -> Json.fromDouble(0.5).get,
               "qdrantUrl"         -> Json.fromString(sys.env.getOrElse("QDRANT_URL", "http://localhost:6333")),
               "collectionName"    -> Json.fromString(sys.env.getOrElse("COLLECTION_NAME", "reality-vectors"))
             )) } },
-            path("dimension") { put { parameter("dimension".as[Int].?(256)) { dim =>
+            path("dimension") { put { parameter("dimension".as[Int].?(sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768))) { dim =>
               complete(Json.obj("success" -> Json.fromBoolean(true), "dimension" -> Json.fromInt(dim)))
             } } },
             path("threshold") { put { parameter("threshold".as[Double].?(0.5)) { t =>

@@ -13,14 +13,14 @@ import scala.util.Random
  *
  * Signal generation lives in the companion object as pure functions.
  */
-class PerceptionEngine {
+class PerceptionEngine(val vectorDimension: Int = sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768)) {
   private val uuidGen = Generators.timeBasedReorderedGenerator()
 
   private var sources: Map[String, SourceConfig]        = Map.empty
   private var testStep: Map[String, Int]                = Map.empty
   private var walkState: Map[String, Vector[Double]]    = Map.empty
-  // 256-element persistent perceptual space — carries machine outputs forward.
-  private var persistentVector: Array[Double]           = new Array[Double](256)
+  // Persistent perceptual space — carries machine outputs forward.
+  private var persistentVector: Array[Double]           = new Array[Double](vectorDimension)
 
   var globalStep: Long = 0L
   var matchAlgorithm: MatchAlgorithm = MatchAlgorithm.Gte
@@ -92,15 +92,18 @@ class PerceptionEngine {
    * Pure read — does not modify persistentVector.
    */
   def assembleVector(): Vector[Double] = synchronized {
-    val out = persistentVector.clone()
+    val out    = persistentVector.clone()
+    val outLen = out.length
     for ((id, src) <- sources if src.active) {
       val values = getSourceValues(id, src)
       val Region(offset, length) = src.region
-      var i = 0
-      while (i < length && i < values.length) {
-        val clamped = math.max(0.0, math.min(1.0, values(i)))
-        out(offset + i) = clamped
-        i += 1
+      // Skip sources whose region starts at or beyond the vector boundary.
+      if (offset < outLen) {
+        var i = 0
+        while (i < length && i < values.length && offset + i < outLen) {
+          out(offset + i) = math.max(0.0, math.min(1.0, values(i)))
+          i += 1
+        }
       }
     }
     out.toVector
@@ -109,7 +112,7 @@ class PerceptionEngine {
   /** Sync the persistent base vector from the RE post-merge state. */
   def updateFromPerceptualSpace(ps: Vector[Double]): Unit = synchronized {
     var i = 0
-    while (i < 256) {
+    while (i < vectorDimension) {
       persistentVector(i) = ps.applyOrElse(i, (_: Int) => 0.0)
       i += 1
     }
@@ -160,7 +163,7 @@ class PerceptionEngine {
 
   def reset(): Unit = synchronized {
     globalStep       = 0L
-    persistentVector = new Array[Double](256)
+    persistentVector = new Array[Double](vectorDimension)
     for ((id, src) <- sources) src match {
       case t: TestSourceConfig =>
         testStep = testStep + (id -> 0)

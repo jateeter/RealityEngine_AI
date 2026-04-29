@@ -4,7 +4,7 @@ package com.realityengine.models
  * PerceptualSpace — manages the shared n-dimensional perceptual reality space (En).
  *
  * Architecture:
- *  - En: the complete event space (default 256 dimensions)
+ *  - En: the complete event space (dimension driven by VECTOR_DIMENSION env var)
  *  - Machines view subsets of En via offset/length mappings (Em)
  *  - Machine outputs are merged back into En to update reality perception
  *
@@ -15,7 +15,7 @@ package com.realityengine.models
  *  is produced only by getPerceptualVector / extractMachineInput / getRegion,
  *  which are called at most once per simulation step.
  */
-class PerceptualSpace(val dimension: Int = 256) {
+class PerceptualSpace(val dimension: Int = sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768)) {
   private val perceptualArray: Array[Double] = new Array[Double](dimension)
 
   // ── Accessors ────────────────────────────────────────────────────────────
@@ -92,7 +92,7 @@ class PerceptualSpace(val dimension: Int = 256) {
 object PerceptualSpace {
   def fromJson(json: io.circe.Json): PerceptualSpace = {
     val c    = json.hcursor
-    val dim  = c.get[Int]("dimension").getOrElse(256)
+    val dim  = c.get[Int]("dimension").getOrElse(sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768))
     val ps   = new PerceptualSpace(dim)
     val vec  = c.downField("perceptualVector").as[Vector[Double]].getOrElse(Vector.fill(dim)(0.0))
     ps.setPerceptualVector(vec)
