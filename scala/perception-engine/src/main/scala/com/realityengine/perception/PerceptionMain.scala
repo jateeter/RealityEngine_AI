@@ -66,9 +66,9 @@ object PerceptionMain extends App {
   if (!isFresh) {
     val loaded = store.load()
     loaded.foreach(engine.restoreSource)
-    println(s"[SourceStore] Loaded ${loaded.size} source(s) from $dataPath")
+    println(s"[SourceStore] Loaded ${loaded.size} source(s) from $dataPath — will supplement any missing machine sources on start")
   } else {
-    println("[SourceStore] FRESH_START: skipping persisted sources — will seed from machines after server starts")
+    println("[SourceStore] FRESH_START: skipping persisted sources — will seed all machine sources after server starts")
   }
 
   val broadcastActor = system.actorOf(WsBroadcastActor.props(), "ws-broadcast")
@@ -101,7 +101,7 @@ object PerceptionMain extends App {
       println(s"\n✅ Perception Engine running on $scheme://$host:$port")
       println(s"   Push target    : $perceptionTarget/api/perceive")
       println(s"   Reality Engine : $realityEngineUrl")
-      if (isFresh) seedSources(realityEngineUrl, engine, store)
+      seedSources(realityEngineUrl, engine, store, mergeOnly = !isFresh)
 
       sys.addShutdownHook {
         println("\nShutting down gracefully...")
@@ -113,7 +113,10 @@ object PerceptionMain extends App {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  def seedSources(realityEngineUrl: String, engine: PerceptionEngine, store: SourceStore): Unit = {
+  // mergeOnly=true: only add sources for machines that have no existing test sources
+  //                 (preserves user-edited on/off state for known machines)
+  // mergeOnly=false: replace all test sources wholesale (FRESH_START)
+  def seedSources(realityEngineUrl: String, engine: PerceptionEngine, store: SourceStore, mergeOnly: Boolean): Unit = {
     Future {
       val backend = HttpURLConnectionBackend()
       var machinesJson: io.circe.Json = io.circe.Json.Null
@@ -144,7 +147,15 @@ object PerceptionMain extends App {
           .downField("machines")
           .as[Vector[io.circe.Json]]
           .getOrElse(Vector.empty)
-        var seeded = 0
+
+        // Build set of machine IDs that already have test sources in the engine
+        val seededMachineIds: Set[String] =
+          if (mergeOnly)
+            engine.getSources.collect { case t: TestSourceConfig => t.machineId }.toSet
+          else
+            Set.empty
+
+        var seeded = 0; var skipped = 0
         machines.foreach { m =>
           val mc          = m.hcursor
           val machineId   = mc.get[String]("id").getOrElse("")
@@ -155,23 +166,27 @@ object PerceptionMain extends App {
             .as[Vector[io.circe.Json]].getOrElse(Vector.empty)
           (offsetOpt, lengthOpt) match {
             case (Some(off), Some(len)) =>
-              inputSeqs.foreach { sj =>
-                val seqName = sj.hcursor.get[String]("name").getOrElse("")
-                val vectors = sj.hcursor.downField("vectors")
-                  .as[Vector[Vector[Double]]].getOrElse(Vector.empty)
-                if (seqName.nonEmpty && vectors.nonEmpty) {
-                  engine.addSource(TestSourceConfig(
-                    id           = java.util.UUID.randomUUID().toString,
-                    name         = s"$machineName — $seqName",
-                    region       = Region(off, len),
-                    active       = true,
-                    machineId    = machineId,
-                    machineName  = machineName,
-                    sequenceName = seqName,
-                    inputs       = vectors,
-                    loop         = true,
-                  ))
-                  seeded += 1
+              if (mergeOnly && seededMachineIds.contains(machineId)) {
+                skipped += 1
+              } else {
+                inputSeqs.foreach { sj =>
+                  val seqName = sj.hcursor.get[String]("name").getOrElse("")
+                  val vectors = sj.hcursor.downField("vectors")
+                    .as[Vector[Vector[Double]]].getOrElse(Vector.empty)
+                  if (seqName.nonEmpty && vectors.nonEmpty) {
+                    engine.addSource(TestSourceConfig(
+                      id           = java.util.UUID.randomUUID().toString,
+                      name         = s"$machineName — $seqName",
+                      region       = Region(off, len),
+                      active       = true,
+                      machineId    = machineId,
+                      machineName  = machineName,
+                      sequenceName = seqName,
+                      inputs       = vectors,
+                      loop         = true,
+                    ))
+                    seeded += 1
+                  }
                 }
               }
             case _ =>
@@ -179,7 +194,8 @@ object PerceptionMain extends App {
                 println(s"[Seed] Skipping $machineName — no perceptualMapping.input found")
           }
         }
-        println(s"[Seed] Seeded $seeded test source(s) from ${machines.size} machine(s)")
+        val mode = if (mergeOnly) "merge" else "fresh"
+        println(s"[Seed] ($mode) Added $seeded source(s), skipped $skipped machines with existing sources, from ${machines.size} machine(s)")
         store.save(engine.getSources)
       }
     }(ec)
