@@ -79,12 +79,15 @@ npm run test:e2e:docker
 
 ```
 e2e/
-├── global-setup.ts           # Setup before all tests
-├── global-teardown.ts        # Cleanup after all tests
+├── global-setup.ts                      # Setup before all tests
+├── global-teardown.ts                   # Cleanup after all tests
 ├── tests/
-│   ├── api.spec.ts          # API endpoint tests
-│   ├── visualizer-ui.spec.ts # UI component tests
-│   └── full-integration.spec.ts # Full workflow tests
+│   ├── api.spec.ts                      # API endpoint tests
+│   ├── visualizer-ui.spec.ts            # UI component tests
+│   ├── full-integration.spec.ts         # Full workflow tests
+│   ├── multi-step-output-workflow.spec.ts  # Multi-step state machine tests
+│   ├── perceptual-space-interconnection.spec.ts # Perceptual space tests
+│   └── error-handling-edge-cases.spec.ts   # Error paths & edge cases (extended)
 ├── fixtures/                 # Test data
 └── utils/                    # Helper functions
 ```
@@ -150,6 +153,40 @@ test('should create sequence and see in UI', async ({ page, request }) => {
   await page.goto('http://localhost:5173');
   await expect(page.getByText('My Sequence')).toBeVisible();
 });
+```
+
+#### 4. Multi-Step State Machine Tests (`multi-step-output-workflow.spec.ts`)
+Tests the complete perceptual workflow for the Multi-Step State Machine:
+- Full output workflow (Sequence 1 RESET path, Sequence 2 SET path)
+- Output vector metadata and descriptions
+- Auto-play execution of both sequences
+
+#### 5. Perceptual Space Interconnection Tests (`perceptual-space-interconnection.spec.ts`)
+Tests machine interconnection through shared perceptual space:
+- Multi-Step → RS2 + RSFlipFlop signal chain
+- Perceptual space state consistency across operations
+
+#### 6. Error Handling & Edge Cases (`error-handling-edge-cases.spec.ts`)
+Extended coverage for error paths, boundary conditions, and performance:
+
+| # | Test | Description |
+|---|------|-------------|
+| 1 | Non-existent sequence → 404 | `GET /api/sequences/<bad-id>` must return 404 |
+| 2 | Delete non-existent sequence → 404 | `DELETE /api/sequences/<bad-id>` must return 404 |
+| 3 | Invalid vector type in engine process | Non-array `vector` field must return ≥ 400 |
+| 4 | Missing vector field in engine process | Omitting `vector` must return ≥ 400 |
+| 5 | Vector search – threshold 1.0 (zero matches) | Empty result at perfect-similarity threshold |
+| 6 | Vector search – threshold 0.0 (permissive) | Accepts any similarity score; valid array returned |
+| 7 | Engine stats consistency after sequence creation | `totalSequences` must increase after `POST /api/sequences` |
+| 8 | History pagination limit respected | `?limit=3` returns ≤ 3 entries |
+| 9 | Concurrent vector processing (5 parallel) | All 5 concurrent `POST /api/engine/process` succeed |
+| 10 | Large-batch vector creation (10 vectors) | `totalVectors` in stats increases accordingly |
+| 11 | Sampler full lifecycle | start → sample → stats (isRunning=true) → stop → stats (isRunning=false) |
+| 12 | UI hard-refresh stability | Two successive `page.reload()` calls leave UI functional |
+
+Run only the extended suite:
+```bash
+npx playwright test e2e/tests/error-handling-edge-cases.spec.ts
 ```
 
 ## Running Tests

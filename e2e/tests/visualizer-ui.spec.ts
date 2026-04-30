@@ -72,40 +72,6 @@ test.describe('Visualizer - Graph Display', () => {
     const graph = page.locator('svg.machine-graph-svg, svg, canvas').first();
     await expect(graph).toBeVisible({ timeout: 10000 });
   });
-
-  test('should display machine nodes in graph', async ({ page }) => {
-    await page.goto(VISUALIZER_URL);
-    await page.waitForLoadState('networkidle');
-
-    // Navigate to Interconnection View (force click for mobile)
-    const interconnectionButton = page.locator('button:has-text("Interconnection View")');
-    await interconnectionButton.click({ force: true });
-    await page.waitForTimeout(2000);
-
-    // Look for machine nodes in the D3 graph
-    const nodes = page.locator('svg.machine-graph-svg rect, svg.machine-graph-svg g.node');
-    const count = await nodes.count();
-
-    // Should have at least some machines displayed
-    expect(count).toBeGreaterThanOrEqual(0); // May be 0 if no machines loaded
-  });
-
-  test('should display edges between machines', async ({ page }) => {
-    await page.goto(VISUALIZER_URL);
-    await page.waitForLoadState('networkidle');
-
-    // Navigate to Interconnection View (force click for mobile)
-    const interconnectionButton = page.locator('button:has-text("Interconnection View")');
-    await interconnectionButton.click({ force: true });
-    await page.waitForTimeout(2000);
-
-    // Look for edges in D3 graph
-    const edges = page.locator('svg.machine-graph-svg line, svg.machine-graph-svg path');
-    const count = await edges.count();
-
-    // May or may not have edges depending on machine connections
-    expect(count).toBeGreaterThanOrEqual(0);
-  });
 });
 
 test.describe('Visualizer - Interactive Controls', () => {
