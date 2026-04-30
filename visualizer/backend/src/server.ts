@@ -424,9 +424,9 @@ app.get('/api/machines', rateLimit(20), async (req: Request, res: Response) => {
               }),
               8
             );
-            return { id: machine.id, name: machine.name, isExample: machine.isExample ?? false, perceptualMapping: machine.perceptualMapping ?? null, sequences: sequences.filter(Boolean) };
+            return { id: machine.id, name: machine.name, description: machine.description ?? '', metadata: machine.metadata ?? {}, isExample: machine.isExample ?? false, perceptualMapping: machine.perceptualMapping ?? null, sequences: sequences.filter(Boolean) };
           } catch {
-            return { id: m.id, name: m.name, isExample: m.isExample ?? false, sequences: [] };
+            return { id: m.id, name: m.name, description: m.description ?? '', metadata: m.metadata ?? {}, isExample: m.isExample ?? false, sequences: [] };
           }
         }),
         8
