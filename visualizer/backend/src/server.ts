@@ -401,7 +401,7 @@ app.get('/api/machines/:id/export', async (req: Request, res: Response) => {
   } catch (error: any) { upstreamError(res, error, 'exportMachine'); }
 });
 
-app.get('/api/machines', rateLimit(20), async (req: Request, res: Response) => {
+app.get('/api/machines', rateLimit(120), async (req: Request, res: Response) => {
   if (req.query.expand === 'sequences') {
     const cacheKey = 'machines:expanded';
     const cached = getCached(cacheKey);

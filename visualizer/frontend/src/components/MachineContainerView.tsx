@@ -316,7 +316,9 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
   // Log viewer modal state
   const [isLogViewerOpen, setIsLogViewerOpen] = useState(false);
 
-  // Fetch all machines for interconnection graph
+  // Fetch all machines for interconnection graph — once on mount only.
+  // The machines prop carries per-step state updates; re-fetching the full
+  // list on every prop change would fire once per simulation step.
   useEffect(() => {
     const fetchMachines = async () => {
       try {
@@ -324,11 +326,10 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         setAllMachines(machinesData);
       } catch (error) {
         console.error('Error fetching machines:', error);
-        setAllMachines(machines);
       }
     };
     fetchMachines();
-  }, [machines]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for perceptual space updates via WebSocket.
   // Depend on `ws` so we re-subscribe whenever the connection is (re)established.
