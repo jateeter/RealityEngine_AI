@@ -13,7 +13,7 @@ const auditConfig = loadAuditConfig('visualizer-backend');
 const REALITY_ENGINE_URL = process.env.REALITY_ENGINE_URL || 'http://localhost:3000';
 // Comma-separated list of allowed browser origins (no trailing slash).
 const ALLOWED_ORIGINS: string[] = (
-  process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173,http://localhost:3001'
+  process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173,https://localhost:5173,http://localhost:3001,https://localhost:3001'
 ).split(',').map(o => o.trim()).filter(Boolean);
 const certPath = process.env.TLS_CERT_PATH;
 const keyPath  = process.env.TLS_KEY_PATH;

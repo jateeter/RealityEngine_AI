@@ -104,6 +104,28 @@ class PerceptionRoutes(
         )
         broadcastState()
         broadcast(Json.obj("type" -> "push-result".asJson).deepMerge(encodePushResult(result)))
+
+        // Notify visualizer backend so it can fan out the step to its WS clients.
+        // Fire-and-forget: never awaited, never blocks the push cycle.
+        val notifyPayload = Json.obj(
+          "step"       -> parsed,
+          "globalStep" -> engine.globalStep.asJson,
+          "timestamp"  -> ts.asJson,
+        ).noSpaces
+        Future {
+          try {
+            basicRequest
+              .post(uri"$perceptionTargetUrl/api/perceive-notify")
+              .contentType("application/json")
+              .body(notifyPayload)
+              .response(ignore)
+              .send(sttpBackend)
+          } catch {
+            case e: Exception =>
+              System.err.println(s"[doPush] Visualizer notify skipped: ${e.getMessage}")
+          }
+        }(system.dispatchers.lookup("blocking-io-dispatcher"))
+
         result
 
       case resp =>
