@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
  * 2. RS2 and RSFlipFlop both read from [3:5] as their input
  * 3. RS2 outputs to [8:10], RSFlipFlop outputs to [6:8]
  *
- * Perceptual Space Layout (256 bytes):
+ * Perceptual Space Layout (768 dimensions):
  * - [0:3]   Multi-Step input (3 bytes)
  * - [3:5]   Multi-Step output / RS2 & RSFlipFlop input (2 bytes)
  * - [6:8]   RSFlipFlop output (2 bytes)
@@ -312,8 +312,8 @@ test.describe('Perceptual Space Interconnection - Multi-Step → RS2 + RSFlipFlo
     const step1State = await step1Response.json();
     const step1Space = step1State.state?.perceptualSpace || [];
 
-    // Verify perceptual space is an array of 256 numbers
-    expect(step1Space.length).toBe(256);
+    // Verify perceptual space is an array of 768 numbers
+    expect(step1Space.length).toBe(768);
     expect(step1Space.every((v: number) => typeof v === 'number')).toBeTruthy();
 
     console.log('✓ Perceptual space remains consistent across machine switches');
