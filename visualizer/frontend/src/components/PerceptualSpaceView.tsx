@@ -47,7 +47,7 @@ export const PerceptualSpaceView: React.FC = () => {
       const response = await fetch('/api/perceptual-simulation/state');
       const result = await response.json();
 
-      if (result.success) {
+      if (result.success || result.state) {
         setState(result.state);
         setError(null);
       } else {

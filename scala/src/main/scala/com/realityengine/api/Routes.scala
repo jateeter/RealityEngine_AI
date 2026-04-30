@@ -550,7 +550,7 @@ class Routes(
                 "isRunning"       -> Json.fromBoolean(simulator.getIsRunning),
                 "machines"        -> simulator.toJson.hcursor.downField("machines").as[Json].getOrElse(Json.arr())
               )
-              complete(Json.obj("state" -> stateObj))
+              complete(Json.obj("success" -> Json.fromBoolean(true), "state" -> stateObj))
             } },
             path("history") { get { complete(Json.obj("history" -> simulator.getHistory.asJson)) } }
           )
