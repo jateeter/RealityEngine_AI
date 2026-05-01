@@ -929,11 +929,6 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         </div>
       </div>
 
-      <div className="graph-controls">
-        <div className="control-hint">
-          💡 Hover nodes for details • Drag to rearrange • Scroll to zoom
-        </div>
-      </div>
     </div>
   );
 };

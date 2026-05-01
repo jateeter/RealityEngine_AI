@@ -8,8 +8,8 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #0b0e14;
-  color: #e0e0e0;
+  background: var(--re-bg-1);
+  color: var(--re-text-0);
   overflow: hidden;
 }
 
@@ -18,10 +18,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
+  height: 52px;
   padding: 0 24px;
-  background: #0f131a;
-  border-bottom: 1px solid #1e2535;
+  background: var(--re-bg-2);
+  border-bottom: 1px solid var(--re-border-bright);
   flex-shrink: 0;
   z-index: 10;
 }
@@ -120,10 +120,10 @@
 
 /* ── Sidebar (LEFT) ─────────────────────────────────────────── */
 .tobias-sidebar {
-  width: 260px;
+  width: 220px;
   flex-shrink: 0;
-  background: #0f131a;
-  border-right: 1px solid #1e2535;
+  background: var(--re-bg-2);
+  border-right: 1px solid var(--re-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -153,8 +153,8 @@
   width: 22px;
   flex-shrink: 0;
   position: relative;
-  background: #0f131a;
-  border-right: 1px solid #1e2535;
+  background: var(--re-bg-2);
+  border-right: 1px solid var(--re-border);
   order: 1;
 }
 

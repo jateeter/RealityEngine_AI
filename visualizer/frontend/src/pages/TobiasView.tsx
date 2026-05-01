@@ -400,7 +400,7 @@ const TobiasView: React.FC = () => {
           </button>
           <div className="tobias-title-group">
             <h1 className="tobias-title">🔮 Tobias</h1>
-            <p className="tobias-subtitle">D3 SVG · machine visualization</p>
+            <p className="tobias-subtitle">D3 force graph · machine visualization</p>
           </div>
         </div>
 

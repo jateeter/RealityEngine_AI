@@ -3,9 +3,9 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-  padding: 20px;
+  background: var(--re-bg-1);
+  color: var(--re-text-0);
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -13,6 +13,9 @@
 .machine-graph-view.error {
   justify-content: center;
   align-items: center;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--re-text-2);
 }
 
 /* Widen legend panel for domain labels (overrides VisLegend.css 200px default) */
@@ -30,9 +33,8 @@
 }
 
 .machine-graph-svg {
-  background-color: #252525;
-  border-radius: 8px;
-  border: 1px solid #3a3a3a;
+  background: var(--re-bg-1);
+  border: none;
   flex: 1;
   width: 100%;
   min-width: 0;
@@ -47,15 +49,15 @@
 }
 
 .machine-graph-svg .node rect {
-  transition: fill 0.3s ease;
+  transition: fill 0.25s ease;
 }
 
 .machine-graph-svg .node:hover rect {
-  filter: brightness(1.2);
+  filter: brightness(1.3);
 }
 
 .machine-graph-svg .edge {
-  transition: stroke 0.3s ease, opacity 0.3s ease;
+  transition: stroke 0.25s ease, opacity 0.25s ease;
 }
 
 .machine-graph-svg .edge-label {
@@ -63,28 +65,23 @@
   user-select: none;
 }
 
-/* Legend is now the shared floating .vis-legend-panel from VisLegend.css */
-
 .error-message {
-  padding: 20px;
-  background-color: #3a1f1f;
-  border: 1px solid #ff5555;
-  border-radius: 8px;
-  color: #ff9999;
+  padding: 16px 20px;
+  background: rgba(248, 113, 113, 0.07);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  border-radius: 3px;
+  color: var(--re-red);
+  font-size: 12px;
+  letter-spacing: 0.04em;
 }
 
-/* Animation for active data flow */
 @keyframes pulse {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
 }
 
 .machine-graph-svg .edge.active {
-  stroke: #4a90e2;
-  stroke-width: 3;
-  animation: pulse 1.5s ease-in-out infinite;
+  stroke: var(--re-cyan);
+  stroke-width: 2.5;
+  animation: pulse 1.8s ease-in-out infinite;
 }

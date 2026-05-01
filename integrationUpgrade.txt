@@ -1,0 +1,138 @@
+ Priority 1 — Scala Reality Engine
+
+  CRITICAL
+
+  VectorStore.scala:29-40, 75-97 — Blocking HTTP inside Future { blocking {} }
+  Every Qdrant call uses the synchronous HttpURLConnectionBackend wrapped in Future { blocking { } }. This holds a thread pool thread for the full round-trip duration.
+  Under load, this exhausts the thread pool and stalls all engine processing. Fix: switch to the async sttp backend (AsyncHttpClientFutureBackend) and chain with
+  .map/.flatMap.
+
+  PerceptualSpaceSimulator.scala:177-191 — O(n²) edge detection on every graph request
+  Builds machine overlap edges with a nested double loop over all machines × all machines. Every GET /api/machine-graph call pays this cost. Fix: pre-compute edges
+  incrementally in addMachine/removeMachine; cache the result.
+
+  ---
+  HIGH
+
+  PerceptualSpace.scala:43, 53 — Vector.patch copies the entire 256-element vector on every merge/update
+  patch() is immutable — it allocates a brand-new 256-element Vector[Double] on every machine output merge and region update. This is called multiple times per step() —
+  once per machine with an output. Fix: back the perceptual space with a Array[Double] internally; expose an immutable snapshot only when serializing.
+
+  RealityEngine.scala:311-313 — history prepend + .take copies the full list on every step
+  transitionHistory = result :: transitionHistory then .take(maxHistorySize) forces O(n) work every input. Fix: replace with a circular ArrayDeque capped at
+  maxHistorySize.
+
+  RealityEngine.scala:162-177 — repeated machines.get(machineId) inside merge phase
+  The merge loop calls machines.get(machineId) for every machine result even though the machine reference is already in scope. Also double-iterates sequenceResults. Fix:
+  pass the machine reference directly; single-pass over outputs.
+
+  Machine.scala:50-51 — fresh mutable Map allocated on every processInput
+  scala.collection.mutable.Map.empty[String, SequenceResult] is allocated on every call. This is the innermost hot path of the entire engine. Fix: pre-allocate and reuse;
+   clear before each call.
+
+  Machine.scala:96-107 — deep clone copies all sequences and vectors
+  .clone() deep-copies every CriticalEventSequence and all their RealityVector instances. Called in what-if analysis. Fix: implement a copy-on-write snapshot; only copy
+  sequences that are actually mutated.
+
+  CriticalEventSequence.scala:69-87 — three ListBuffer → .toList conversions per transition
+  Every transition() call allocates three ListBuffers and converts them to List. Fix: return the ListBuffer directly or use an Array; defer immutable conversion to call
+  sites that require it.
+
+  RealityVector.scala:60-70 — manual element loop with per-element Option.getOrElse
+  The matching loop calls elem.threshold.getOrElse(...) on every element on every vector comparison. At 256 elements × many vectors per step, this adds up. Fix:
+  pre-extract the threshold before the match arm.
+
+  store.ts:254-276 — full getSequences() fetch on every WebSocket step message
+  Every perceptual-simulation-stepped WebSocket message triggers a full GET /api/viz/sequences round-trip, rebuilding the entire sequence graph including all nodes and
+  edges. At 1 Hz+ push rate this is continuous load. Fix: include the step delta (which machines fired, which vectors activated) in the WebSocket message itself; apply
+  locally without a re-fetch.
+
+  useMachineSimulation.ts:204-233 — full sequence re-fetch on every simulation step
+  Same pattern as above, in the hook layer. Compounds the store issue. Fix: same — move live activation state into the WebSocket payload.
+
+  ---
+  MEDIUM
+
+  PreceptionOfReality.scala:37-40, 53-57 — intermediate vector copies per transformer + ensureDimension padding
+  Each transformer reassigns vectorData, creating a new Vector[Double] per transformer. Then ensureDimension may allocate again to pad to 256. Fix: work on a pre-sized
+  mutable Array[Double]; apply all transformers in a single pass.
+
+  RealitySampler.scala:93-95 — Vector :+ append then takeRight copy
+  Scala Vector.:+ is O(log n) but takeRight copies. Fix: replace with a bounded ArrayDeque.
+
+  RealityEngine.scala:124-131, 147-151 — metadata Map(...) allocated inside every machine transition
+  New Map constructed for tagging each machine output. Fix: build a static template Map and copy only the varying fields.
+
+  Routes.scala:80-96, 343-358 — Files.readAllBytes on every JSON load request
+  GET /api/machines/json/:name reads from disk every call. Fix: cache parsed JSON in a TrieMap[String, String]; invalidate only if file changes.
+
+  OutputArbiter.scala:52-53 — double iteration: .flatten.toList then .count
+  sequenceOutputs.values.flatten.toList builds an intermediate list, then .count iterates it again. Fix: single foldLeft that accumulates count and output list
+  simultaneously.
+
+  PerceptionEngine.ts:114 — full 256-element array copy on every push
+  const out = [...this.persistentVector] in assembleVector() is called on every auto-push tick. Fix: write directly into the output buffer using typed array views; only
+  copy the modified regions, not the entire 256 slots.
+
+  PerceptionEngine.ts:122-124 — two comparisons per loop iteration in assembleVector
+  i < length && i < values.length pays double comparison. Fix: const len = Math.min(length, values.length) once before the loop.
+
+  PerceptionEngine.ts:147-175 — iterate all sources in advance() including inactive
+  The advance loop walks every source on every push. Fix: maintain a separate active-sources list; skip sources that are paused or exhausted.
+
+  PerceptionEngine.ts:286-289 — per-element Box-Muller random in Gaussian noise
+  Box-Muller produces two random numbers but only one is used; the second is discarded. Fix: consume both; store the spare for the next element.
+
+  VectorStore.scala:79, 91, 122 — normalizeVector allocates new vector per call
+  Called on every vector before Qdrant upsert/search. Fix: normalize in-place using an Array; convert to immutable only for the HTTP payload.
+
+  useMachineSimulation.ts:81-140 — N + (N×M) API calls on machine load
+  Loads all machines, then calls getMachine() for each, then getSequence() for each sequence of each machine. Fix: add a /api/machines?expand=sequences endpoint that
+  returns the full graph in one call.
+
+  useMachineSimulation.ts:180-181 — .some() O(n) scan for deduplication per step
+  prev.some(r => r.stepNumber === record.stepNumber) scans the full history array. Fix: track seen step numbers in a Set<number>.
+
+  server.ts (visualizer-backend):143-200 — every proxy call re-fetches from Reality Engine with no caching
+  Machines, sequences, and graph data are fetched fresh on every frontend request. Fix: add a short-TTL in-memory cache (e.g. 500 ms) per endpoint; invalidate on mutating
+   calls.
+
+  server.ts (perception-engine):302-318 — each sensor POST triggers immediate full state broadcast
+  Rapid sensor pushes fan out to all WS clients per-event. Fix: coalesce with a debounced broadcast (e.g. 50 ms window).
+
+  ---
+  LOW
+
+  CriticalEventGraphView.tsx:54-135 — D3 simulation fully re-initialized on every sequence prop change
+  Every step that changes sequences rebuilds the entire force-layout simulation. Fix: separate structural changes (add/remove nodes) from state changes (active/matched
+  flags); only re-initialize on structural change, update node attributes in place otherwise.
+
+  PerceptualSpace.scala:26-33, 56-61 — redundant bounds check: require + slice both validate
+  Fix: validate once; let slice operate unchecked.
+
+  server.ts (visualizer-backend):67-78 — heartbeat clients.forEach checks all connections
+  Fix: maintain a separate set of connections pending pong; skip the alive check for the majority that responded.
+
+  OutputStreamVisualization.tsx:42 — Date.now() - output.timestamp calculated per output per render
+  Fix: compute age in a useMemo or move the calculation upstream.
+
+  Routes.scala:142 — JSON cursor descent on every request for common parameters
+  Fix: pre-parse standard query parameters via Akka HTTP parameters() directive rather than body cursor descent.
+
+  ---
+  Priority 2 — Cross-cutting Patterns
+
+  Three systemic patterns appear across both applications:
+
+  1. Immutable collections in hot paths — The Scala core uses Vector[Double] and List throughout the per-step path. These are safe but allocate on every mutation. The
+  most impactful single change would be making PerceptualSpace mutable internally (Array[Double]) — it is the structure written to on every machine output.
+  2. Full re-fetch on WebSocket events — Both store.ts and useMachineSimulation.ts respond to each step message by fetching the complete sequence graph. The WebSocket
+  message should carry the delta (which vector IDs changed state) so the frontend can update in place.
+  3. No blocking I/O isolation — The Scala VectorStore ties thread pool threads to network round-trips via the blocking sttp backend. In an Akka HTTP service, blocking in
+   the default dispatcher degrades all request handling. This is the only fix that requires an external dependency change (async sttp backend), but it is the
+  highest-impact architectural issue.
+
+✻ Worked for 5m 6s
+
+
+==== agent integration.
