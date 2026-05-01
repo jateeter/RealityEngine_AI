@@ -61,7 +61,7 @@ const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
     const DIM = PERCEPTUAL_DIM;
     const H   = canvas.height;
 
-    ctx.fillStyle = '#080c12';
+    ctx.fillStyle = '#020609';
     ctx.fillRect(0, 0, W, H);
 
     // Pre-assign a domain-colored rgb triplet per perceptual-space index based on
@@ -148,11 +148,40 @@ const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
       </div>
 
       <div className="tobias-psbar-meta">
-        {latestStep !== null ? `step ${latestStep}` : '—'}
+        <span className="tobias-psbar-meta-label">step</span>
+        <span className="tobias-psbar-meta-value">
+          {latestStep !== null ? latestStep : '—'}
+        </span>
       </div>
     </div>
   );
 };
+
+// ---------------------------------------------------------------------------
+// OutputDots — shared dot renderer for both collapsed and expanded views.
+// ---------------------------------------------------------------------------
+
+const OUTPUT_DOT_RGB = '240,62,138'; // --re-pink
+const OUTPUT_DOT_MIN = 0.12;
+
+const OutputDots: React.FC<{
+  ov?: number[] | null;
+  getTitle?: (i: number, v: number) => string;
+}> = ({ ov, getTitle }) => (
+  <>
+    {ov && ov.length > 0
+      ? ov.slice(0, 4).map((v, i) => (
+          <div
+            key={i}
+            className="tobias-outbar-dot"
+            style={{ background: `rgba(${OUTPUT_DOT_RGB},${Math.max(OUTPUT_DOT_MIN, Math.min(1, v))})` }}
+            title={getTitle?.(i, v)}
+          />
+        ))
+      : <div className="tobias-outbar-dot tobias-outbar-dot-nil" />
+    }
+  </>
+);
 
 // ---------------------------------------------------------------------------
 // OutputHistoryBar
@@ -177,7 +206,7 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
     if (scrollRef.current) {
       scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
     }
-  }, [stepHistory.length, expanded]);
+  }, [stepHistory, expanded]);
 
   // Selected machine first, then up to 8 total
   const displayMachines = useMemo(() => {
@@ -221,18 +250,7 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
                     {m.name.replace(/^DC/, '').slice(0, 10)}
                   </span>
                   <div className="tobias-outbar-dots">
-                    {ov && ov.length > 0
-                      ? ov.slice(0, 4).map((v, i) => (
-                          <div
-                            key={i}
-                            className="tobias-outbar-dot"
-                            style={{
-                              background: `rgba(168,85,247,${Math.max(0.07, Math.min(1, v))})`,
-                            }}
-                          />
-                        ))
-                      : <div className="tobias-outbar-dot tobias-outbar-dot-nil" />
-                    }
+                    <OutputDots ov={ov} />
                   </div>
                 </div>
               );
@@ -263,19 +281,10 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
                   const ov     = result?.outputVector;
                   return (
                     <div key={m.id} className="tobias-outbar-cell">
-                      {ov && ov.length > 0
-                        ? ov.slice(0, 4).map((v, i) => (
-                            <div
-                              key={i}
-                              className="tobias-outbar-dot"
-                              style={{
-                                background: `rgba(168,85,247,${Math.max(0.07, Math.min(1, v))})`,
-                              }}
-                              title={`${m.name}[out${i}] = ${v.toFixed(3)} @ step ${step.stepNumber}`}
-                            />
-                          ))
-                        : <div className="tobias-outbar-dot tobias-outbar-dot-nil" />
-                      }
+                      <OutputDots
+                        ov={ov}
+                        getTitle={(i, v) => `${m.name}[out${i}] = ${v.toFixed(3)} @ step ${step.stepNumber}`}
+                      />
                     </div>
                   );
                 })}
@@ -350,20 +359,15 @@ const TobiasView: React.FC = () => {
   const [domainFilter, setDomainFilter] = useState<'all' | DomainId>('all');
   const [sidebarOpen,  setSidebarOpen]  = useState(true);
 
-  // Domain classification from graphNodes — has correct metadata (category field).
-  const domainById = useMemo(
-    () => new Map(graphNodes.map(n => [n.id, classifyMachine(n).domain])),
-    [graphNodes],
-  );
-
-  // Domain counts from graphNodes (correct classification, matches Machine Interconnect).
-  const domainCounts = useMemo(() => {
+  // Domain classification + counts from graphNodes — single pass, correct metadata.
+  const { domainById, domainCounts } = useMemo(() => {
+    const byId   = new Map(graphNodes.map(n => [n.id, classifyMachine(n).domain]));
     const counts: Record<DomainId, number> = {
       healthservices: 0, ai: 0, datacenter: 0, agriculture: 0, communityservices: 0, general: 0,
     };
-    for (const n of graphNodes) counts[domainById.get(n.id) ?? 'general']++;
-    return counts;
-  }, [graphNodes, domainById]);
+    for (const n of graphNodes) counts[byId.get(n.id) ?? 'general']++;
+    return { domainById: byId, domainCounts: counts };
+  }, [graphNodes]);
 
   // PerceptualSpaceBar uses graphAsMachines filtered by domain for correct region coloring.
   const filteredGraphMachines = useMemo(() => {
@@ -399,7 +403,7 @@ const TobiasView: React.FC = () => {
             ← Back
           </button>
           <div className="tobias-title-group">
-            <h1 className="tobias-title">🔮 Tobias</h1>
+            <h1 className="tobias-title">🔮 <span className="tobias-title-accent">Tobias</span></h1>
             <p className="tobias-subtitle">D3 force graph · machine visualization</p>
           </div>
         </div>

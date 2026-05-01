@@ -515,7 +515,7 @@ export const MachineGraphView: React.FC = () => {
 
     node.select<SVGRectElement>('rect')
       .attr('fill', (d: MachineNode) =>
-        currentStep?.machineResults[d.id] ? '#06b6d4' : vizTheme.bg.cardIdle
+        currentStep?.machineResults[d.id] ? vizTheme.accent.input : vizTheme.bg.cardIdle
       );
 
     if (stepText) {
@@ -566,7 +566,7 @@ export const MachineGraphView: React.FC = () => {
           <div className="vis-legend-content">
             <div className="vis-legend-items">
               <div className="vis-legend-item">
-                <span className="vis-legend-dot" style={{ background: '#06b6d4' }} />
+                <span className="vis-legend-dot" style={{ background: vizTheme.accent.input }} />
                 <span>Active machine</span>
               </div>
               <div className="vis-legend-item">
