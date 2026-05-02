@@ -87,6 +87,9 @@ function getMachineColorState(
 const CARD_FIRED_FILL   = '#2d0808';
 const CARD_FIRED_STROKE = '#ef4444';
 
+// Off-white blue-grey — visible against the deep navy background.
+const EDGE_IDLE_COLOR = '#8ab4cc';
+
 // ---------------------------------------------------------------------------
 // Layout persistence
 // ---------------------------------------------------------------------------
@@ -120,6 +123,7 @@ export const MachineGraphView: React.FC = () => {
 
   // D3 objects that must persist across step updates
   const nodeSelRef      = useRef<d3.Selection<SVGGElement, MachineNode, SVGGElement, unknown> | null>(null);
+  const linkSelRef      = useRef<d3.Selection<SVGPathElement, any, SVGGElement, unknown> | null>(null);
   const stepTextRef     = useRef<d3.Selection<SVGTextElement, MachineNode, SVGGElement, unknown> | null>(null);
   const simRef          = useRef<d3.Simulation<MachineNode & d3.SimulationNodeDatum, undefined> | null>(null);
   const zoomTransformRef = useRef<d3.ZoomTransform | null>(null);
@@ -204,6 +208,7 @@ export const MachineGraphView: React.FC = () => {
     const svg    = d3.select(svgRef.current);
     svg.selectAll('*').remove();
     nodeSelRef.current  = null;
+    linkSelRef.current  = null;
     stepTextRef.current = null;
     simRef.current?.stop();
     simRef.current = null;
@@ -214,19 +219,25 @@ export const MachineGraphView: React.FC = () => {
     svg.attr('width', width).attr('height', height);
 
     // Arrowhead markers for directed edges
-    svg.append('defs').selectAll('marker')
-      .data(['mgv-arrow', 'mgv-arrow-active'])
-      .join('marker')
-      .attr('id', t => t)
-      .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 10)
-      .attr('refY', 0)
-      .attr('markerWidth', 10)
-      .attr('markerHeight', 10)
-      .attr('orient', 'auto')
-      .append('path')
-      .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', t => t === 'mgv-arrow-active' ? vizTheme.edge.active : vizTheme.edge.arrowhead);
+    // Two arrowhead markers sized so the physical arrow stays the same regardless
+    // of stroke-width: idle (stroke≈2.5 → mw=10 → 25px), active (stroke≈3.5 → mw=7 → 24.5px).
+    const defs = svg.append('defs');
+    ([
+      { id: 'mgv-arrow',        fill: EDGE_IDLE_COLOR,      mw: 10 },
+      { id: 'mgv-arrow-active', fill: vizTheme.edge.active, mw:  7 },
+    ] as const).forEach(({ id, fill, mw }) => {
+      defs.append('marker')
+        .attr('id', id)
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 10)
+        .attr('refY', 0)
+        .attr('markerWidth', mw)
+        .attr('markerHeight', mw)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-5L10,0L0,5')
+        .attr('fill', fill);
+    });
 
     // Outer group owned by zoom/pan; inner group owns margin translation
     const outerG = svg.append('g');
@@ -411,11 +422,13 @@ export const MachineGraphView: React.FC = () => {
       .join('path')
       .attr('class', 'edge')
       .attr('fill', 'none')
-      .attr('stroke', vizTheme.edge.idle)
-      .attr('stroke-width', 2)
-      .attr('stroke-dasharray', '5,5')
-      .attr('opacity', 0.85)
+      .attr('stroke', EDGE_IDLE_COLOR)
+      .attr('stroke-width', 2.5)
+      .attr('stroke-dasharray', '7,3')
+      .attr('opacity', 0.8)
       .attr('marker-end', 'url(#mgv-arrow)');
+
+    linkSelRef.current = link as any;
 
     const linkLabels = g.append('g')
       .selectAll<SVGTextElement, typeof simEdges[0]>('text')
@@ -535,12 +548,32 @@ export const MachineGraphView: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphData, dimensions, layoutEpoch]);
 
-  // ── State update effect — updates node appearance on each step ─────────────
+  // ── State update effect — updates node and edge appearance on each step ──────
   // Does NOT touch the simulation or positions.
   useEffect(() => {
     const node     = nodeSelRef.current;
+    const link     = linkSelRef.current;
     const stepText = stepTextRef.current;
     if (!node) return;
+
+    // ── Edge highlighting — fired-source edges glow cyan ───────────────────
+    if (link) {
+      const firedIds = new Set(
+        currentStep
+          ? Object.entries(currentStep.machineResults)
+              .filter(([, r]) => r.outputVector !== null && r.outputVector !== undefined)
+              .map(([id]) => id)
+          : [],
+      );
+      link
+        .classed('active', (d: any) => firedIds.has(
+          typeof d.source === 'object' ? d.source.id : d.source,
+        ))
+        .attr('marker-end', (d: any) => {
+          const srcId = typeof d.source === 'object' ? d.source.id : d.source;
+          return firedIds.has(srcId) ? 'url(#mgv-arrow-active)' : 'url(#mgv-arrow)';
+        });
+    }
 
     node.select<SVGRectElement>('rect')
       .attr('fill', (d: MachineNode) => {

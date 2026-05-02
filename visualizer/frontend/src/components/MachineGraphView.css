@@ -57,7 +57,7 @@
 }
 
 .machine-graph-svg .edge {
-  transition: stroke 0.25s ease, opacity 0.25s ease;
+  transition: stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
 }
 
 .machine-graph-svg .edge-label {
@@ -76,12 +76,14 @@
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50%       { opacity: 1; }
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1.0;  }
 }
 
 .machine-graph-svg .edge.active {
   stroke: var(--re-cyan);
-  stroke-width: 2.5;
-  animation: pulse 1.8s ease-in-out infinite;
+  stroke-width: 3.5;
+  stroke-dasharray: 0;
+  opacity: 1;
+  animation: pulse 1.4s ease-in-out infinite;
 }
