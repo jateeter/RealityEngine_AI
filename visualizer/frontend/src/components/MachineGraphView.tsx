@@ -49,6 +49,12 @@ interface SimulationStep {
     outputVector: number[] | null;
     inputRegion: { offset: number; length: number };
     outputRegion: { offset: number; length: number } | null;
+    transitionResult?: {
+      sequenceResults?: Record<string, {
+        activatedVectors?: string[];
+        matchedVectors?: string[];
+      }>;
+    };
   }>;
   activeRegions: Array<{
     offset: number;
@@ -57,6 +63,29 @@ interface SimulationStep {
     type: 'input' | 'output';
   }>;
 }
+
+// ── Machine color state ──────────────────────────────────────────────────────
+// idle   → no meaningful transition this step
+// active → sequence advanced (vectors activated) but no output yet
+// fired  → final event matched, output vector produced
+type MachineColorState = 'idle' | 'active' | 'fired';
+
+function getMachineColorState(
+  result: SimulationStep['machineResults'][string] | undefined,
+): MachineColorState {
+  if (!result) return 'idle';
+  if (result.outputVector !== null && result.outputVector !== undefined) return 'fired';
+  const seqResults = result.transitionResult?.sequenceResults;
+  if (seqResults) {
+    for (const sr of Object.values(seqResults)) {
+      if ((sr.activatedVectors?.length ?? 0) > 0) return 'active';
+    }
+  }
+  return 'idle';
+}
+
+const CARD_FIRED_FILL   = '#2d0808';
+const CARD_FIRED_STROKE = '#ef4444';
 
 // ---------------------------------------------------------------------------
 // Layout persistence
@@ -514,9 +543,22 @@ export const MachineGraphView: React.FC = () => {
     if (!node) return;
 
     node.select<SVGRectElement>('rect')
-      .attr('fill', (d: MachineNode) =>
-        currentStep?.machineResults[d.id] ? vizTheme.accent.input : vizTheme.bg.cardIdle
-      );
+      .attr('fill', (d: MachineNode) => {
+        const state = getMachineColorState(currentStep?.machineResults[d.id]);
+        if (state === 'fired')  return CARD_FIRED_FILL;
+        if (state === 'active') return vizTheme.bg.cardActive;
+        return vizTheme.bg.cardIdle;
+      })
+      .attr('stroke', (d: MachineNode) => {
+        const state = getMachineColorState(currentStep?.machineResults[d.id]);
+        if (state === 'fired')  return CARD_FIRED_STROKE;
+        if (state === 'active') return vizTheme.accent.input;
+        return DOMAINS[(d.domain ?? 'general')].color;
+      })
+      .attr('stroke-width', (d: MachineNode) => {
+        const state = getMachineColorState(currentStep?.machineResults[d.id]);
+        return state !== 'idle' ? 3 : 2.5;
+      });
 
     if (stepText) {
       stepText.text((d: MachineNode) => {
@@ -566,12 +608,16 @@ export const MachineGraphView: React.FC = () => {
           <div className="vis-legend-content">
             <div className="vis-legend-items">
               <div className="vis-legend-item">
-                <span className="vis-legend-dot" style={{ background: vizTheme.accent.input }} />
-                <span>Active machine</span>
+                <span className="vis-legend-dot" style={{ background: CARD_FIRED_FILL, border: `1.5px solid ${CARD_FIRED_STROKE}` }} />
+                <span>Output fired</span>
+              </div>
+              <div className="vis-legend-item">
+                <span className="vis-legend-dot" style={{ background: vizTheme.bg.cardActive, border: `1.5px solid ${vizTheme.accent.input}` }} />
+                <span>Event active</span>
               </div>
               <div className="vis-legend-item">
                 <span className="vis-legend-dot" style={{ background: vizTheme.bg.cardIdle, border: `1px solid ${vizTheme.outline.idle}` }} />
-                <span>Idle machine</span>
+                <span>Idle</span>
               </div>
               <div className="vis-legend-divider" />
               <div className="vis-legend-item">
