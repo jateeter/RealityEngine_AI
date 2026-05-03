@@ -28,6 +28,12 @@ class PerceptualSpaceSimulator(dimension: Int = sys.env.getOrElse("VECTOR_DIMENS
   def addMachine(machine: Machine): Unit = {
     require(machine.perceptualMapping.isDefined,
       s"Machine ${machine.name} does not have a perceptual mapping")
+    val mapping  = machine.perceptualMapping.get
+    val required = math.max(
+      mapping.input.offset  + mapping.input.length,
+      mapping.output.offset + mapping.output.length,
+    )
+    perceptualSpace.growTo(required)
     machines = machines + (machine.id -> machine)
     rebuildEdgeCache()
   }
@@ -200,7 +206,7 @@ class PerceptualSpaceSimulator(dimension: Int = sys.env.getOrElse("VECTOR_DIMENS
     Json.obj(
       "nodes"                    -> Json.arr(nodes: _*),
       "edges"                    -> Json.arr(cachedEdges: _*),
-      "perceptualSpaceDimension" -> Json.fromInt(dimension)
+      "perceptualSpaceDimension" -> Json.fromInt(perceptualSpace.dimension)
     )
   }
 
