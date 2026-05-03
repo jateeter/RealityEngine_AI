@@ -128,174 +128,211 @@ interface TooltipState {
   data: TooltipMachineData | null;
 }
 
-// BFS column assignment — returns { col, row } per node id.
-function bfsLayout(
-  nodes: TooltipSeqNode[],
-  edges: Array<{ source: string; target: string }>,
-): { col: Map<string, number>; row: Map<string, number>; cols: number } {
-  if (!nodes.length) return { col: new Map(), row: new Map(), cols: 0 };
+// ── TooltipSeqGraph ───────────────────────────────────────────────────────────
+// Force-directed sequence graph embedded in the machine tooltip.
+// Visual language matches CriticalEventGraphView (same colors, drag/zoom/hover).
 
-  const adj  = new Map<string, string[]>(nodes.map(n => [n.id, []]));
-  const inDeg = new Map<string, number>(nodes.map(n => [n.id, 0]));
-  for (const e of edges) {
-    adj.get(e.source)?.push(e.target);
-    inDeg.set(e.target, (inDeg.get(e.target) ?? 0) + 1);
-  }
+const TT_NODE_R     = 11;
+const TT_C_INITIAL  = '#3b82f6';
+const TT_C_TERMINAL = '#111827';
+const TT_C_DEFAULT  = '#64748b';
+const TT_C_FIRED    = '#f59e0b';
+const TT_EDGE_CLR   = '#e2e8f0';
 
-  const col     = new Map<string, number>();
-  const visited = new Set<string>();
-  let frontier  = nodes.filter(n => !(inDeg.get(n.id) ?? 0)).map(n => n.id);
-  if (!frontier.length) frontier = [nodes[0].id];
-
-  let c = 0;
-  while (frontier.length) {
-    const next: string[] = [];
-    for (const id of frontier) {
-      if (visited.has(id)) continue;
-      visited.add(id);
-      col.set(id, c);
-      for (const nb of (adj.get(id) ?? [])) {
-        if (!visited.has(nb)) next.push(nb);
-      }
-    }
-    frontier = next;
-    c++;
-  }
-  for (const n of nodes) if (!col.has(n.id)) col.set(n.id, c++);
-
-  // Row within column (for branches)
-  const colBuckets = new Map<number, string[]>();
-  for (const [id, lv] of col) {
-    if (!colBuckets.has(lv)) colBuckets.set(lv, []);
-    colBuckets.get(lv)!.push(id);
-  }
-  const row = new Map<string, number>();
-  for (const ids of colBuckets.values()) ids.forEach((id, i) => row.set(id, i));
-
-  const cols = col.size ? Math.max(...col.values()) + 1 : 0;
-  return { col, row, cols };
+interface TTNode extends d3.SimulationNodeDatum {
+  id:        string;
+  label:     string;
+  isInitial: boolean;
+  hasOutput: boolean;
+  cx:        number;
+  cy:        number;
+}
+interface TTLink extends d3.SimulationLinkDatum<TTNode> {
+  source: string | TTNode;
+  target: string | TTNode;
 }
 
-// ── MiniSeqGraph ─────────────────────────────────────────────────────────────
+const ttFill    = (n: TTNode) => n.hasOutput ? TT_C_TERMINAL : n.isInitial ? TT_C_INITIAL : TT_C_DEFAULT;
+const ttStroke  = (n: TTNode) => n.hasOutput ? TT_C_FIRED    : n.isInitial ? '#2563eb'    : '#475569';
+const ttStrokeW = (n: TTNode) => n.hasOutput ? 3 : 2;
 
-const NW = 64, NH = 26, CW = NW + 14, RH = NH + 6, SEQ_GAP = 22, LPAD = 8;
+const TooltipSeqGraph: React.FC<{ sequences: TooltipSeq[] }> = ({ sequences }) => {
+  const svgRef       = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const simRef       = useRef<d3.Simulation<TTNode, TTLink> | null>(null);
 
-const MiniSeqGraph: React.FC<{ sequences: TooltipSeq[] }> = ({ sequences }) => {
-  if (!sequences.length) return (
-    <span style={{ fontSize: 10, color: 'var(--re-text-2)', fontStyle: 'italic' }}>
-      no sequences
-    </span>
-  );
+  useEffect(() => {
+    simRef.current?.stop();
+    if (!svgRef.current || !containerRef.current || !sequences.length) return;
 
-  // Pre-compute layouts
-  const layouts = sequences.map(s => bfsLayout(s.nodes, s.edges));
-  const maxCols = Math.max(1, ...layouts.map(l => l.cols));
-  const maxRows = (_seq: TooltipSeq, l: ReturnType<typeof bfsLayout>) => {
-    let m = 1;
-    for (const r of l.row.values()) m = Math.max(m, r + 1);
-    return m;
-  };
+    const W = containerRef.current.clientWidth  || 380;
+    const H = containerRef.current.clientHeight || 300;
 
-  // Cumulative y offsets per sequence
-  const seqOffsets: number[] = [];
-  let yOff = 0;
-  for (let i = 0; i < sequences.length; i++) {
-    seqOffsets.push(yOff);
-    yOff += 12 + maxRows(sequences[i], layouts[i]) * RH + SEQ_GAP;
+    // Build graph data
+    const nodeMap = new Map<string, TTNode>();
+    const links: TTLink[] = [];
+
+    sequences.forEach((seq, si) => {
+      const angle = sequences.length > 1
+        ? (si / sequences.length) * 2 * Math.PI - Math.PI / 2
+        : 0;
+      const r  = Math.min(W, H) * 0.28;
+      const cx = sequences.length > 1 ? W / 2 + r * Math.cos(angle) : W / 2;
+      const cy = sequences.length > 1 ? H / 2 + r * Math.sin(angle) : H / 2;
+
+      for (const n of seq.nodes) {
+        if (!nodeMap.has(n.id)) {
+          nodeMap.set(n.id, { id: n.id, label: n.label, isInitial: n.isInitial, hasOutput: n.hasOutput, cx, cy });
+        }
+      }
+      for (const e of seq.edges) links.push({ source: e.source, target: e.target });
+    });
+
+    const nodes = Array.from(nodeMap.values());
+
+    // Pre-position nodes near their cluster center so the initial layout is clean
+    nodes.forEach(n => {
+      n.x = n.cx + (Math.random() - 0.5) * 40;
+      n.y = n.cy + (Math.random() - 0.5) * 40;
+    });
+
+    // SVG setup
+    const svg = d3.select(svgRef.current);
+    svg.selectAll('*').remove();
+    svg.attr('width', W).attr('height', H);
+
+    const defs = svg.append('defs');
+    defs.append('marker')
+      .attr('id', 'tt-arrowhead')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', TT_NODE_R + 10)
+      .attr('refY', 0)
+      .attr('markerWidth', 7)
+      .attr('markerHeight', 7)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', TT_EDGE_CLR);
+
+    const g = svg.append('g');
+
+    // Zoom / pan
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.2, 5])
+      .on('zoom', event => g.attr('transform', event.transform));
+    svg.call(zoom);
+
+    // Edges
+    const link = g.append('g')
+      .selectAll<SVGLineElement, TTLink>('line')
+      .data(links)
+      .join('line')
+      .attr('stroke', TT_EDGE_CLR)
+      .attr('stroke-width', 1.5)
+      .attr('stroke-opacity', 0.45)
+      .attr('marker-end', 'url(#tt-arrowhead)');
+
+    // Nodes
+    const node = g.append('g')
+      .selectAll<SVGCircleElement, TTNode>('circle')
+      .data(nodes)
+      .join('circle')
+      .attr('r', TT_NODE_R)
+      .attr('fill',         d => ttFill(d))
+      .attr('stroke',       d => ttStroke(d))
+      .attr('stroke-width', d => ttStrokeW(d))
+      .style('cursor', 'grab');
+
+    // Labels
+    const label = g.append('g')
+      .selectAll<SVGTextElement, TTNode>('text')
+      .data(nodes)
+      .join('text')
+      .text(d => d.label)
+      .attr('font-size', 9)
+      .attr('fill', '#94a3b8')
+      .attr('dx', TT_NODE_R + 3)
+      .attr('dy', 3)
+      .style('pointer-events', 'none');
+
+    // Drag — pin on drop
+    const drag = d3.drag<SVGCircleElement, TTNode>()
+      .on('start', (event, d) => {
+        if (!event.active) sim.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on('drag',  (event, d) => { d.fx = event.x; d.fy = event.y; })
+      .on('end',   (event, d) => {
+        if (!event.active) sim.alphaTarget(0);
+        d.fx = d.x; d.fy = d.y;
+      });
+    node.call(drag as any);
+
+    // Double-click to unpin
+    node.on('dblclick', function(_, d) {
+      d.fx = null; d.fy = null;
+      sim.alpha(0.3).restart();
+    });
+
+    // Hover: dim non-connected nodes / edges, highlight connected
+    node
+      .on('mouseover', function(_, d) {
+        d3.select(this).attr('r', TT_NODE_R + 3);
+        node.style('opacity', (n: TTNode) => n.id === d.id ? 1 : 0.25);
+        link.style('opacity', (l: TTLink) => {
+          const src = typeof l.source === 'object' ? (l.source as TTNode).id : l.source as string;
+          const tgt = typeof l.target === 'object' ? (l.target as TTNode).id : l.target as string;
+          return src === d.id || tgt === d.id ? 1 : 0.06;
+        });
+        label.style('opacity', (n: TTNode) => n.id === d.id ? 1 : 0.15);
+      })
+      .on('mouseout', function() {
+        d3.select(this).attr('r', TT_NODE_R);
+        node.style('opacity', 1);
+        link.style('opacity', 0.45);
+        label.style('opacity', 1);
+      });
+
+    // Force simulation
+    const sim = d3.forceSimulation<TTNode>(nodes)
+      .force('link',      d3.forceLink<TTNode, TTLink>(links).id(d => d.id).distance(60).strength(1))
+      .force('charge',    d3.forceManyBody<TTNode>().strength(-160))
+      .force('collision', d3.forceCollide<TTNode>().radius(TT_NODE_R + 7))
+      .force('x',         d3.forceX<TTNode>(d => d.cx).strength(0.35))
+      .force('y',         d3.forceY<TTNode>(d => d.cy).strength(0.35));
+
+    simRef.current = sim;
+
+    sim.on('tick', () => {
+      link
+        .attr('x1', d => (d.source as TTNode).x ?? 0)
+        .attr('y1', d => (d.source as TTNode).y ?? 0)
+        .attr('x2', d => (d.target as TTNode).x ?? 0)
+        .attr('y2', d => (d.target as TTNode).y ?? 0);
+      node.attr('cx', d => d.x ?? 0).attr('cy', d => d.y ?? 0);
+      label.attr('x', d => d.x ?? 0).attr('y', d => d.y ?? 0);
+    });
+
+    return () => { sim.stop(); };
+  }, [sequences]);
+
+  useEffect(() => () => { simRef.current?.stop(); }, []);
+
+  if (!sequences.length) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: '100%', fontSize: 10, color: 'var(--re-text-2)', fontStyle: 'italic',
+      }}>
+        no sequences
+      </div>
+    );
   }
 
-  const svgW = LPAD * 2 + maxCols * CW;
-  const svgH = yOff - SEQ_GAP + LPAD;
-
   return (
-    <svg viewBox={`0 0 ${svgW} ${svgH}`} width={svgW} height={svgH}
-      style={{ display: 'block', overflow: 'visible' }}
-    >
-      <defs>
-        {(['tt-arr','tt-arr-i','tt-arr-o'] as const).map((id, idx) => (
-          <marker key={id} id={id} viewBox="0 -4 8 8" refX="7" refY="0"
-            markerWidth="5" markerHeight="5" orient="auto"
-          >
-            <path d="M0,-4L8,0L0,4"
-              fill={idx === 2 ? 'rgba(240,62,138,0.7)'
-                  : idx === 1 ? 'rgba(0,200,239,0.6)'
-                  : 'var(--re-border-glow)'}
-            />
-          </marker>
-        ))}
-      </defs>
-
-      {sequences.map((seq, si) => {
-        const { col, row } = layouts[si];
-        const base = seqOffsets[si];
-        const nodeById = new Map(seq.nodes.map(n => [n.id, n]));
-        const nx = (id: string) => LPAD + (col.get(id) ?? 0) * CW;
-        const ny = (id: string) => base + 14 + (row.get(id) ?? 0) * RH;
-
-        return (
-          <g key={seq.sequenceId}>
-            {/* Sequence label */}
-            <text x={LPAD} y={base + 9} fontSize="9" fontWeight="700"
-              letterSpacing="0.10em" fill="var(--re-text-1)"
-              style={{ textTransform: 'uppercase', fontFamily: 'inherit' }}
-            >
-              {seq.name.slice(0, 32)}
-            </text>
-
-            {/* Edges */}
-            {seq.edges.map((e, ei) => {
-              const tgt = nodeById.get(e.target);
-              const src = nodeById.get(e.source);
-              const x1 = nx(e.source) + NW, y1 = ny(e.source) + NH / 2;
-              const x2 = nx(e.target),      y2 = ny(e.target) + NH / 2;
-              const mx = (x1 + x2) / 2;
-              const arrowId = tgt?.hasOutput ? 'tt-arr-o'
-                            : src?.isInitial ? 'tt-arr-i' : 'tt-arr';
-              const clr = tgt?.hasOutput ? 'rgba(240,62,138,0.75)'
-                        : src?.isInitial ? 'rgba(0,200,239,0.65)'
-                        : 'rgba(37,77,115,0.9)';
-              return (
-                <path key={ei}
-                  d={`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`}
-                  fill="none" stroke={clr} strokeWidth={1.5}
-                  markerEnd={`url(#${arrowId})`}
-                />
-              );
-            })}
-
-            {/* Nodes */}
-            {seq.nodes.map(n => {
-              const x = nx(n.id), y = ny(n.id);
-              const fill   = n.hasOutput ? 'rgba(240,62,138,0.22)'
-                           : n.isInitial ? 'rgba(0,200,239,0.18)'
-                           : 'rgba(19,34,55,0.9)';
-              const stroke = n.hasOutput ? 'var(--re-pink)'
-                           : n.isInitial ? 'var(--re-cyan)'
-                           : 'var(--re-border-glow)';
-              const tc     = n.hasOutput ? 'var(--re-pink)'
-                           : n.isInitial ? 'var(--re-cyan)'
-                           : 'var(--re-text-0)';
-              const tag    = n.hasOutput ? '▶' : n.isInitial ? '◆' : '·';
-              return (
-                <g key={n.id}>
-                  <rect x={x} y={y} width={NW} height={NH} rx={3}
-                    fill={fill} stroke={stroke} strokeWidth={1.5}
-                  />
-                  <text x={x + 5} y={y + 10} fontSize="8" fill={stroke} fontWeight="700">
-                    {tag}
-                  </text>
-                  <text x={x + NW / 2} y={y + NH / 2 + 4} textAnchor="middle"
-                    fontSize="10" fill={tc} style={{ fontFamily: 'inherit' }}
-                  >
-                    {n.label.slice(0, 7)}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-        );
-      })}
-    </svg>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <svg ref={svgRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
+    </div>
   );
 };
 
@@ -335,12 +372,12 @@ const SequenceTooltip: React.FC<{
           )}
           <div className="mgv-tooltip-seq-hdr">Event Sequences</div>
           <div className="mgv-tooltip-body">
-            <MiniSeqGraph sequences={data.sequences} />
+            <TooltipSeqGraph sequences={data.sequences} />
           </div>
           <div className="mgv-tooltip-foot">
-            <span style={{ color: 'var(--re-cyan)' }}>◆ Initial</span>
-            <span style={{ color: 'var(--re-text-1)' }}>· Intermediate</span>
-            <span style={{ color: 'var(--re-pink)' }}>▶ Output</span>
+            <span style={{ color: '#3b82f6' }}>◆ Initial</span>
+            <span style={{ color: '#64748b' }}>● Intermediate</span>
+            <span style={{ color: '#f59e0b' }}>○ Terminal</span>
           </div>
         </>
       ) : (

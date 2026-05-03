@@ -95,8 +95,8 @@
 .mgv-tooltip {
   position:         absolute;
   z-index:          120;
-  min-width:        240px;
-  max-width:        420px;
+  min-width:        320px;
+  max-width:        500px;
   background:       var(--re-bg-3);
   border:           1px solid var(--re-border-glow);
   border-radius:    5px;
@@ -188,16 +188,10 @@
 }
 
 .mgv-tooltip-body {
-  padding:          4px 10px 8px;
-  overflow-x:       auto;
-  overflow-y:       auto;
-  max-height:       280px;
-  scrollbar-width:  thin;
-  scrollbar-color:  var(--re-border-glow) transparent;
+  height:           300px;
+  padding:          0;
+  overflow:         hidden;
 }
-
-.mgv-tooltip-body::-webkit-scrollbar       { width: 4px; height: 4px; }
-.mgv-tooltip-body::-webkit-scrollbar-thumb { background: var(--re-border-glow); border-radius: 2px; }
 
 .mgv-tooltip-foot {
   display:          flex;
