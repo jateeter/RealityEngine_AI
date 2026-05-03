@@ -234,9 +234,21 @@ class PerceptionRoutes(
       concat(
         get { complete(Json.obj("sources" -> engine.getSources.asJson)) },
         post { entity(as[SourceConfig]) { config =>
-          val src = engine.addSource(config)
-          onComplete(saveAndBroadcast()) { _ =>
-            complete(StatusCodes.OK -> Json.obj("source" -> src.asJson))
+          // Idempotent for sensor sources: if a sensor with the same sensorId already
+          // exists (e.g. from the persisted volume after a non-fresh restart), return it
+          // rather than creating a duplicate with a new UUID.
+          val existing: Option[SourceConfig] = config match {
+            case s: SensorSourceConfig => engine.findSensorBySensorId(s.sensorId)
+            case _                     => None
+          }
+          existing match {
+            case Some(src) =>
+              complete(StatusCodes.OK -> Json.obj("source" -> src.asJson))
+            case None =>
+              val src = engine.addSource(config)
+              onComplete(saveAndBroadcast()) { _ =>
+                complete(StatusCodes.OK -> Json.obj("source" -> src.asJson))
+              }
           }
         }}
       )

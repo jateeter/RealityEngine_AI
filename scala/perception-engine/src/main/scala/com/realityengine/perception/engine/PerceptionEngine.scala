@@ -67,6 +67,11 @@ class PerceptionEngine(val vectorDimension: Int = sys.env.getOrElse("VECTOR_DIME
 
   def getSources: Vector[SourceConfig] = synchronized { sources.values.toVector }
 
+  /** Find an existing sensor source by its logical sensorId (not its UUID). */
+  def findSensorBySensorId(sensorId: String): Option[SensorSourceConfig] = synchronized {
+    sources.values.collectFirst { case s: SensorSourceConfig if s.sensorId == sensorId => s }
+  }
+
   // ── Sensor push ───────────────────────────────────────────────────────────
 
   def updateSensorValue(sensorId: String, values: Vector[Double]): Boolean = synchronized {

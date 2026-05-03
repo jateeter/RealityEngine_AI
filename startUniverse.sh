@@ -490,10 +490,10 @@ if [ -n "$ZERO_VEC" ]; then
         PERCEIVE_INFO=$(echo "$PERCEIVE_RESP" | python3 -c "
 import json, sys
 d = json.load(sys.stdin)
-# Accept flat or nested SimulationStep response shapes
+# SimulationStep is returned directly (not nested under 'step')
 step = d.get('step', d)
-outputs = step.get('machineOutputs', step.get('outputs', {}))
-n = len(outputs) if isinstance(outputs, dict) else '?'
+results = step.get('machineResults', {})
+n = len(results) if isinstance(results, dict) else '?'
 ps = step.get('perceptualSpace', [])
 nz = sum(1 for v in ps if v != 0.0) if ps else 0
 print(f'machines_evaluated={n}, non-zero_perceptual_elements={nz}')
