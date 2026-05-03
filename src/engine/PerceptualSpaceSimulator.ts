@@ -7,6 +7,7 @@
 
 import { PerceptualSpace } from '../models/PerceptualSpace.js';
 import { Machine } from '../models/Machine.js';
+import { PerceptualRegionAllocator } from '../services/PerceptualRegionAllocator.js';
 import { ComparatorType } from '../models/types.js';
 import type { MachineTransitionResult } from '../models/types.js';
 
@@ -48,13 +49,25 @@ export class PerceptualSpaceSimulator {
   private config?: SimulationConfig;
   private onStepCompleteCallback?: (step: SimulationStep, perceptualSpaceVector: number[]) => void;
   private immediateStepCount = 0;
+  private allocator: PerceptualRegionAllocator;
 
-  constructor(dimension: number = 256) {
-    this.perceptualSpace = new PerceptualSpace(dimension);
-    this.machines = new Map();
-    this.history = [];
-    this.currentStep = 0;
-    this.isRunning = false;
+  /**
+   * @param initialDimension  Starting PE space size (0 = fully dynamic; grows
+   *                          automatically as machines are added).
+   * @param allocator         Optional region allocator.  When provided, machines
+   *                          without an explicit `perceptualMapping` receive
+   *                          auto-assigned non-overlapping regions.
+   */
+  constructor(
+    initialDimension = 0,
+    allocator?: PerceptualRegionAllocator,
+  ) {
+    this.perceptualSpace = new PerceptualSpace(initialDimension);
+    this.machines        = new Map();
+    this.history         = [];
+    this.currentStep     = 0;
+    this.isRunning       = false;
+    this.allocator       = allocator ?? new PerceptualRegionAllocator();
   }
 
   /**
@@ -71,18 +84,63 @@ export class PerceptualSpaceSimulator {
   }
 
   /**
+   * Current dimension of the shared perceptual space (En).
+   * Grows automatically as machines are added; never decreases.
+   */
+  public getDimension(): number {
+    return this.perceptualSpace.getDimension();
+  }
+
+  /**
+   * The region allocator used to auto-assign PE coordinates to machines that
+   * do not have an explicit `perceptualMapping` in their definition.
+   */
+  public getAllocator(): PerceptualRegionAllocator {
+    return this.allocator;
+  }
+
+  /**
    * Add a machine to the simulation.
+   *
+   * If the machine has no `perceptualMapping`, the internal allocator assigns
+   * non-overlapping input/output regions automatically using the machine's
+   * `metadata.inputLength` and `metadata.outputLength` values (defaulting to
+   * 32 each when absent).
+   *
+   * The PE space auto-expands to cover the machine's required regions.
    *
    * Machines are deterministic and atomic — applying the match algorithm to
    * active events and advancing their state is fully reproducible given the
-   * same input sequence.  The simulator therefore shares the same Machine
-   * instance as the RealityEngine; no cloning is needed for normal operation.
+   * same input sequence.  The simulator shares the same Machine instance as
+   * the RealityEngine; no cloning is needed for normal operation.
    * Use Machine.clone() explicitly when starting a what-if analytic workflow.
    */
   public addMachine(machine: Machine): void {
+    // Auto-allocate regions when no explicit mapping is present
     if (!machine.perceptualMapping) {
-      throw new Error(`Machine ${machine.name} does not have a perceptual mapping`);
+      const inputLength  = Number((machine.metadata?.['inputLength']  ?? 32));
+      const outputLength = Number((machine.metadata?.['outputLength'] ?? inputLength));
+      const mapping = this.allocator.allocate(inputLength, outputLength);
+      machine.setPerceptualMapping(mapping);
+      console.log(
+        `[PE] Auto-allocated "${machine.name}": ` +
+        `input [${mapping.input.offset}:${mapping.input.offset + mapping.input.length}), ` +
+        `output [${mapping.output.offset}:${mapping.output.offset + mapping.output.length})`,
+      );
     }
+
+    // Expand the PE space to cover this machine's required coordinates
+    const { input, output } = machine.perceptualMapping!;
+    const required = Math.max(
+      input.offset  + input.length,
+      output.offset + output.length,
+    );
+    if (required > this.perceptualSpace.getDimension()) {
+      const prev = this.perceptualSpace.getDimension();
+      this.perceptualSpace.growTo(required);
+      console.log(`[PE] Grew perceptual space ${prev} → ${required} for machine "${machine.name}"`);
+    }
+
     this.machines.set(machine.id, machine);
   }
 

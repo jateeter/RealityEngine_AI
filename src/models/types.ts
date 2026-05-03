@@ -56,7 +56,10 @@ export interface VectorElement {
  * Configuration for the Reality Engine system
  */
 export interface RealityEngineConfig {
+  /** Qdrant collection vector size — fixed schema dimension for similarity search. */
   vectorDimension: number;
+  /** Alias for vectorDimension; takes precedence when both are set. */
+  qdrantVectorDimension?: number;
   defaultMatchThreshold: number;
   qdrantUrl: string;
   collectionName: string;

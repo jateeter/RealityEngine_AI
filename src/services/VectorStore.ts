@@ -1,11 +1,17 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { RealityVector } from '../models/RealityVector.js';
 import { CriticalEventSequence } from '../models/CriticalEventSequence.js';
+import { PerceptualVectorCodec } from './PerceptualVectorCodec.js';
 import config from '../config/config.js';
 
 /**
- * VectorStore: Interface to Qdrant vector database
- * Handles storage, retrieval, and search of RealityVectors
+ * VectorStore: Interface to Qdrant vector database.
+ *
+ * This store is for fixed-size similarity vectors. Runtime perceptual-space
+ * vectors are coordinate-addressed operational state and should be managed by a
+ * dynamically sized region/snapshot store rather than truncated into an
+ * embedding collection. Keep localAIStack/Ollama embedding collections isolated
+ * from Reality Engine perceptual-space snapshots.
  */
 export class VectorStore {
   private client: QdrantClient;
@@ -64,7 +70,7 @@ export class VectorStore {
         points: [
           {
             id: vector.id,
-            vector: this.normalizeVector(vector.getVector()),
+            vector: this.toQdrantVector(vector.getVector()),
             payload: {
               ...vector.toJSON(),
               timestamp: Date.now()
@@ -91,7 +97,7 @@ export class VectorStore {
         wait: true,
         points: vectors.map(vector => ({
           id: vector.id,
-          vector: this.normalizeVector(vector.getVector()),
+          vector: this.toQdrantVector(vector.getVector()),
           payload: {
             ...vector.toJSON(),
             timestamp: Date.now()
@@ -142,7 +148,7 @@ export class VectorStore {
 
     try {
       const results = await this.client.search(this.collectionName, {
-        vector: this.normalizeVector(vector),
+        vector: this.toQdrantVector(vector),
         limit,
         score_threshold: scoreThreshold ?? null,
         with_payload: true
@@ -259,16 +265,19 @@ export class VectorStore {
   }
 
   /**
-   * Normalize vector to ensure it's within valid range
+   * Project a vector to exactly this.vectorDimension dimensions for Qdrant storage.
+   * Uses segment-average pooling (via PerceptualVectorCodec) when N > vectorDimension
+   * so information is preserved in ANN search rather than silently truncated.
    */
-  private normalizeVector(vector: number[]): number[] {
-    // Pad or truncate to match configured dimension
-    if (vector.length < this.vectorDimension) {
-      return [...vector, ...new Array(this.vectorDimension - vector.length).fill(0)];
-    } else if (vector.length > this.vectorDimension) {
-      return vector.slice(0, this.vectorDimension);
+  private toQdrantVector(vector: number[]): number[] {
+    if (vector.length === this.vectorDimension) return vector;
+    // Codec projects to STORAGE_DIM (768); if our collection is smaller, pad/slice after
+    const projected = PerceptualVectorCodec.project(vector);
+    if (projected.length === this.vectorDimension) return projected;
+    if (projected.length < this.vectorDimension) {
+      return [...projected, ...new Array(this.vectorDimension - projected.length).fill(0)];
     }
-    return vector;
+    return projected.slice(0, this.vectorDimension);
   }
 
   /**

@@ -31,7 +31,7 @@ export class RealityEngineAPI {
     this.router = express.Router();
     this.engine = engine;
     this.perception = new PreceptionOfReality(config.getVectorDimension());
-    this.perceptualSimulator = new PerceptualSpaceSimulator(256);
+    this.perceptualSimulator = new PerceptualSpaceSimulator();
 
     // Sync the simulator's evolved perceptual space back into the PreceptionEngine
     // after every simulation step (manual or auto-play).  This ensures the engine's
@@ -53,21 +53,15 @@ export class RealityEngineAPI {
     // Add to RealityEngine (always)
     this.engine.addMachine(machine);
 
-    // Add to PerceptualSpaceSimulator (only if it has perceptual mapping)
-    if (machine.perceptualMapping) {
-      this.perceptualSimulator.addMachine(machine);
-      console.log(`  ✓ Machine "${machine.name}" registered with perceptual simulator`);
-      console.log(`    Input region: [${machine.perceptualMapping.input.offset}:${machine.perceptualMapping.input.offset + machine.perceptualMapping.input.length}]`);
-      console.log(`    Output region: [${machine.perceptualMapping.output.offset}:${machine.perceptualMapping.output.offset + machine.perceptualMapping.output.length}]`);
-    } else {
-      console.log(`  ⚠ Machine "${machine.name}" has no perceptual mapping - not added to perceptual simulator`);
-    }
+    // Auto-allocates region if no explicit perceptualMapping
+    this.perceptualSimulator.addMachine(machine);
+    const m = machine.perceptualMapping!;
+    console.log(`  ✓ Machine "${machine.name}" registered with perceptual simulator`);
+    console.log(`    Input region:  [${m.input.offset}:${m.input.offset + m.input.length})`);
+    console.log(`    Output region: [${m.output.offset}:${m.output.offset + m.output.length})`);
   }
 
   /**
-   * Helper: Convert machine-specific input vectors to universal perceptual space vectors
-   * Embeds machine inputs at their designated offset in 256-byte universal vectors
-   */
   /**
    * Initialize default machines from JSON files on startup
    */
@@ -85,20 +79,9 @@ export class RealityEngineAPI {
         return;
       }
 
-      // List of machines to load on startup
-      const machinesToLoad = [
-        'RSFlipFlop.json',
-        'RS2.json',
-        'MultiStep.json',
-        'DataCenterMonitoring.json',
-        'KleeneStar.json',
-        'AIPowerEfficiency.json',
-        'AICoolingRegulator.json',
-        'AICapacityThrottler.json',
-        'AISecurityMonitor.json',
-        'AIModelWellness.json',
-        'AIHardwareResilience.json',
-      ];
+      const machinesToLoad = readdirSync(machinesDir)
+        .filter(filename => filename.toLowerCase().endsWith('.json'))
+        .sort();
 
       let loadedCount = 0;
       let failedCount = 0;
@@ -218,6 +201,10 @@ export class RealityEngineAPI {
     this.router.get('/demo/multi-step', this.loadMultiStepExample.bind(this));
     this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
     this.router.get('/demo/kleene-star', this.loadKleeneStarExample.bind(this));
+
+    // Perceptual space introspection
+    this.router.get('/perceptual-space/dimension', this.getPerceptualSpaceDimension.bind(this));
+    this.router.get('/perceptual-space/regions', this.getPerceptualSpaceRegions.bind(this));
 
     // Perception Engine push endpoint — accepts a pre-assembled reality vector
     this.router.post('/perceive', this.perceive.bind(this));
@@ -815,7 +802,7 @@ export class RealityEngineAPI {
    *
    * Body:
    * {
-   *   "universalInputSpace": number[] // 256-byte universal input vector
+   *   "universalInputSpace": number[] // N-dimensional universal input vector
    * }
    */
   private processUniversalInput(req: Request, res: Response): void {
@@ -830,14 +817,6 @@ export class RealityEngineAPI {
 
       if (!Array.isArray(universalInputSpace)) {
         res.status(400).json({ error: 'universalInputSpace must be an array' });
-        return;
-      }
-
-      if (universalInputSpace.length !== 256) {
-        res.status(400).json({
-          error: 'universalInputSpace must be 256 bytes',
-          provided: universalInputSpace.length
-        });
         return;
       }
 
@@ -882,7 +861,7 @@ export class RealityEngineAPI {
    *
    * Body:
    * {
-   *   "universalInputSpace": number[] // 256-byte universal input vector
+   *   "universalInputSpace": number[] // N-dimensional universal input vector
    * }
    */
   private processUniversalInputForAllMachines(req: Request, res: Response): void {
@@ -891,14 +870,6 @@ export class RealityEngineAPI {
 
       if (!Array.isArray(universalInputSpace)) {
         res.status(400).json({ error: 'universalInputSpace must be an array' });
-        return;
-      }
-
-      if (universalInputSpace.length !== 256) {
-        res.status(400).json({
-          error: 'universalInputSpace must be 256 bytes',
-          provided: universalInputSpace.length
-        });
         return;
       }
 
@@ -1115,7 +1086,7 @@ export class RealityEngineAPI {
    *
    * Body:
    * {
-   *   "universalInputSpace": number[] // 256-byte universal input vector
+   *   "universalInputSpace": number[] // N-dimensional universal input vector
    * }
    */
   private getPreceptionDiagnostic(req: Request, res: Response): void {
@@ -1124,14 +1095,6 @@ export class RealityEngineAPI {
 
       if (!Array.isArray(universalInputSpace)) {
         res.status(400).json({ error: 'universalInputSpace must be an array' });
-        return;
-      }
-
-      if (universalInputSpace.length !== 256) {
-        res.status(400).json({
-          error: 'universalInputSpace must be 256 bytes',
-          provided: universalInputSpace.length
-        });
         return;
       }
 
@@ -1511,6 +1474,41 @@ export class RealityEngineAPI {
     }
   }
 
+  private getPerceptualSpaceDimension(_req: Request, res: Response): void {
+    res.json({
+      dimension: this.perceptualSimulator.getDimension(),
+      allocatorHighWaterMark: this.perceptualSimulator.getAllocator().getHighWaterMark(),
+      timestamp: Date.now(),
+    });
+  }
+
+  private getPerceptualSpaceRegions(_req: Request, res: Response): void {
+    const regions: Array<{
+      machineId: string;
+      machineName: string;
+      input:  { offset: number; length: number };
+      output: { offset: number; length: number };
+    }> = [];
+
+    for (const machine of this.engine.getAllMachines()) {
+      const m = machine.perceptualMapping;
+      if (m) {
+        regions.push({
+          machineId:   machine.id,
+          machineName: machine.name,
+          input:  m.input,
+          output: m.output,
+        });
+      }
+    }
+
+    res.json({
+      dimension: this.perceptualSimulator.getDimension(),
+      regions,
+      timestamp: Date.now(),
+    });
+  }
+
   /**
    * Append a chunk of vectors to the staging buffer.
    * Send { reset: true, inputRegion, stepDelayMs, maxSteps? } on the first chunk
@@ -1524,7 +1522,7 @@ export class RealityEngineAPI {
       if (reset) {
         this.sequenceBuffer = [];
         this.sequenceBufferConfig = {
-          inputRegion: inputRegion || { offset: 0, length: 256 },
+          inputRegion: inputRegion || { offset: 0, length: this.perceptualSimulator.getDimension() },
           stepDelayMs: stepDelayMs || 1000,
           maxSteps
         };
@@ -1753,10 +1751,10 @@ export class RealityEngineAPI {
   }
 
   /**
-   * Accept a pre-assembled 256-byte reality vector from the external Perception Engine.
+   * Accept a pre-assembled N-dimensional reality vector from the external Perception Engine.
    * POST /api/perceive
    *
-   * Body: { "vector": number[] }  — must be exactly 256 elements in [0, 1]
+   * Body: { "vector": number[] }  — N-dimensional perceptual space vector in [0, 1]
    *
    * Installs the vector directly into the perceptual space simulator and runs
    * one processing cycle through all registered machines. The result is identical
@@ -1768,15 +1766,6 @@ export class RealityEngineAPI {
 
       if (!Array.isArray(vector)) {
         res.status(400).json({ success: false, error: 'vector must be an array' });
-        return;
-      }
-
-      if (vector.length !== 256) {
-        res.status(400).json({
-          success: false,
-          error: 'vector must be exactly 256 elements',
-          provided: vector.length
-        });
         return;
       }
 

@@ -11,11 +11,16 @@ export class Config {
   private config: RealityEngineConfig;
 
   private constructor() {
+    const qdrantDim = parseInt(
+      process.env.QDRANT_VECTOR_DIM || process.env.VECTOR_DIMENSION || '768',
+      10,
+    );
     this.config = {
-      vectorDimension: parseInt(process.env.VECTOR_DIMENSION || '128', 10),
+      vectorDimension:       qdrantDim,
+      qdrantVectorDimension: qdrantDim,
       defaultMatchThreshold: parseFloat(process.env.MATCH_THRESHOLD || '0.85'),
-      qdrantUrl: process.env.QDRANT_URL || 'http://localhost:6333',
-      collectionName: process.env.COLLECTION_NAME || 'reality_vectors'
+      qdrantUrl:             process.env.QDRANT_URL || 'http://localhost:6333',
+      collectionName:        process.env.COLLECTION_NAME || 'reality_vectors',
     };
 
     this.validate();
@@ -33,7 +38,11 @@ export class Config {
   }
 
   public getVectorDimension(): number {
-    return this.config.vectorDimension;
+    return this.config.qdrantVectorDimension ?? this.config.vectorDimension;
+  }
+
+  public getQdrantVectorDimension(): number {
+    return this.config.qdrantVectorDimension ?? this.config.vectorDimension;
   }
 
   public getDefaultMatchThreshold(): number {
@@ -52,7 +61,8 @@ export class Config {
     if (dimension < 1 || dimension > 4096) {
       throw new Error('Vector dimension must be between 1 and 4096');
     }
-    this.config.vectorDimension = dimension;
+    this.config.vectorDimension       = dimension;
+    this.config.qdrantVectorDimension = dimension;
   }
 
   public updateMatchThreshold(threshold: number): void {
@@ -63,8 +73,9 @@ export class Config {
   }
 
   private validate(): void {
-    if (this.config.vectorDimension < 1 || this.config.vectorDimension > 4096) {
-      throw new Error('Invalid vector dimension configuration');
+    const dim = this.config.qdrantVectorDimension ?? this.config.vectorDimension;
+    if (dim < 1 || dim > 4096) {
+      throw new Error('Invalid Qdrant vector dimension configuration');
     }
 
     if (this.config.defaultMatchThreshold < 0 || this.config.defaultMatchThreshold > 1) {
