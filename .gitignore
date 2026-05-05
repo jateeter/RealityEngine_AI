@@ -38,6 +38,7 @@ qdrant_storage/
 # Temporary files
 tmp/
 temp/
+__pycache__/
 
 # Runtime files
 .api.pid
