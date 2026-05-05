@@ -317,7 +317,7 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
  *       OutputHistoryBar    [OUTPUT STREAM]  — bottom (32px collapsed / 148px expanded)
  */
 const TobiasView: React.FC = () => {
-  const { setCurrentView } = useVisualizerStore();
+  const { setCurrentView, hoveredDomainId, selectedDomains } = useVisualizerStore();
 
   // Step history + live simulation state from the shared hook.
   // We use machines only for step-based display (OutputHistoryBar, TobiasAISequencePulse).
@@ -356,9 +356,6 @@ const TobiasView: React.FC = () => {
     [graphNodes],
   );
 
-  const [domainFilter, setDomainFilter] = useState<'all' | DomainId>('all');
-  const [sidebarOpen,  setSidebarOpen]  = useState(true);
-
   // Domain classification + counts from graphNodes — single pass, correct metadata.
   const { domainById, domainCounts } = useMemo(() => {
     const byId   = new Map(graphNodes.map(n => [n.id, classifyMachine(n).domain]));
@@ -369,25 +366,30 @@ const TobiasView: React.FC = () => {
     return { domainById: byId, domainCounts: counts };
   }, [graphNodes]);
 
+  const allDomainsSelected = selectedDomains.length === DOMAIN_ORDER.length;
+
   // PerceptualSpaceBar uses graphAsMachines filtered by domain for correct region coloring.
   const filteredGraphMachines = useMemo(() => {
-    if (domainFilter === 'all') return graphAsMachines;
-    return graphAsMachines.filter(m => domainById.get(m.id) === domainFilter);
-  }, [graphAsMachines, domainFilter, domainById]);
+    if (allDomainsSelected) return graphAsMachines;
+    const sel = new Set(selectedDomains);
+    return graphAsMachines.filter(m => sel.has(domainById.get(m.id) ?? 'general'));
+  }, [graphAsMachines, selectedDomains, allDomainsSelected, domainById]);
 
   // OutputHistoryBar uses useMachineSimulation machines (has live step state).
-  // Apply domain filter so the panel stays in sync with what the user selected.
   const filteredMachines = useMemo(() => {
-    if (domainFilter === 'all') return machines;
-    return machines.filter(m => domainById.get(m.id) === domainFilter);
-  }, [machines, domainFilter, domainById]);
+    if (allDomainsSelected) return machines;
+    const sel = new Set(selectedDomains);
+    return machines.filter(m => sel.has(domainById.get(m.id) ?? 'general'));
+  }, [machines, selectedDomains, allDomainsSelected, domainById]);
 
   const latestStep       = stepHistory[stepHistory.length - 1];
   const latestStepNumber = latestStep?.stepNumber ?? null;
   const perceptualSpace  = latestStep?.perceptualSpace ?? [];
 
   const totalMachines    = graphNodes.length;
-  const filteredTotal    = domainFilter === 'all' ? totalMachines : (domainCounts[domainFilter] ?? 0);
+  const filteredTotal    = allDomainsSelected
+    ? totalMachines
+    : selectedDomains.reduce((sum, d) => sum + (domainCounts[d] ?? 0), 0);
 
   return (
     <div className="tobias-view">
@@ -409,6 +411,12 @@ const TobiasView: React.FC = () => {
         </div>
 
         <div className="tobias-header-right">
+          {hoveredDomainId && (
+            <span className="tobias-domain-hover-label" style={{ borderColor: DOMAINS[hoveredDomainId].color, color: DOMAINS[hoveredDomainId].color }}>
+              <span className="tobias-domain-hover-dot" style={{ background: DOMAINS[hoveredDomainId].color }} />
+              {DOMAINS[hoveredDomainId].label}
+            </span>
+          )}
           {latestStepNumber !== null && (
             <span className="tobias-step-indicator">
               step <strong>{latestStepNumber}</strong>
@@ -428,53 +436,6 @@ const TobiasView: React.FC = () => {
 
       {/* ── Body ──────────────────────────────────────────────── */}
       <div className="tobias-body">
-
-        {/* ── Sidebar (LEFT) ───────────────────────────────────── */}
-        <aside className={`tobias-sidebar${sidebarOpen ? '' : ' collapsed'}`}>
-          {sidebarOpen && (
-            <div className="tobias-sidebar-content">
-
-              {/* Section: Domain Filter ──────────────────────── */}
-              <div className="tbs-section">
-                <div className="tbs-section-title">Domain Filter</div>
-                <div className="tbs-filter">
-                  <button
-                    className={`tbs-filter-btn${domainFilter === 'all' ? ' active' : ''}`}
-                    onClick={() => setDomainFilter('all')}
-                  >
-                    All ({totalMachines})
-                  </button>
-                  {DOMAIN_ORDER.map(d => (
-                    <button
-                      key={d}
-                      className={`tbs-filter-btn${domainFilter === d ? ' active' : ''}`}
-                      onClick={() => setDomainFilter(d)}
-                      title={DOMAINS[d].description}
-                      style={{
-                        borderLeft: `3px solid ${DOMAINS[d].color}`,
-                        paddingLeft: 6,
-                      }}
-                    >
-                      {DOMAINS[d].short} ({domainCounts[d]})
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          )}
-        </aside>
-
-        {/* ── Sidebar gutter ───────────────────────────────────── */}
-        <div className="tobias-sidebar-gutter">
-          <button
-            className="tobias-sidebar-toggle"
-            onClick={() => setSidebarOpen(o => !o)}
-            title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {sidebarOpen ? '‹' : '›'}
-          </button>
-        </div>
 
         {/* ── Canvas column ────────────────────────────────────── */}
         <div className="tobias-canvas-area">

@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Community Access Monitor",
-    "description": "Integration machine that reads combined output signals from the Referral Network Monitor [454:458] and the Community Outreach Monitor [458:462] to detect community access failures — conditions where the outreach and referral systems that connect people to community services have broken down. When outreach fails to reach eligible populations AND the referral network cannot route connected clients to services, community services become inaccessible regardless of how many programs exist on paper. Output at [474:478] is available to downstream care coordination systems.",
+    "description": "Integration machine that reads combined output signals from the Referral Network Monitor [976:980] and the Community Outreach Monitor [980:984] to detect community access failures — conditions where the outreach and referral systems that connect people to community services have broken down. When outreach fails to reach eligible populations AND the referral network cannot route connected clients to services, community services become inaccessible regardless of how many programs exist on paper. Output at [996:1000] is available to downstream care coordination systems.",
     "metadata": {
       "category": "community-services",
       "domain": "Community Services — Community Access / Network Health",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [474:478]: [1,0,0,0]=ACCESS_FAILURE, [0,1,0,0]=ACCESS_BARRIERS, [0,0,1,0]=ACCESS_LIMITED, [0,0,0,1]=ACCESS_ADEQUATE",
+      "outputSpace": "4D binary at [996:1000]: [1,0,0,0]=ACCESS_FAILURE, [0,1,0,0]=ACCESS_BARRIERS, [0,0,1,0]=ACCESS_LIMITED, [0,0,0,1]=ACCESS_ADEQUATE",
       "tags": [
         "community-services",
         "community access",
@@ -26,18 +26,18 @@
         "service_awareness_norm": "0.0=target population largely unaware services exist; no effective public communication, 0.5=moderate awareness; some segments informed; hard-to-reach populations unaware, 1.0=high awareness; trusted messengers active; service uptake matching eligibility estimates"
       },
       "upstreamMachines": [
-        "ReferralNetworkMonitor (output [454:458])",
-        "CommunityOutreachMonitor (output [458:462])"
+        "ReferralNetworkMonitor (output [976:980])",
+        "CommunityOutreachMonitor (output [980:984])"
       ]
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 454,
+        "offset": 976,
         "length": 8
       },
       "output": {
-        "offset": 474,
+        "offset": 996,
         "length": 4
       }
     },
@@ -54,14 +54,38 @@
           {
             "id": "ca-adequate",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -69,19 +93,46 @@
               "description": "ADEQUATE+ — REFERRAL_FUNCTIONAL (bit 457) and OUTREACH_EFFECTIVE (bit 461) both high. Outreach reaching community; referral network routing successfully. isInitial A*A = A+.",
               "upstream_state": "ReferralNetwork=REFERRAL_FUNCTIONAL, CommunityOutreach=OUTREACH_EFFECTIVE"
             },
-            "nextVectorIds": ["ca-adequate", "ca-limited"]
+            "nextVectorIds": [
+              "ca-adequate",
+              "ca-limited"
+            ]
           },
           {
             "id": "ca-limited",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -89,19 +140,45 @@
               "description": "LIMITED — REFERRAL_DELAYS (bit 456) and ENGAGEMENT_BUILDING (bit 460). Both systems degraded but not failed; access restricted. Clients being reached but wait times long; or outreach building but not yet effective.",
               "upstream_state": "ReferralNetwork=REFERRAL_DELAYS, CommunityOutreach=ENGAGEMENT_BUILDING"
             },
-            "nextVectorIds": ["ca-barriers"]
+            "nextVectorIds": [
+              "ca-barriers"
+            ]
           },
           {
             "id": "ca-barriers",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -112,9 +189,14 @@
             "outputVectors": [
               {
                 "id": "ca-failure-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "ACCESS_FAILURE: community cannot reach services; outreach and referral systems simultaneously failed at [474:478]",
+                  "description": "ACCESS_FAILURE: community cannot reach services; outreach and referral systems simultaneously failed at [996:1000]",
                   "action": "Emergency community convening; direct service delivery bypass of referral system; mobile services deployment; mutual aid network activation; funder emergency notification"
                 }
               }
@@ -134,14 +216,38 @@
           {
             "id": "ca-constrained",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -152,9 +258,14 @@
             "outputVectors": [
               {
                 "id": "ca-barriers-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "ACCESS_BARRIERS: significant barriers preventing reliable community access to services at [474:478]",
+                  "description": "ACCESS_BARRIERS: significant barriers preventing reliable community access to services at [996:1000]",
                   "action": "Resource gap advocacy with funders; alternative service pathway identification; interim direct service bridge; cross-sector coordination meeting"
                 }
               }
@@ -174,14 +285,38 @@
           {
             "id": "ca-connected",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -192,9 +327,14 @@
             "outputVectors": [
               {
                 "id": "ca-adequate-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "ACCESS_ADEQUATE: community successfully connected to services through functional outreach and referral systems at [474:478]",
+                  "description": "ACCESS_ADEQUATE: community successfully connected to services through functional outreach and referral systems at [996:1000]",
                   "action": "No access intervention required; continue monitoring and document effective practices"
                 }
               }
@@ -209,11 +349,56 @@
         "pattern": "5-step: ADEQUATE→ADEQUATE→LIMITED (outreach suspended, referrals delayed)→ACCESS_FAILURE (partner closures)→ADEQUATE (restored after storm)",
         "description": "Severe winter storm suspends street outreach for two weeks; partner agencies close; community access collapses; emergency mutual aid activates; systems restored after storm.",
         "vectors": [
-          [0.09, 0.09, 0.09, 0.63, 0.09, 0.09, 0.09, 0.63],
-          [0.08, 0.08, 0.08, 0.62, 0.08, 0.08, 0.08, 0.62],
-          [0.09, 0.09, 0.63, 0.09, 0.09, 0.09, 0.63, 0.09],
-          [0.63, 0.09, 0.09, 0.09, 0.63, 0.09, 0.09, 0.09],
-          [0.09, 0.09, 0.09, 0.66, 0.09, 0.09, 0.09, 0.66]
+          [
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.63
+          ],
+          [
+            0.08,
+            0.08,
+            0.08,
+            0.62,
+            0.08,
+            0.08,
+            0.08,
+            0.62
+          ],
+          [
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09
+          ],
+          [
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.09
+          ],
+          [
+            0.09,
+            0.09,
+            0.09,
+            0.66,
+            0.09,
+            0.09,
+            0.09,
+            0.66
+          ]
         ],
         "metadata": {
           "scenario": "winter-storm-access-collapse",

@@ -3,22 +3,22 @@
   "machine": {
     "id": "ai-security-monitor",
     "name": "AI Security Monitor",
-    "description": "Detects security anomalies in AI infrastructure \u2014 unusual authentication patterns, network exfiltration indicators, privilege escalation, and confirmed threat signals.",
+    "description": "Detects security anomalies in AI infrastructure — unusual authentication patterns, network exfiltration indicators, privilege escalation, and confirmed threat signals.",
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
     "perceptualMapping": {
       "input": {
-        "offset": 132,
+        "offset": 268,
         "length": 4
       },
       "output": {
-        "offset": 168,
+        "offset": 298,
         "length": 6
       }
     },
     "metadata": {
       "category": "ai-services",
-      "domain": "AI Infrastructure \u2014 Security Monitoring",
+      "domain": "AI Infrastructure — Security Monitoring",
       "tags": [
         "data-center",
         "security",
@@ -81,7 +81,7 @@
       {
         "id": "aism-threat-escalation",
         "name": "Security Threat Escalation",
-        "description": "4-step escalation: SECURE \u2192 SUSPICIOUS \u2192 ELEVATED \u2192 CRITICAL as threat indicators progressively activate",
+        "description": "4-step escalation: SECURE → SUSPICIOUS → ELEVATED → CRITICAL as threat indicators progressively activate",
         "vectors": [
           {
             "id": "aism-secure",
@@ -119,7 +119,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Security posture SECURE \u2014 all anomaly indicators within baseline",
+                  "description": "Security posture SECURE — all anomaly indicators within baseline",
                   "severity": "INFO"
                 }
               }
@@ -161,7 +161,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Security SUSPICIOUS \u2014 anomalous patterns detected, investigation warranted",
+                  "description": "Security SUSPICIOUS — anomalous patterns detected, investigation warranted",
                   "severity": "WARNING"
                 }
               }
@@ -203,7 +203,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Security ELEVATED THREAT \u2014 correlated anomalies suggest active intrusion attempt",
+                  "description": "Security ELEVATED THREAT — correlated anomalies suggest active intrusion attempt",
                   "severity": "CRITICAL"
                 }
               },
@@ -258,7 +258,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Security CRITICAL \u2014 confirmed intrusion with privilege escalation, immediate response required",
+                  "description": "Security CRITICAL — confirmed intrusion with privilege escalation, immediate response required",
                   "severity": "EMERGENCY"
                 }
               },
@@ -299,7 +299,7 @@
       {
         "id": "aism-rapid-privilege-escalation",
         "name": "Rapid Privilege Escalation Response",
-        "description": "2-step detection: BASELINE \u2192 CONFIRMED_ESCALATION \u2014 fires when privilege escalation and threat confidence are HIGH while other indicators remain low",
+        "description": "2-step detection: BASELINE → CONFIRMED_ESCALATION — fires when privilege escalation and threat confidence are HIGH while other indicators remain low",
         "vectors": [
           {
             "id": "aism-baseline",
@@ -376,7 +376,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "Action: Immediate isolation \u2014 privilege escalation confirmed, contain before lateral movement",
+                  "description": "Action: Immediate isolation — privilege escalation confirmed, contain before lateral movement",
                   "severity": "ACTION"
                 }
               }
@@ -389,7 +389,7 @@
       {
         "id": "aisec-seq-1",
         "name": "Normal Security Baseline",
-        "description": "All anomaly scores well below threshold \u2014 system operating securely",
+        "description": "All anomaly scores well below threshold — system operating securely",
         "vectors": [
           [
             0.06,
@@ -449,7 +449,7 @@
       {
         "id": "aisec-seq-3",
         "name": "Rapid Privilege Escalation",
-        "description": "Sudden privilege escalation with high confidence while other indicators remain low \u2014 insider threat pattern",
+        "description": "Sudden privilege escalation with high confidence while other indicators remain low — insider threat pattern",
         "metadata": {
           "expectedOutputs": 1,
           "scenario": "Rogue insider bypasses access controls targeting model serving infrastructure"

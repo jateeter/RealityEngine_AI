@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Ag Atmospheric Controller",
-    "description": "Monitors CO2 concentration, relative humidity, and vapor pressure deficit (VPD) within indoor growing zones. Three concurrent patterns detect CO2 depletion during photosynthesis peaks, high-humidity fungal risk, and optimal atmospheric conditions. Upstream: atmospheric sensors at [256:260]. Downstream: AgIPMPestAlertMonitor reads output at [276:280].",
+    "description": "Monitors CO2 concentration, relative humidity, and vapor pressure deficit (VPD) within indoor growing zones. Three concurrent patterns detect CO2 depletion during photosynthesis peaks, high-humidity fungal risk, and optimal atmospheric conditions. Upstream: atmospheric sensors at [16:20]. Downstream: AgIPMPestAlertMonitor reads output at [36:40].",
     "metadata": {
       "category": "agriculture",
       "domain": "Agriculture — Atmospheric CO2 / Humidity Control",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [276:280]: [1,0,0,0]=CO2_INJECT, [0,1,0,0]=VENT_OPEN, [0,0,1,0]=HUMIDITY_ALERT, [0,0,0,1]=ATMOS_OK",
+      "outputSpace": "4D binary at [36:40]: [1,0,0,0]=CO2_INJECT, [0,1,0,0]=VENT_OPEN, [0,0,1,0]=HUMIDITY_ALERT, [0,0,0,1]=ATMOS_OK",
       "tags": [
         "agriculture",
         "atmospheric co2",
@@ -25,16 +25,16 @@
         "vpd_norm": "0.0=0.0 kPa (zero VPD, no transpiration), 0.5=1.0 kPa (optimal), 1.0=2.5 kPa (excessive)",
         "air_exchange_norm": "0.0=stagnant, 0.5=nominal ACH, 1.0=maximum ventilation"
       },
-      "downstreamMachine": "AgIPMPestAlertMonitor (reads [276:280])"
+      "downstreamMachine": "AgIPMPestAlertMonitor (reads [36:40])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 256,
+        "offset": 16,
         "length": 4
       },
       "output": {
-        "offset": 276,
+        "offset": 36,
         "length": 4
       }
     },
@@ -51,10 +51,22 @@
           {
             "id": "ag-atm-co2-enriched",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -62,15 +74,30 @@
               "description": "ENRICHED+ — CO2 above ambient (>500 ppm); system has been actively enriched. isInitial A*A = A+: confirms enriched baseline before tracking depletion.",
               "co2_range": "0.55–0.72 (600–900 ppm enriched)"
             },
-            "nextVectorIds": ["ag-atm-co2-enriched", "ag-atm-co2-declining"]
+            "nextVectorIds": [
+              "ag-atm-co2-enriched",
+              "ag-atm-co2-declining"
+            ]
           },
           {
             "id": "ag-atm-co2-declining",
             "elements": [
-              { "value": 0.42, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 }
+              {
+                "value": 0.42,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -78,15 +105,29 @@
               "description": "DECLINING — CO2 falling below enriched threshold as photosynthesis consumes it.",
               "co2_range": "0.35–0.52 (400–600 ppm, approaching ambient)"
             },
-            "nextVectorIds": ["ag-atm-co2-low"]
+            "nextVectorIds": [
+              "ag-atm-co2-low"
+            ]
           },
           {
             "id": "ag-atm-co2-low",
             "elements": [
-              { "value": 0.25, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 }
+              {
+                "value": 0.25,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -94,15 +135,29 @@
               "description": "LOW CO2 — below ambient 400 ppm; photosynthesis rate limited; plant stress.",
               "co2_range": "0.15–0.35 (200–400 ppm)"
             },
-            "nextVectorIds": ["ag-atm-co2-depleted"]
+            "nextVectorIds": [
+              "ag-atm-co2-depleted"
+            ]
           },
           {
             "id": "ag-atm-co2-depleted",
             "elements": [
-              { "value": 0.1,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -113,9 +168,14 @@
             "outputVectors": [
               {
                 "id": "ag-atm-co2-inject-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "CO2_INJECT: open CO2 valve; restore enriched atmosphere at [276:280]",
+                  "description": "CO2_INJECT: open CO2 valve; restore enriched atmosphere at [36:40]",
                   "action": "Open CO2 regulator; enrichment cycle begins; IPM monitor registers CO2 stress"
                 }
               }
@@ -135,10 +195,22 @@
           {
             "id": "ag-atm-dry-watch",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 },
-              { "value": 0.52, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.52,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -147,15 +219,30 @@
               "rh_range": "0.40–0.52 (55–65% RH, vegetative optimal)",
               "vpd_range": "0.50–0.55 (1.0–1.1 kPa, good transpiration)"
             },
-            "nextVectorIds": ["ag-atm-dry-watch", "ag-atm-humid"]
+            "nextVectorIds": [
+              "ag-atm-dry-watch",
+              "ag-atm-humid"
+            ]
           },
           {
             "id": "ag-atm-humid",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.68, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.68,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -164,15 +251,29 @@
               "rh_range": "0.62–0.75 (75–85% RH)",
               "vpd_range": "0.28–0.42 (0.6–0.9 kPa)"
             },
-            "nextVectorIds": ["ag-atm-high-humidity"]
+            "nextVectorIds": [
+              "ag-atm-high-humidity"
+            ]
           },
           {
             "id": "ag-atm-high-humidity",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.82, "threshold": 0.5 },
-              { "value": 0.2,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.82,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -180,15 +281,29 @@
               "description": "HIGH_HUMIDITY — RH >85%; VPD very low; fungal risk elevated.",
               "rh_range": "0.78–0.90 (85–92% RH)"
             },
-            "nextVectorIds": ["ag-atm-condensation-risk"]
+            "nextVectorIds": [
+              "ag-atm-condensation-risk"
+            ]
           },
           {
             "id": "ag-atm-condensation-risk",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.93, "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.93,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -200,9 +315,14 @@
             "outputVectors": [
               {
                 "id": "ag-atm-humidity-alert-output",
-                "vector": [0, 0, 1, 0],
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
                 "metadata": {
-                  "description": "HUMIDITY_ALERT: open ventilation; activate dehumidifier at [276:280]",
+                  "description": "HUMIDITY_ALERT: open ventilation; activate dehumidifier at [36:40]",
                   "action": "Increase air exchange; IPM monitor registers elevated fungal pressure"
                 }
               }
@@ -222,10 +342,22 @@
           {
             "id": "ag-atm-optimal",
             "elements": [
-              { "value": 0.6,  "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 },
-              { "value": 0.52, "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 }
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.52,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -238,9 +370,14 @@
             "outputVectors": [
               {
                 "id": "ag-atm-ok-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "ATMOS_OK: atmospheric conditions optimal for plant growth at [276:280]",
+                  "description": "ATMOS_OK: atmospheric conditions optimal for plant growth at [36:40]",
                   "action": "IPM and plant monitors register clean atmospheric baseline"
                 }
               }
@@ -255,13 +392,48 @@
         "pattern": "7-step: ENRICHED → ENRICHED → DECLINING → LOW → DEPLETED → (CO2 injected) → OPTIMAL",
         "description": "CO2 draw-down during afternoon peak photosynthesis; injection system restores enriched level.",
         "vectors": [
-          [0.64, 0.46, 0.52, 0.44],
-          [0.63, 0.47, 0.51, 0.45],
-          [0.41, 0.46, 0.51, 0.45],
-          [0.24, 0.45, 0.52, 0.45],
-          [0.09, 0.46, 0.52, 0.45],
-          [0.62, 0.45, 0.52, 0.45],
-          [0.61, 0.44, 0.53, 0.44]
+          [
+            0.64,
+            0.46,
+            0.52,
+            0.44
+          ],
+          [
+            0.63,
+            0.47,
+            0.51,
+            0.45
+          ],
+          [
+            0.41,
+            0.46,
+            0.51,
+            0.45
+          ],
+          [
+            0.24,
+            0.45,
+            0.52,
+            0.45
+          ],
+          [
+            0.09,
+            0.46,
+            0.52,
+            0.45
+          ],
+          [
+            0.62,
+            0.45,
+            0.52,
+            0.45
+          ],
+          [
+            0.61,
+            0.44,
+            0.53,
+            0.44
+          ]
         ],
         "metadata": {
           "scenario": "co2-drawdown-recovery",

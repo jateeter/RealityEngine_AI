@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Service Intake Assessment Monitor",
-    "description": "Monitors intake and needs assessment workflow for community service recipients — tracking need severity, functional status, safety risk, and support network adequacy. Determines intake priority and routing for case assignment. In community services, intake triage determines whether a person receives immediate crisis response, intensive case management, or standard program enrollment. Output at [434:438] feeds the Enrollment Coordination Monitor.",
+    "description": "Monitors intake and needs assessment workflow for community service recipients — tracking need severity, functional status, safety risk, and support network adequacy. Determines intake priority and routing for case assignment. In community services, intake triage determines whether a person receives immediate crisis response, intensive case management, or standard program enrollment. Output at [956:960] feeds the Enrollment Coordination Monitor.",
     "metadata": {
       "category": "community-services",
       "domain": "Community Services — Intake / Needs Assessment",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [434:438]: [1,0,0,0]=PRIORITY_INTAKE, [0,1,0,0]=COMPLEX_INTAKE, [0,0,1,0]=STANDARD_INTAKE, [0,0,0,1]=INTAKE_COMPLETE",
+      "outputSpace": "4D binary at [956:960]: [1,0,0,0]=PRIORITY_INTAKE, [0,1,0,0]=COMPLEX_INTAKE, [0,0,1,0]=STANDARD_INTAKE, [0,0,0,1]=INTAKE_COMPLETE",
       "tags": [
         "community-services",
         "intake assessment",
@@ -25,16 +25,16 @@
         "safety_risk_norm": "0.0=imminent safety risk (DV, child abuse, elder abuse, suicidality reported), 0.5=elevated risk factors present but not acute (past DV, unstable housing, substance use), 1.0=no safety concerns identified during screening",
         "support_network_norm": "0.0=completely isolated; no family, friends, or existing services engaged, 0.5=limited support (one informal contact; partial service engagement), 1.0=strong support network; family engaged; existing services active"
       },
-      "downstreamMachine": "EnrollmentCoordinationMonitor (reads [430:438])"
+      "downstreamMachine": "EnrollmentCoordinationMonitor (reads [952:960])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 394,
+        "offset": 924,
         "length": 4
       },
       "output": {
-        "offset": 434,
+        "offset": 956,
         "length": 4
       }
     },
@@ -51,10 +51,22 @@
           {
             "id": "ia-standard",
             "elements": [
-              { "value": 0.55, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.55, "threshold": 0.5 }
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -62,15 +74,30 @@
               "description": "STANDARD+ — moderate need; functional for intake; no acute safety concerns; some support present. isInitial A*A = A+.",
               "need_severity": "0.50–0.65 (single-domain need; manageable)"
             },
-            "nextVectorIds": ["ia-standard", "ia-complex"]
+            "nextVectorIds": [
+              "ia-standard",
+              "ia-complex"
+            ]
           },
           {
             "id": "ia-complex",
             "elements": [
-              { "value": 0.32, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.4, "threshold": 0.5 },
-              { "value": 0.3, "threshold": 0.5 }
+              {
+                "value": 0.32,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.4,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.3,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -78,15 +105,29 @@
               "description": "COMPLEX — multiple need domains; functional barriers requiring intake support; risk factors present.",
               "need_severity": "0.25–0.45 (two or more need domains; requires complex case management)"
             },
-            "nextVectorIds": ["ia-priority"]
+            "nextVectorIds": [
+              "ia-priority"
+            ]
           },
           {
             "id": "ia-priority",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.15, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.15,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -97,9 +138,14 @@
             "outputVectors": [
               {
                 "id": "ia-priority-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "PRIORITY_INTAKE: acute crisis requiring immediate case worker assignment at [434:438]",
+                  "description": "PRIORITY_INTAKE: acute crisis requiring immediate case worker assignment at [956:960]",
                   "action": "Immediate caseworker assignment; safety plan activation; partner agency crisis notification; same-day service initiation"
                 }
               }
@@ -119,10 +165,22 @@
           {
             "id": "ia-complex-stable",
             "elements": [
-              { "value": 0.3, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.55, "threshold": 0.5 },
-              { "value": 0.28, "threshold": 0.5 }
+              {
+                "value": 0.3,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.28,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -133,9 +191,14 @@
             "outputVectors": [
               {
                 "id": "ia-complex-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "COMPLEX_INTAKE: multi-domain needs requiring intensive case management assignment at [434:438]",
+                  "description": "COMPLEX_INTAKE: multi-domain needs requiring intensive case management assignment at [956:960]",
                   "action": "Complex case manager assignment; multi-agency coordination plan; functional capacity assessment; care plan development"
                 }
               }
@@ -155,10 +218,22 @@
           {
             "id": "ia-resolved",
             "elements": [
-              { "value": 0.58, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.58, "threshold": 0.5 }
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -169,9 +244,14 @@
             "outputVectors": [
               {
                 "id": "ia-complete-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "INTAKE_COMPLETE: needs assessment finished; ready for program enrollment at [434:438]",
+                  "description": "INTAKE_COMPLETE: needs assessment finished; ready for program enrollment at [956:960]",
                   "action": "Enrollment coordination monitor receives INTAKE_COMPLETE; case assignment queue populated"
                 }
               }
@@ -186,11 +266,36 @@
         "pattern": "5-step: STANDARD→STANDARD→COMPLEX (DV disclosed)→PRIORITY (imminent risk identified)→RESOLVED (after safety plan)",
         "description": "New housing assistance applicant discloses DV during intake; safety risk elevated; priority crisis services engaged; safety plan stabilizes situation; intake completed.",
         "vectors": [
-          [0.56, 0.61, 0.63, 0.56],
-          [0.54, 0.59, 0.61, 0.54],
-          [0.31, 0.34, 0.39, 0.29],
-          [0.09, 0.14, 0.09, 0.09],
-          [0.59, 0.63, 0.66, 0.59]
+          [
+            0.56,
+            0.61,
+            0.63,
+            0.56
+          ],
+          [
+            0.54,
+            0.59,
+            0.61,
+            0.54
+          ],
+          [
+            0.31,
+            0.34,
+            0.39,
+            0.29
+          ],
+          [
+            0.09,
+            0.14,
+            0.09,
+            0.09
+          ],
+          [
+            0.59,
+            0.63,
+            0.66,
+            0.59
+          ]
         ],
         "metadata": {
           "scenario": "dv-survivor-priority-intake",

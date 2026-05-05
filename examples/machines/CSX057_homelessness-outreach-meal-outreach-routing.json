@@ -1,0 +1,353 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Community Services Homelessness Outreach Meal Outreach Routing",
+    "description": "Community-services machine for meal outreach routing in the homelessness outreach workstream. It monitors food-service schedule, dietary need, location cluster, and volunteer capacity and emits AI-triggered actions for health and human services, law enforcement/public safety coordination, homelessness response, and city operations.",
+    "metadata": {
+      "category": "community-services",
+      "domain": "Community Services - Homelessness Outreach",
+      "author": "Reality Engine",
+      "workstream": "Homelessness Outreach",
+      "operationalFocus": "Meal Outreach Routing",
+      "focusDescription": "food-service schedule, dietary need, location cluster, and volunteer capacity",
+      "upstreamMachine": "Community Services Homelessness Outreach Hygiene Service Access",
+      "upstreamDomain": "community-services",
+      "upstreamOutputRegion": "[1216:1220]",
+      "upstreamPurpose": null,
+      "downstreamMachines": [
+        "Community Services Homelessness Outreach Pet Companion Accommodation"
+      ],
+      "crossDomainInterconnect": true,
+      "crossDomainOutputTarget": "health-services",
+      "crossDomainOutputPurpose": "unsheltered medical outreach into emergency preparedness referral",
+      "dispatchableAgent": "behavioral_crisis_agent",
+      "aiTrigger": "community-services-homelessness-outreach-meal-outreach-routing",
+      "predictiveFlowTrigger": "community-services-predictive-homelessness-outreach-meal-outreach-routing",
+      "agentActions": [
+        "Dispatch behavioral_crisis_agent for urgent community-services intervention on meal outreach routing.",
+        "Coordinate health, housing, public safety, transportation, or city service partners for meal outreach routing.",
+        "Create field work order or mobile team task for meal outreach routing.",
+        "Maintain monitored service path for meal outreach routing."
+      ],
+      "inputSpace": "4D binary at [1216:1220]",
+      "outputSpace": "4D binary at [3443:3447]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
+      "inputSemantics": [
+        "resident need severity",
+        "eligibility and documentation readiness",
+        "field capacity or operational readiness",
+        "safety, mobility, and health risk"
+      ],
+      "tags": [
+        "community-services",
+        "health-and-human-services",
+        "law-enforcement",
+        "public-safety",
+        "homelessness",
+        "city-services",
+        "ai-triggers",
+        "dispatchable-agents",
+        "cross-domain",
+        "homelessness-outreach",
+        "meal-outreach-routing"
+      ],
+      "sequenceCount": 5,
+      "reuseGuideline": "Map 311, case-management, CAD/RMS, shelter HMIS, benefit enrollment, outreach, public health, and transit-access signals into the 4D input lane. Route outputs to case workers, mobile crisis, public safety, housing navigators, field crews, transportation dispatch, or health-service agents.",
+      "downstreamPattern": "Output region [3443:3447] feeds Community Services Homelessness Outreach Pet Companion Accommodation."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 1216,
+        "length": 4
+      },
+      "output": {
+        "offset": 3443,
+        "length": 4
+      }
+    },
+    "sequences": [
+      {
+        "id": "csx-057-urgent-response",
+        "name": "Meal Outreach Routing: WATCH -> URGENT_RESPONSE",
+        "metadata": {
+          "description": "Escalates resident or field risk into urgent response.",
+          "output": "[1,0,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-057-watch",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "nextVectorIds": [
+              "csx-057-urgent"
+            ]
+          },
+          {
+            "id": "csx-057-urgent",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": false,
+            "outputVectors": [
+              {
+                "id": "csx-057-urgent-output",
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Dispatch behavioral_crisis_agent for urgent community-services intervention on meal outreach routing."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-057-coordinate-services",
+        "name": "Meal Outreach Routing: COORDINATION_NEEDED -> COORDINATE_SERVICES",
+        "metadata": {
+          "description": "Triggers cross-agency coordination.",
+          "output": "[0,1,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-057-coordinate",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-057-coordinate-output",
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Coordinate health, housing, public safety, transportation, or city service partners for meal outreach routing."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-057-field-work-order",
+        "name": "Meal Outreach Routing: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER",
+        "metadata": {
+          "description": "Creates a field crew, outreach, or mobile response task.",
+          "output": "[0,0,1,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-057-field-task",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-057-field-output",
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "action": "Create field work order or mobile team task for meal outreach routing."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-057-stable-service-path",
+        "name": "Meal Outreach Routing: STABLE_PATH -> STABLE_SERVICE_PATH",
+        "metadata": {
+          "description": "Confirms resident service path is stable and monitored.",
+          "output": "[0,0,0,1]"
+        },
+        "vectors": [
+          {
+            "id": "csx-057-stable",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-057-stable-output",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "metadata": {
+                  "action": "Maintain monitored service path for meal outreach routing."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Urgent response sequence",
+        "description": "Two-step community risk escalation ending in urgent response.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0,0,0]",
+          "scenario": "urgent-response",
+          "sequenceLength": 2
+        }
+      },
+      {
+        "name": "Coordinate services",
+        "description": "Coordinates health, public safety, housing, transit, or city service partners.",
+        "vectors": [
+          [
+            0,
+            1,
+            1,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,1,0,0]",
+          "scenario": "coordinate-services"
+        }
+      },
+      {
+        "name": "Field work order",
+        "description": "Creates a field response or outreach task.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,1,0]",
+          "scenario": "field-work-order"
+        }
+      },
+      {
+        "name": "Stable service path",
+        "description": "Confirms the resident or city service path is stable.",
+        "vectors": [
+          [
+            1,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,0,1]",
+          "scenario": "stable-service-path"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Initial observation arms the urgent path without firing.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

@@ -3,22 +3,22 @@
   "machine": {
     "id": "ai-hardware-resilience",
     "name": "AI Hardware Resilience Monitor",
-    "description": "Monitors AI infrastructure hardware health \u2014 detects disk SMART failures, GPU/CPU memory ECC errors, network packet loss, and hardware fault accumulation to trigger proactive workload evacuation before catastrophic failure.",
+    "description": "Monitors AI infrastructure hardware health — detects disk SMART failures, GPU/CPU memory ECC errors, network packet loss, and hardware fault accumulation to trigger proactive workload evacuation before catastrophic failure.",
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
     "perceptualMapping": {
       "input": {
-        "offset": 140,
+        "offset": 276,
         "length": 4
       },
       "output": {
-        "offset": 186,
+        "offset": 3523,
         "length": 6
       }
     },
     "metadata": {
       "category": "ai-services",
-      "domain": "AI Infrastructure \u2014 Hardware Health / Resilience",
+      "domain": "AI Infrastructure — Hardware Health / Resilience",
       "tags": [
         "data-center",
         "hardware",
@@ -28,8 +28,8 @@
         "ai-workload"
       ],
       "rationale": "Disk SMART, ECC errors, and network fabric health are physical data-center hardware concerns.",
-      "eventSpace": "4D continuous fault severity vector at [140:144]: [disk_fault_score, memory_error_rate, network_packet_loss, hw_fault_accumulation]",
-      "outputSpace": "6D status/action at [186:192]: [STATUS_HEALTHY, STATUS_WARNING, STATUS_DEGRADED, STATUS_CRITICAL, ACT_EVACUATE_WORKLOADS, ACT_SCHEDULE_MAINTENANCE]",
+      "eventSpace": "4D continuous fault severity vector at [276:280]: [disk_fault_score, memory_error_rate, network_packet_loss, hw_fault_accumulation]",
+      "outputSpace": "6D status/action at [3523:3529]: [STATUS_HEALTHY, STATUS_WARNING, STATUS_DEGRADED, STATUS_CRITICAL, ACT_EVACUATE_WORKLOADS, ACT_SCHEDULE_MAINTENANCE]",
       "inputDimensions": [
         {
           "index": 0,
@@ -83,7 +83,7 @@
       {
         "id": "aihr-hw-degradation",
         "name": "Hardware Degradation Escalation",
-        "description": "4-step escalation: HEALTHY \u2192 WARNING \u2192 DEGRADED \u2192 CRITICAL as hardware fault indicators accumulate across disk, memory, network, and fault counters",
+        "description": "4-step escalation: HEALTHY → WARNING → DEGRADED → CRITICAL as hardware fault indicators accumulate across disk, memory, network, and fault counters",
         "vectors": [
           {
             "id": "aihr-healthy",
@@ -121,7 +121,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Hardware HEALTHY \u2014 all SMART indicators nominal, no ECC errors, network clean",
+                  "description": "Hardware HEALTHY — all SMART indicators nominal, no ECC errors, network clean",
                   "severity": "INFO"
                 }
               }
@@ -163,7 +163,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Hardware WARNING \u2014 early SMART deterioration and elevated ECC error rate",
+                  "description": "Hardware WARNING — early SMART deterioration and elevated ECC error rate",
                   "severity": "WARNING"
                 }
               }
@@ -205,7 +205,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Hardware DEGRADED \u2014 multiple components showing failure indicators, reliability compromised",
+                  "description": "Hardware DEGRADED — multiple components showing failure indicators, reliability compromised",
                   "severity": "CRITICAL"
                 }
               },
@@ -260,7 +260,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Hardware CRITICAL \u2014 imminent hardware failure, data loss and downtime risk",
+                  "description": "Hardware CRITICAL — imminent hardware failure, data loss and downtime risk",
                   "severity": "EMERGENCY"
                 }
               },
@@ -290,7 +290,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "Action: Emergency hardware replacement \u2014 pull from production immediately",
+                  "description": "Action: Emergency hardware replacement — pull from production immediately",
                   "severity": "ACTION"
                 }
               }
@@ -301,7 +301,7 @@
       {
         "id": "aihr-sudden-network-failure",
         "name": "Sudden Network Fabric Failure",
-        "description": "2-step detection: NETWORK_NOMINAL \u2192 NETWORK_FAULT \u2014 fires when packet loss spikes HIGH while disk and memory health remain LOW (isolated network component failure)",
+        "description": "2-step detection: NETWORK_NOMINAL → NETWORK_FAULT — fires when packet loss spikes HIGH while disk and memory health remain LOW (isolated network component failure)",
         "vectors": [
           {
             "id": "aihr-net-nominal",
@@ -363,7 +363,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Network fabric FAULT \u2014 sudden packet loss spike, likely NIC or switch failure",
+                  "description": "Network fabric FAULT — sudden packet loss spike, likely NIC or switch failure",
                   "severity": "WARNING"
                 }
               },
@@ -391,7 +391,7 @@
       {
         "id": "aihr-seq-1",
         "name": "Healthy Hardware Baseline",
-        "description": "All hardware health metrics well within nominal ranges \u2014 no faults detected",
+        "description": "All hardware health metrics well within nominal ranges — no faults detected",
         "vectors": [
           [
             0.04,

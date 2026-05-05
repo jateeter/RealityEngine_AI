@@ -1,0 +1,165 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Logical Infrastructure Fifo Full To Not Full",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `FULL READ`. Detects FIFO relief after read. Reads a 4D control/status lane at [3657:3661] and emits a 2D match lane at [3661:3663].",
+    "metadata": {
+      "category": "digital-logic",
+      "domain": "Digital Logic - Infrastructure",
+      "author": "Reality Engine",
+      "regularExpression": "FULL READ",
+      "asicPattern": "Fifo Full To Not Full",
+      "reuseRole": "general-purpose logical connective tissue",
+      "inputSpace": "4D binary at [3657:3661]",
+      "outputSpace": "2D binary at [3661:3663]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSemantics": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "qualifier"
+      ],
+      "tags": [
+        "digital-logic",
+        "logical-infrastructure",
+        "asic-pattern",
+        "regular-expression",
+        "fifo-full-to-not-full"
+      ],
+      "sequenceCount": 1,
+      "reuseGuideline": "Use this machine by mapping upstream source or machine output bits into its 4D input lane. Map its 2D output lane into downstream machine input when a reusable temporal guard, latch trigger, handshake detector, CDC detector, bus phase detector, or safety qualifier is needed."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 3657,
+        "length": 4
+      },
+      "output": {
+        "offset": 3661,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "dlx-039-match",
+        "name": "Fifo Full To Not Full: FULL READ -> MATCH",
+        "metadata": {
+          "description": "Detects FIFO relief after read.",
+          "regularExpression": "FULL READ",
+          "output": "[1,0]"
+        },
+        "vectors": [
+          {
+            "id": "dlx-039-step-1",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "STEP_1",
+              "description": "Fifo Full To Not Full regex step 1: [1, 0, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-039-step-2"
+            ]
+          },
+          {
+            "id": "dlx-039-step-2",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_2",
+              "description": "Fifo Full To Not Full regex step 2: [0, 1, 0, 0]"
+            },
+            "outputVectors": [
+              {
+                "id": "dlx-039-match-output",
+                "vector": [
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "description": "Fifo Full To Not Full matched regular expression FULL READ.",
+                  "state": "MATCH"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Fifo Full To Not Full match path",
+        "description": "Validates regular expression FULL READ.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0]",
+          "scenario": "fifo-full-to-not-full"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Single baseline sample does not complete the expression.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

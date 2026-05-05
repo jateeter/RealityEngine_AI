@@ -1,0 +1,200 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Logical Infrastructure Metastability Settled",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `X0 X0 STABLE`. Detects synchronizer settling after uncertain samples. Reads a 4D control/status lane at [3703:3707] and emits a 2D match lane at [3707:3709].",
+    "metadata": {
+      "category": "digital-logic",
+      "domain": "Digital Logic - Infrastructure",
+      "author": "Reality Engine",
+      "regularExpression": "X0 X0 STABLE",
+      "asicPattern": "Metastability Settled",
+      "reuseRole": "general-purpose logical connective tissue",
+      "inputSpace": "4D binary at [3703:3707]",
+      "outputSpace": "2D binary at [3707:3709]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSemantics": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "qualifier"
+      ],
+      "tags": [
+        "digital-logic",
+        "logical-infrastructure",
+        "asic-pattern",
+        "regular-expression",
+        "metastability-settled"
+      ],
+      "sequenceCount": 1,
+      "reuseGuideline": "Use this machine by mapping upstream source or machine output bits into its 4D input lane. Map its 2D output lane into downstream machine input when a reusable temporal guard, latch trigger, handshake detector, CDC detector, bus phase detector, or safety qualifier is needed."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 3703,
+        "length": 4
+      },
+      "output": {
+        "offset": 3707,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "dlx-050-match",
+        "name": "Metastability Settled: X0 X0 STABLE -> MATCH",
+        "metadata": {
+          "description": "Detects synchronizer settling after uncertain samples.",
+          "regularExpression": "X0 X0 STABLE",
+          "output": "[1,0]"
+        },
+        "vectors": [
+          {
+            "id": "dlx-050-step-1",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "STEP_1",
+              "description": "Metastability Settled regex step 1: [1, 0, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-050-step-2"
+            ]
+          },
+          {
+            "id": "dlx-050-step-2",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_2",
+              "description": "Metastability Settled regex step 2: [1, 0, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-050-step-3"
+            ]
+          },
+          {
+            "id": "dlx-050-step-3",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_3",
+              "description": "Metastability Settled regex step 3: [0, 1, 0, 0]"
+            },
+            "outputVectors": [
+              {
+                "id": "dlx-050-match-output",
+                "vector": [
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "description": "Metastability Settled matched regular expression X0 X0 STABLE.",
+                  "state": "MATCH"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Metastability Settled match path",
+        "description": "Validates regular expression X0 X0 STABLE.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0]",
+          "scenario": "metastability-settled"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Single baseline sample does not complete the expression.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

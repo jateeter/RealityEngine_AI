@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Referral Network Monitor",
-    "description": "Monitors referral acceptance rates, wait time performance, warm handoff completion, and follow-through rates across community service referral partnerships. Referral networks are the connective tissue of community services — they route clients to specialized resources (food banks, legal aid, mental health, substance use treatment, housing) that the referring agency cannot provide directly. Network degradation (partner agencies at capacity, wait lists expanding, warm handoff failures) silently starves clients of services they were told they would receive. Output at [454:458] feeds the Community Access Monitor.",
+    "description": "Monitors referral acceptance rates, wait time performance, warm handoff completion, and follow-through rates across community service referral partnerships. Referral networks are the connective tissue of community services — they route clients to specialized resources (food banks, legal aid, mental health, substance use treatment, housing) that the referring agency cannot provide directly. Network degradation (partner agencies at capacity, wait lists expanding, warm handoff failures) silently starves clients of services they were told they would receive. Output at [976:980] feeds the Community Access Monitor.",
     "metadata": {
       "category": "community-services",
       "domain": "Community Services — Referral Network / Inter-Agency",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [454:458]: [1,0,0,0]=REFERRAL_BREAKDOWN, [0,1,0,0]=NETWORK_STRAINED, [0,0,1,0]=REFERRAL_DELAYS, [0,0,0,1]=REFERRAL_FUNCTIONAL",
+      "outputSpace": "4D binary at [976:980]: [1,0,0,0]=REFERRAL_BREAKDOWN, [0,1,0,0]=NETWORK_STRAINED, [0,0,1,0]=REFERRAL_DELAYS, [0,0,0,1]=REFERRAL_FUNCTIONAL",
       "tags": [
         "community-services",
         "referral network",
@@ -25,16 +25,16 @@
         "warm_handoff_completion_norm": "0.0=warm handoffs not occurring; clients being given phone numbers and left to navigate alone, 0.5=partial warm handoff (email introduction sent; no direct contact confirmation), 1.0=warm handoff confirmed — direct worker-to-worker contact; client acknowledged by receiving agency",
         "follow_through_norm": "0.0=<30% of referred clients confirmed to have connected with referred service, 0.5=40–65% of referred clients confirmed connected, 1.0=>80% of referred clients confirmed connected within target timeframe"
       },
-      "downstreamMachine": "CommunityAccessMonitor (reads [454:462])"
+      "downstreamMachine": "CommunityAccessMonitor (reads [976:984])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 414,
+        "offset": 944,
         "length": 4
       },
       "output": {
-        "offset": 454,
+        "offset": 976,
         "length": 4
       }
     },
@@ -51,10 +51,22 @@
           {
             "id": "rn-functional",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -62,15 +74,30 @@
               "description": "FUNCTIONAL+ — partner acceptance above 85%; wait times reasonable; warm handoffs completing; follow-through tracked above 80%. isInitial A*A = A+.",
               "acceptance_rate": "0.58–0.75 (most referrals accepted within target timeframe)"
             },
-            "nextVectorIds": ["rn-functional", "rn-strained"]
+            "nextVectorIds": [
+              "rn-functional",
+              "rn-strained"
+            ]
           },
           {
             "id": "rn-strained",
             "elements": [
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.38, "threshold": 0.5 },
-              { "value": 0.38, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 }
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -78,15 +105,29 @@
               "description": "STRAINED — acceptance rates declining; wait times extending; warm handoffs becoming inconsistent; follow-through dropping.",
               "acceptance_rate": "0.28–0.45 (partner agencies near capacity; selective referral acceptance)"
             },
-            "nextVectorIds": ["rn-failing"]
+            "nextVectorIds": [
+              "rn-failing"
+            ]
           },
           {
             "id": "rn-failing",
             "elements": [
-              { "value": 0.12, "threshold": 0.5 },
-              { "value": 0.15, "threshold": 0.5 },
-              { "value": 0.12, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.12,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.15,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.12,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -97,9 +138,14 @@
             "outputVectors": [
               {
                 "id": "rn-breakdown-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "REFERRAL_BREAKDOWN: community referral network non-functional; clients not connecting with referred services at [454:458]",
+                  "description": "REFERRAL_BREAKDOWN: community referral network non-functional; clients not connecting with referred services at [976:980]",
                   "action": "Emergency partner network meeting; alternative resource identification; direct service expansion; funder notification; coordinated entry system escalation"
                 }
               }
@@ -119,10 +165,22 @@
           {
             "id": "rn-delayed",
             "elements": [
-              { "value": 0.52, "threshold": 0.5 },
-              { "value": 0.28, "threshold": 0.5 },
-              { "value": 0.42, "threshold": 0.5 },
-              { "value": 0.38, "threshold": 0.5 }
+              {
+                "value": 0.52,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.28,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.42,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -133,9 +191,14 @@
             "outputVectors": [
               {
                 "id": "rn-delays-output",
-                "vector": [0, 0, 1, 0],
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
                 "metadata": {
-                  "description": "REFERRAL_DELAYS: referral network functional but wait times preventing timely service access at [454:458]",
+                  "description": "REFERRAL_DELAYS: referral network functional but wait times preventing timely service access at [976:980]",
                   "action": "Expedited referral pathways negotiation; crisis slot advocacy with partners; interim bridge service identification; peer support engagement while waiting"
                 }
               }
@@ -155,10 +218,22 @@
           {
             "id": "rn-operating",
             "elements": [
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.68, "threshold": 0.5 },
-              { "value": 0.63, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 }
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.68,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.63,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -169,9 +244,14 @@
             "outputVectors": [
               {
                 "id": "rn-functional-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "REFERRAL_FUNCTIONAL: referral network supporting effective client routing at [454:458]",
+                  "description": "REFERRAL_FUNCTIONAL: referral network supporting effective client routing at [976:980]",
                   "action": "Community access monitor registers referral network healthy"
                 }
               }
@@ -186,11 +266,36 @@
         "pattern": "5-step: FUNCTIONAL→FUNCTIONAL→STRAINED (closure announced)→BREAKDOWN (closure effective)→FUNCTIONAL (alternative partners onboarded)",
         "description": "The largest food bank in the referral network closes due to funding loss; referral acceptance for food assistance drops to near zero; emergency network expansion restores functionality.",
         "vectors": [
-          [0.63, 0.66, 0.61, 0.63],
-          [0.61, 0.64, 0.59, 0.61],
-          [0.34, 0.37, 0.37, 0.34],
-          [0.11, 0.14, 0.11, 0.09],
-          [0.66, 0.69, 0.64, 0.66]
+          [
+            0.63,
+            0.66,
+            0.61,
+            0.63
+          ],
+          [
+            0.61,
+            0.64,
+            0.59,
+            0.61
+          ],
+          [
+            0.34,
+            0.37,
+            0.37,
+            0.34
+          ],
+          [
+            0.11,
+            0.14,
+            0.11,
+            0.09
+          ],
+          [
+            0.66,
+            0.69,
+            0.64,
+            0.66
+          ]
         ],
         "metadata": {
           "scenario": "major-partner-closure-network-breakdown",

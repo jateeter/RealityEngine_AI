@@ -111,6 +111,85 @@
   flex-shrink: 0;
 }
 
+/* Domain filter header row */
+.vis-legend-domain-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+/* Show All / None toggle */
+.vis-legend-domain-toggle {
+  padding: 2px 7px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--re-cyan);
+  background: rgba(0, 200, 239, 0.08);
+  border: 1px solid rgba(0, 200, 239, 0.3);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+.vis-legend-domain-toggle:hover {
+  background: rgba(0, 200, 239, 0.18);
+  border-color: var(--re-border-glow);
+}
+
+/* Domain checkbox row */
+.vis-legend-domain-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: var(--re-text-1);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  padding: 1px 0;
+}
+.vis-legend-domain-row:hover {
+  color: var(--re-text-0, #fff);
+}
+
+/* Custom checkbox — tiny, on-brand */
+.vis-legend-domain-cb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--re-border-bright);
+  border-radius: 2px;
+  background: var(--re-bg-3);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.vis-legend-domain-cb:checked {
+  background: var(--re-cyan);
+  border-color: var(--re-cyan);
+}
+.vis-legend-domain-cb:checked::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  width: 4px;
+  height: 6px;
+  border: 1.5px solid #000;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translateY(-1px);
+}
+.vis-legend-domain-cb:hover {
+  border-color: var(--re-cyan);
+}
+
 /* Reset-layout button */
 .vis-reset-layout-btn {
   padding: 5px 10px;

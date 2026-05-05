@@ -2,14 +2,24 @@
 
 ## Overview
 
-The Reality Engine now operates entirely through the **Universal Perceptual Input Space (En)** - a 256-dimensional vector representing the complete observable reality. All machine inputs are sourced from this shared perceptual space, ensuring consistent, coordinated processing across all machines.
+The Reality Engine operates through the **Universal Perceptual Input Space
+(En)** - a logical coordinate space representing the complete observable
+reality. All machine inputs are sourced from this shared perceptual space,
+ensuring consistent, coordinated processing across all machines.
+
+Historically this document described En as a fixed 256-dimensional vector. That
+is now only a legacy test assumption. In production, En should be logically
+unconstrained with respect to `N`: the active machine universe and registered
+Perception Engine sources define the required high-water mark.
 
 ## Core Concepts
 
 ### Universal Perceptual Space (En)
-- **Fixed 256-byte vector** representing complete observable reality
+- **Dynamically sized logical vector** representing complete observable reality
 - Shared across all machines in the system
 - Each machine perceives a specific region of this space
+- Dense vectors are materialized snapshots of the logical space, not the source
+  of truth for its size
 
 ### Machine Perceptual Mapping
 Every machine has a **perceptual mapping** that defines:
@@ -29,10 +39,39 @@ Example:
 ### Preception Process (Reality Perception)
 **Preception** is how machines extract relevant information from the universal space:
 
-1. **Universal Input (En)** → 256-byte vector enters the system
+1. **Universal Input (En)** → logical reality vector enters the system
 2. **Extract Machine Input (Em)** → PreceptionEngine extracts bytes [offset:offset+length]
 3. **Process** → Machine processes its specific input slice
 4. **Merge Output (Ox)** → Machine output merged back into En at output offset
+
+## Vector Management Philosophy
+
+The perceptual space must grow from the active machine/source registry rather
+than from a static deployment setting.
+
+- Adding a machine can extend En when its input or output mapping exceeds the
+  current high-water mark.
+- Removing a machine releases its region reservations but should not shrink live
+  state automatically.
+- Repacking is an explicit maintenance operation that preserves all intentional
+  output-to-input overlaps and emits a coordinate migration map.
+- Runtime reality vectors must not be truncated to a configured dimension.
+  Shorter inputs are zero-filled to the required logical dimension.
+- Semantic embedding vectors used by localAIStack/Ollama are separate from
+  Reality Engine operational vectors. They may share physical Qdrant
+  infrastructure, but they must use separate collections and lifecycle rules.
+
+Recommended implementation:
+
+1. Add a vector-space registry that records machine input/output reservations
+   and Perception Engine source reservations.
+2. Derive `requiredDimension = max(offset + length)` from that registry.
+3. Treat `VECTOR_DIMENSION` as a compatibility floor:
+   `runtimeDimension = max(configuredDimension, requiredDimension)`.
+4. Grow `PerceptualSpace`, `PreceptionEngine`, simulator state, and PE
+   persistent vectors when the registry high-water mark increases.
+5. Persist operational vectors as sparse region updates or versioned dense
+   snapshots outside localAIStack embedding collections.
 
 ## Architecture Components
 

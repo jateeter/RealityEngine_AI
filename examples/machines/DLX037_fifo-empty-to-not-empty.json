@@ -1,0 +1,165 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Logical Infrastructure Fifo Empty To Not Empty",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `EMPTY WRITE`. Detects FIFO leaving empty state. Reads a 4D control/status lane at [1699:1703] and emits a 2D match lane at [1703:1705].",
+    "metadata": {
+      "category": "digital-logic",
+      "domain": "Digital Logic - Infrastructure",
+      "author": "Reality Engine",
+      "regularExpression": "EMPTY WRITE",
+      "asicPattern": "Fifo Empty To Not Empty",
+      "reuseRole": "general-purpose logical connective tissue",
+      "inputSpace": "4D binary at [1699:1703]",
+      "outputSpace": "2D binary at [1703:1705]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSemantics": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "qualifier"
+      ],
+      "tags": [
+        "digital-logic",
+        "logical-infrastructure",
+        "asic-pattern",
+        "regular-expression",
+        "fifo-empty-to-not-empty"
+      ],
+      "sequenceCount": 1,
+      "reuseGuideline": "Use this machine by mapping upstream source or machine output bits into its 4D input lane. Map its 2D output lane into downstream machine input when a reusable temporal guard, latch trigger, handshake detector, CDC detector, bus phase detector, or safety qualifier is needed."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 1699,
+        "length": 4
+      },
+      "output": {
+        "offset": 1703,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "dlx-037-match",
+        "name": "Fifo Empty To Not Empty: EMPTY WRITE -> MATCH",
+        "metadata": {
+          "description": "Detects FIFO leaving empty state.",
+          "regularExpression": "EMPTY WRITE",
+          "output": "[1,0]"
+        },
+        "vectors": [
+          {
+            "id": "dlx-037-step-1",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "STEP_1",
+              "description": "Fifo Empty To Not Empty regex step 1: [1, 0, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-037-step-2"
+            ]
+          },
+          {
+            "id": "dlx-037-step-2",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_2",
+              "description": "Fifo Empty To Not Empty regex step 2: [0, 1, 0, 0]"
+            },
+            "outputVectors": [
+              {
+                "id": "dlx-037-match-output",
+                "vector": [
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "description": "Fifo Empty To Not Empty matched regular expression EMPTY WRITE.",
+                  "state": "MATCH"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Fifo Empty To Not Empty match path",
+        "description": "Validates regular expression EMPTY WRITE.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0]",
+          "scenario": "fifo-empty-to-not-empty"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Single baseline sample does not complete the expression.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

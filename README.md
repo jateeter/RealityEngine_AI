@@ -144,6 +144,16 @@ that directory is **auto-loaded at engine startup** (see
 `scala/.../Routes.scala::loadDefaultMachines`), so adding a new file and
 restarting the stack is all that's needed — no allowlist to edit.
 
+The generated example corpus currently contains `906` startup-loadable machines
+across `10` active domains. The searchable index is generated at
+[`docs/EXAMPLE_DOMAIN_COMPENDIUM.md`](docs/EXAMPLE_DOMAIN_COMPENDIUM.md), and
+the current packed domain/bridge layout is documented in
+[`docs/DOMAIN_PERCEPTUAL_SPACE_REMAP.md`](docs/DOMAIN_PERCEPTUAL_SPACE_REMAP.md).
+The community-services domain now includes `102` machines, including `90`
+generated examples for health and human services, law enforcement/public safety,
+homelessness response, city operations, and bridge interconnects to
+health-services and transportation.
+
 ```bash
 # Via API
 curl -sk https://localhost:3000/api/machines/json/RS2
@@ -234,6 +244,7 @@ See `LOKI_GRAFANA_SETUP.md` for dashboard and alerting configuration.
 | `ARCHITECTURE.md` | Detailed Scala engine and perceptual space internals |
 | `API_ENDPOINTS_GUIDE.md` | Complete REST and WebSocket API reference |
 | `PERCEPTUAL_SPACE_ARCHITECTURE.md` | 256-byte space layout and machine interconnection model |
+| `docs/EXAMPLE_DOMAIN_COMPENDIUM.md` | Generated searchable compendium of all active domains, machines, triggers, mappings, and interconnections |
 | `RS_FLIP_FLOP.md` | RS flip-flop machine example walkthrough |
 | `NAND-GATE-PROOF.md` | NAND gate logical proof using CES machines |
 | `ARBITER_ARCHITECTURE.md` | Output arbiter and shouldOutput semantics |

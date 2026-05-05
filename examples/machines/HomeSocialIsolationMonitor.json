@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Social Isolation Monitor",
-    "description": "Integration machine that reads combined output signals from the Home Medication Cost Barrier Monitor [358:362] and the Home Transportation Barrier Monitor [362:366] to detect social isolation driven by access barriers. For low- and medium-income adults managing chronic conditions at home, the combination of medication cost barriers and transportation failures systematically restricts social participation, community connection, and human contact — accelerating depression, cognitive decline, and self-neglect. Output at [382:386] is available to downstream care coordination systems.",
+    "description": "Integration machine that reads combined output signals from the Home Medication Cost Barrier Monitor [2015:2019] and the Home Transportation Barrier Monitor [2019:2023] to detect social isolation driven by access barriers. For low- and medium-income adults managing chronic conditions at home, the combination of medication cost barriers and transportation failures systematically restricts social participation, community connection, and human contact — accelerating depression, cognitive decline, and self-neglect. Output at [2039:2043] is available to downstream care coordination systems.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Social Isolation / Access Barriers",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [382:386]: [1,0,0,0]=SEVERE_ISOLATION, [0,1,0,0]=SOCIAL_WITHDRAWAL, [0,0,1,0]=ISOLATION_RISK, [0,0,0,1]=SOCIALLY_CONNECTED",
+      "outputSpace": "4D binary at [2039:2043]: [1,0,0,0]=SEVERE_ISOLATION, [0,1,0,0]=SOCIAL_WITHDRAWAL, [0,0,1,0]=ISOLATION_RISK, [0,0,0,1]=SOCIALLY_CONNECTED",
       "tags": [
         "healthcare",
         "home health",
@@ -28,18 +28,18 @@
         "self_care_norm": "0.0=self-neglect evident (nutrition, hygiene, medication all failing), 0.5=managing core self-care with effort; some slippage, 1.0=adequate self-care maintained independently"
       },
       "upstreamMachines": [
-        "HomeMedicationCostBarrierMonitor (output [358:362])",
-        "HomeTransportationBarrierMonitor (output [362:366])"
+        "HomeMedicationCostBarrierMonitor (output [2015:2019])",
+        "HomeTransportationBarrierMonitor (output [2019:2023])"
       ]
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 358,
+        "offset": 2015,
         "length": 8
       },
       "output": {
-        "offset": 382,
+        "offset": 2039,
         "length": 4
       }
     },
@@ -56,14 +56,38 @@
           {
             "id": "si-connected",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -71,19 +95,46 @@
               "description": "CONNECTED+ — MEDICATION_MANAGED (bit 361) and TRANSPORTATION_ADEQUATE (bit 365) both high. Medications managed; transport available; patient engaged in community. isInitial A*A = A+.",
               "upstream_state": "MedCostBarrier=MEDICATION_MANAGED, TransportBarrier=TRANSPORTATION_ADEQUATE"
             },
-            "nextVectorIds": ["si-connected", "si-withdrawing"]
+            "nextVectorIds": [
+              "si-connected",
+              "si-withdrawing"
+            ]
           },
           {
             "id": "si-withdrawing",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -91,19 +142,45 @@
               "description": "WITHDRAWING — COST_BARRIER_ACTIVE (bit 359) and TRANSIT_DEPENDENT_RISK (bit 364). One moderate barrier in each domain. Patient reducing community trips to conserve resources; social contact decreasing.",
               "upstream_state": "MedCostBarrier=COST_BARRIER_ACTIVE, TransportBarrier=TRANSIT_DEPENDENT_RISK"
             },
-            "nextVectorIds": ["si-isolated"]
+            "nextVectorIds": [
+              "si-isolated"
+            ]
           },
           {
             "id": "si-isolated",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -114,9 +191,14 @@
             "outputVectors": [
               {
                 "id": "si-severe-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "SEVERE_ISOLATION: patient housebound with dual access barrier crisis; self-neglect risk at [382:386]",
+                  "description": "SEVERE_ISOLATION: patient housebound with dual access barrier crisis; self-neglect risk at [2039:2043]",
                   "action": "Emergency home visit; welfare check; emergency medication delivery; NEMT enrollment; adult protective services consideration"
                 }
               }
@@ -136,14 +218,38 @@
           {
             "id": "si-barrier-risk",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -154,9 +260,14 @@
             "outputVectors": [
               {
                 "id": "si-risk-output",
-                "vector": [0, 0, 1, 0],
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
                 "metadata": {
-                  "description": "ISOLATION_RISK: converging access barriers approaching isolation threshold at [382:386]",
+                  "description": "ISOLATION_RISK: converging access barriers approaching isolation threshold at [2039:2043]",
                   "action": "Proactive home visitor contact; multi-barrier resolution plan; phone/telehealth setup; community resource navigator"
                 }
               }
@@ -176,14 +287,38 @@
           {
             "id": "si-stable",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -194,9 +329,14 @@
             "outputVectors": [
               {
                 "id": "si-connected-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "SOCIALLY_CONNECTED: access barriers resolved; social participation maintained at [382:386]",
+                  "description": "SOCIALLY_CONNECTED: access barriers resolved; social participation maintained at [2039:2043]",
                   "action": "No isolation intervention required; continue monitoring"
                 }
               }
@@ -211,12 +351,66 @@
         "pattern": "6-step: CONNECTED→CONNECTED→WITHDRAWING→ISOLATION_RISK→SEVERE_ISOLATION→CONNECTED (after outreach)",
         "description": "Widowed elder retires; pension cuts trigger medication rationing; simultaneously stops driving; county transit route cut; full isolation; outreach worker intervention restores connection.",
         "vectors": [
-          [0.08, 0.09, 0.09, 0.63, 0.09, 0.09, 0.09, 0.63],
-          [0.09, 0.09, 0.08, 0.62, 0.09, 0.08, 0.09, 0.62],
-          [0.09, 0.63, 0.09, 0.09, 0.09, 0.09, 0.63, 0.09],
-          [0.63, 0.09, 0.09, 0.09, 0.09, 0.09, 0.63, 0.09],
-          [0.63, 0.09, 0.09, 0.09, 0.63, 0.09, 0.09, 0.09],
-          [0.09, 0.09, 0.09, 0.66, 0.09, 0.09, 0.09, 0.66]
+          [
+            0.08,
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.63
+          ],
+          [
+            0.09,
+            0.09,
+            0.08,
+            0.62,
+            0.09,
+            0.08,
+            0.09,
+            0.62
+          ],
+          [
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09
+          ],
+          [
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09
+          ],
+          [
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.09
+          ],
+          [
+            0.09,
+            0.09,
+            0.09,
+            0.66,
+            0.09,
+            0.09,
+            0.09,
+            0.66
+          ]
         ],
         "metadata": {
           "scenario": "retirement-income-drop-isolation",

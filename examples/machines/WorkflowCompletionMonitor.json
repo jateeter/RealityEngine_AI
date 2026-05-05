@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Workflow Completion Monitor",
-    "description": "Integration machine that reads combined output signals from the Document Signing Workflow Monitor [438:442] and the Qualification Verification Monitor [442:446] to detect workflow completion failures — cases where signing and qualification are both required before services can be delivered but one or both remain incomplete. In community services, unclosed workflow loops (unsigned forms + unverified qualifications) create audit risk, delay benefit issuance, and prevent inter-agency coordination. Output at [466:470] is available to downstream care coordination systems.",
+    "description": "Integration machine that reads combined output signals from the Document Signing Workflow Monitor [960:964] and the Qualification Verification Monitor [964:968] to detect workflow completion failures — cases where signing and qualification are both required before services can be delivered but one or both remain incomplete. In community services, unclosed workflow loops (unsigned forms + unverified qualifications) create audit risk, delay benefit issuance, and prevent inter-agency coordination. Output at [988:992] is available to downstream care coordination systems.",
     "metadata": {
       "category": "community-services",
       "domain": "Community Services — Workflow Completion / Qualification",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [466:470]: [1,0,0,0]=WORKFLOW_BLOCKED, [0,1,0,0]=WORKFLOW_STALLED, [0,0,1,0]=WORKFLOW_PARTIAL, [0,0,0,1]=WORKFLOW_COMPLETE",
+      "outputSpace": "4D binary at [988:992]: [1,0,0,0]=WORKFLOW_BLOCKED, [0,1,0,0]=WORKFLOW_STALLED, [0,0,1,0]=WORKFLOW_PARTIAL, [0,0,0,1]=WORKFLOW_COMPLETE",
       "tags": [
         "community-services",
         "qualification workflow",
@@ -25,18 +25,18 @@
         "completion_likelihood_norm": "0.0=client unreachable; documents not returned; no recent activity, 0.5=partial progress; some items completed; client intermittently responsive, 1.0=active engagement; all steps progressing; completion imminent"
       },
       "upstreamMachines": [
-        "DocumentSigningWorkflowMonitor (output [438:442])",
-        "QualificationVerificationMonitor (output [442:446])"
+        "DocumentSigningWorkflowMonitor (output [960:964])",
+        "QualificationVerificationMonitor (output [964:968])"
       ]
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 438,
+        "offset": 960,
         "length": 8
       },
       "output": {
-        "offset": 466,
+        "offset": 988,
         "length": 4
       }
     },
@@ -53,14 +53,38 @@
           {
             "id": "wc-complete",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -68,19 +92,46 @@
               "description": "COMPLETE+ — SIGNING_COMPLETE (bit 441) and FULLY_QUALIFIED (bit 445) both high. All workflow requirements met; unrestricted service delivery authorized. isInitial A*A = A+.",
               "upstream_state": "DocSigning=SIGNING_COMPLETE, QualVerification=FULLY_QUALIFIED"
             },
-            "nextVectorIds": ["wc-complete", "wc-partial"]
+            "nextVectorIds": [
+              "wc-complete",
+              "wc-partial"
+            ]
           },
           {
             "id": "wc-partial",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -88,19 +139,45 @@
               "description": "PARTIAL — PARTIAL_SIGNING (bit 440) and REVERIFICATION_REQUIRED (bit 443). Both workflows have outstanding items; services partially restricted.",
               "upstream_state": "DocSigning=PARTIAL_SIGNING, QualVerification=REVERIFICATION_REQUIRED"
             },
-            "nextVectorIds": ["wc-stalled"]
+            "nextVectorIds": [
+              "wc-stalled"
+            ]
           },
           {
             "id": "wc-stalled",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -111,9 +188,14 @@
             "outputVectors": [
               {
                 "id": "wc-blocked-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "WORKFLOW_BLOCKED: both signing and qualification workflows in failure; service delivery fully blocked at [466:470]",
+                  "description": "WORKFLOW_BLOCKED: both signing and qualification workflows in failure; service delivery fully blocked at [988:992]",
                   "action": "Case manager escalation; dual-track resolution plan; supervisor review; legal/compliance consultation if qualification failure involves adverse action"
                 }
               }
@@ -133,14 +215,38 @@
           {
             "id": "wc-partial-open",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -151,9 +257,14 @@
             "outputVectors": [
               {
                 "id": "wc-partial-output",
-                "vector": [0, 0, 1, 0],
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
                 "metadata": {
-                  "description": "WORKFLOW_PARTIAL: primary workflow complete; supplementary item outstanding at [466:470]",
+                  "description": "WORKFLOW_PARTIAL: primary workflow complete; supplementary item outstanding at [988:992]",
                   "action": "Continue primary services; schedule reverification appointment; track outstanding item; set completion deadline"
                 }
               }
@@ -173,14 +284,38 @@
           {
             "id": "wc-both-complete",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -191,9 +326,14 @@
             "outputVectors": [
               {
                 "id": "wc-complete-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "WORKFLOW_COMPLETE: all signing and qualification requirements met; unrestricted service delivery authorized at [466:470]",
+                  "description": "WORKFLOW_COMPLETE: all signing and qualification requirements met; unrestricted service delivery authorized at [988:992]",
                   "action": "Full inter-agency data sharing authorized; complete case coordination enabled; audit trail confirmed"
                 }
               }
@@ -208,11 +348,56 @@
         "pattern": "5-step: COMPLETE→COMPLETE→PARTIAL (reverification due)→STALLED (forms expired + qualification failed)→COMPLETE (after in-person resolution)",
         "description": "Annual redetermination triggers simultaneous signing expiry and income verification failure; both workflows stall; case manager conducts in-person session resolving both; workflow complete.",
         "vectors": [
-          [0.09, 0.09, 0.09, 0.63, 0.09, 0.09, 0.09, 0.63],
-          [0.08, 0.08, 0.08, 0.62, 0.08, 0.08, 0.08, 0.62],
-          [0.09, 0.09, 0.09, 0.63, 0.09, 0.63, 0.09, 0.09],
-          [0.63, 0.09, 0.09, 0.09, 0.63, 0.09, 0.09, 0.09],
-          [0.09, 0.09, 0.09, 0.66, 0.09, 0.09, 0.09, 0.66]
+          [
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.63
+          ],
+          [
+            0.08,
+            0.08,
+            0.08,
+            0.62,
+            0.08,
+            0.08,
+            0.08,
+            0.62
+          ],
+          [
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.63,
+            0.09,
+            0.09
+          ],
+          [
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.09
+          ],
+          [
+            0.09,
+            0.09,
+            0.09,
+            0.66,
+            0.09,
+            0.09,
+            0.09,
+            0.66
+          ]
         ],
         "metadata": {
           "scenario": "redetermination-dual-workflow-stall",

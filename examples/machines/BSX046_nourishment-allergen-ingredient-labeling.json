@@ -1,0 +1,533 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Built Space WELL Nourishment Allergen Ingredient Labeling",
+    "description": "Built-Space domain machine for WELL-oriented allergen ingredient labeling in the nourishment workstream. It monitors 11 allergen flags, artificial ingredients, label accuracy, and menu change control and emits AI-triggered outputs for verification, predictive optimization, operations work, and sustained compliant operation.",
+    "metadata": {
+      "category": "built-space",
+      "domain": "Built Space - WELL Nourishment",
+      "author": "Reality Engine",
+      "standardFocus": "WELL Building Standard operations",
+      "workstream": "Nourishment",
+      "operationalFocus": "Allergen Ingredient Labeling",
+      "focusDescription": "11 allergen flags, artificial ingredients, label accuracy, and menu change control",
+      "sourceGuidance": [
+        "Integrative design: stakeholder charrette, values assessment, health mission, WELL concept alignment, and O&M planning",
+        "Implementation verification: letters of assurance from designers, engineers, and contractors",
+        "Performance testing: on-site water, acoustic, thermal, and environmental verification",
+        "Water O&M: daily dispenser cleaning, quarterly aerator/filter work, quarterly metals testing, annual reporting, and three-year records",
+        "Legionella control: dedicated team, flow diagrams, hazard analysis, and critical control points",
+        "Nourishment operations: cold storage ranges, allergen labeling, fryer oil controls, safe food-contact materials, and portion/sugar controls",
+        "Occupant feedback: annual IEQ surveys to at least 30% of occupants and report results within 30 days",
+        "Organizational wellness: health benefits, family support, sleep/travel policies, EAP/stress support, altruism, and fitness opportunities"
+      ],
+      "upstreamMachine": "Built Space WELL Nourishment Fryer Oil Quality",
+      "upstreamOutputRegion": "[496:500]",
+      "downstreamMachines": [
+        "Built Space WELL Nourishment Sugar Portion Control"
+      ],
+      "dispatchableAgent": "well_integrative_agent",
+      "aiTrigger": "built-space-well-nourishment-allergen-ingredient-labeling",
+      "predictiveOptimizationTrigger": "well-predictive-optimization-nourishment-allergen-ingredient-labeling",
+      "agentActions": [
+        "Dispatch well_integrative_agent to verify WELL operational conformance for allergen ingredient labeling.",
+        "Run predictive optimization for allergen ingredient labeling using occupant, system, and evidence trends.",
+        "Create an operations, maintenance, policy, or evidence work order for allergen ingredient labeling.",
+        "Mark allergen ingredient labeling in the current compliant operating window."
+      ],
+      "inputSpace": "4D binary at [496:500]",
+      "outputSpace": "4D binary at [500:504]: [1,0,0,0]=VERIFY_WELL_CONFORMANCE, [0,1,0,0]=PREDICTIVE_OPTIMIZE, [0,0,1,0]=OPS_WORK_ORDER, [0,0,0,1]=COMPLIANT_WINDOW",
+      "inputSemantics": [
+        "health-performance signal stable",
+        "evidence or policy current",
+        "maintenance or operational drift pressure",
+        "occupant impact or wellness risk"
+      ],
+      "tags": [
+        "built-space",
+        "well-building-standard",
+        "well-operations",
+        "predictive-optimization",
+        "verification",
+        "occupant-health",
+        "nourishment",
+        "allergen-ingredient-labeling"
+      ],
+      "sequenceCount": 5,
+      "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
+      "downstreamPattern": "Output region [500:504] feeds Built Space WELL Nourishment Sugar Portion Control for WELL operations optimization."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 496,
+        "length": 4
+      },
+      "output": {
+        "offset": 500,
+        "length": 4
+      }
+    },
+    "sequences": [
+      {
+        "id": "bsx-046-verify",
+        "name": "Allergen Ingredient Labeling: WATCH -> EVIDENCE_GAP -> VERIFY_WELL_CONFORMANCE",
+        "metadata": {
+          "description": "Escalates when operational or evidence drift requires WELL conformance verification.",
+          "output": "[1,0,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "bsx-046-watch",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "nextVectorIds": [
+              "bsx-046-evidence-gap"
+            ]
+          },
+          {
+            "id": "bsx-046-evidence-gap",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "outputVectors": [
+              {
+                "id": "bsx-046-verify-output",
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Dispatch well_integrative_agent to verify WELL operational conformance for allergen ingredient labeling."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bsx-046-optimize",
+        "name": "Allergen Ingredient Labeling: FORECAST_DRIFT -> PREDICTIVE_OPTIMIZE",
+        "metadata": {
+          "description": "Triggers predictive building optimization before occupant wellness degrades.",
+          "output": "[0,1,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "bsx-046-forecast-drift",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "bsx-046-optimize-output",
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Run predictive optimization for allergen ingredient labeling using occupant, system, and evidence trends."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bsx-046-work-order",
+        "name": "Allergen Ingredient Labeling: ACTION_NEEDED -> OPS_WORK_ORDER",
+        "metadata": {
+          "description": "Creates an operations, maintenance, policy, or evidence task.",
+          "output": "[0,0,1,0]"
+        },
+        "vectors": [
+          {
+            "id": "bsx-046-action-needed",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "bsx-046-work-order-output",
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "action": "Create an operations, maintenance, policy, or evidence work order for allergen ingredient labeling."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bsx-046-compliant",
+        "name": "Allergen Ingredient Labeling: CURRENT -> COMPLIANT_WINDOW",
+        "metadata": {
+          "description": "Confirms current WELL-aligned operational posture.",
+          "output": "[0,0,0,1]"
+        },
+        "vectors": [
+          {
+            "id": "bsx-046-current",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "bsx-046-compliant-output",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "metadata": {
+                  "action": "Mark allergen ingredient labeling in the current compliant operating window."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bsx-046-predictive-24h",
+        "name": "Allergen Ingredient Labeling: 0-6H -> 6-12H -> 12-18H -> 18-24H -> PREDICTIVE_OPTIMIZE",
+        "metadata": {
+          "description": "Projects WELL operations forward over 24 hours and optimizes before health-performance drift.",
+          "projectionHorizon": "24h",
+          "output": "[0,1,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "bsx-046-0-6h",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "nextVectorIds": [
+              "bsx-046-6-12h"
+            ]
+          },
+          {
+            "id": "bsx-046-6-12h",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "nextVectorIds": [
+              "bsx-046-12-18h"
+            ]
+          },
+          {
+            "id": "bsx-046-12-18h",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "nextVectorIds": [
+              "bsx-046-18-24h"
+            ]
+          },
+          {
+            "id": "bsx-046-18-24h",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "outputVectors": [
+              {
+                "id": "bsx-046-projection-output",
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Run predictive optimization for allergen ingredient labeling using occupant, system, and evidence trends.",
+                  "projectionHorizon": "24h"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Verify WELL conformance",
+        "description": "Evidence or operational drift requires verification.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0,0,0]",
+          "scenario": "verify-well-conformance"
+        }
+      },
+      {
+        "name": "Predictive optimization",
+        "description": "Forecasted drift should be optimized before occupant impact.",
+        "vectors": [
+          [
+            0,
+            1,
+            0,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,1,0,0]",
+          "scenario": "predictive-optimize"
+        }
+      },
+      {
+        "name": "Operations work order",
+        "description": "Operations, maintenance, policy, or evidence action is needed.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,1,0]",
+          "scenario": "ops-work-order"
+        }
+      },
+      {
+        "name": "Compliant operating window",
+        "description": "Current operating posture is compliant.",
+        "vectors": [
+          [
+            1,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,0,1]",
+          "scenario": "compliant-window"
+        }
+      },
+      {
+        "name": "24-hour predictive optimization",
+        "description": "Forecasts 24-hour WELL performance drift and emits optimization.",
+        "vectors": [
+          [
+            1,
+            1,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            1,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,1,0,0]",
+          "scenario": "24h-predictive-optimize"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Initial watch state arms verification without firing.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

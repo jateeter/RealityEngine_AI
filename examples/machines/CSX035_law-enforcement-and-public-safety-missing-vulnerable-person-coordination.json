@@ -1,0 +1,353 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Community Services Law Enforcement And Public Safety Missing Vulnerable Person Coordination",
+    "description": "Community-services machine for missing vulnerable person coordination in the law enforcement and public safety workstream. It monitors age, cognitive risk, last location, transit linkage, and search coordination and emits AI-triggered actions for health and human services, law enforcement/public safety coordination, homelessness response, and city operations.",
+    "metadata": {
+      "category": "community-services",
+      "domain": "Community Services - Law Enforcement And Public Safety",
+      "author": "Reality Engine",
+      "workstream": "Law Enforcement And Public Safety",
+      "operationalFocus": "Missing Vulnerable Person Coordination",
+      "focusDescription": "age, cognitive risk, last location, transit linkage, and search coordination",
+      "upstreamMachine": "transportation mapped output",
+      "upstreamDomain": "transportation",
+      "upstreamOutputRegion": "[3463:3467]",
+      "upstreamPurpose": "onboard public safety alert",
+      "downstreamMachines": [
+        "Community Services Law Enforcement And Public Safety Traffic Safety Enforcement"
+      ],
+      "crossDomainInterconnect": true,
+      "crossDomainOutputTarget": null,
+      "crossDomainOutputPurpose": null,
+      "dispatchableAgent": "city_operations_agent",
+      "aiTrigger": "community-services-law-enforcement-and-public-safety-missing-vulnerable-person-coordination",
+      "predictiveFlowTrigger": "community-services-predictive-law-enforcement-and-public-safety-missing-vulnerable-person-coordination",
+      "agentActions": [
+        "Dispatch city_operations_agent for urgent community-services intervention on missing vulnerable person coordination.",
+        "Coordinate health, housing, public safety, transportation, or city service partners for missing vulnerable person coordination.",
+        "Create field work order or mobile team task for missing vulnerable person coordination.",
+        "Maintain monitored service path for missing vulnerable person coordination."
+      ],
+      "inputSpace": "4D binary at [3463:3467]",
+      "outputSpace": "4D binary at [1136:1140]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
+      "inputSemantics": [
+        "resident need severity",
+        "eligibility and documentation readiness",
+        "field capacity or operational readiness",
+        "safety, mobility, and health risk"
+      ],
+      "tags": [
+        "community-services",
+        "health-and-human-services",
+        "law-enforcement",
+        "public-safety",
+        "homelessness",
+        "city-services",
+        "ai-triggers",
+        "dispatchable-agents",
+        "cross-domain",
+        "law-enforcement-and-public-safety",
+        "missing-vulnerable-person-coordination"
+      ],
+      "sequenceCount": 5,
+      "reuseGuideline": "Map 311, case-management, CAD/RMS, shelter HMIS, benefit enrollment, outreach, public health, and transit-access signals into the 4D input lane. Route outputs to case workers, mobile crisis, public safety, housing navigators, field crews, transportation dispatch, or health-service agents.",
+      "downstreamPattern": "Output region [1136:1140] feeds Community Services Law Enforcement And Public Safety Traffic Safety Enforcement."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 3463,
+        "length": 4
+      },
+      "output": {
+        "offset": 1136,
+        "length": 4
+      }
+    },
+    "sequences": [
+      {
+        "id": "csx-035-urgent-response",
+        "name": "Missing Vulnerable Person Coordination: WATCH -> URGENT_RESPONSE",
+        "metadata": {
+          "description": "Escalates resident or field risk into urgent response.",
+          "output": "[1,0,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-035-watch",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "nextVectorIds": [
+              "csx-035-urgent"
+            ]
+          },
+          {
+            "id": "csx-035-urgent",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": false,
+            "outputVectors": [
+              {
+                "id": "csx-035-urgent-output",
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Dispatch city_operations_agent for urgent community-services intervention on missing vulnerable person coordination."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-035-coordinate-services",
+        "name": "Missing Vulnerable Person Coordination: COORDINATION_NEEDED -> COORDINATE_SERVICES",
+        "metadata": {
+          "description": "Triggers cross-agency coordination.",
+          "output": "[0,1,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-035-coordinate",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-035-coordinate-output",
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Coordinate health, housing, public safety, transportation, or city service partners for missing vulnerable person coordination."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-035-field-work-order",
+        "name": "Missing Vulnerable Person Coordination: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER",
+        "metadata": {
+          "description": "Creates a field crew, outreach, or mobile response task.",
+          "output": "[0,0,1,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-035-field-task",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-035-field-output",
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "action": "Create field work order or mobile team task for missing vulnerable person coordination."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-035-stable-service-path",
+        "name": "Missing Vulnerable Person Coordination: STABLE_PATH -> STABLE_SERVICE_PATH",
+        "metadata": {
+          "description": "Confirms resident service path is stable and monitored.",
+          "output": "[0,0,0,1]"
+        },
+        "vectors": [
+          {
+            "id": "csx-035-stable",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-035-stable-output",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "metadata": {
+                  "action": "Maintain monitored service path for missing vulnerable person coordination."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Urgent response sequence",
+        "description": "Two-step community risk escalation ending in urgent response.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0,0,0]",
+          "scenario": "urgent-response",
+          "sequenceLength": 2
+        }
+      },
+      {
+        "name": "Coordinate services",
+        "description": "Coordinates health, public safety, housing, transit, or city service partners.",
+        "vectors": [
+          [
+            0,
+            1,
+            1,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,1,0,0]",
+          "scenario": "coordinate-services"
+        }
+      },
+      {
+        "name": "Field work order",
+        "description": "Creates a field response or outreach task.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,1,0]",
+          "scenario": "field-work-order"
+        }
+      },
+      {
+        "name": "Stable service path",
+        "description": "Confirms the resident or city service path is stable.",
+        "vectors": [
+          [
+            1,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,0,1]",
+          "scenario": "stable-service-path"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Initial observation arms the urgent path without firing.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Logical Infrastructure Ready Before Valid",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `READY+ VALID`. Detects ready asserted before valid arrives. Reads a 4D control/status lane at [3641:3645] and emits a 2D match lane at [3645:3647].",
+    "metadata": {
+      "category": "digital-logic",
+      "domain": "Digital Logic - Infrastructure",
+      "author": "Reality Engine",
+      "regularExpression": "READY+ VALID",
+      "asicPattern": "Ready Before Valid",
+      "reuseRole": "general-purpose logical connective tissue",
+      "inputSpace": "4D binary at [3641:3645]",
+      "outputSpace": "2D binary at [3645:3647]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSemantics": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "qualifier"
+      ],
+      "tags": [
+        "digital-logic",
+        "logical-infrastructure",
+        "asic-pattern",
+        "regular-expression",
+        "ready-before-valid"
+      ],
+      "sequenceCount": 1,
+      "reuseGuideline": "Use this machine by mapping upstream source or machine output bits into its 4D input lane. Map its 2D output lane into downstream machine input when a reusable temporal guard, latch trigger, handshake detector, CDC detector, bus phase detector, or safety qualifier is needed."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 3641,
+        "length": 4
+      },
+      "output": {
+        "offset": 3645,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "dlx-016-match",
+        "name": "Ready Before Valid: READY+ VALID -> MATCH",
+        "metadata": {
+          "description": "Detects ready asserted before valid arrives.",
+          "regularExpression": "READY+ VALID",
+          "output": "[1,0]"
+        },
+        "vectors": [
+          {
+            "id": "dlx-016-step-1",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "STEP_1",
+              "description": "Ready Before Valid regex step 1: [0, 1, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-016-step-2"
+            ]
+          },
+          {
+            "id": "dlx-016-step-2",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_2",
+              "description": "Ready Before Valid regex step 2: [0, 1, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-016-step-3"
+            ]
+          },
+          {
+            "id": "dlx-016-step-3",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_3",
+              "description": "Ready Before Valid regex step 3: [1, 1, 0, 0]"
+            },
+            "outputVectors": [
+              {
+                "id": "dlx-016-match-output",
+                "vector": [
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "description": "Ready Before Valid matched regular expression READY+ VALID.",
+                  "state": "MATCH"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Ready Before Valid match path",
+        "description": "Validates regular expression READY+ VALID.",
+        "vectors": [
+          [
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0]",
+          "scenario": "ready-before-valid"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Single baseline sample does not complete the expression.",
+        "vectors": [
+          [
+            0,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

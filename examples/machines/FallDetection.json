@@ -12,8 +12,13 @@
       "eventSpace": "2D binary: [motion_anomaly, impact_confirmed]",
       "outputSpace": "2D binary: {[0,0]=NOMINAL, [1,0]=NEAR_FALL, [1,1]=FALL}",
       "tags": [
-        "wellness", "healthcare", "fall-detection", "elder-care",
-        "in-home-monitoring", "safety", "trigger"
+        "wellness",
+        "healthcare",
+        "fall-detection",
+        "elder-care",
+        "in-home-monitoring",
+        "safety",
+        "trigger"
       ],
       "sequenceCount": 3,
       "severity": "life-safety",
@@ -25,21 +30,30 @@
         "rules": [
           {
             "sequenceId": "fall-nominal",
-            "outputMatches": [0, 0],
+            "outputMatches": [
+              0,
+              0
+            ],
             "ragStatusCode": "GREEN",
             "processStatus": "ok",
             "description": "No motion anomaly detected"
           },
           {
             "sequenceId": "fall-near-miss",
-            "outputMatches": [1, 0],
+            "outputMatches": [
+              1,
+              0
+            ],
             "ragStatusCode": "AMBER",
             "processStatus": "warning",
             "description": "Stumble detected but recovered — log and watch"
           },
           {
             "sequenceId": "fall-impact",
-            "outputMatches": [1, 1],
+            "outputMatches": [
+              1,
+              1
+            ],
             "ragStatusCode": "RED",
             "processStatus": "error",
             "description": "Fall with impact confirmed — dispatch caregiver / emergency contact"
@@ -49,26 +63,52 @@
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
-      "input":  { "offset": 78, "length": 2 },
-      "output": { "offset": 80, "length": 2 }
+      "input": {
+        "offset": 1943,
+        "length": 2
+      },
+      "output": {
+        "offset": 1945,
+        "length": 2
+      }
     },
     "sequences": [
       {
         "id": "fall-nominal",
         "name": "Nominal motion → GREEN",
-        "metadata": { "description": "No motion anomaly detected" },
+        "metadata": {
+          "description": "No motion anomaly detected"
+        },
         "vectors": [
           {
             "id": "fall-ev-nominal",
             "elements": [
-              { "value": 0, "threshold": 0.5 },
-              { "value": 0, "threshold": 0.5 }
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
-            "metadata": { "name": "nominal", "state": "NOMINAL" },
+            "metadata": {
+              "name": "nominal",
+              "state": "NOMINAL"
+            },
             "outputVectors": [
-              { "id": "fall-out-nominal", "vector": [0, 0],
-                "metadata": { "ragStatusCode": "GREEN", "state": "NOMINAL" } }
+              {
+                "id": "fall-out-nominal",
+                "vector": [
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "ragStatusCode": "GREEN",
+                  "state": "NOMINAL"
+                }
+              }
             ]
           }
         ]
@@ -76,19 +116,39 @@
       {
         "id": "fall-near-miss",
         "name": "Near-fall / stumble → AMBER",
-        "metadata": { "description": "Motion anomaly without confirmed impact" },
+        "metadata": {
+          "description": "Motion anomaly without confirmed impact"
+        },
         "vectors": [
           {
             "id": "fall-ev-near",
             "elements": [
-              { "value": 1, "threshold": 0.5 },
-              { "value": 0, "threshold": 0.5 }
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
-            "metadata": { "name": "near-fall", "state": "NEAR_FALL" },
+            "metadata": {
+              "name": "near-fall",
+              "state": "NEAR_FALL"
+            },
             "outputVectors": [
-              { "id": "fall-out-near", "vector": [1, 0],
-                "metadata": { "ragStatusCode": "AMBER", "state": "NEAR_FALL" } }
+              {
+                "id": "fall-out-near",
+                "vector": [
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "ragStatusCode": "AMBER",
+                  "state": "NEAR_FALL"
+                }
+              }
             ]
           }
         ]
@@ -96,19 +156,40 @@
       {
         "id": "fall-impact",
         "name": "Confirmed fall → RED",
-        "metadata": { "description": "Motion anomaly + impact confirmed — emergency escalation" },
+        "metadata": {
+          "description": "Motion anomaly + impact confirmed — emergency escalation"
+        },
         "vectors": [
           {
             "id": "fall-ev-impact",
             "elements": [
-              { "value": 1, "threshold": 0.5 },
-              { "value": 1, "threshold": 0.5 }
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
-            "metadata": { "name": "impact", "state": "FALL" },
+            "metadata": {
+              "name": "impact",
+              "state": "FALL"
+            },
             "outputVectors": [
-              { "id": "fall-out-impact", "vector": [1, 1],
-                "metadata": { "ragStatusCode": "RED", "state": "FALL", "lifeSafety": true } }
+              {
+                "id": "fall-out-impact",
+                "vector": [
+                  1,
+                  1
+                ],
+                "metadata": {
+                  "ragStatusCode": "RED",
+                  "state": "FALL",
+                  "lifeSafety": true
+                }
+              }
             ]
           }
         ]
@@ -119,13 +200,43 @@
         "name": "Stumble recovered",
         "pattern": "[1,0]",
         "description": "Motion anomaly without impact — expects AMBER trigger",
-        "vectors": [ [0, 0], [1, 0], [0, 0] ]
+        "vectors": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
       },
       {
         "name": "Fall with impact",
         "pattern": "[1,1]",
         "description": "Motion anomaly + impact — expects RED trigger",
-        "vectors": [ [0, 0], [1, 0], [1, 1], [0, 0] ]
+        "vectors": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            0
+          ]
+        ]
       }
     ],
     "matchAlgorithm": "gte"

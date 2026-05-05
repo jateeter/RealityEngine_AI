@@ -12,8 +12,13 @@
       "eventSpace": "2D binary: [adequate_duration, fragmented]",
       "outputSpace": "2D binary: {[0,0]=RESTFUL, [0,1]=DISTURBED, [1,1]=POOR}",
       "tags": [
-        "wellness", "healthcare", "sleep", "elder-care",
-        "in-home-monitoring", "trend", "trigger"
+        "wellness",
+        "healthcare",
+        "sleep",
+        "elder-care",
+        "in-home-monitoring",
+        "trend",
+        "trigger"
       ],
       "sequenceCount": 3,
       "triggerConfig": {
@@ -24,21 +29,30 @@
         "rules": [
           {
             "sequenceId": "sleep-restful",
-            "outputMatches": [0, 0],
+            "outputMatches": [
+              0,
+              0
+            ],
             "ragStatusCode": "GREEN",
             "processStatus": "ok",
             "description": "Restful night — no intervention"
           },
           {
             "sequenceId": "sleep-disturbed",
-            "outputMatches": [0, 1],
+            "outputMatches": [
+              0,
+              1
+            ],
             "ragStatusCode": "AMBER",
             "processStatus": "warning",
             "description": "Fragmented sleep — surface the trend in the AI's daily summary"
           },
           {
             "sequenceId": "sleep-poor",
-            "outputMatches": [1, 1],
+            "outputMatches": [
+              1,
+              1
+            ],
             "ragStatusCode": "RED",
             "processStatus": "error",
             "description": "Short + fragmented sleep — recommend clinical follow-up"
@@ -48,26 +62,52 @@
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
-      "input":  { "offset": 82, "length": 2 },
-      "output": { "offset": 84, "length": 2 }
+      "input": {
+        "offset": 1947,
+        "length": 2
+      },
+      "output": {
+        "offset": 1949,
+        "length": 2
+      }
     },
     "sequences": [
       {
         "id": "sleep-restful",
         "name": "Restful sleep → GREEN",
-        "metadata": { "description": "Adequate duration, minimal fragmentation" },
+        "metadata": {
+          "description": "Adequate duration, minimal fragmentation"
+        },
         "vectors": [
           {
             "id": "sleep-ev-restful",
             "elements": [
-              { "value": 1, "threshold": 0.5 },
-              { "value": 0, "threshold": 0.5 }
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
-            "metadata": { "name": "restful", "state": "RESTFUL" },
+            "metadata": {
+              "name": "restful",
+              "state": "RESTFUL"
+            },
             "outputVectors": [
-              { "id": "sleep-out-restful", "vector": [0, 0],
-                "metadata": { "ragStatusCode": "GREEN", "state": "RESTFUL" } }
+              {
+                "id": "sleep-out-restful",
+                "vector": [
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "ragStatusCode": "GREEN",
+                  "state": "RESTFUL"
+                }
+              }
             ]
           }
         ]
@@ -75,19 +115,39 @@
       {
         "id": "sleep-disturbed",
         "name": "Disturbed sleep → AMBER",
-        "metadata": { "description": "Adequate duration but fragmented" },
+        "metadata": {
+          "description": "Adequate duration but fragmented"
+        },
         "vectors": [
           {
             "id": "sleep-ev-disturbed",
             "elements": [
-              { "value": 1, "threshold": 0.5 },
-              { "value": 1, "threshold": 0.5 }
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
-            "metadata": { "name": "disturbed", "state": "DISTURBED" },
+            "metadata": {
+              "name": "disturbed",
+              "state": "DISTURBED"
+            },
             "outputVectors": [
-              { "id": "sleep-out-disturbed", "vector": [0, 1],
-                "metadata": { "ragStatusCode": "AMBER", "state": "DISTURBED" } }
+              {
+                "id": "sleep-out-disturbed",
+                "vector": [
+                  0,
+                  1
+                ],
+                "metadata": {
+                  "ragStatusCode": "AMBER",
+                  "state": "DISTURBED"
+                }
+              }
             ]
           }
         ]
@@ -95,19 +155,39 @@
       {
         "id": "sleep-poor",
         "name": "Poor sleep → RED",
-        "metadata": { "description": "Insufficient duration AND fragmented" },
+        "metadata": {
+          "description": "Insufficient duration AND fragmented"
+        },
         "vectors": [
           {
             "id": "sleep-ev-poor",
             "elements": [
-              { "value": 0, "threshold": 0.5 },
-              { "value": 1, "threshold": 0.5 }
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
-            "metadata": { "name": "poor", "state": "POOR" },
+            "metadata": {
+              "name": "poor",
+              "state": "POOR"
+            },
             "outputVectors": [
-              { "id": "sleep-out-poor", "vector": [1, 1],
-                "metadata": { "ragStatusCode": "RED", "state": "POOR" } }
+              {
+                "id": "sleep-out-poor",
+                "vector": [
+                  1,
+                  1
+                ],
+                "metadata": {
+                  "ragStatusCode": "RED",
+                  "state": "POOR"
+                }
+              }
             ]
           }
         ]
@@ -118,13 +198,43 @@
         "name": "Restful night",
         "pattern": "[1,0]",
         "description": "Adequate duration, low fragmentation — GREEN trigger",
-        "vectors": [ [0, 0], [1, 0], [0, 0] ]
+        "vectors": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
       },
       {
         "name": "Disturbed then poor",
         "pattern": "[1,1] → [0,1]",
         "description": "Fragmented adequate sleep (AMBER), then insufficient + fragmented (RED)",
-        "vectors": [ [0, 0], [1, 1], [0, 1], [0, 0] ]
+        "vectors": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            0
+          ]
+        ]
       }
     ],
     "matchAlgorithm": "gte"

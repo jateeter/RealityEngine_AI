@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Child Development Monitor",
-    "description": "Tracks developmental milestone progress, social-emotional engagement, language acquisition, and learning readiness for children ages 0–12 in low- and medium-income home care settings. Early identification of developmental delays in economically vulnerable households is critical because access to early intervention services (EI, speech therapy, occupational therapy) is income- and geography-dependent. Output at [354:358] feeds the Home Caregiver Burden Monitor alongside the Pediatric Nutrition Monitor.",
+    "description": "Tracks developmental milestone progress, social-emotional engagement, language acquisition, and learning readiness for children ages 0–12 in low- and medium-income home care settings. Early identification of developmental delays in economically vulnerable households is critical because access to early intervention services (EI, speech therapy, occupational therapy) is income- and geography-dependent. Output at [2011:2015] feeds the Home Caregiver Burden Monitor alongside the Pediatric Nutrition Monitor.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Pediatric / Child Development",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [354:358]: [1,0,0,0]=REFERRAL_NEEDED, [0,1,0,0]=SOCIAL_DEVELOPMENTAL_CONCERN, [0,0,1,0]=LEARNING_CONCERN, [0,0,0,1]=DEVELOPMENT_OK",
+      "outputSpace": "4D binary at [2011:2015]: [1,0,0,0]=REFERRAL_NEEDED, [0,1,0,0]=SOCIAL_DEVELOPMENTAL_CONCERN, [0,0,1,0]=LEARNING_CONCERN, [0,0,0,1]=DEVELOPMENT_OK",
       "tags": [
         "healthcare",
         "pediatric",
@@ -26,16 +26,16 @@
         "language_score_norm": "0.0=non-verbal or severely limited expressive/receptive language for age, 0.5=borderline language development, 1.0=age-appropriate or advanced language",
         "learning_engagement_norm": "0.0=disengaged; unable to focus; school-readiness concerns, 0.5=partial engagement with support needs, 1.0=curious and engaged learner"
       },
-      "downstreamMachine": "HomeCaregiverBurdenMonitor (reads [350:358])"
+      "downstreamMachine": "HomeCaregiverBurdenMonitor (reads [2007:2015])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 314,
+        "offset": 1979,
         "length": 4
       },
       "output": {
-        "offset": 354,
+        "offset": 2011,
         "length": 4
       }
     },
@@ -52,10 +52,22 @@
           {
             "id": "cd-typical",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.58, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.55, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -63,15 +75,30 @@
               "description": "TYPICAL+ — milestones met; peer interaction present; language developing; learning engagement observed. isInitial A*A = A+.",
               "milestone_completion": "0.55–0.72 (on-track to slightly above age norms)"
             },
-            "nextVectorIds": ["cd-typical", "cd-borderline"]
+            "nextVectorIds": [
+              "cd-typical",
+              "cd-borderline"
+            ]
           },
           {
             "id": "cd-borderline",
             "elements": [
-              { "value": 0.38, "threshold": 0.5 },
-              { "value": 0.42, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.4, "threshold": 0.5 }
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.42,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.4,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -79,15 +106,29 @@
               "description": "BORDERLINE — one or more milestone domains lagging; language slightly behind; reduced learning engagement.",
               "milestone_completion": "0.30–0.48 (1 standard deviation behind; watchful waiting zone)"
             },
-            "nextVectorIds": ["cd-delayed"]
+            "nextVectorIds": [
+              "cd-delayed"
+            ]
           },
           {
             "id": "cd-delayed",
             "elements": [
-              { "value": 0.22, "threshold": 0.5 },
-              { "value": 0.28, "threshold": 0.5 },
-              { "value": 0.2, "threshold": 0.5 },
-              { "value": 0.25, "threshold": 0.5 }
+              {
+                "value": 0.22,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.28,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.25,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -95,15 +136,29 @@
               "description": "DELAYED — multiple milestone domains behind; limited language; reduced engagement across settings.",
               "milestone_completion": "0.15–0.28 (1.5–2 standard deviations behind; EI referral zone)"
             },
-            "nextVectorIds": ["cd-significant-delay"]
+            "nextVectorIds": [
+              "cd-significant-delay"
+            ]
           },
           {
             "id": "cd-significant-delay",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.12, "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.12,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -114,9 +169,14 @@
             "outputVectors": [
               {
                 "id": "cd-referral-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "REFERRAL_NEEDED: multi-domain developmental delay requiring early intervention referral at [354:358]",
+                  "description": "REFERRAL_NEEDED: multi-domain developmental delay requiring early intervention referral at [2011:2015]",
                   "action": "Early intervention referral; developmental pediatrician evaluation; speech/OT/PT screening"
                 }
               }
@@ -136,10 +196,22 @@
           {
             "id": "cd-engaged",
             "elements": [
-              { "value": 0.55, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.58, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 }
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -147,15 +219,30 @@
               "description": "ENGAGED+ — child socially active with peers; language used for communication; responsive and curious. isInitial A*A = A+.",
               "peer_interaction": "0.55–0.70 (age-appropriate social engagement)"
             },
-            "nextVectorIds": ["cd-engaged", "cd-withdrawing"]
+            "nextVectorIds": [
+              "cd-engaged",
+              "cd-withdrawing"
+            ]
           },
           {
             "id": "cd-withdrawing",
             "elements": [
-              { "value": 0.42, "threshold": 0.5 },
-              { "value": 0.3, "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 }
+              {
+                "value": 0.42,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.3,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -163,15 +250,29 @@
               "description": "WITHDRAWING — reduced peer initiation; quieter; less responsive; possible regression in established skills.",
               "peer_interaction": "0.22–0.42 (social withdrawal beginning; caregiver-reported change)"
             },
-            "nextVectorIds": ["cd-isolated"]
+            "nextVectorIds": [
+              "cd-isolated"
+            ]
           },
           {
             "id": "cd-isolated",
             "elements": [
-              { "value": 0.28, "threshold": 0.5 },
-              { "value": 0.12, "threshold": 0.5 },
-              { "value": 0.3, "threshold": 0.5 },
-              { "value": 0.15, "threshold": 0.5 }
+              {
+                "value": 0.28,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.12,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.3,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.15,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -182,9 +283,14 @@
             "outputVectors": [
               {
                 "id": "cd-social-concern-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "SOCIAL_DEVELOPMENTAL_CONCERN: child social-emotional withdrawal requiring behavioral health screening at [354:358]",
+                  "description": "SOCIAL_DEVELOPMENTAL_CONCERN: child social-emotional withdrawal requiring behavioral health screening at [2011:2015]",
                   "action": "Developmental-behavioral pediatrics referral; ACE screening; caregiver mental health check"
                 }
               }
@@ -204,10 +310,22 @@
           {
             "id": "cd-on-track",
             "elements": [
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.58, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 }
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -218,9 +336,14 @@
             "outputVectors": [
               {
                 "id": "cd-ok-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "DEVELOPMENT_OK: child development on track for age and context at [354:358]",
+                  "description": "DEVELOPMENT_OK: child development on track for age and context at [2011:2015]",
                   "action": "Caregiver burden monitor registers healthy child developmental state"
                 }
               }
@@ -235,12 +358,42 @@
         "pattern": "6-step: TYPICAL→TYPICAL→BORDERLINE→DELAYED→SIGNIFICANT_DELAY (referral)→ON_TRACK (after EI)",
         "description": "Family experiences eviction; child's language and social development regress during shelter stay; early intervention referral and stabilization restore on-track trajectory.",
         "vectors": [
-          [0.63, 0.59, 0.61, 0.56],
-          [0.60, 0.57, 0.59, 0.54],
-          [0.37, 0.41, 0.34, 0.39],
-          [0.21, 0.27, 0.19, 0.24],
-          [0.09, 0.11, 0.07, 0.09],
-          [0.61, 0.63, 0.59, 0.61]
+          [
+            0.63,
+            0.59,
+            0.61,
+            0.56
+          ],
+          [
+            0.6,
+            0.57,
+            0.59,
+            0.54
+          ],
+          [
+            0.37,
+            0.41,
+            0.34,
+            0.39
+          ],
+          [
+            0.21,
+            0.27,
+            0.19,
+            0.24
+          ],
+          [
+            0.09,
+            0.11,
+            0.07,
+            0.09
+          ],
+          [
+            0.61,
+            0.63,
+            0.59,
+            0.61
+          ]
         ],
         "metadata": {
           "scenario": "housing-disruption-language-delay",

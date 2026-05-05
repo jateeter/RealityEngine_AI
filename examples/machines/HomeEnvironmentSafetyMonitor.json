@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Environment Safety Monitor",
-    "description": "Monitors housing quality conditions that directly affect resident health in low- and medium-income households. Tracks temperature stability (heating/cooling reliability), air quality (mold, lead, particulates), structural hazards, and utility shutoff risk. These social determinants of health are disproportionately present in aging rental housing stock occupied by economically vulnerable families. Output at [346:350] feeds the Adolescent Mental Health Monitor.",
+    "description": "Monitors housing quality conditions that directly affect resident health in low- and medium-income households. Tracks temperature stability (heating/cooling reliability), air quality (mold, lead, particulates), structural hazards, and utility shutoff risk. These social determinants of health are disproportionately present in aging rental housing stock occupied by economically vulnerable families. Output at [2003:2007] feeds the Adolescent Mental Health Monitor.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Social Determinants / Housing Safety",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [346:350]: [1,0,0,0]=UNSAFE_HOUSING, [0,1,0,0]=UTILITY_FAILURE, [0,0,1,0]=HEALTH_HAZARD_RISK, [0,0,0,1]=ENVIRONMENT_SAFE",
+      "outputSpace": "4D binary at [2003:2007]: [1,0,0,0]=UNSAFE_HOUSING, [0,1,0,0]=UTILITY_FAILURE, [0,0,1,0]=HEALTH_HAZARD_RISK, [0,0,0,1]=ENVIRONMENT_SAFE",
       "tags": [
         "healthcare",
         "home health",
@@ -27,16 +27,16 @@
         "structural_safety_norm": "0.0=multiple active structural hazards (roof leak, electrical, falling plaster), 0.5=minor deferred maintenance, 1.0=structurally sound",
         "utility_reliability_norm": "0.0=active shutoff notice or disconnected, 0.5=past-due balance with shutoff risk, 1.0=current and reliable service"
       },
-      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [346:350])"
+      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [2003:2007])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 306,
+        "offset": 1971,
         "length": 4
       },
       "output": {
-        "offset": 346,
+        "offset": 2003,
         "length": 4
       }
     },
@@ -53,10 +53,22 @@
           {
             "id": "henv-sound",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.7, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.7,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -64,15 +76,30 @@
               "description": "SOUND+ — all housing dimensions above threshold: livable temperature, acceptable air quality, no major structural hazards, utilities current. isInitial A*A = A+.",
               "scenario": "Baseline safe housing — may have minor deferred maintenance but not health-threatening"
             },
-            "nextVectorIds": ["henv-sound", "henv-deteriorating"]
+            "nextVectorIds": [
+              "henv-sound",
+              "henv-deteriorating"
+            ]
           },
           {
             "id": "henv-deteriorating",
             "elements": [
-              { "value": 0.38, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.4, "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 }
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.4,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -80,15 +107,29 @@
               "description": "DETERIORATING — multiple housing dimensions falling below adequate threshold: unreliable heating, suspected mold, past-due utility balance.",
               "scenario": "Winter heating concerns; landlord non-responsive to maintenance; utility shutoff notice received"
             },
-            "nextVectorIds": ["henv-hazardous"]
+            "nextVectorIds": [
+              "henv-hazardous"
+            ]
           },
           {
             "id": "henv-hazardous",
             "elements": [
-              { "value": 0.2, "threshold": 0.5 },
-              { "value": 0.18, "threshold": 0.5 },
-              { "value": 0.15, "threshold": 0.5 },
-              { "value": 0.2, "threshold": 0.5 }
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.18,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.15,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -99,9 +140,14 @@
             "outputVectors": [
               {
                 "id": "henv-unsafe-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "UNSAFE_HOUSING: habitability crisis requiring housing authority intervention at [346:350]",
+                  "description": "UNSAFE_HOUSING: habitability crisis requiring housing authority intervention at [2003:2007]",
                   "action": "Housing code complaint; emergency shelter referral; children's services notification if children present"
                 }
               }
@@ -121,10 +167,22 @@
           {
             "id": "henv-utility-current",
             "elements": [
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.82, "threshold": 0.5 }
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.82,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -132,15 +190,30 @@
               "description": "CURRENT+ — utilities paid and reliable; home temperature controlled; structural sound. isInitial A*A = A+.",
               "utility_status": "0.78–0.90 (current; no arrears)"
             },
-            "nextVectorIds": ["henv-utility-current", "henv-past-due"]
+            "nextVectorIds": [
+              "henv-utility-current",
+              "henv-past-due"
+            ]
           },
           {
             "id": "henv-past-due",
             "elements": [
-              { "value": 0.55, "threshold": 0.5 },
-              { "value": 0.52, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 }
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.52,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -148,15 +221,29 @@
               "description": "PAST_DUE — utility balance past due; shutoff notice timeline starting; household managing but at risk.",
               "utility_status": "0.25–0.48 (past-due balance; shutoff notice issued)"
             },
-            "nextVectorIds": ["henv-shutoff-risk"]
+            "nextVectorIds": [
+              "henv-shutoff-risk"
+            ]
           },
           {
             "id": "henv-shutoff-risk",
             "elements": [
-              { "value": 0.22, "threshold": 0.5 },
-              { "value": 0.2, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.22,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -167,9 +254,14 @@
             "outputVectors": [
               {
                 "id": "henv-utility-failure-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "UTILITY_FAILURE: utility shutoff imminent or active at [346:350]",
+                  "description": "UTILITY_FAILURE: utility shutoff imminent or active at [2003:2007]",
                   "action": "LIHEAP/utility assistance referral; emergency fund application; health impacts assessment for vulnerable residents"
                 }
               }
@@ -189,10 +281,22 @@
           {
             "id": "henv-safe",
             "elements": [
-              { "value": 0.7, "threshold": 0.5 },
-              { "value": 0.68, "threshold": 0.5 },
-              { "value": 0.72, "threshold": 0.5 },
-              { "value": 0.78, "threshold": 0.5 }
+              {
+                "value": 0.7,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.68,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.72,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.78,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -203,9 +307,14 @@
             "outputVectors": [
               {
                 "id": "henv-safe-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "ENVIRONMENT_SAFE: home environment supports healthy resident outcomes at [346:350]",
+                  "description": "ENVIRONMENT_SAFE: home environment supports healthy resident outcomes at [2003:2007]",
                   "action": "Downstream adolescent mental health monitor registers stable home environment"
                 }
               }
@@ -220,12 +329,42 @@
         "pattern": "6-step: SOUND→SOUND→DETERIORATING→HAZARDOUS→UNSAFE→(intervention)→SAFE",
         "description": "Heating system failure in January; landlord delayed response; temperature drops to hazardous; emergency housing assistance intervenes.",
         "vectors": [
-          [0.63, 0.61, 0.66, 0.81],
-          [0.62, 0.59, 0.64, 0.80],
-          [0.37, 0.34, 0.39, 0.44],
-          [0.19, 0.17, 0.14, 0.19],
-          [0.18, 0.16, 0.13, 0.08],
-          [0.71, 0.69, 0.73, 0.79]
+          [
+            0.63,
+            0.61,
+            0.66,
+            0.81
+          ],
+          [
+            0.62,
+            0.59,
+            0.64,
+            0.8
+          ],
+          [
+            0.37,
+            0.34,
+            0.39,
+            0.44
+          ],
+          [
+            0.19,
+            0.17,
+            0.14,
+            0.19
+          ],
+          [
+            0.18,
+            0.16,
+            0.13,
+            0.08
+          ],
+          [
+            0.71,
+            0.69,
+            0.73,
+            0.79
+          ]
         ],
         "metadata": {
           "scenario": "winter-heating-failure",

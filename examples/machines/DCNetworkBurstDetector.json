@@ -8,8 +8,8 @@
       "domain": "Data Center — Network / Burst Detection",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
-      "eventSpace": "4D continuous sensor vector at [20:24]: [bandwidth_util_norm, packet_loss_norm, latency_norm, queue_depth_norm]",
-      "outputSpace": "2D binary at [64:66]: [1,0]=NETWORK_ALARM, [0,1]=NETWORK_NORMAL",
+      "eventSpace": "4D continuous sensor vector at [1348:1352]: [bandwidth_util_norm, packet_loss_norm, latency_norm, queue_depth_norm]",
+      "outputSpace": "2D binary at [1365:1367]: [1,0]=NETWORK_ALARM, [0,1]=NETWORK_NORMAL",
       "tags": [
         "monitoring",
         "data-center",
@@ -18,7 +18,7 @@
         "continuous"
       ],
       "sequenceCount": 2,
-      "downstreamMachine": "DCNetworkThrottleFF (reads [64:66])",
+      "downstreamMachine": "DCNetworkThrottleFF (reads [1365:1367])",
       "regularExpression": {
         "escalation": "BASELINE+ → ELEVATED+ → BURST → CONGESTION+ → OVERFLOW → output[1,0]",
         "recovery": "NORMAL_FLOW+ → output[0,1]",
@@ -41,11 +41,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 20,
+        "offset": 1348,
         "length": 4
       },
       "output": {
-        "offset": 64,
+        "offset": 1365,
         "length": 2
       }
     },
@@ -230,7 +230,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "NETWORK OVERFLOW: Alarm signal [1,0] to DCNetworkThrottleFF at [64:66]",
+                  "description": "NETWORK OVERFLOW: Alarm signal [1,0] to DCNetworkThrottleFF at [1365:1367]",
                   "severity": "EMERGENCY",
                   "action": "DCNetworkThrottleFF will SET; traffic shaping and rate limiting engaged"
                 }
@@ -284,7 +284,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "NETWORK NORMAL: Reset signal [0,1] to DCNetworkThrottleFF at [64:66]",
+                  "description": "NETWORK NORMAL: Reset signal [0,1] to DCNetworkThrottleFF at [1365:1367]",
                   "severity": "INFO",
                   "action": "DCNetworkThrottleFF will RESET; normal traffic flow"
                 }

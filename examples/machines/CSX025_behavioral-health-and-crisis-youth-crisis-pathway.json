@@ -1,0 +1,353 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Community Services Behavioral Health And Crisis Youth Crisis Pathway",
+    "description": "Community-services machine for youth crisis pathway in the behavioral health and crisis workstream. It monitors minor safety, family contact, school partner, and mandated reporting threshold and emits AI-triggered actions for health and human services, law enforcement/public safety coordination, homelessness response, and city operations.",
+    "metadata": {
+      "category": "community-services",
+      "domain": "Community Services - Behavioral Health And Crisis",
+      "author": "Reality Engine",
+      "workstream": "Behavioral Health And Crisis",
+      "operationalFocus": "Youth Crisis Pathway",
+      "focusDescription": "minor safety, family contact, school partner, and mandated reporting threshold",
+      "upstreamMachine": "Community Services Behavioral Health And Crisis Mental Health Shelter Referral",
+      "upstreamDomain": "community-services",
+      "upstreamOutputRegion": "[1096:1100]",
+      "upstreamPurpose": null,
+      "downstreamMachines": [
+        "Community Services Behavioral Health And Crisis Post Crisis Follow Up"
+      ],
+      "crossDomainInterconnect": true,
+      "crossDomainOutputTarget": "health-services",
+      "crossDomainOutputPurpose": "post-crisis casework into health-services agent dispatch",
+      "dispatchableAgent": "housing_services_agent",
+      "aiTrigger": "community-services-behavioral-health-and-crisis-youth-crisis-pathway",
+      "predictiveFlowTrigger": "community-services-predictive-behavioral-health-and-crisis-youth-crisis-pathway",
+      "agentActions": [
+        "Dispatch housing_services_agent for urgent community-services intervention on youth crisis pathway.",
+        "Coordinate health, housing, public safety, transportation, or city service partners for youth crisis pathway.",
+        "Create field work order or mobile team task for youth crisis pathway.",
+        "Maintain monitored service path for youth crisis pathway."
+      ],
+      "inputSpace": "4D binary at [1096:1100]",
+      "outputSpace": "4D binary at [3423:3427]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
+      "inputSemantics": [
+        "resident need severity",
+        "eligibility and documentation readiness",
+        "field capacity or operational readiness",
+        "safety, mobility, and health risk"
+      ],
+      "tags": [
+        "community-services",
+        "health-and-human-services",
+        "law-enforcement",
+        "public-safety",
+        "homelessness",
+        "city-services",
+        "ai-triggers",
+        "dispatchable-agents",
+        "cross-domain",
+        "behavioral-health-and-crisis",
+        "youth-crisis-pathway"
+      ],
+      "sequenceCount": 5,
+      "reuseGuideline": "Map 311, case-management, CAD/RMS, shelter HMIS, benefit enrollment, outreach, public health, and transit-access signals into the 4D input lane. Route outputs to case workers, mobile crisis, public safety, housing navigators, field crews, transportation dispatch, or health-service agents.",
+      "downstreamPattern": "Output region [3423:3427] feeds Community Services Behavioral Health And Crisis Post Crisis Follow Up."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 1096,
+        "length": 4
+      },
+      "output": {
+        "offset": 3423,
+        "length": 4
+      }
+    },
+    "sequences": [
+      {
+        "id": "csx-025-urgent-response",
+        "name": "Youth Crisis Pathway: WATCH -> URGENT_RESPONSE",
+        "metadata": {
+          "description": "Escalates resident or field risk into urgent response.",
+          "output": "[1,0,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-025-watch",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "nextVectorIds": [
+              "csx-025-urgent"
+            ]
+          },
+          {
+            "id": "csx-025-urgent",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": false,
+            "outputVectors": [
+              {
+                "id": "csx-025-urgent-output",
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Dispatch housing_services_agent for urgent community-services intervention on youth crisis pathway."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-025-coordinate-services",
+        "name": "Youth Crisis Pathway: COORDINATION_NEEDED -> COORDINATE_SERVICES",
+        "metadata": {
+          "description": "Triggers cross-agency coordination.",
+          "output": "[0,1,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-025-coordinate",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-025-coordinate-output",
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Coordinate health, housing, public safety, transportation, or city service partners for youth crisis pathway."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-025-field-work-order",
+        "name": "Youth Crisis Pathway: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER",
+        "metadata": {
+          "description": "Creates a field crew, outreach, or mobile response task.",
+          "output": "[0,0,1,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-025-field-task",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-025-field-output",
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "action": "Create field work order or mobile team task for youth crisis pathway."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-025-stable-service-path",
+        "name": "Youth Crisis Pathway: STABLE_PATH -> STABLE_SERVICE_PATH",
+        "metadata": {
+          "description": "Confirms resident service path is stable and monitored.",
+          "output": "[0,0,0,1]"
+        },
+        "vectors": [
+          {
+            "id": "csx-025-stable",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-025-stable-output",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "metadata": {
+                  "action": "Maintain monitored service path for youth crisis pathway."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Urgent response sequence",
+        "description": "Two-step community risk escalation ending in urgent response.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0,0,0]",
+          "scenario": "urgent-response",
+          "sequenceLength": 2
+        }
+      },
+      {
+        "name": "Coordinate services",
+        "description": "Coordinates health, public safety, housing, transit, or city service partners.",
+        "vectors": [
+          [
+            0,
+            1,
+            1,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,1,0,0]",
+          "scenario": "coordinate-services"
+        }
+      },
+      {
+        "name": "Field work order",
+        "description": "Creates a field response or outreach task.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,1,0]",
+          "scenario": "field-work-order"
+        }
+      },
+      {
+        "name": "Stable service path",
+        "description": "Confirms the resident or city service path is stable.",
+        "vectors": [
+          [
+            1,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,0,1]",
+          "scenario": "stable-service-path"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Initial observation arms the urgent path without firing.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

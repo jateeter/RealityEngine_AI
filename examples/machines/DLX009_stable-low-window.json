@@ -1,0 +1,200 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Logical Infrastructure Stable Low Window",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `0{3}`. Detects three consecutive stable-low samples. Reads a 4D control/status lane at [1579:1583] and emits a 2D match lane at [3609:3611].",
+    "metadata": {
+      "category": "digital-logic",
+      "domain": "Digital Logic - Infrastructure",
+      "author": "Reality Engine",
+      "regularExpression": "0{3}",
+      "asicPattern": "Stable Low Window",
+      "reuseRole": "general-purpose logical connective tissue",
+      "inputSpace": "4D binary at [1579:1583]",
+      "outputSpace": "2D binary at [3609:3611]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSemantics": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "qualifier"
+      ],
+      "tags": [
+        "digital-logic",
+        "logical-infrastructure",
+        "asic-pattern",
+        "regular-expression",
+        "stable-low-window"
+      ],
+      "sequenceCount": 1,
+      "reuseGuideline": "Use this machine by mapping upstream source or machine output bits into its 4D input lane. Map its 2D output lane into downstream machine input when a reusable temporal guard, latch trigger, handshake detector, CDC detector, bus phase detector, or safety qualifier is needed."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 1579,
+        "length": 4
+      },
+      "output": {
+        "offset": 3609,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "dlx-009-match",
+        "name": "Stable Low Window: 0{3} -> MATCH",
+        "metadata": {
+          "description": "Detects three consecutive stable-low samples.",
+          "regularExpression": "0{3}",
+          "output": "[1,0]"
+        },
+        "vectors": [
+          {
+            "id": "dlx-009-step-1",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "STEP_1",
+              "description": "Stable Low Window regex step 1: [0, 0, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-009-step-2"
+            ]
+          },
+          {
+            "id": "dlx-009-step-2",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_2",
+              "description": "Stable Low Window regex step 2: [0, 0, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-009-step-3"
+            ]
+          },
+          {
+            "id": "dlx-009-step-3",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_3",
+              "description": "Stable Low Window regex step 3: [0, 0, 0, 0]"
+            },
+            "outputVectors": [
+              {
+                "id": "dlx-009-match-output",
+                "vector": [
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "description": "Stable Low Window matched regular expression 0{3}.",
+                  "state": "MATCH"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Stable Low Window match path",
+        "description": "Validates regular expression 0{3}.",
+        "vectors": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0]",
+          "scenario": "stable-low-window"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Single baseline sample does not complete the expression.",
+        "vectors": [
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

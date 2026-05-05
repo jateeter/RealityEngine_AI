@@ -3,22 +3,22 @@
   "machine": {
     "id": "ai-capacity-throttler",
     "name": "AI Capacity Throttler",
-    "description": "Monitor AI compute capacity \u2014 GPU utilization, job queue depth, memory pressure, thermal headroom. Prevent cascade overloads by triggering throttling before saturation.",
+    "description": "Monitor AI compute capacity — GPU utilization, job queue depth, memory pressure, thermal headroom. Prevent cascade overloads by triggering throttling before saturation.",
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
     "perceptualMapping": {
       "input": {
-        "offset": 128,
+        "offset": 264,
         "length": 4
       },
       "output": {
-        "offset": 162,
+        "offset": 292,
         "length": 6
       }
     },
     "metadata": {
       "category": "ai-services",
-      "domain": "AI Infrastructure \u2014 AI Workload Capacity Throttling",
+      "domain": "AI Infrastructure — AI Workload Capacity Throttling",
       "tags": [
         "data-center",
         "capacity",
@@ -26,7 +26,7 @@
         "throttling",
         "ai-workload"
       ],
-      "rationale": "Manages AI-workload-driven GPU/memory saturation \u2014 a data-center infrastructure concern, not an AI-pipeline concern."
+      "rationale": "Manages AI-workload-driven GPU/memory saturation — a data-center infrastructure concern, not an AI-pipeline concern."
     },
     "sequences": [
       {
@@ -69,7 +69,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Compute capacity AVAILABLE \u2014 accepting new inference and training jobs",
+                  "description": "Compute capacity AVAILABLE — accepting new inference and training jobs",
                   "severity": "INFO"
                 }
               }
@@ -111,7 +111,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Compute capacity BUSY \u2014 high utilization, monitor queue depth",
+                  "description": "Compute capacity BUSY — high utilization, monitor queue depth",
                   "severity": "WARNING"
                 }
               }
@@ -153,7 +153,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Compute capacity SATURATED \u2014 queue growing, inference latency increasing",
+                  "description": "Compute capacity SATURATED — queue growing, inference latency increasing",
                   "severity": "CRITICAL"
                 }
               },
@@ -208,7 +208,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Compute capacity OVERLOADED \u2014 OOM risk, SLO violations imminent",
+                  "description": "Compute capacity OVERLOADED — OOM risk, SLO violations imminent",
                   "severity": "EMERGENCY"
                 }
               },
@@ -310,7 +310,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Memory pressure CRITICAL \u2014 GPU memory nearing exhaustion despite moderate compute load",
+                  "description": "Memory pressure CRITICAL — GPU memory nearing exhaustion despite moderate compute load",
                   "severity": "CRITICAL"
                 }
               },

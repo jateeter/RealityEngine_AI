@@ -1,0 +1,200 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Logical Infrastructure Pulse Stretch Start",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `01+`. Detects a pulse that remains asserted for multiple cycles. Reads a 4D control/status lane at [3583:3587] and emits a 2D match lane at [3587:3589].",
+    "metadata": {
+      "category": "digital-logic",
+      "domain": "Digital Logic - Infrastructure",
+      "author": "Reality Engine",
+      "regularExpression": "01+",
+      "asicPattern": "Pulse Stretch Start",
+      "reuseRole": "general-purpose logical connective tissue",
+      "inputSpace": "4D binary at [3583:3587]",
+      "outputSpace": "2D binary at [3587:3589]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSemantics": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "qualifier"
+      ],
+      "tags": [
+        "digital-logic",
+        "logical-infrastructure",
+        "asic-pattern",
+        "regular-expression",
+        "pulse-stretch-start"
+      ],
+      "sequenceCount": 1,
+      "reuseGuideline": "Use this machine by mapping upstream source or machine output bits into its 4D input lane. Map its 2D output lane into downstream machine input when a reusable temporal guard, latch trigger, handshake detector, CDC detector, bus phase detector, or safety qualifier is needed."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 3583,
+        "length": 4
+      },
+      "output": {
+        "offset": 3587,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "dlx-004-match",
+        "name": "Pulse Stretch Start: 01+ -> MATCH",
+        "metadata": {
+          "description": "Detects a pulse that remains asserted for multiple cycles.",
+          "regularExpression": "01+",
+          "output": "[1,0]"
+        },
+        "vectors": [
+          {
+            "id": "dlx-004-step-1",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "STEP_1",
+              "description": "Pulse Stretch Start regex step 1: [0, 0, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-004-step-2"
+            ]
+          },
+          {
+            "id": "dlx-004-step-2",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_2",
+              "description": "Pulse Stretch Start regex step 2: [1, 0, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-004-step-3"
+            ]
+          },
+          {
+            "id": "dlx-004-step-3",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_3",
+              "description": "Pulse Stretch Start regex step 3: [1, 0, 0, 0]"
+            },
+            "outputVectors": [
+              {
+                "id": "dlx-004-match-output",
+                "vector": [
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "description": "Pulse Stretch Start matched regular expression 01+.",
+                  "state": "MATCH"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Pulse Stretch Start match path",
+        "description": "Validates regular expression 01+.",
+        "vectors": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            0,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0]",
+          "scenario": "pulse-stretch-start"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Single baseline sample does not complete the expression.",
+        "vectors": [
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

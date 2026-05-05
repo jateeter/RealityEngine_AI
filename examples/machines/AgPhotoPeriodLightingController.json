@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Ag Photo Period Lighting Controller",
-    "description": "Controls photoperiod and light intensity for indoor growing zones. Monitors PAR (photosynthetically active radiation) intensity, accumulated daily light integral (DLI), and dark-period integrity. Fires LIGHTS_ON/OFF transitions and DLI insufficiency alerts. Upstream: light sensors at [252:256]. Downstream: AgNutrientCycleOptimizer and AgIPMPestAlertMonitor read output at [272:276].",
+    "description": "Controls photoperiod and light intensity for indoor growing zones. Monitors PAR (photosynthetically active radiation) intensity, accumulated daily light integral (DLI), and dark-period integrity. Fires LIGHTS_ON/OFF transitions and DLI insufficiency alerts. Upstream: light sensors at [12:16]. Downstream: AgNutrientCycleOptimizer and AgIPMPestAlertMonitor read output at [32:36].",
     "metadata": {
       "category": "agriculture",
       "domain": "Agriculture — Photoperiod / Lighting Control",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [272:276]: [1,0,0,0]=LIGHTS_ON, [0,1,0,0]=LIGHTS_OFF, [0,0,1,0]=DLI_ALERT, [0,0,0,1]=PHOTO_OK",
+      "outputSpace": "4D binary at [32:36]: [1,0,0,0]=LIGHTS_ON, [0,1,0,0]=LIGHTS_OFF, [0,0,1,0]=DLI_ALERT, [0,0,0,1]=PHOTO_OK",
       "tags": [
         "agriculture",
         "photoperiod",
@@ -26,18 +26,18 @@
         "dark_period_integrity_norm": "0.0=dark period fully satisfied, 0.5=partial dark, 1.0=no dark period (light leak)"
       },
       "downstreamMachines": [
-        "AgNutrientCycleOptimizer (reads [272:276])",
-        "AgIPMPestAlertMonitor (reads [272:276])"
+        "AgNutrientCycleOptimizer (reads [32:36])",
+        "AgIPMPestAlertMonitor (reads [32:36])"
       ]
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 252,
+        "offset": 12,
         "length": 4
       },
       "output": {
-        "offset": 272,
+        "offset": 32,
         "length": 4
       }
     },
@@ -54,10 +54,22 @@
           {
             "id": "ag-ph-dark-period",
             "elements": [
-              { "value": 0.05, "threshold": 0.5 },
-              { "value": 0.1,  "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 },
-              { "value": 0.1,  "threshold": 0.5 }
+              {
+                "value": 0.05,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -66,15 +78,30 @@
               "par_range": "0.0–0.10 (near-dark, no light leak)",
               "dark_integrity": "0.0–0.15 (dark period fully active)"
             },
-            "nextVectorIds": ["ag-ph-dark-period", "ag-ph-transition"]
+            "nextVectorIds": [
+              "ag-ph-dark-period",
+              "ag-ph-transition"
+            ]
           },
           {
             "id": "ag-ph-transition",
             "elements": [
-              { "value": 0.25, "threshold": 0.5 },
-              { "value": 0.15, "threshold": 0.5 },
-              { "value": 0.18, "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 }
+              {
+                "value": 0.25,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.15,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.18,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -82,15 +109,29 @@
               "description": "TRANSITION — lamp warm-up; PAR rising from dark to active level.",
               "par_range": "0.10–0.40 (ramp-up)"
             },
-            "nextVectorIds": ["ag-ph-active"]
+            "nextVectorIds": [
+              "ag-ph-active"
+            ]
           },
           {
             "id": "ag-ph-active",
             "elements": [
-              { "value": 0.55, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 }
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -98,15 +139,29 @@
               "description": "ACTIVE — lights at photosynthetically effective intensity; photoperiod in progress.",
               "par_range": "0.50–0.70 (400–600 µmol/m²/s)"
             },
-            "nextVectorIds": ["ag-ph-peak"]
+            "nextVectorIds": [
+              "ag-ph-peak"
+            ]
           },
           {
             "id": "ag-ph-peak",
             "elements": [
-              { "value": 0.82, "threshold": 0.5 },
-              { "value": 0.58, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 }
+              {
+                "value": 0.82,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -117,9 +172,14 @@
             "outputVectors": [
               {
                 "id": "ag-ph-lights-on-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "LIGHTS_ON: light cycle active and at peak intensity at [272:276]",
+                  "description": "LIGHTS_ON: light cycle active and at peak intensity at [32:36]",
                   "action": "Downstream IPM and nutrient cycle monitors register active photoperiod"
                 }
               }
@@ -139,10 +199,22 @@
           {
             "id": "ag-ph-dli-building",
             "elements": [
-              { "value": 0.6,  "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 }
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -150,15 +222,30 @@
               "description": "DLI_BUILDING+ — lights active, DLI accumulating toward target. isInitial A*A = A+.",
               "dli_range": "0.25–0.45 (10–18 mol/m²/d accumulated)"
             },
-            "nextVectorIds": ["ag-ph-dli-building", "ag-ph-dli-near"]
+            "nextVectorIds": [
+              "ag-ph-dli-building",
+              "ag-ph-dli-near"
+            ]
           },
           {
             "id": "ag-ph-dli-near",
             "elements": [
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.72, "threshold": 0.5 },
-              { "value": 0.72, "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 }
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.72,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.72,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -166,15 +253,29 @@
               "description": "DLI_NEAR_TARGET — approaching daily target; prepare to transition lights off.",
               "dli_range": "0.65–0.82 (26–33 mol/m²/d)"
             },
-            "nextVectorIds": ["ag-ph-dli-met"]
+            "nextVectorIds": [
+              "ag-ph-dli-met"
+            ]
           },
           {
             "id": "ag-ph-dli-met",
             "elements": [
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.88, "threshold": 0.5 },
-              { "value": 0.9,  "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 }
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.88,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -185,9 +286,14 @@
             "outputVectors": [
               {
                 "id": "ag-ph-lights-off-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "LIGHTS_OFF: DLI target met; begin dark period at [272:276]",
+                  "description": "LIGHTS_OFF: DLI target met; begin dark period at [32:36]",
                   "action": "Power down grow lights; dark period timer starts"
                 }
               }
@@ -207,10 +313,22 @@
           {
             "id": "ag-ph-optimal",
             "elements": [
-              { "value": 0.58, "threshold": 0.5 },
-              { "value": 0.42, "threshold": 0.5 },
-              { "value": 0.48, "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 }
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.42,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.48,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -222,9 +340,14 @@
             "outputVectors": [
               {
                 "id": "ag-ph-ok-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "PHOTO_OK: photoperiod within optimal parameters at [272:276]",
+                  "description": "PHOTO_OK: photoperiod within optimal parameters at [32:36]",
                   "action": "Downstream nutrient and IPM monitors register healthy light environment"
                 }
               }
@@ -239,14 +362,54 @@
         "pattern": "8-step: DARK→DARK→TRANSITION→ACTIVE→PEAK→PHOTO_OK→DLI_NEAR→DLI_MET",
         "description": "Full 18-hour light / 6-hour dark vegetative cycle compressed to representative samples.",
         "vectors": [
-          [0.04, 0.08, 0.06, 0.09],
-          [0.03, 0.09, 0.05, 0.08],
-          [0.26, 0.16, 0.19, 0.07],
-          [0.58, 0.37, 0.37, 0.07],
-          [0.83, 0.60, 0.64, 0.07],
-          [0.59, 0.43, 0.49, 0.07],
-          [0.66, 0.73, 0.74, 0.07],
-          [0.66, 0.89, 0.91, 0.07]
+          [
+            0.04,
+            0.08,
+            0.06,
+            0.09
+          ],
+          [
+            0.03,
+            0.09,
+            0.05,
+            0.08
+          ],
+          [
+            0.26,
+            0.16,
+            0.19,
+            0.07
+          ],
+          [
+            0.58,
+            0.37,
+            0.37,
+            0.07
+          ],
+          [
+            0.83,
+            0.6,
+            0.64,
+            0.07
+          ],
+          [
+            0.59,
+            0.43,
+            0.49,
+            0.07
+          ],
+          [
+            0.66,
+            0.73,
+            0.74,
+            0.07
+          ],
+          [
+            0.66,
+            0.89,
+            0.91,
+            0.07
+          ]
         ],
         "metadata": {
           "scenario": "vegetative-18-6-cycle",

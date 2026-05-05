@@ -1,0 +1,200 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Logical Infrastructure Arbiter Request Grant Release",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `REQ GRANT RELEASE`. Detects arbitration service lifecycle. Reads a 4D control/status lane at [1715:1719] and emits a 2D match lane at [3677:3679].",
+    "metadata": {
+      "category": "digital-logic",
+      "domain": "Digital Logic - Infrastructure",
+      "author": "Reality Engine",
+      "regularExpression": "REQ GRANT RELEASE",
+      "asicPattern": "Arbiter Request Grant Release",
+      "reuseRole": "general-purpose logical connective tissue",
+      "inputSpace": "4D binary at [1715:1719]",
+      "outputSpace": "2D binary at [3677:3679]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSemantics": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "qualifier"
+      ],
+      "tags": [
+        "digital-logic",
+        "logical-infrastructure",
+        "asic-pattern",
+        "regular-expression",
+        "arbiter-request-grant-release"
+      ],
+      "sequenceCount": 1,
+      "reuseGuideline": "Use this machine by mapping upstream source or machine output bits into its 4D input lane. Map its 2D output lane into downstream machine input when a reusable temporal guard, latch trigger, handshake detector, CDC detector, bus phase detector, or safety qualifier is needed."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 1715,
+        "length": 4
+      },
+      "output": {
+        "offset": 3677,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "dlx-043-match",
+        "name": "Arbiter Request Grant Release: REQ GRANT RELEASE -> MATCH",
+        "metadata": {
+          "description": "Detects arbitration service lifecycle.",
+          "regularExpression": "REQ GRANT RELEASE",
+          "output": "[1,0]"
+        },
+        "vectors": [
+          {
+            "id": "dlx-043-step-1",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "STEP_1",
+              "description": "Arbiter Request Grant Release regex step 1: [1, 0, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-043-step-2"
+            ]
+          },
+          {
+            "id": "dlx-043-step-2",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_2",
+              "description": "Arbiter Request Grant Release regex step 2: [0, 1, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-043-step-3"
+            ]
+          },
+          {
+            "id": "dlx-043-step-3",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_3",
+              "description": "Arbiter Request Grant Release regex step 3: [0, 0, 1, 0]"
+            },
+            "outputVectors": [
+              {
+                "id": "dlx-043-match-output",
+                "vector": [
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "description": "Arbiter Request Grant Release matched regular expression REQ GRANT RELEASE.",
+                  "state": "MATCH"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Arbiter Request Grant Release match path",
+        "description": "Validates regular expression REQ GRANT RELEASE.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0]",
+          "scenario": "arbiter-request-grant-release"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Single baseline sample does not complete the expression.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

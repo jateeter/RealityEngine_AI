@@ -8,8 +8,8 @@
       "domain": "Data Center — Memory / Pressure",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
-      "eventSpace": "4D continuous sensor vector at [16:20]: [mem_usage_norm, mem_page_fault_rate_norm, mem_cache_miss_norm, swap_usage_norm]",
-      "outputSpace": "2D binary at [66:68]: [1,0]=MEMORY_ALARM, [0,1]=MEMORY_HEALTHY",
+      "eventSpace": "4D continuous sensor vector at [1344:1348]: [mem_usage_norm, mem_page_fault_rate_norm, mem_cache_miss_norm, swap_usage_norm]",
+      "outputSpace": "2D binary at [1367:1369]: [1,0]=MEMORY_ALARM, [0,1]=MEMORY_HEALTHY",
       "tags": [
         "monitoring",
         "data-center",
@@ -19,7 +19,7 @@
         "continuous"
       ],
       "sequenceCount": 2,
-      "downstreamMachine": "DCMemoryAlertFF (reads [66:68])",
+      "downstreamMachine": "DCMemoryAlertFF (reads [1367:1369])",
       "regularExpression": {
         "escalation": "NORMAL+ → PRESSURE+ → THRASHING → CASCADING+ → FAILURE → output[1,0]",
         "recovery": "HEALTHY+ → output[0,1]",
@@ -42,11 +42,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 16,
+        "offset": 1344,
         "length": 4
       },
       "output": {
-        "offset": 66,
+        "offset": 1367,
         "length": 2
       }
     },
@@ -231,7 +231,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "MEMORY FAILURE: Alarm signal [1,0] to DCMemoryAlertFF at [66:68]",
+                  "description": "MEMORY FAILURE: Alarm signal [1,0] to DCMemoryAlertFF at [1367:1369]",
                   "severity": "EMERGENCY",
                   "action": "DCMemoryAlertFF will SET; initiate process termination, workload shedding"
                 }
@@ -285,7 +285,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "MEMORY HEALTHY: Reset signal [0,1] to DCMemoryAlertFF at [66:68]",
+                  "description": "MEMORY HEALTHY: Reset signal [0,1] to DCMemoryAlertFF at [1367:1369]",
                   "severity": "INFO",
                   "action": "DCMemoryAlertFF will RESET; memory utilization normal"
                 }

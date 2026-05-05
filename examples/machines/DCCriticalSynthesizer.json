@@ -8,8 +8,8 @@
       "domain": "Data Center — Critical Alert / Synthesizer",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
-      "eventSpace": "4D binary FF-state vector at [100:104]: [CoolingQ, CoolingQ̄, NetworkQ, NetworkQ̄]",
-      "outputSpace": "2D binary at [72:74]: [1,0]=MULTI_ALARM, [0,1]=ALL_CLEAR",
+      "eventSpace": "4D binary FF-state vector at [1371:1375]: [CoolingQ, CoolingQ̄, NetworkQ, NetworkQ̄]",
+      "outputSpace": "2D binary at [1369:1371]: [1,0]=MULTI_ALARM, [0,1]=ALL_CLEAR",
       "tags": [
         "synthesizer",
         "data-center",
@@ -19,10 +19,10 @@
       "sequenceCount": 2,
       "role": "Detects simultaneous thermal AND network failure conditions; drives DCCriticalAlertFF",
       "upstreamMachines": [
-        "DCCoolingControlFF (writes [100:102])",
-        "DCNetworkThrottleFF (writes [102:104])"
+        "DCCoolingControlFF (writes [1371:1373])",
+        "DCNetworkThrottleFF (writes [1373:1375])"
       ],
-      "downstreamMachine": "DCCriticalAlertFF (reads [72:74])",
+      "downstreamMachine": "DCCriticalAlertFF (reads [1369:1371])",
       "correlationLogic": "THERMAL_AND_NETWORK: both CoolingControlFF=SET and NetworkThrottleFF=SET",
       "singleTransitionAssumption": {
         "required": false,
@@ -40,11 +40,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 100,
+        "offset": 1371,
         "length": 4
       },
       "output": {
-        "offset": 72,
+        "offset": 1369,
         "length": 2
       }
     },

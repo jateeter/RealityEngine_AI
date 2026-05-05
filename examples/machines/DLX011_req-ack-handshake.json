@@ -1,0 +1,165 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Logical Infrastructure Req Ack Handshake",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `REQ ACK`. Detects request followed by acknowledge. Reads a 4D control/status lane at [3617:3621] and emits a 2D match lane at [1583:1585].",
+    "metadata": {
+      "category": "digital-logic",
+      "domain": "Digital Logic - Infrastructure",
+      "author": "Reality Engine",
+      "regularExpression": "REQ ACK",
+      "asicPattern": "Req Ack Handshake",
+      "reuseRole": "general-purpose logical connective tissue",
+      "inputSpace": "4D binary at [3617:3621]",
+      "outputSpace": "2D binary at [1583:1585]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSemantics": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "qualifier"
+      ],
+      "tags": [
+        "digital-logic",
+        "logical-infrastructure",
+        "asic-pattern",
+        "regular-expression",
+        "req-ack-handshake"
+      ],
+      "sequenceCount": 1,
+      "reuseGuideline": "Use this machine by mapping upstream source or machine output bits into its 4D input lane. Map its 2D output lane into downstream machine input when a reusable temporal guard, latch trigger, handshake detector, CDC detector, bus phase detector, or safety qualifier is needed."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 3617,
+        "length": 4
+      },
+      "output": {
+        "offset": 1583,
+        "length": 2
+      }
+    },
+    "sequences": [
+      {
+        "id": "dlx-011-match",
+        "name": "Req Ack Handshake: REQ ACK -> MATCH",
+        "metadata": {
+          "description": "Detects request followed by acknowledge.",
+          "regularExpression": "REQ ACK",
+          "output": "[1,0]"
+        },
+        "vectors": [
+          {
+            "id": "dlx-011-step-1",
+            "elements": [
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": true,
+            "metadata": {
+              "name": "STEP_1",
+              "description": "Req Ack Handshake regex step 1: [1, 0, 0, 0]"
+            },
+            "nextVectorIds": [
+              "dlx-011-step-2"
+            ]
+          },
+          {
+            "id": "dlx-011-step-2",
+            "elements": [
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
+            ],
+            "isInitial": false,
+            "metadata": {
+              "name": "STEP_2",
+              "description": "Req Ack Handshake regex step 2: [0, 1, 0, 0]"
+            },
+            "outputVectors": [
+              {
+                "id": "dlx-011-match-output",
+                "vector": [
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "description": "Req Ack Handshake matched regular expression REQ ACK.",
+                  "state": "MATCH"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Req Ack Handshake match path",
+        "description": "Validates regular expression REQ ACK.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0]",
+          "scenario": "req-ack-handshake"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Single baseline sample does not complete the expression.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

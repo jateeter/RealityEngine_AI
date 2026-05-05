@@ -1,0 +1,353 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Community Services Courts Diversion And Victim Services Restorative Justice Referral",
+    "description": "Community-services machine for restorative justice referral in the courts diversion and victim services workstream. It monitors case eligibility, participant consent, facilitator capacity, and safety screen and emits AI-triggered actions for health and human services, law enforcement/public safety coordination, homelessness response, and city operations.",
+    "metadata": {
+      "category": "community-services",
+      "domain": "Community Services - Courts Diversion And Victim Services",
+      "author": "Reality Engine",
+      "workstream": "Courts Diversion And Victim Services",
+      "operationalFocus": "Restorative Justice Referral",
+      "focusDescription": "case eligibility, participant consent, facilitator capacity, and safety screen",
+      "upstreamMachine": "Community Services Courts Diversion And Victim Services Community Service Placement",
+      "upstreamDomain": "community-services",
+      "upstreamOutputRegion": "[1168:1172]",
+      "upstreamPurpose": null,
+      "downstreamMachines": [
+        "Community Services Courts Diversion And Victim Services Victim Advocate Assignment"
+      ],
+      "crossDomainInterconnect": false,
+      "crossDomainOutputTarget": null,
+      "crossDomainOutputPurpose": null,
+      "dispatchableAgent": "city_operations_agent",
+      "aiTrigger": "community-services-courts-diversion-and-victim-services-restorative-justice-referral",
+      "predictiveFlowTrigger": "community-services-predictive-courts-diversion-and-victim-services-restorative-justice-referral",
+      "agentActions": [
+        "Dispatch city_operations_agent for urgent community-services intervention on restorative justice referral.",
+        "Coordinate health, housing, public safety, transportation, or city service partners for restorative justice referral.",
+        "Create field work order or mobile team task for restorative justice referral.",
+        "Maintain monitored service path for restorative justice referral."
+      ],
+      "inputSpace": "4D binary at [1168:1172]",
+      "outputSpace": "4D binary at [1172:1176]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
+      "inputSemantics": [
+        "resident need severity",
+        "eligibility and documentation readiness",
+        "field capacity or operational readiness",
+        "safety, mobility, and health risk"
+      ],
+      "tags": [
+        "community-services",
+        "health-and-human-services",
+        "law-enforcement",
+        "public-safety",
+        "homelessness",
+        "city-services",
+        "ai-triggers",
+        "dispatchable-agents",
+        "cross-domain",
+        "courts-diversion-and-victim-services",
+        "restorative-justice-referral"
+      ],
+      "sequenceCount": 5,
+      "reuseGuideline": "Map 311, case-management, CAD/RMS, shelter HMIS, benefit enrollment, outreach, public health, and transit-access signals into the 4D input lane. Route outputs to case workers, mobile crisis, public safety, housing navigators, field crews, transportation dispatch, or health-service agents.",
+      "downstreamPattern": "Output region [1172:1176] feeds Community Services Courts Diversion And Victim Services Victim Advocate Assignment."
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 1168,
+        "length": 4
+      },
+      "output": {
+        "offset": 1172,
+        "length": 4
+      }
+    },
+    "sequences": [
+      {
+        "id": "csx-044-urgent-response",
+        "name": "Restorative Justice Referral: WATCH -> URGENT_RESPONSE",
+        "metadata": {
+          "description": "Escalates resident or field risk into urgent response.",
+          "output": "[1,0,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-044-watch",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "nextVectorIds": [
+              "csx-044-urgent"
+            ]
+          },
+          {
+            "id": "csx-044-urgent",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": false,
+            "outputVectors": [
+              {
+                "id": "csx-044-urgent-output",
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Dispatch city_operations_agent for urgent community-services intervention on restorative justice referral."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-044-coordinate-services",
+        "name": "Restorative Justice Referral: COORDINATION_NEEDED -> COORDINATE_SERVICES",
+        "metadata": {
+          "description": "Triggers cross-agency coordination.",
+          "output": "[0,1,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-044-coordinate",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-044-coordinate-output",
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Coordinate health, housing, public safety, transportation, or city service partners for restorative justice referral."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-044-field-work-order",
+        "name": "Restorative Justice Referral: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER",
+        "metadata": {
+          "description": "Creates a field crew, outreach, or mobile response task.",
+          "output": "[0,0,1,0]"
+        },
+        "vectors": [
+          {
+            "id": "csx-044-field-task",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-044-field-output",
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "action": "Create field work order or mobile team task for restorative justice referral."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "csx-044-stable-service-path",
+        "name": "Restorative Justice Referral: STABLE_PATH -> STABLE_SERVICE_PATH",
+        "metadata": {
+          "description": "Confirms resident service path is stable and monitored.",
+          "output": "[0,0,0,1]"
+        },
+        "vectors": [
+          {
+            "id": "csx-044-stable",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "csx-044-stable-output",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "metadata": {
+                  "action": "Maintain monitored service path for restorative justice referral."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Urgent response sequence",
+        "description": "Two-step community risk escalation ending in urgent response.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0,0,0]",
+          "scenario": "urgent-response",
+          "sequenceLength": 2
+        }
+      },
+      {
+        "name": "Coordinate services",
+        "description": "Coordinates health, public safety, housing, transit, or city service partners.",
+        "vectors": [
+          [
+            0,
+            1,
+            1,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,1,0,0]",
+          "scenario": "coordinate-services"
+        }
+      },
+      {
+        "name": "Field work order",
+        "description": "Creates a field response or outreach task.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,1,0]",
+          "scenario": "field-work-order"
+        }
+      },
+      {
+        "name": "Stable service path",
+        "description": "Confirms the resident or city service path is stable.",
+        "vectors": [
+          [
+            1,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,0,1]",
+          "scenario": "stable-service-path"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Initial observation arms the urgent path without firing.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

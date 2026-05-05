@@ -5,11 +5,11 @@
     "description": "RS flip-flop that latches the memory pressure alarm state. SET by DCMemoryPressure [1,0], RESET by healthy-memory signal [0,1].",
     "metadata": {
       "category": "data-center",
-      "domain": "Data Center \u2014 Memory / Alert Latch",
+      "domain": "Data Center — Memory / Alert Latch",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
-      "eventSpace": "2D binary control signal at [66:68]: [1,0]=ALARM, [0,1]=SAFE",
-      "outputSpace": "2D binary at [146:148]: [1,0]=MEMORY_ALERT_ACTIVE, [0,1]=MEMORY_ALERT_OFF",
+      "eventSpace": "2D binary control signal at [1367:1369]: [1,0]=ALARM, [0,1]=SAFE",
+      "outputSpace": "2D binary at [1377:1379]: [1,0]=MEMORY_ALERT_ACTIVE, [0,1]=MEMORY_ALERT_OFF",
       "tags": [
         "flip-flop",
         "digital-logic",
@@ -18,11 +18,11 @@
       ],
       "sequenceCount": 2,
       "role": "Latches memory pressure alarm; available for future synthesis machines",
-      "upstreamMachine": "DCMemoryPressure (writes [66:68])",
-      "downstreamMachine": "Future DCCriticalSynthesizer extensions (reads [146:148])",
+      "upstreamMachine": "DCMemoryPressure (writes [1367:1369])",
+      "downstreamMachine": "Future DCCriticalSynthesizer extensions (reads [1377:1379])",
       "singleTransitionAssumption": {
         "required": false,
-        "scope": "not applicable \u2014 all event vectors are isInitial (combinatorial)",
+        "scope": "not applicable — all event vectors are isInitial (combinatorial)",
         "compliant": true,
         "notes": "Both SET and RESET events are isInitial. Combinatorial RS flip-flop; state persists via perceptual space value retention."
       }
@@ -30,23 +30,23 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 66,
+        "offset": 1367,
         "length": 2
       },
       "output": {
-        "offset": 146,
+        "offset": 1377,
         "length": 2
       }
     },
     "sequences": [
       {
         "id": "dc-mem-alert-set-sequence",
-        "name": "MEMORY ALERT SET: [1,0] \u2192 [1,0]",
+        "name": "MEMORY ALERT SET: [1,0] → [1,0]",
         "metadata": {
           "description": "Activates memory alert when pressure detector fires [1,0] control signal",
-          "path": "[1,0] \u2192 [1,0]",
+          "path": "[1,0] → [1,0]",
           "output": "[1,0]",
-          "trigger": "DCMemoryPressure FAILURE state fires [1,0] to bytes [66:68]"
+          "trigger": "DCMemoryPressure FAILURE state fires [1,0] to bytes [1367:1369]"
         },
         "vectors": [
           {
@@ -86,12 +86,12 @@
       },
       {
         "id": "dc-mem-alert-reset-sequence",
-        "name": "MEMORY ALERT RESET: [0,1] \u2192 [0,1]",
+        "name": "MEMORY ALERT RESET: [0,1] → [0,1]",
         "metadata": {
           "description": "Deactivates memory alert when healthy-memory signal [0,1] is received",
-          "path": "[0,1] \u2192 [0,1]",
+          "path": "[0,1] → [0,1]",
           "output": "[0,1]",
-          "trigger": "DCMemoryPressure HEALTHY state fires [0,1] to bytes [66:68]"
+          "trigger": "DCMemoryPressure HEALTHY state fires [0,1] to bytes [1367:1369]"
         },
         "vectors": [
           {
@@ -109,7 +109,7 @@
             "isInitial": true,
             "metadata": {
               "name": "SAFE",
-              "description": "Control signal [0,1]: memory healthy \u2014 deactivate alert",
+              "description": "Control signal [0,1]: memory healthy — deactivate alert",
               "state": "RESET"
             },
             "outputVectors": [
@@ -133,8 +133,8 @@
     "inputSequences": [
       {
         "name": "Memory Alarm Activation",
-        "pattern": "[0,1] \u2192 [1,0]",
-        "description": "Simulate DCMemoryPressure firing: healthy \u2192 alarm",
+        "pattern": "[0,1] → [1,0]",
+        "description": "Simulate DCMemoryPressure firing: healthy → alarm",
         "vectors": [
           [
             0,
@@ -148,8 +148,8 @@
       },
       {
         "name": "Memory Alarm Recovery",
-        "pattern": "[1,0] \u2192 [0,1]",
-        "description": "Simulate recovery: alarm \u2192 healthy",
+        "pattern": "[1,0] → [0,1]",
+        "description": "Simulate recovery: alarm → healthy",
         "vectors": [
           [
             1,
@@ -163,7 +163,7 @@
       },
       {
         "name": "Memory Alert Latch Cycle",
-        "pattern": "[0,1] \u2192 [1,0] \u2192 [1,0] \u2192 [0,1]",
+        "pattern": "[0,1] → [1,0] → [1,0] → [0,1]",
         "description": "Full cycle: healthy, alarm, persists, recovers",
         "vectors": [
           [

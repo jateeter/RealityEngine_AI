@@ -439,8 +439,19 @@ export const MachineGraphView: React.FC = () => {
   // Incrementing this forces a full layout rebuild (Reset Layout)
   const [layoutEpoch, setLayoutEpoch] = useState(0);
 
-  const ws          = useVisualizerStore(state => state.ws);
-  const loadMachine = useVisualizerStore(state => state.loadMachine);
+  // SVG is hidden until the simulation fully settles. On warm restarts
+  // (saved zoom + saved positions) we reveal immediately.
+  const [isReady, setIsReady] = useState(() => {
+    const { graphZoomState } = useVisualizerStore.getState();
+    return graphZoomState !== null && Object.keys(loadLayout()).length > 0;
+  });
+
+  const ws               = useVisualizerStore(state => state.ws);
+  const loadMachine      = useVisualizerStore(state => state.loadMachine);
+  const setGraphZoomState = useVisualizerStore(state => state.setGraphZoomState);
+  const selectedDomains  = useVisualizerStore(state => state.selectedDomains);
+  const toggleDomain     = useVisualizerStore(state => state.toggleDomain);
+  const setAllDomains    = useVisualizerStore(state => state.setAllDomains);
   const loadMachineRef = useRef(loadMachine);
   useEffect(() => { loadMachineRef.current = loadMachine; }, [loadMachine]);
 
@@ -501,8 +512,10 @@ export const MachineGraphView: React.FC = () => {
   const handleResetLayout = useCallback(() => {
     try { localStorage.removeItem(LAYOUT_KEY); } catch { /* ignore */ }
     zoomTransformRef.current = null;
+    setGraphZoomState(null);
+    setIsReady(false);
     setLayoutEpoch(e => e + 1);
-  }, []);
+  }, [setGraphZoomState]);
 
   // ── Tooltip data fetch ─────────────────────────────────────────────────────
   const showTooltip = useCallback((id: string, name: string, x: number, y: number) => {
@@ -608,21 +621,30 @@ export const MachineGraphView: React.FC = () => {
       .on('zoom', (event) => {
         outerG.attr('transform', event.transform);
         zoomTransformRef.current = event.transform;
+        const { k, x, y } = event.transform;
+        useVisualizerStore.getState().setGraphZoomState({ k, x, y });
       });
     svg.call(zoom);
-    if (zoomTransformRef.current) {
-      svg.call(zoom.transform, zoomTransformRef.current);
+    // Restore zoom: prefer local ref (mid-session pan), then store (cross-mount).
+    const storedZoom = useVisualizerStore.getState().graphZoomState;
+    const restoreTransform = zoomTransformRef.current
+      ?? (storedZoom ? d3.zoomIdentity.translate(storedZoom.x, storedZoom.y).scale(storedZoom.k) : null);
+    if (restoreTransform) {
+      svg.call(zoom.transform, restoreTransform);
+      zoomTransformRef.current = restoreTransform;
     }
 
     // Restore saved positions before starting simulation
     const savedLayout = loadLayout();
+    const spread = compact ? 60 : 160;
     const simNodes = graphData.nodes.map(n => {
       const saved = savedLayout[n.id];
       const domain = classifyMachine(n).domain;
+      const anchor = DOMAINS[domain ?? 'general'].anchor;
       return Object.assign({}, n, {
         domain,
-        x:  saved?.fx ?? undefined,
-        y:  saved?.fy ?? undefined,
+        x:  saved?.fx ?? (anchor.x * innerWidth  + (Math.random() - 0.5) * spread),
+        y:  saved?.fy ?? (anchor.y * innerHeight + (Math.random() - 0.5) * spread),
         fx: saved?.fx ?? null,
         fy: saved?.fy ?? null,
       });
@@ -752,6 +774,12 @@ export const MachineGraphView: React.FC = () => {
         .attr('stroke-dasharray', '8,6')
         .attr('pointer-events', 'all')
         .style('cursor', 'grab')
+        .on('mouseenter', (_event, d) => {
+          useVisualizerStore.getState().setHoveredDomainId(d.domainId);
+        })
+        .on('mouseleave', () => {
+          useVisualizerStore.getState().setHoveredDomainId(null);
+        })
         .call(hullDrag as any);
 
       enter.merge(sel as any).attr('d', d => {
@@ -912,6 +940,11 @@ export const MachineGraphView: React.FC = () => {
     // ── Simulation tick ────────────────────────────────────────────────────
     // CARD_PAD offsets arrow endpoints to the node edge (card or circle).
     const CARD_PAD = compact ? COMPACT_R + 3 : 84;
+    // Auto-fit: on first load (no saved zoom), zoom to show all nodes once
+    // the simulation has settled enough that positions are stable.
+    const shouldAutoFit = !zoomTransformRef.current;
+    let autoFitDone = false;
+
     simulation.on('tick', () => {
       drawHulls();
 
@@ -930,6 +963,44 @@ export const MachineGraphView: React.FC = () => {
         .attr('y', (d: any) => (d.source.y + d.target.y) / 2);
 
       node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
+
+      if (!autoFitDone && shouldAutoFit && simulation.alpha() < 0.05) {
+        autoFitDone = true;
+
+        // Compute fit-to-bounds
+        const xs = simNodes.map(n => n.x ?? 0);
+        const ys = simNodes.map(n => n.y ?? 0);
+        const halfW = compact ? COMPACT_R : 80;
+        const halfH = compact ? COMPACT_R : 50;
+        const fitPad = 48;
+        const minX = Math.min(...xs) - halfW - fitPad;
+        const maxX = Math.max(...xs) + halfW + fitPad;
+        const minY = Math.min(...ys) - halfH - fitPad;
+        const maxY = Math.max(...ys) + halfH + fitPad;
+        const graphW = maxX - minX;
+        const graphH = maxY - minY;
+        const s = Math.min(
+          width  / graphW,
+          height / graphH,
+          compact ? 1.0 : 0.85,
+        );
+        const cx = (minX + maxX) / 2;
+        const cy = (minY + maxY) / 2;
+        const fitTx = width  / 2 - s * (margin.left + cx);
+        const fitTy = height / 2 - s * (margin.top  + cy);
+        svg.call(zoom.transform, d3.zoomIdentity.translate(fitTx, fitTy).scale(s));
+
+        // Pin all nodes at their settled positions so the layout is preserved
+        // across view switches (nodes load from savedLayout as fx/fy next mount).
+        for (const n of simNodes) { n.fx = n.x ?? null; n.fy = n.y ?? null; }
+        saveLayout(simNodes);
+
+        // Persist zoom to store — survives unmount/remount across view switches.
+        useVisualizerStore.getState().setGraphZoomState({ k: s, x: fitTx, y: fitTy });
+
+        // Reveal the graph.
+        setIsReady(true);
+      }
     });
 
     return () => { simulation.stop(); };
@@ -998,6 +1069,35 @@ export const MachineGraphView: React.FC = () => {
     }
   }, [currentStep]);
 
+  // ── Domain visibility filter ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const selected = new Set(selectedDomains);
+    const allSelected = selectedDomains.length === DOMAIN_ORDER.length;
+
+    if (nodeSelRef.current) {
+      nodeSelRef.current
+        .style('opacity', (d: MachineNode) =>
+          allSelected || selected.has(d.domain ?? 'general') ? 1 : 0.04)
+        .style('pointer-events', (d: MachineNode) =>
+          allSelected || selected.has(d.domain ?? 'general') ? 'all' : 'none');
+    }
+    if (linkSelRef.current) {
+      linkSelRef.current.style('opacity', (d: any) => {
+        if (allSelected) return 1;
+        const srcDom = (typeof d.source === 'object' ? d.source.domain : null) ?? 'general';
+        const tgtDom = (typeof d.target === 'object' ? d.target.domain : null) ?? 'general';
+        return selected.has(srcDom) && selected.has(tgtDom) ? 1 : 0.04;
+      });
+    }
+    d3.select(svgRef.current)
+      .selectAll<SVGPathElement, { domainId: DomainId }>('path.domain-hull')
+      .style('opacity', d => allSelected || selected.has(d.domainId) ? 1 : 0);
+    d3.select(svgRef.current)
+      .selectAll<SVGTextElement, DomainId>('.domain-labels text')
+      .style('opacity', (d: DomainId) => allSelected || selected.has(d) ? 1 : 0);
+  }, [selectedDomains]);
+
   // ── Render ─────────────────────────────────────────────────────────────────
   if (error) {
     return (
@@ -1025,6 +1125,22 @@ export const MachineGraphView: React.FC = () => {
   return (
     <div className="machine-graph-view" ref={containerRef}>
       <div className="machine-graph-svg-wrapper">
+
+        {/* ── Working overlay — shown while simulation settles ── */}
+        {!isReady && (
+          <div className="mgv-working-overlay">
+            <div className="mgv-working-inner">
+              <div className="mgv-working-rings">
+                <span /><span /><span />
+              </div>
+              <div className="mgv-working-label">Initializing Universe</div>
+              <div className="mgv-working-sub">
+                {graphData ? `${graphData.nodes.length} machines · simulation settling…` : 'Loading machine graph…'}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Floating left-side legend */}
         <div className={`vis-legend-panel${legendOpen ? ' open' : ''}`}>
           <button
@@ -1054,14 +1170,30 @@ export const MachineGraphView: React.FC = () => {
                 <span>Data flow</span>
               </div>
               <div className="vis-legend-divider" />
+              <div className="vis-legend-domain-header">
+                <span style={{ fontSize: '10px', color: vizTheme.text.secondary, textTransform: 'uppercase', letterSpacing: 1 }}>Domains</span>
+                <button
+                  className="vis-legend-domain-toggle"
+                  onClick={() => setAllDomains(selectedDomains.length < DOMAIN_ORDER.filter(d => domainCounts[d] > 0).length)}
+                  title={selectedDomains.length < DOMAIN_ORDER.filter(d => domainCounts[d] > 0).length ? 'Show all' : 'Hide all'}
+                >
+                  {selectedDomains.length < DOMAIN_ORDER.filter(d => domainCounts[d] > 0).length ? 'All' : 'None'}
+                </button>
+              </div>
               {DOMAIN_ORDER.filter(d => domainCounts[d] > 0).map(d => (
-                <div key={d} className="vis-legend-item">
-                  <span className="vis-legend-dot" style={{ background: DOMAINS[d].color }} />
-                  <span style={{ flex: 1 }}>{DOMAINS[d].label}</span>
-                  <span style={{ color: DOMAINS[d].color, fontWeight: 700, fontSize: '10px', marginLeft: 6 }}>
+                <label key={d} className="vis-legend-domain-row">
+                  <input
+                    type="checkbox"
+                    className="vis-legend-domain-cb"
+                    checked={selectedDomains.includes(d)}
+                    onChange={() => toggleDomain(d)}
+                  />
+                  <span className="vis-legend-dot" style={{ background: DOMAINS[d].color, flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: '11px' }}>{DOMAINS[d].label}</span>
+                  <span style={{ color: DOMAINS[d].color, fontWeight: 700, fontSize: '10px' }}>
                     {domainCounts[d]}
                   </span>
-                </div>
+                </label>
               ))}
               <div className="vis-legend-divider" />
               <div className="vis-legend-item" style={{ color: vizTheme.text.secondary, fontSize: '10px' }}>
@@ -1093,7 +1225,7 @@ export const MachineGraphView: React.FC = () => {
           </div>
         </div>
 
-        <svg ref={svgRef} className="machine-graph-svg"></svg>
+        <svg ref={svgRef} className="machine-graph-svg" style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.4s ease' }}></svg>
 
         {tooltip && (
           <SequenceTooltip

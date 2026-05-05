@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Chronic Pain Monitor",
-    "description": "Monitors pain intensity, functional impairment, opioid risk indicators, and physical activity for adults managing chronic pain at home in low- and medium-income settings. Chronic pain is disproportionately prevalent in low-income populations due to occupational injury, inadequate early treatment, and limited access to non-pharmacological interventions. Unmanaged chronic pain is a primary driver of depression and social isolation. Output at [370:374] feeds the Home Mental Health Access Monitor alongside the Chronic Disease Monitor.",
+    "description": "Monitors pain intensity, functional impairment, opioid risk indicators, and physical activity for adults managing chronic pain at home in low- and medium-income settings. Chronic pain is disproportionately prevalent in low-income populations due to occupational injury, inadequate early treatment, and limited access to non-pharmacological interventions. Unmanaged chronic pain is a primary driver of depression and social isolation. Output at [2027:2031] feeds the Home Mental Health Access Monitor alongside the Chronic Disease Monitor.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Chronic Pain Management",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [370:374]: [1,0,0,0]=PAIN_CRISIS, [0,1,0,0]=OPIOID_RISK_ELEVATED, [0,0,1,0]=FUNCTIONAL_IMPAIRMENT, [0,0,0,1]=PAIN_MANAGED",
+      "outputSpace": "4D binary at [2027:2031]: [1,0,0,0]=PAIN_CRISIS, [0,1,0,0]=OPIOID_RISK_ELEVATED, [0,0,1,0]=FUNCTIONAL_IMPAIRMENT, [0,0,0,1]=PAIN_MANAGED",
       "tags": [
         "healthcare",
         "home health",
@@ -26,16 +26,16 @@
         "opioid_risk_norm": "0.0=multiple opioid risk flags (early refills, sedation signs, diversion indicators, dose escalation without consult), 0.5=one risk factor present (borderline early refill; PRN overuse), 1.0=no opioid risk indicators; stable prescribed use or non-opioid pain management",
         "physical_activity_norm": "0.0=zero physical activity; complete deconditioning, 0.5=minimal movement with assistance; ADL-level activity only, 1.0=regular therapeutic activity; walking program or PT adherent"
       },
-      "downstreamMachine": "HomeMentalHealthAccessMonitor (reads [366:374])"
+      "downstreamMachine": "HomeMentalHealthAccessMonitor (reads [2023:2031])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 330,
+        "offset": 1995,
         "length": 4
       },
       "output": {
-        "offset": 370,
+        "offset": 2027,
         "length": 4
       }
     },
@@ -52,10 +52,22 @@
           {
             "id": "cp-managed",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.55, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -63,15 +75,30 @@
               "description": "MANAGED+ — pain 3–5/10 manageable; functional for essential ADLs; opioid use stable; some physical activity maintained. isInitial A*A = A+.",
               "pain_scale": "0.55–0.72 (pain 3–5/10; functional)"
             },
-            "nextVectorIds": ["cp-managed", "cp-worsening"]
+            "nextVectorIds": [
+              "cp-managed",
+              "cp-worsening"
+            ]
           },
           {
             "id": "cp-worsening",
             "elements": [
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.38, "threshold": 0.5 },
-              { "value": 0.52, "threshold": 0.5 },
-              { "value": 0.32, "threshold": 0.5 }
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.52,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.32,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -79,15 +106,29 @@
               "description": "WORSENING — pain escalating to 6–7/10; functional limitations increasing; activity declining; PRN medication use increasing.",
               "pain_scale": "0.30–0.48 (pain 5–7/10; functional decline)"
             },
-            "nextVectorIds": ["cp-severe"]
+            "nextVectorIds": [
+              "cp-severe"
+            ]
           },
           {
             "id": "cp-severe",
             "elements": [
-              { "value": 0.12, "threshold": 0.5 },
-              { "value": 0.15, "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.12,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.15,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -98,9 +139,14 @@
             "outputVectors": [
               {
                 "id": "cp-crisis-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "PAIN_CRISIS: uncontrolled acute pain episode requiring urgent pain management intervention at [370:374]",
+                  "description": "PAIN_CRISIS: uncontrolled acute pain episode requiring urgent pain management intervention at [2027:2031]",
                   "action": "Urgent nurse visit; physician pain consult; medication adjustment; crisis pain plan activation"
                 }
               }
@@ -120,10 +166,22 @@
           {
             "id": "cp-stable-rx",
             "elements": [
-              { "value": 0.55, "threshold": 0.5 },
-              { "value": 0.52, "threshold": 0.5 },
-              { "value": 0.72, "threshold": 0.5 },
-              { "value": 0.52, "threshold": 0.5 }
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.52,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.72,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.52,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -131,15 +189,30 @@
               "description": "STABLE_RX+ — opioid prescription adherent; no early refill requests; function adequate; no sedation signs. isInitial A*A = A+.",
               "opioid_risk": "0.65–0.80 (no risk flags; stable prescribed use)"
             },
-            "nextVectorIds": ["cp-stable-rx", "cp-risk-signal"]
+            "nextVectorIds": [
+              "cp-stable-rx",
+              "cp-risk-signal"
+            ]
           },
           {
             "id": "cp-risk-signal",
             "elements": [
-              { "value": 0.38, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.3, "threshold": 0.5 }
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.3,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -150,9 +223,14 @@
             "outputVectors": [
               {
                 "id": "cp-opioid-risk-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "OPIOID_RISK_ELEVATED: opioid misuse or overuse pattern detected at [370:374]",
+                  "description": "OPIOID_RISK_ELEVATED: opioid misuse or overuse pattern detected at [2027:2031]",
                   "action": "ORT/DIRE risk re-screening; physician medication review; urine drug screen; PDMP check; non-opioid alternative assessment"
                 }
               }
@@ -172,10 +250,22 @@
           {
             "id": "cp-functionally-impaired",
             "elements": [
-              { "value": 0.32, "threshold": 0.5 },
-              { "value": 0.28, "threshold": 0.5 },
-              { "value": 0.58, "threshold": 0.5 },
-              { "value": 0.22, "threshold": 0.5 }
+              {
+                "value": 0.32,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.28,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.22,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -186,9 +276,14 @@
             "outputVectors": [
               {
                 "id": "cp-impairment-output",
-                "vector": [0, 0, 1, 0],
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
                 "metadata": {
-                  "description": "FUNCTIONAL_IMPAIRMENT: chronic pain causing sustained ADL and activity limitation at [370:374]",
+                  "description": "FUNCTIONAL_IMPAIRMENT: chronic pain causing sustained ADL and activity limitation at [2027:2031]",
                   "action": "PT referral; pain management plan review; occupational therapy for adaptive function; depression screening"
                 }
               }
@@ -208,10 +303,22 @@
           {
             "id": "cp-controlled",
             "elements": [
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.7, "threshold": 0.5 },
-              { "value": 0.58, "threshold": 0.5 }
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.7,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -222,9 +329,14 @@
             "outputVectors": [
               {
                 "id": "cp-managed-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "PAIN_MANAGED: chronic pain adequately controlled with maintained function at [370:374]",
+                  "description": "PAIN_MANAGED: chronic pain adequately controlled with maintained function at [2027:2031]",
                   "action": "Mental health access monitor registers pain management stable"
                 }
               }
@@ -239,12 +351,42 @@
         "pattern": "6-step: MANAGED→MANAGED→WORSENING→SEVERE (crisis)→OPIOID_RISK→PAIN_MANAGED (after consult)",
         "description": "Patient's prior authorization for extended-release opioid denied by insurer; winter cold worsens back pain; flare to crisis; early short-acting use flags risk; pain management review resolves.",
         "vectors": [
-          [0.63, 0.61, 0.66, 0.56],
-          [0.61, 0.59, 0.64, 0.54],
-          [0.34, 0.37, 0.51, 0.31],
-          [0.11, 0.14, 0.44, 0.09],
-          [0.37, 0.34, 0.34, 0.29],
-          [0.66, 0.63, 0.71, 0.59]
+          [
+            0.63,
+            0.61,
+            0.66,
+            0.56
+          ],
+          [
+            0.61,
+            0.59,
+            0.64,
+            0.54
+          ],
+          [
+            0.34,
+            0.37,
+            0.51,
+            0.31
+          ],
+          [
+            0.11,
+            0.14,
+            0.44,
+            0.09
+          ],
+          [
+            0.37,
+            0.34,
+            0.34,
+            0.29
+          ],
+          [
+            0.66,
+            0.63,
+            0.71,
+            0.59
+          ]
         ],
         "metadata": {
           "scenario": "prior-auth-denial-winter-flare",

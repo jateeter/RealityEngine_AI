@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Medication Cost Barrier Monitor",
-    "description": "Monitors prescription fill rates, dose adherence, cost-driven non-adherence, and generic/assistance program access for low- and medium-income adults managing chronic conditions at home. Medication cost barriers are a leading driver of avoidable hospitalization and disease progression in economically vulnerable populations. Output at [358:362] feeds the Home Social Isolation Monitor, capturing how pharmacy access barriers compound transportation and social barriers.",
+    "description": "Monitors prescription fill rates, dose adherence, cost-driven non-adherence, and generic/assistance program access for low- and medium-income adults managing chronic conditions at home. Medication cost barriers are a leading driver of avoidable hospitalization and disease progression in economically vulnerable populations. Output at [2015:2019] feeds the Home Social Isolation Monitor, capturing how pharmacy access barriers compound transportation and social barriers.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Medication Access / Cost Barriers",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [358:362]: [1,0,0,0]=ADHERENCE_CRISIS, [0,1,0,0]=COST_BARRIER_ACTIVE, [0,0,1,0]=PARTIAL_ADHERENCE, [0,0,0,1]=MEDICATION_MANAGED",
+      "outputSpace": "4D binary at [2015:2019]: [1,0,0,0]=ADHERENCE_CRISIS, [0,1,0,0]=COST_BARRIER_ACTIVE, [0,0,1,0]=PARTIAL_ADHERENCE, [0,0,0,1]=MEDICATION_MANAGED",
       "tags": [
         "healthcare",
         "home health",
@@ -26,16 +26,16 @@
         "cost_barrier_norm": "0.0=cost explicitly cited as reason for not filling (unaffordable even with insurance), 0.5=difficulty but managing with assistance, 1.0=no cost barrier reported",
         "generic_access_norm": "0.0=no access to generic or assistance programs; paying full brand price or going without, 0.5=partial program access (copay cards, one drug covered), 1.0=fully enrolled in PAP or full generic coverage"
       },
-      "downstreamMachine": "HomeSocialIsolationMonitor (reads [358:366])"
+      "downstreamMachine": "HomeSocialIsolationMonitor (reads [2015:2023])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 318,
+        "offset": 1983,
         "length": 4
       },
       "output": {
-        "offset": 358,
+        "offset": 2015,
         "length": 4
       }
     },
@@ -52,10 +52,22 @@
           {
             "id": "med-adherent",
             "elements": [
-              { "value": 0.7, "threshold": 0.5 },
-              { "value": 0.72, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 }
+              {
+                "value": 0.7,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.72,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -63,15 +75,30 @@
               "description": "ADHERENT+ — prescriptions being filled; doses taken as prescribed; cost barriers manageable; generics or assistance covering most needs. isInitial A*A = A+.",
               "fill_ratio": "0.65–0.85 (most fills completed on schedule)"
             },
-            "nextVectorIds": ["med-adherent", "med-rationing"]
+            "nextVectorIds": [
+              "med-adherent",
+              "med-rationing"
+            ]
           },
           {
             "id": "med-rationing",
             "elements": [
-              { "value": 0.42, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.28, "threshold": 0.5 },
-              { "value": 0.4, "threshold": 0.5 }
+              {
+                "value": 0.42,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.28,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.4,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -79,15 +106,29 @@
               "description": "RATIONING — fill rate dropping; patient splitting doses or skipping days; cost barrier explicitly reported.",
               "fill_ratio": "0.30–0.48 (skipping refills; dose splitting reported)"
             },
-            "nextVectorIds": ["med-non-adherent"]
+            "nextVectorIds": [
+              "med-non-adherent"
+            ]
           },
           {
             "id": "med-non-adherent",
             "elements": [
-              { "value": 0.15, "threshold": 0.5 },
-              { "value": 0.12, "threshold": 0.5 },
-              { "value": 0.08, "threshold": 0.5 },
-              { "value": 0.2, "threshold": 0.5 }
+              {
+                "value": 0.15,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.12,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -98,9 +139,14 @@
             "outputVectors": [
               {
                 "id": "med-crisis-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "ADHERENCE_CRISIS: complete medication non-adherence due to cost barrier at [358:362]",
+                  "description": "ADHERENCE_CRISIS: complete medication non-adherence due to cost barrier at [2015:2019]",
                   "action": "Patient assistance program enrollment; 340B pharmacy referral; social worker outreach; emergency supply bridge"
                 }
               }
@@ -120,10 +166,22 @@
           {
             "id": "med-struggling",
             "elements": [
-              { "value": 0.38, "threshold": 0.5 },
-              { "value": 0.42, "threshold": 0.5 },
-              { "value": 0.22, "threshold": 0.5 },
-              { "value": 0.18, "threshold": 0.5 }
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.42,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.22,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.18,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -134,9 +192,14 @@
             "outputVectors": [
               {
                 "id": "med-cost-barrier-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "COST_BARRIER_ACTIVE: ongoing cost barrier to prescribed medications at [358:362]",
+                  "description": "COST_BARRIER_ACTIVE: ongoing cost barrier to prescribed medications at [2015:2019]",
                   "action": "Pharmacy assistance program review; GoodRx/NeedyMeds screening; formulary substitution review"
                 }
               }
@@ -156,10 +219,22 @@
           {
             "id": "med-managed",
             "elements": [
-              { "value": 0.72, "threshold": 0.5 },
-              { "value": 0.75, "threshold": 0.5 },
-              { "value": 0.68, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 }
+              {
+                "value": 0.72,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.75,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.68,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -170,9 +245,14 @@
             "outputVectors": [
               {
                 "id": "med-managed-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "MEDICATION_MANAGED: prescription access and adherence adequate at [358:362]",
+                  "description": "MEDICATION_MANAGED: prescription access and adherence adequate at [2015:2019]",
                   "action": "Social isolation monitor registers medication access stable"
                 }
               }
@@ -187,12 +267,42 @@
         "pattern": "6-step: ADHERENT→ADHERENT→RATIONING→NON_ADHERENT (crisis)→COST_BARRIER→MANAGED (after LIS enrollment)",
         "description": "Senior hits Medicare Part D coverage gap in August; begins rationing insulin; home health nurse identifies crisis; Low Income Subsidy enrollment resolves gap.",
         "vectors": [
-          [0.71, 0.73, 0.66, 0.61],
-          [0.70, 0.71, 0.64, 0.60],
-          [0.41, 0.34, 0.27, 0.39],
-          [0.14, 0.11, 0.07, 0.19],
-          [0.37, 0.41, 0.21, 0.17],
-          [0.73, 0.76, 0.69, 0.66]
+          [
+            0.71,
+            0.73,
+            0.66,
+            0.61
+          ],
+          [
+            0.7,
+            0.71,
+            0.64,
+            0.6
+          ],
+          [
+            0.41,
+            0.34,
+            0.27,
+            0.39
+          ],
+          [
+            0.14,
+            0.11,
+            0.07,
+            0.19
+          ],
+          [
+            0.37,
+            0.41,
+            0.21,
+            0.17
+          ],
+          [
+            0.73,
+            0.76,
+            0.69,
+            0.66
+          ]
         ],
         "metadata": {
           "scenario": "medicare-donut-hole-insulin-rationing",

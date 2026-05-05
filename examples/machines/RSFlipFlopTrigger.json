@@ -24,14 +24,20 @@
         "rules": [
           {
             "sequenceId": "rs-set-sequence",
-            "outputMatches": [1, 0],
+            "outputMatches": [
+              1,
+              0
+            ],
             "ragStatusCode": "AMBER",
             "processStatus": "warning",
             "description": "Machine latched SET — signal AMBER to local AI"
           },
           {
             "sequenceId": "rs-reset-sequence",
-            "outputMatches": [0, 1],
+            "outputMatches": [
+              0,
+              1
+            ],
             "ragStatusCode": "GREEN",
             "processStatus": "ok",
             "description": "Machine reset — clear upstream AMBER/RED"
@@ -41,8 +47,14 @@
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
-      "input":  { "offset": 10, "length": 2 },
-      "output": { "offset": 12, "length": 2 }
+      "input": {
+        "offset": 3517,
+        "length": 2
+      },
+      "output": {
+        "offset": 3519,
+        "length": 2
+      }
     },
     "sequences": [
       {
@@ -59,8 +71,14 @@
           {
             "id": "rs-trigger-set",
             "elements": [
-              { "value": 1, "threshold": 0.5 },
-              { "value": 0, "threshold": 0.5 }
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -71,7 +89,10 @@
             "outputVectors": [
               {
                 "id": "rs-trigger-output-set",
-                "vector": [1, 0],
+                "vector": [
+                  1,
+                  0
+                ],
                 "metadata": {
                   "description": "SET asserted — upstream AMBER",
                   "state": "SET",
@@ -97,8 +118,14 @@
           {
             "id": "rs-trigger-reset",
             "elements": [
-              { "value": 0, "threshold": 0.5 },
-              { "value": 1, "threshold": 0.5 }
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -109,7 +136,10 @@
             "outputVectors": [
               {
                 "id": "rs-trigger-output-reset",
-                "vector": [0, 1],
+                "vector": [
+                  0,
+                  1
+                ],
                 "metadata": {
                   "description": "RESET asserted — upstream GREEN",
                   "state": "RESET",
@@ -128,8 +158,14 @@
         "pattern": "00→10",
         "description": "Hold → SET. Expected upstream effect: updateProcessState(id=RS-FLIPFLOP-TRIGGER, ragStatusCode=AMBER)",
         "vectors": [
-          [0, 0],
-          [1, 0]
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ]
         ]
       },
       {
@@ -137,8 +173,14 @@
         "pattern": "00→01",
         "description": "Hold → RESET. Expected upstream effect: updateProcessState(id=RS-FLIPFLOP-TRIGGER, ragStatusCode=GREEN)",
         "vectors": [
-          [0, 0],
-          [0, 1]
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ]
         ]
       },
       {
@@ -146,11 +188,26 @@
         "pattern": "00→10→00→01→00",
         "description": "Validates both triggers fire in sequence: AMBER on SET, GREEN on RESET",
         "vectors": [
-          [0, 0],
-          [1, 0],
-          [0, 0],
-          [0, 1],
-          [0, 0]
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            0
+          ]
         ]
       }
     ],

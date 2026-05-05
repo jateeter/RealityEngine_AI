@@ -10,6 +10,8 @@ import {
 } from './types';
 import { api, perceptionEngineApi } from './api';
 import { PERCEPTUAL_DIM } from './constants';
+import type { DomainId } from './components/machineDomains';
+import { DOMAIN_ORDER } from './components/machineDomains';
 
 interface VisualizerState {
   // View state
@@ -66,6 +68,21 @@ interface VisualizerState {
   // Output stream actions
   setCurrentOutputVectors: (outputs: OutputVector[]) => void;
   setHighlightedOutputId: (outputId: string | null) => void;
+
+  // Domain hover (set by MachineGraphView hull hover, read by TobiasView header)
+  hoveredDomainId: DomainId | null;
+  setHoveredDomainId: (id: DomainId | null) => void;
+
+  // Persisted zoom transform — survives view switches so the settled layout
+  // is the starting point for every context that mounts MachineGraphView.
+  graphZoomState: { k: number; x: number; y: number } | null;
+  setGraphZoomState: (state: { k: number; x: number; y: number } | null) => void;
+
+  // Domain visibility filter — shared across all graph view contexts.
+  // All domains selected by default; multi-select; empty = all hidden.
+  selectedDomains: DomainId[];
+  toggleDomain:   (id: DomainId) => void;
+  setAllDomains:  (selected: boolean) => void;
 }
 
 export const useVisualizerStore = create<VisualizerState>((set, get) => ({
@@ -80,6 +97,9 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   currentOutputVectors: [],
   highlightedOutputId: null,
   peSources: [],
+  hoveredDomainId: null,
+  graphZoomState: null,
+  selectedDomains: [...DOMAIN_ORDER],
 
   // View actions
   setCurrentView: (view) => set({ currentView: view }),
@@ -450,4 +470,15 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   // Output stream actions
   setCurrentOutputVectors: (outputs: OutputVector[]) => set({ currentOutputVectors: outputs }),
   setHighlightedOutputId: (outputId: string | null) => set({ highlightedOutputId: outputId }),
+
+  setHoveredDomainId: (id: DomainId | null) => set({ hoveredDomainId: id }),
+  setGraphZoomState: (state) => set({ graphZoomState: state }),
+
+  toggleDomain: (id) => set(state => {
+    const cur = state.selectedDomains;
+    return {
+      selectedDomains: cur.includes(id) ? cur.filter(d => d !== id) : [...cur, id],
+    };
+  }),
+  setAllDomains: (selected) => set({ selectedDomains: selected ? [...DOMAIN_ORDER] : [] }),
 }));

@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Qualification Verification Monitor",
-    "description": "Tracks identity verification, income verification, program-specific qualification criteria, and active enrollment status for community service participants. Qualification verification is the formal determination layer sitting between eligibility screening and active benefit delivery — it catches identity mismatches, income discrepancies, and program-specific rules (residency duration, asset limits, household composition) that screening tools miss. Output at [442:446] feeds the Workflow Completion Monitor.",
+    "description": "Tracks identity verification, income verification, program-specific qualification criteria, and active enrollment status for community service participants. Qualification verification is the formal determination layer sitting between eligibility screening and active benefit delivery — it catches identity mismatches, income discrepancies, and program-specific rules (residency duration, asset limits, household composition) that screening tools miss. Output at [964:968] feeds the Workflow Completion Monitor.",
     "metadata": {
       "category": "community-services",
       "domain": "Community Services — Qualification Verification / Enrollment",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [442:446]: [1,0,0,0]=QUALIFICATION_FAILED, [0,1,0,0]=REVERIFICATION_REQUIRED, [0,0,1,0]=CONDITIONALLY_QUALIFIED, [0,0,0,1]=FULLY_QUALIFIED",
+      "outputSpace": "4D binary at [964:968]: [1,0,0,0]=QUALIFICATION_FAILED, [0,1,0,0]=REVERIFICATION_REQUIRED, [0,0,1,0]=CONDITIONALLY_QUALIFIED, [0,0,0,1]=FULLY_QUALIFIED",
       "tags": [
         "community-services",
         "qualification workflow",
@@ -25,16 +25,16 @@
         "program_qualification_norm": "0.0=program-specific rules not met (asset limit exceeded, residency duration insufficient, household composition mismatch), 0.5=program rules met but one qualifier requires additional documentation, 1.0=all program-specific qualification criteria confirmed",
         "enrollment_active_norm": "0.0=enrollment lapsed, suspended, or terminated; benefits not flowing, 0.5=enrollment conditionally active (provisional benefits; verification hold), 1.0=enrollment fully active; benefits flowing without restriction"
       },
-      "downstreamMachine": "WorkflowCompletionMonitor (reads [438:446])"
+      "downstreamMachine": "WorkflowCompletionMonitor (reads [960:968])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 402,
+        "offset": 932,
         "length": 4
       },
       "output": {
-        "offset": 442,
+        "offset": 964,
         "length": 4
       }
     },
@@ -51,10 +51,22 @@
           {
             "id": "qv-qualified",
             "elements": [
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.7, "threshold": 0.5 }
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.7,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -62,15 +74,30 @@
               "description": "QUALIFIED+ — identity verified, income verified, program rules met, enrollment active. isInitial A*A = A+.",
               "enrollment_status": "0.65–0.80 (active enrollment; all verifications current)"
             },
-            "nextVectorIds": ["qv-qualified", "qv-discrepancy"]
+            "nextVectorIds": [
+              "qv-qualified",
+              "qv-discrepancy"
+            ]
           },
           {
             "id": "qv-discrepancy",
             "elements": [
-              { "value": 0.38, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.42, "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 }
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.42,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -78,15 +105,29 @@
               "description": "DISCREPANCY — one or more verification factors showing data mismatch; income figure inconsistent with reported amount; program rule borderline.",
               "enrollment_status": "0.40–0.48 (provisional; discrepancy notice issued; cure period open)"
             },
-            "nextVectorIds": ["qv-hold"]
+            "nextVectorIds": [
+              "qv-hold"
+            ]
           },
           {
             "id": "qv-hold",
             "elements": [
-              { "value": 0.15, "threshold": 0.5 },
-              { "value": 0.12, "threshold": 0.5 },
-              { "value": 0.2, "threshold": 0.5 },
-              { "value": 0.2, "threshold": 0.5 }
+              {
+                "value": 0.15,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.12,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -97,9 +138,14 @@
             "outputVectors": [
               {
                 "id": "qv-failed-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "QUALIFICATION_FAILED: qualification verification failed; benefits suspended at [442:446]",
+                  "description": "QUALIFICATION_FAILED: qualification verification failed; benefits suspended at [964:968]",
                   "action": "Formal adverse action notice; fair hearing rights notification; appeal process initiation; navigator assistance for documentation cure"
                 }
               }
@@ -119,10 +165,22 @@
           {
             "id": "qv-lapsing",
             "elements": [
-              { "value": 0.52, "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 },
-              { "value": 0.55, "threshold": 0.5 },
-              { "value": 0.38, "threshold": 0.5 }
+              {
+                "value": 0.52,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -133,9 +191,14 @@
             "outputVectors": [
               {
                 "id": "qv-reverification-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "REVERIFICATION_REQUIRED: qualification verification approaching expiry or triggered event detected at [442:446]",
+                  "description": "REVERIFICATION_REQUIRED: qualification verification approaching expiry or triggered event detected at [964:968]",
                   "action": "Redetermination appointment scheduling; document collection checklist; proactive outreach to prevent gap in benefits"
                 }
               }
@@ -155,10 +218,22 @@
           {
             "id": "qv-verified",
             "elements": [
-              { "value": 0.68, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.68, "threshold": 0.5 },
-              { "value": 0.72, "threshold": 0.5 }
+              {
+                "value": 0.68,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.68,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.72,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -169,9 +244,14 @@
             "outputVectors": [
               {
                 "id": "qv-qualified-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "FULLY_QUALIFIED: all verification criteria met; enrollment fully active at [442:446]",
+                  "description": "FULLY_QUALIFIED: all verification criteria met; enrollment fully active at [964:968]",
                   "action": "Workflow completion monitor registers qualification confirmed; unrestricted service delivery authorized"
                 }
               }
@@ -186,11 +266,36 @@
         "pattern": "5-step: QUALIFIED→QUALIFIED→LAPSING (redetermination due)→DISCREPANCY (new income flagged)→QUALIFIED (income verified within limits)",
         "description": "Medicaid enrollee hits annual redetermination; new part-time job income flagged; verified as still within threshold; qualification confirmed.",
         "vectors": [
-          [0.66, 0.63, 0.66, 0.71],
-          [0.64, 0.61, 0.64, 0.69],
-          [0.53, 0.44, 0.56, 0.37],
-          [0.37, 0.34, 0.41, 0.44],
-          [0.69, 0.66, 0.69, 0.73]
+          [
+            0.66,
+            0.63,
+            0.66,
+            0.71
+          ],
+          [
+            0.64,
+            0.61,
+            0.64,
+            0.69
+          ],
+          [
+            0.53,
+            0.44,
+            0.56,
+            0.37
+          ],
+          [
+            0.37,
+            0.34,
+            0.41,
+            0.44
+          ],
+          [
+            0.69,
+            0.66,
+            0.69,
+            0.73
+          ]
         ],
         "metadata": {
           "scenario": "annual-redetermination-income-change",

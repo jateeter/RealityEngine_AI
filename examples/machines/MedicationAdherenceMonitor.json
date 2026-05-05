@@ -12,8 +12,12 @@
       "eventSpace": "2D binary: [dose_pending, dose_confirmed]",
       "outputSpace": "2D binary: {[0,0]=NOMINAL, [1,0]=DELAYED, [1,1]=MISSED}",
       "tags": [
-        "wellness", "healthcare", "medication", "elder-care",
-        "in-home-monitoring", "trigger"
+        "wellness",
+        "healthcare",
+        "medication",
+        "elder-care",
+        "in-home-monitoring",
+        "trigger"
       ],
       "sequenceCount": 3,
       "triggerConfig": {
@@ -24,21 +28,30 @@
         "rules": [
           {
             "sequenceId": "med-taken-on-time",
-            "outputMatches": [0, 0],
+            "outputMatches": [
+              0,
+              0
+            ],
             "ragStatusCode": "GREEN",
             "processStatus": "ok",
             "description": "Dose acknowledged within window"
           },
           {
             "sequenceId": "med-delayed",
-            "outputMatches": [1, 0],
+            "outputMatches": [
+              1,
+              0
+            ],
             "ragStatusCode": "AMBER",
             "processStatus": "warning",
             "description": "Dose pending past reminder window — nudge the patient / caregiver"
           },
           {
             "sequenceId": "med-missed",
-            "outputMatches": [1, 1],
+            "outputMatches": [
+              1,
+              1
+            ],
             "ragStatusCode": "RED",
             "processStatus": "error",
             "description": "Dose missed past grace window — escalate to clinical contact"
@@ -48,26 +61,52 @@
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
-      "input":  { "offset": 74, "length": 2 },
-      "output": { "offset": 76, "length": 2 }
+      "input": {
+        "offset": 1939,
+        "length": 2
+      },
+      "output": {
+        "offset": 1941,
+        "length": 2
+      }
     },
     "sequences": [
       {
         "id": "med-taken-on-time",
         "name": "Dose taken on time → GREEN",
-        "metadata": { "description": "Dose confirmed within the scheduled window" },
+        "metadata": {
+          "description": "Dose confirmed within the scheduled window"
+        },
         "vectors": [
           {
             "id": "med-ev-confirmed",
             "elements": [
-              { "value": 0, "threshold": 0.5 },
-              { "value": 1, "threshold": 0.5 }
+              {
+                "value": 0,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
-            "metadata": { "name": "confirmed", "state": "NOMINAL" },
+            "metadata": {
+              "name": "confirmed",
+              "state": "NOMINAL"
+            },
             "outputVectors": [
-              { "id": "med-out-nominal", "vector": [0, 0],
-                "metadata": { "ragStatusCode": "GREEN", "state": "NOMINAL" } }
+              {
+                "id": "med-out-nominal",
+                "vector": [
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "ragStatusCode": "GREEN",
+                  "state": "NOMINAL"
+                }
+              }
             ]
           }
         ]
@@ -75,19 +114,39 @@
       {
         "id": "med-delayed",
         "name": "Dose delayed → AMBER",
-        "metadata": { "description": "Pending dose not yet confirmed after reminder window" },
+        "metadata": {
+          "description": "Pending dose not yet confirmed after reminder window"
+        },
         "vectors": [
           {
             "id": "med-ev-delayed",
             "elements": [
-              { "value": 1, "threshold": 0.5 },
-              { "value": 0, "threshold": 0.5 }
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
-            "metadata": { "name": "delayed", "state": "DELAYED" },
+            "metadata": {
+              "name": "delayed",
+              "state": "DELAYED"
+            },
             "outputVectors": [
-              { "id": "med-out-delayed", "vector": [1, 0],
-                "metadata": { "ragStatusCode": "AMBER", "state": "DELAYED" } }
+              {
+                "id": "med-out-delayed",
+                "vector": [
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "ragStatusCode": "AMBER",
+                  "state": "DELAYED"
+                }
+              }
             ]
           }
         ]
@@ -95,19 +154,39 @@
       {
         "id": "med-missed",
         "name": "Dose missed → RED",
-        "metadata": { "description": "Dose still pending past grace window — escalation required" },
+        "metadata": {
+          "description": "Dose still pending past grace window — escalation required"
+        },
         "vectors": [
           {
             "id": "med-ev-missed",
             "elements": [
-              { "value": 1, "threshold": 0.5 },
-              { "value": 1, "threshold": 0.5 }
+              {
+                "value": 1,
+                "threshold": 0.5
+              },
+              {
+                "value": 1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
-            "metadata": { "name": "missed", "state": "MISSED" },
+            "metadata": {
+              "name": "missed",
+              "state": "MISSED"
+            },
             "outputVectors": [
-              { "id": "med-out-missed", "vector": [1, 1],
-                "metadata": { "ragStatusCode": "RED", "state": "MISSED" } }
+              {
+                "id": "med-out-missed",
+                "vector": [
+                  1,
+                  1
+                ],
+                "metadata": {
+                  "ragStatusCode": "RED",
+                  "state": "MISSED"
+                }
+              }
             ]
           }
         ]
@@ -118,13 +197,43 @@
         "name": "On-time dose",
         "pattern": "[0,1]",
         "description": "Patient confirms the dose within the window — expects GREEN trigger",
-        "vectors": [ [0, 0], [0, 1], [0, 0] ]
+        "vectors": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            0
+          ]
+        ]
       },
       {
         "name": "Delayed dose → missed dose",
         "pattern": "[1,0] → [1,1]",
         "description": "Reminder window elapses (AMBER), then grace window elapses (RED)",
-        "vectors": [ [0, 0], [1, 0], [1, 1], [0, 0] ]
+        "vectors": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            0
+          ]
+        ]
       }
     ],
     "matchAlgorithm": "gte"
