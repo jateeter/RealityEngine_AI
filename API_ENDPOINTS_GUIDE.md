@@ -45,7 +45,7 @@ GET  /api/perceptual-simulation/history           → { history: SimulationStep[
 
 ### Perception Engine push endpoint
 ```
-POST /api/perceive    body: { vector: number[256], matchAlgorithm?: "gte"|"equals" }
+POST /api/perceive    body: { vector: number[], matchAlgorithm?: "gte"|"equals" }
                       → SimulationStep  (runs processImmediate, returns full step result)
 ```
 
@@ -174,7 +174,7 @@ Message types broadcast to clients:
 ```json
 {
   "sources": [/* SourceConfig[] */],
-  "assembledVector": [/* number[256] — current pre-push preview */],
+  "assembledVector": [/* number[] — current pre-push preview */],
   "globalStep": 42,
   "auto": { "running": true, "intervalMs": 600 },
   "lastPush": 1234567890,

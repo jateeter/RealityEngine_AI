@@ -1,6 +1,6 @@
 # Reality Engine
 
-A vector-based state machine system that models reality through observable events and CriticalEventSequence (CES) machines. Inputs are assembled by the **Perception Engine** from configurable sources and pushed into the **Reality Engine**, where registered machines process them through a shared 256-byte perceptual space.
+A vector-based state machine system that models reality through observable events and CriticalEventSequence (CES) machines. Inputs are assembled by the **Perception Engine** from configurable sources and pushed into the **Reality Engine**, where registered machines process them through a shared perceptual space (768-element default; grows dynamically to accommodate all machine mappings).
 
 > Claude Code generated seed version of the Reality Engine (with incremental prompt specification)
 
@@ -48,7 +48,7 @@ Browsers will warn about the self-signed certificate — add an exception or use
 
 ## Architecture
 
-The system runs as nine Docker services connected on a private `reality-network`:
+The system runs as eight Docker services connected on a private `reality-network` (Qdrant and Redis run externally via localAIStack):
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -83,7 +83,7 @@ The system runs as nine Docker services connected on a private `reality-network`
 
 ### Data flow
 
-1. **Perception Engine** assembles a 256-element vector from its configured sources (test sequences, simulated signals, or live sensors).
+1. **Perception Engine** assembles a vector from its configured sources (test sequences, simulated signals, or live sensors) and writes each source into its assigned region of the shared perceptual space.
 2. It posts the vector to **Visualizer Backend** `/api/perceive`, which forwards it to **Reality Engine** `/api/perceive`.
 3. The Reality Engine runs a 3-phase snapshot → process → merge loop over all registered machines, writing machine outputs back into the shared perceptual space.
 4. The Visualizer Backend broadcasts `perceptual-simulation-stepped` to all WebSocket clients.
@@ -105,11 +105,11 @@ A directed graph of RealityVectors. Requires at least one `isInitial` vector (al
 
 ### Machine
 
-A named collection of CriticalEventSequences with a **perceptual mapping** — `inputRegion` and `outputRegion` — that defines which bytes of the 256-element shared perceptual space the machine reads from and writes to.
+A named collection of CriticalEventSequences with a **perceptual mapping** — `inputRegion` and `outputRegion` — that defines which elements of the shared perceptual space the machine reads from and writes to.
 
 ### Perceptual Space
 
-A 256-byte shared vector. All machines snapshot their input region, process concurrently, then merge their outputs in a single atomic phase. Sources outside a machine's assigned regions are unaffected.
+A shared vector (768 elements by default; grows to the highest machine mapping offset + length). All machines snapshot their input region, process concurrently, then merge their outputs in a single atomic phase. Sources outside a machine's assigned regions are unaffected.
 
 ### Perception Engine
 
@@ -241,10 +241,13 @@ See `LOKI_GRAFANA_SETUP.md` for dashboard and alerting configuration.
 
 | Doc | Description |
 |---|---|
-| `ARCHITECTURE.md` | Detailed Scala engine and perceptual space internals |
+| `docs/README.md` | Maintained documentation index |
+| `ARCHITECTURE.md` | Visual service architecture and data flow |
 | `API_ENDPOINTS_GUIDE.md` | Complete REST and WebSocket API reference |
-| `PERCEPTUAL_SPACE_ARCHITECTURE.md` | 256-byte space layout and machine interconnection model |
+| `PERCEPTUAL_SPACE_ARCHITECTURE.md` | Dynamic perceptual-space model |
 | `docs/EXAMPLE_DOMAIN_COMPENDIUM.md` | Generated searchable compendium of all active domains, machines, triggers, mappings, and interconnections |
+| `docs/ACRONYMS.md` | Acronym definitions |
+| `docs/BIBLIOGRAPHY.md` | External and project references |
 | `RS_FLIP_FLOP.md` | RS flip-flop machine example walkthrough |
 | `NAND-GATE-PROOF.md` | NAND gate logical proof using CES machines |
 | `ARBITER_ARCHITECTURE.md` | Output arbiter and shouldOutput semantics |

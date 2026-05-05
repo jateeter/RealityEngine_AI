@@ -1,213 +1,85 @@
-# Reality Engine - Quick Start Guide
+# Reality Engine — Quick Start
 
-Get Reality Engine up and running in 5 minutes!
+Get the full Reality Engine universe running in one command.
 
-## Prerequisites Checklist
+## Prerequisites
 
-- [ ] Node.js 18+ installed
-- [ ] Docker Desktop installed and running
-- [ ] Git (for cloning repository)
-- [ ] Terminal/Command line access
+- Docker Desktop installed and running
+- 4 GB+ RAM available
+- Ports 3000–3005, 5173, 6333, 3100 free
 
-## Installation Steps
-
-### Step 1: Setup (2 minutes)
+## First-Time Setup
 
 ```bash
-cd realityEngine
-./scripts/setup.sh
+# Generate dev TLS certificates (once per machine)
+bash certs/generate-dev-certs.sh
 ```
 
-This will:
-- ✓ Validate prerequisites
-- ✓ Install dependencies
-- ✓ Build the application
-- ✓ Create configuration files
+This creates `certs/server.crt` and `certs/server.key` used by the nginx TLS proxy.
 
-### Step 2: Start Services (1 minute)
-
-Recommended — bring up the whole stack (localAIStack + Reality Engine) in one command:
+## Start the Universe
 
 ```bash
+# Start localAIStack (Qdrant + Redis + API) + all Reality Engine services
 ./startUniverse.sh
-# or, to wipe perception sources and rebuild images without cache:
+
+# First run or after schema changes — wipe perception sources + rebuild with --no-cache
 ./startUniverse.sh --fresh
 ```
 
-Reality-Engine-only (requires localAIStack already running on port 4333):
+`startUniverse.sh` brings up the full stack and verifies machine/sensor/Qdrant integration before returning.
+
+If localAIStack is already running and you only need to (re)start Reality Engine services:
 
 ```bash
 ./scripts/start.sh
 ```
 
-Wait for the success message:
-```
-Reality Engine Started Successfully!
+## Service URLs
 
-Services:
-  - Qdrant:          http://localhost:6333
-  - Reality Engine:  http://localhost:3000
-```
+| Service | URL |
+|---|---|
+| Visualizer Frontend | https://localhost:5173 |
+| Perception Engine UI | https://localhost:3005 |
+| Grafana Logs | https://localhost:3002 (admin / admin) |
+| Reality Engine API | https://localhost:3000 |
+| Visualizer Backend | https://localhost:3001 |
+| Perception Engine API | https://localhost:3004 |
+| Qdrant Dashboard | http://localhost:6333/dashboard |
 
-### Step 3: Verify (30 seconds)
-
-```bash
-./scripts/status.sh
-```
-
-You should see:
-```
-Overall: ALL SERVICES RUNNING
-```
-
-### Step 4: Run Example (1 minute)
-
-```bash
-# Create a simple sequence
-./scripts/examples/create-sequence.sh
-
-# Process some inputs
-./scripts/examples/process-input.sh
-```
-
-## 🎉 You're Ready!
-
-The Reality Engine is now running. Here's what you can do:
-
-### View the Dashboard
-
-Open in your browser:
-- **API Root:** http://localhost:3000
-- **Qdrant UI:** http://localhost:6333/dashboard
-- **API Health:** http://localhost:3000/api/health
-
-### Try the API
-
-```bash
-# Get configuration
-curl http://localhost:3000/api/config
-
-# Get engine statistics
-curl http://localhost:3000/api/engine/stats
-
-# Create a vector
-curl -X POST http://localhost:3000/api/vectors \
-  -H "Content-Type: application/json" \
-  -d '{
-    "elements": [
-      {"value": 0.5, "comparatorType": "threshold", "threshold": 0.1}
-    ],
-    "isInitial": true
-  }'
-```
-
-### Run More Examples
-
-```bash
-# Pattern recognition demo
-./scripts/examples/pattern-recognition.sh
-
-# Reality sampler demo
-./scripts/examples/sampler-demo.sh
-```
+Browsers will warn about the self-signed certificate — add an exception or use `--ignore-certificate-errors` in Playwright.
 
 ## Common Commands
 
 ```bash
-# Start full universe (localAIStack + Reality Engine)
-./startUniverse.sh              # cached build
+./startUniverse.sh              # start full universe (cached build)
 ./startUniverse.sh --fresh      # wipe perception data + rebuild RE with --no-cache
+./scripts/start.sh              # Reality Engine only (localAIStack must be running)
+./scripts/stop.sh               # stop all Reality Engine services
+./scripts/restart.sh            # stop + start
+./scripts/status.sh             # health summary
+./scripts/logs.sh               # tail logs for all services
+docker compose ps               # container status and health checks
+docker compose logs -f <svc>    # stream logs for one service
+```
 
-# Start Reality Engine only (localAIStack must already be running)
-./scripts/start.sh
+## Try the API
 
-# Stop services
-./scripts/stop.sh
-
-# Restart services
-./scripts/restart.sh
-
-# Check status
-./scripts/status.sh
-
-# View logs
-./scripts/logs.sh
-
+```bash
 # Health check
-./scripts/health-check.sh
+curl -k https://localhost:3000/api/health
+
+# List registered machines
+curl -k https://localhost:3000/api/machines
+
+# Engine statistics
+curl -k https://localhost:3000/api/engine/stats
 ```
 
 ## Next Steps
 
-1. **Read the Documentation:**
-   - [README.md](README.md) - Full documentation
-   - [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment guide
-   - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
-
-2. **Explore the API:**
-   - See [README.md#api-reference](README.md#api-reference)
-
-3. **Run Tests:**
-   ```bash
-   npm test
-   ```
-
-4. **Customize Configuration:**
-   ```bash
-   nano .env
-   ./scripts/restart.sh
-   ```
-
-## Troubleshooting
-
-### Services won't start?
-
-```bash
-# Check Docker is running
-docker info
-
-# View logs
-./scripts/logs.sh
-
-# Try restart
-./scripts/restart.sh
-```
-
-### Port already in use?
-
-Edit `.env` and change:
-```bash
-PORT=3001
-```
-
-Then restart:
-```bash
-./scripts/restart.sh
-```
-
-### Need help?
-
-Run the health check:
-```bash
-./scripts/health-check.sh
-```
-
-This will diagnose common issues.
-
-## Stopping the System
-
-When you're done:
-
-```bash
-./scripts/stop.sh
-```
-
-This gracefully shuts down all services.
-
----
-
-**That's it!** You now have a fully functional Reality Engine.
-
-For detailed usage and API documentation, see [README.md](README.md).
-
-For deployment scenarios and production setup, see [DEPLOYMENT.md](DEPLOYMENT.md).
+- **[README.md](README.md)** — full architecture and core concepts
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — service design and data flow
+- **[API_ENDPOINTS_GUIDE.md](API_ENDPOINTS_GUIDE.md)** — complete API reference
+- **[VISUALIZER_USER_GUIDE.md](VISUALIZER_USER_GUIDE.md)** — Tobias canvas walkthrough
+- **[E2E_TESTING.md](E2E_TESTING.md)** — Playwright e2e test guide

@@ -1,6 +1,6 @@
 # Docker Quick Start
 
-Run the entire Reality Engine stack (9 services) with a single command.
+Run the entire Reality Engine stack (8 services) with a single command.
 
 ## TL;DR
 
