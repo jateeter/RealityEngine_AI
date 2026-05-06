@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Ag Nutrient Cycle Optimizer",
-    "description": "Correlates nutrient solution quality signals with active photoperiod state to optimize nutrient uptake timing. Reads binary outputs from AgNutrientSolutionMonitor [28:32] and AgPhotoPeriodLightingController [32:36]. During active photosynthesis, elevated nutrient demand is expected; mismatches between solution quality and light state indicate suboptimal scheduling. Output feeds AgHarvestReadinessAssessor and AgYieldOptimizationAI at [3559:3563].",
+    "description": "Correlates nutrient solution quality signals with active photoperiod state to optimize nutrient uptake timing. Reads binary outputs from AgNutrientSolutionMonitor [28:32] and AgPhotoPeriodLightingController [32:36]. During active photosynthesis, elevated nutrient demand is expected; mismatches between solution quality and light state indicate suboptimal scheduling. Output feeds AgHarvestReadinessAssessor and AgYieldOptimizationAI at [3959:3963].",
     "metadata": {
       "category": "agriculture",
       "domain": "Agriculture — Nutrient Management / Crop Optimization",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [3559:3563]: [1,0,0,0]=NUTRIENT_LOCKOUT, [0,1,0,0]=UPTAKE_MISMATCH, [0,0,1,0]=NIGHT_REST, [0,0,0,1]=NUTRIENT_OK",
+      "outputSpace": "4D binary at [3959:3963]: [1,0,0,0]=NUTRIENT_LOCKOUT, [0,1,0,0]=UPTAKE_MISMATCH, [0,0,1,0]=NIGHT_REST, [0,0,0,1]=NUTRIENT_OK",
       "tags": [
         "agriculture",
         "nutrient solution",
@@ -33,8 +33,8 @@
         "AgPhotoPeriodLightingController (output at [32:36])"
       ],
       "downstreamMachines": [
-        "AgHarvestReadinessAssessor (reads [3559:3563])",
-        "AgYieldOptimizationAI (reads [3559:3563])"
+        "AgHarvestReadinessAssessor (reads [3959:3963])",
+        "AgYieldOptimizationAI (reads [3959:3963])"
       ]
     },
     "arbiterRule": "PASSTHROUGH",
@@ -44,7 +44,7 @@
         "length": 8
       },
       "output": {
-        "offset": 3559,
+        "offset": 3959,
         "length": 4
       }
     },
@@ -157,7 +157,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "NUTRIENT_OK: optimal nutrient uptake conditions active at [3559:3563]",
+                  "description": "NUTRIENT_OK: optimal nutrient uptake conditions active at [3959:3963]",
                   "action": "Harvest assessor and AI optimizer register healthy nutrient state"
                 }
               }
@@ -319,7 +319,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "NUTRIENT_LOCKOUT: pH-induced nutrient unavailability during active photosynthesis at [3559:3563]",
+                  "description": "NUTRIENT_LOCKOUT: pH-induced nutrient unavailability during active photosynthesis at [3959:3963]",
                   "action": "Emergency pH adjustment; reduce lighting duration; AI optimizer enters corrective mode"
                 }
               }
@@ -388,7 +388,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "NIGHT_REST: dark period with optimal solution ready at [3559:3563]",
+                  "description": "NIGHT_REST: dark period with optimal solution ready at [3959:3963]",
                   "action": "Expected quiescent state; AI optimizer logs rest cycle"
                 }
               }

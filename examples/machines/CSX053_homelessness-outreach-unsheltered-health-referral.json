@@ -12,7 +12,7 @@
       "focusDescription": "medical need, behavioral health need, mobile clinic availability, and transport barrier",
       "upstreamMachine": "health-services mapped output",
       "upstreamDomain": "health-services",
-      "upstreamOutputRegion": "[3427:3431]",
+      "upstreamOutputRegion": "[3827:3831]",
       "upstreamPurpose": "care coordination signal",
       "downstreamMachines": [
         "Community Services Homelessness Outreach Cold Weather Outreach"
@@ -29,7 +29,7 @@
         "Create field work order or mobile team task for unsheltered health referral.",
         "Maintain monitored service path for unsheltered health referral."
       ],
-      "inputSpace": "4D binary at [3427:3431]",
+      "inputSpace": "4D binary at [3827:3831]",
       "outputSpace": "4D binary at [1204:1208]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
       "inputSemantics": [
         "resident need severity",
@@ -57,7 +57,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3427,
+        "offset": 3827,
         "length": 4
       },
       "output": {

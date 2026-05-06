@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Medication Cost Barrier Monitor",
-    "description": "Monitors prescription fill rates, dose adherence, cost-driven non-adherence, and generic/assistance program access for low- and medium-income adults managing chronic conditions at home. Medication cost barriers are a leading driver of avoidable hospitalization and disease progression in economically vulnerable populations. Output at [2015:2019] feeds the Home Social Isolation Monitor, capturing how pharmacy access barriers compound transportation and social barriers.",
+    "description": "Monitors prescription fill rates, dose adherence, cost-driven non-adherence, and generic/assistance program access for low- and medium-income adults managing chronic conditions at home. Medication cost barriers are a leading driver of avoidable hospitalization and disease progression in economically vulnerable populations. Output at [2011:2015] feeds the Home Social Isolation Monitor, capturing how pharmacy access barriers compound transportation and social barriers.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Medication Access / Cost Barriers",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [2015:2019]: [1,0,0,0]=ADHERENCE_CRISIS, [0,1,0,0]=COST_BARRIER_ACTIVE, [0,0,1,0]=PARTIAL_ADHERENCE, [0,0,0,1]=MEDICATION_MANAGED",
+      "outputSpace": "4D binary at [2011:2015]: [1,0,0,0]=ADHERENCE_CRISIS, [0,1,0,0]=COST_BARRIER_ACTIVE, [0,0,1,0]=PARTIAL_ADHERENCE, [0,0,0,1]=MEDICATION_MANAGED",
       "tags": [
         "healthcare",
         "home health",
@@ -26,16 +26,16 @@
         "cost_barrier_norm": "0.0=cost explicitly cited as reason for not filling (unaffordable even with insurance), 0.5=difficulty but managing with assistance, 1.0=no cost barrier reported",
         "generic_access_norm": "0.0=no access to generic or assistance programs; paying full brand price or going without, 0.5=partial program access (copay cards, one drug covered), 1.0=fully enrolled in PAP or full generic coverage"
       },
-      "downstreamMachine": "HomeSocialIsolationMonitor (reads [2015:2023])"
+      "downstreamMachine": "HomeSocialIsolationMonitor (reads [2011:2019])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 1983,
+        "offset": 1979,
         "length": 4
       },
       "output": {
-        "offset": 2015,
+        "offset": 2011,
         "length": 4
       }
     },
@@ -146,7 +146,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "ADHERENCE_CRISIS: complete medication non-adherence due to cost barrier at [2015:2019]",
+                  "description": "ADHERENCE_CRISIS: complete medication non-adherence due to cost barrier at [2011:2015]",
                   "action": "Patient assistance program enrollment; 340B pharmacy referral; social worker outreach; emergency supply bridge"
                 }
               }
@@ -199,7 +199,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "COST_BARRIER_ACTIVE: ongoing cost barrier to prescribed medications at [2015:2019]",
+                  "description": "COST_BARRIER_ACTIVE: ongoing cost barrier to prescribed medications at [2011:2015]",
                   "action": "Pharmacy assistance program review; GoodRx/NeedyMeds screening; formulary substitution review"
                 }
               }
@@ -252,7 +252,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "MEDICATION_MANAGED: prescription access and adherence adequate at [2015:2019]",
+                  "description": "MEDICATION_MANAGED: prescription access and adherence adequate at [2011:2015]",
                   "action": "Social isolation monitor registers medication access stable"
                 }
               }

@@ -1,0 +1,359 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Life Balance Medication And Psychiatric Care Mood Stabilization Monitor",
+    "description": "Life-balance machine for mood stabilization monitor in the medication and psychiatric care workstream. It monitors mood variability, irritability, sleep shift, activation, and safety signals to support lifestyle-psychiatry workflows spanning psychiatric care, nutrition, sleep, movement, stress resilience, monitoring, and projection. Example only; not medical advice.",
+    "metadata": {
+      "category": "life-balance",
+      "domain": "Life Balance - Medication And Psychiatric Care",
+      "author": "Reality Engine",
+      "workstream": "Medication And Psychiatric Care",
+      "operationalFocus": "Mood Stabilization Monitor",
+      "focusDescription": "mood variability, irritability, sleep shift, activation, and safety signals",
+      "sourceContext": [
+        "Ann Childers, MD public lifestyle-psychiatry biography emphasizing mainstream psychiatry, nutrition, sleep, general health, CGM, genetics, and temperament testing.",
+        "Lifestyle psychiatry six-pillar framing: nutrition, sleep, movement, stress management, relationships, and harm reduction."
+      ],
+      "clinicalSafety": "Example workflow automation only; outputs route to review, plan adjustment, monitoring, or stable status and are not diagnosis or treatment.",
+      "upstreamMachine": "healthcare mapped output",
+      "upstreamDomain": "healthcare",
+      "upstreamOutputRegion": "[3811:3815]",
+      "upstreamPurpose": "medication-adherence signal for psychiatric care response",
+      "downstreamMachines": [
+        "Life Balance Medication And Psychiatric Care Anxiety Treatment Response"
+      ],
+      "crossDomainInterconnect": true,
+      "crossDomainOutputTarget": null,
+      "crossDomainOutputPurpose": null,
+      "dispatchableAgent": "psychiatric_care_agent",
+      "aiTrigger": "life-balance-medication-and-psychiatric-care-mood-stabilization-monitor",
+      "predictiveProjectionTrigger": "life-balance-projection-medication-and-psychiatric-care-mood-stabilization-monitor",
+      "agentActions": [
+        "Route mood stabilization monitor concern to licensed care-team review.",
+        "Adjust the life-balance plan for mood stabilization monitor using patient goals, barriers, and preferences.",
+        "Create monitoring or follow-up task for mood stabilization monitor.",
+        "Continue stable life-balance monitoring for mood stabilization monitor."
+      ],
+      "inputSpace": "4D binary at [3811:3815]",
+      "outputSpace": "4D binary at [3067:3071]: [1,0,0,0]=CARE_TEAM_REVIEW, [0,1,0,0]=LIFESTYLE_PLAN_ADJUST, [0,0,1,0]=MONITORING_TASK, [0,0,0,1]=STABLE_BALANCE",
+      "inputSemantics": [
+        "symptom or functional concern",
+        "lifestyle barrier or preference",
+        "monitoring data quality or readiness",
+        "risk, safety, or care-team urgency"
+      ],
+      "tags": [
+        "life-balance",
+        "lifestyle-psychiatry",
+        "nutrition",
+        "sleep",
+        "metabolic-health",
+        "cgm",
+        "temperament-testing",
+        "adolescent-psychiatry",
+        "projection",
+        "automation",
+        "medication-and-psychiatric-care",
+        "mood-stabilization-monitor"
+      ],
+      "sequenceCount": 4,
+      "reuseGuideline": "Map patient-reported outcomes, sleep logs, nutrition journals, CGM summaries, activity data, medication observations, temperament/genetics notes, and care-team review status into the 4D input lane. Route outputs to licensed clinician review, plan adjustment, monitoring tasks, or stable follow-up.",
+      "domainEndToEndSequenceCount": 0
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 3811,
+        "length": 4
+      },
+      "output": {
+        "offset": 3067,
+        "length": 4
+      }
+    },
+    "sequences": [
+      {
+        "id": "lbl-056-care-team-review",
+        "name": "Mood Stabilization Monitor: WATCH -> CARE_TEAM_REVIEW",
+        "metadata": {
+          "description": "Escalates clinical or safety concern for care-team review.",
+          "output": "[1,0,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "lbl-056-watch",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "nextVectorIds": [
+              "lbl-056-review"
+            ]
+          },
+          {
+            "id": "lbl-056-review",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": false,
+            "outputVectors": [
+              {
+                "id": "lbl-056-review-output",
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Route mood stabilization monitor concern to licensed care-team review."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lbl-056-plan-adjust",
+        "name": "Mood Stabilization Monitor: BARRIER -> LIFESTYLE_PLAN_ADJUST",
+        "metadata": {
+          "description": "Adjusts lifestyle plan based on barriers and preferences.",
+          "output": "[0,1,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "lbl-056-barrier",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "lbl-056-plan-output",
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Adjust the life-balance plan for mood stabilization monitor using patient goals, barriers, and preferences."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lbl-056-monitoring-task",
+        "name": "Mood Stabilization Monitor: DATA_GAP -> MONITORING_TASK",
+        "metadata": {
+          "description": "Creates monitoring, journaling, lab, CGM, wearable, or follow-up task.",
+          "output": "[0,0,1,0]"
+        },
+        "vectors": [
+          {
+            "id": "lbl-056-data-gap",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "lbl-056-monitor-output",
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "action": "Create monitoring or follow-up task for mood stabilization monitor."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lbl-056-stable-balance",
+        "name": "Mood Stabilization Monitor: STABLE -> STABLE_BALANCE",
+        "metadata": {
+          "description": "Confirms stable life-balance plan state.",
+          "output": "[0,0,0,1]"
+        },
+        "vectors": [
+          {
+            "id": "lbl-056-stable",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "lbl-056-stable-output",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "metadata": {
+                  "action": "Continue stable life-balance monitoring for mood stabilization monitor."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Care team review",
+        "description": "Two-step concern escalation ending in care-team review.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0,0,0]",
+          "scenario": "care-team-review",
+          "sequenceLength": 2
+        }
+      },
+      {
+        "name": "Lifestyle plan adjustment",
+        "description": "Barrier or preference signal adjusts the lifestyle plan.",
+        "vectors": [
+          [
+            0,
+            1,
+            1,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,1,0,0]",
+          "scenario": "lifestyle-plan-adjust"
+        }
+      },
+      {
+        "name": "Monitoring task",
+        "description": "Data gap creates a monitoring or follow-up task.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,1,0]",
+          "scenario": "monitoring-task"
+        }
+      },
+      {
+        "name": "Stable balance",
+        "description": "Stable state confirms the plan remains in range.",
+        "vectors": [
+          [
+            1,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,0,1]",
+          "scenario": "stable-balance"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Initial observation arms the review path without firing.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

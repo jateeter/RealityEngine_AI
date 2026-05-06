@@ -144,8 +144,8 @@ that directory is **auto-loaded at engine startup** (see
 `scala/.../Routes.scala::loadDefaultMachines`), so adding a new file and
 restarting the stack is all that's needed — no allowlist to edit.
 
-The generated example corpus currently contains `906` startup-loadable machines
-across `10` active domains. The searchable index is generated at
+The generated example corpus currently contains `1006` startup-loadable machines
+across `11` active domains. The searchable index is generated at
 [`docs/EXAMPLE_DOMAIN_COMPENDIUM.md`](docs/EXAMPLE_DOMAIN_COMPENDIUM.md), and
 the current packed domain/bridge layout is documented in
 [`docs/DOMAIN_PERCEPTUAL_SPACE_REMAP.md`](docs/DOMAIN_PERCEPTUAL_SPACE_REMAP.md).
@@ -153,6 +153,10 @@ The community-services domain now includes `102` machines, including `90`
 generated examples for health and human services, law enforcement/public safety,
 homelessness response, city operations, and bridge interconnects to
 health-services and transportation.
+The life-balance domain adds `100` machines for lifestyle-psychiatry workflow
+tracking, projection, and automation across intake, nutrition, sleep, movement,
+stress resilience, psychiatric care, adolescent/family support, monitoring, and
+care-team escalation.
 
 ```bash
 # Via API

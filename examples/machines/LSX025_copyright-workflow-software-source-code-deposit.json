@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for software source code deposit.",
         "Mark software source code deposit ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2239:2243]",
-      "outputSpace": "4D binary at [2243:2247]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2235:2239]",
+      "outputSpace": "4D binary at [2239:2243]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2239,
+        "offset": 2235,
         "length": 4
       },
       "output": {
-        "offset": 2243,
+        "offset": 2239,
         "length": 4
       }
     },

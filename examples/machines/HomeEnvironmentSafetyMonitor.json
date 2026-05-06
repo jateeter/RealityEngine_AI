@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Environment Safety Monitor",
-    "description": "Monitors housing quality conditions that directly affect resident health in low- and medium-income households. Tracks temperature stability (heating/cooling reliability), air quality (mold, lead, particulates), structural hazards, and utility shutoff risk. These social determinants of health are disproportionately present in aging rental housing stock occupied by economically vulnerable families. Output at [2003:2007] feeds the Adolescent Mental Health Monitor.",
+    "description": "Monitors housing quality conditions that directly affect resident health in low- and medium-income households. Tracks temperature stability (heating/cooling reliability), air quality (mold, lead, particulates), structural hazards, and utility shutoff risk. These social determinants of health are disproportionately present in aging rental housing stock occupied by economically vulnerable families. Output at [1999:2003] feeds the Adolescent Mental Health Monitor.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Social Determinants / Housing Safety",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [2003:2007]: [1,0,0,0]=UNSAFE_HOUSING, [0,1,0,0]=UTILITY_FAILURE, [0,0,1,0]=HEALTH_HAZARD_RISK, [0,0,0,1]=ENVIRONMENT_SAFE",
+      "outputSpace": "4D binary at [1999:2003]: [1,0,0,0]=UNSAFE_HOUSING, [0,1,0,0]=UTILITY_FAILURE, [0,0,1,0]=HEALTH_HAZARD_RISK, [0,0,0,1]=ENVIRONMENT_SAFE",
       "tags": [
         "healthcare",
         "home health",
@@ -27,16 +27,16 @@
         "structural_safety_norm": "0.0=multiple active structural hazards (roof leak, electrical, falling plaster), 0.5=minor deferred maintenance, 1.0=structurally sound",
         "utility_reliability_norm": "0.0=active shutoff notice or disconnected, 0.5=past-due balance with shutoff risk, 1.0=current and reliable service"
       },
-      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [2003:2007])"
+      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [1999:2003])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 1971,
+        "offset": 1967,
         "length": 4
       },
       "output": {
-        "offset": 2003,
+        "offset": 1999,
         "length": 4
       }
     },
@@ -147,7 +147,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "UNSAFE_HOUSING: habitability crisis requiring housing authority intervention at [2003:2007]",
+                  "description": "UNSAFE_HOUSING: habitability crisis requiring housing authority intervention at [1999:2003]",
                   "action": "Housing code complaint; emergency shelter referral; children's services notification if children present"
                 }
               }
@@ -261,7 +261,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "UTILITY_FAILURE: utility shutoff imminent or active at [2003:2007]",
+                  "description": "UTILITY_FAILURE: utility shutoff imminent or active at [1999:2003]",
                   "action": "LIHEAP/utility assistance referral; emergency fund application; health impacts assessment for vulnerable residents"
                 }
               }
@@ -314,7 +314,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "ENVIRONMENT_SAFE: home environment supports healthy resident outcomes at [2003:2007]",
+                  "description": "ENVIRONMENT_SAFE: home environment supports healthy resident outcomes at [1999:2003]",
                   "action": "Downstream adolescent mental health monitor registers stable home environment"
                 }
               }

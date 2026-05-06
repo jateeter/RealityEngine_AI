@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for filing package assembly.",
         "Mark filing package assembly ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2111:2115]",
-      "outputSpace": "4D binary at [2115:2119]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2107:2111]",
+      "outputSpace": "4D binary at [2111:2115]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2111,
+        "offset": 2107,
         "length": 4
       },
       "output": {
-        "offset": 2115,
+        "offset": 2111,
         "length": 4
       }
     },

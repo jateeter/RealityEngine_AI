@@ -30,7 +30,7 @@
         "Maintain monitored service path for public trust feedback loop."
       ],
       "inputSpace": "4D binary at [1336:1340]",
-      "outputSpace": "4D binary at [3495:3499]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
+      "outputSpace": "4D binary at [3895:3899]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
       "inputSemantics": [
         "resident need severity",
         "eligibility and documentation readiness",
@@ -52,7 +52,7 @@
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map 311, case-management, CAD/RMS, shelter HMIS, benefit enrollment, outreach, public health, and transit-access signals into the 4D input lane. Route outputs to case workers, mobile crisis, public safety, housing navigators, field crews, transportation dispatch, or health-service agents.",
-      "downstreamPattern": "Output region [3495:3499] feeds Community Services Community Executive Optimization Community Services Command Center."
+      "downstreamPattern": "Output region [3895:3899] feeds Community Services Community Executive Optimization Community Services Command Center."
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -61,7 +61,7 @@
         "length": 4
       },
       "output": {
-        "offset": 3495,
+        "offset": 3895,
         "length": 4
       }
     },

@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for m and a ip diligence.",
         "Mark m and a ip diligence ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2623:2627]",
-      "outputSpace": "4D binary at [2627:2631]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2619:2623]",
+      "outputSpace": "4D binary at [2623:2627]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2623,
+        "offset": 2619,
         "length": 4
       },
       "output": {
-        "offset": 2627,
+        "offset": 2623,
         "length": 4
       }
     },

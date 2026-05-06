@@ -12,7 +12,7 @@
       "focusDescription": "age, cognitive risk, last location, transit linkage, and search coordination",
       "upstreamMachine": "transportation mapped output",
       "upstreamDomain": "transportation",
-      "upstreamOutputRegion": "[3463:3467]",
+      "upstreamOutputRegion": "[3863:3867]",
       "upstreamPurpose": "onboard public safety alert",
       "downstreamMachines": [
         "Community Services Law Enforcement And Public Safety Traffic Safety Enforcement"
@@ -29,7 +29,7 @@
         "Create field work order or mobile team task for missing vulnerable person coordination.",
         "Maintain monitored service path for missing vulnerable person coordination."
       ],
-      "inputSpace": "4D binary at [3463:3467]",
+      "inputSpace": "4D binary at [3863:3867]",
       "outputSpace": "4D binary at [1136:1140]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
       "inputSemantics": [
         "resident need severity",
@@ -57,7 +57,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3463,
+        "offset": 3863,
         "length": 4
       },
       "output": {

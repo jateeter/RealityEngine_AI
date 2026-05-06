@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "machine": {
     "name": "Ag Yield Optimization AI",
-    "description": "AI-augmented yield optimization engine that synthesizes nutrient cycle quality, IPM pest pressure, and harvest readiness signals across the entire agricultural deployment. Implements corrective strategies: when nutrient lockout co-occurs with pest pressure, triggers emergency intervention; when harvest approaches with clear IPM status, optimizes the final push for peak yield; monitors recovery trajectories to forecast adjusted harvest windows. Reads outputs from AgNutrientCycleOptimizer [3559:3563], AgIPMPestAlertMonitor [3563:3567], and AgHarvestReadinessAssessor [3567:3571]. Cross-domain: this machine bridges the Agriculture and AI domains.",
+    "description": "AI-augmented yield optimization engine that synthesizes nutrient cycle quality, IPM pest pressure, and harvest readiness signals across the entire agricultural deployment. Implements corrective strategies: when nutrient lockout co-occurs with pest pressure, triggers emergency intervention; when harvest approaches with clear IPM status, optimizes the final push for peak yield; monitors recovery trajectories to forecast adjusted harvest windows. Reads outputs from AgNutrientCycleOptimizer [3959:3963], AgIPMPestAlertMonitor [3963:3967], and AgHarvestReadinessAssessor [3967:3971]. Cross-domain: this machine bridges the Agriculture and AI domains.",
     "metadata": {
       "category": "ai-services",
       "domain": "Agriculture — AI Yield Optimization",
@@ -19,7 +19,7 @@
         "kleene-plus"
       ],
       "sequenceCount": 3,
-      "crossDomainNote": "This machine is authored as an AI-pipeline component. Its input reads from the Agriculture domain perceptual space [3559:3571] while its outputs can trigger actions processed by the broader AI/decision layer at [310:316]. Category 'ai-pipeline' overrides the 'Ag' name prefix to correctly classify it in the AI domain.",
+      "crossDomainNote": "This machine is authored as an AI-pipeline component. Its input reads from the Agriculture domain perceptual space [3959:3971] while its outputs can trigger actions processed by the broader AI/decision layer at [310:316]. Category 'ai-pipeline' overrides the 'Ag' name prefix to correctly classify it in the AI domain.",
       "inputSignalMap": {
         "elem_0": "NUTRIENT_LOCKOUT from AgNutrientCycleOptimizer [284]",
         "elem_1": "UPTAKE_MISMATCH from AgNutrientCycleOptimizer [285]",
@@ -35,9 +35,9 @@
         "elem_11": "HARVEST_READY from AgHarvestReadinessAssessor [295]"
       },
       "upstreamMachines": [
-        "AgNutrientCycleOptimizer (output at [3559:3563])",
-        "AgIPMPestAlertMonitor (output at [3563:3567])",
-        "AgHarvestReadinessAssessor (output at [3567:3571])"
+        "AgNutrientCycleOptimizer (output at [3959:3963])",
+        "AgIPMPestAlertMonitor (output at [3963:3967])",
+        "AgHarvestReadinessAssessor (output at [3967:3971])"
       ],
       "regularExpression": {
         "emergency": "NUTRIENT_LOCKOUT + PEST_ALERT → EMERGENCY_INTERVENTION",
@@ -49,7 +49,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3559,
+        "offset": 3959,
         "length": 12
       },
       "output": {

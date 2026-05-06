@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for post registration maintenance.",
         "Mark post registration maintenance ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2199:2203]",
-      "outputSpace": "4D binary at [2203:2207]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2195:2199]",
+      "outputSpace": "4D binary at [2199:2203]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2199,
+        "offset": 2195,
         "length": 4
       },
       "output": {
-        "offset": 2203,
+        "offset": 2199,
         "length": 4
       }
     },

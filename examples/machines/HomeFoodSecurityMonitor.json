@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Food Security Monitor",
-    "description": "Monitors household food access, meal frequency, and nutrition assistance engagement for low- and medium-income families receiving home-based care. Tracks the progression from adequate food access through food insecurity to crisis conditions requiring immediate SNAP, WIC, or food-bank referral. Output at [1999:2003] feeds the Adolescent Mental Health Monitor, reflecting the documented link between food insecurity and adolescent behavioral health outcomes.",
+    "description": "Monitors household food access, meal frequency, and nutrition assistance engagement for low- and medium-income families receiving home-based care. Tracks the progression from adequate food access through food insecurity to crisis conditions requiring immediate SNAP, WIC, or food-bank referral. Output at [1995:1999] feeds the Adolescent Mental Health Monitor, reflecting the documented link between food insecurity and adolescent behavioral health outcomes.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Social Determinants / Food Security",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [1999:2003]: [1,0,0,0]=FOOD_CRISIS, [0,1,0,0]=FOOD_INSECURE, [0,0,1,0]=ASSISTANCE_NEEDED, [0,0,0,1]=FOOD_SECURE",
+      "outputSpace": "4D binary at [1995:1999]: [1,0,0,0]=FOOD_CRISIS, [0,1,0,0]=FOOD_INSECURE, [0,0,1,0]=ASSISTANCE_NEEDED, [0,0,0,1]=FOOD_SECURE",
       "tags": [
         "healthcare",
         "home health",
@@ -27,16 +27,16 @@
         "pantry_days_norm": "0.0=empty pantry (0 days supply), 0.5=3–5 day supply, 1.0=2+ week supply",
         "food_assistance_norm": "0.0=no assistance active (not enrolled or access lapsed), 0.5=partial benefit (SNAP pending/partial), 1.0=full assistance active (SNAP/WIC/food bank regular)"
       },
-      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [1999:2003])"
+      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [1995:1999])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 1967,
+        "offset": 1963,
         "length": 4
       },
       "output": {
-        "offset": 1999,
+        "offset": 1995,
         "length": 4
       }
     },
@@ -181,7 +181,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "FOOD_CRISIS: immediate food assistance referral required at [1999:2003]",
+                  "description": "FOOD_CRISIS: immediate food assistance referral required at [1995:1999]",
                   "action": "Emergency food bank referral; SNAP expedited application; care coordinator notification"
                 }
               }
@@ -234,7 +234,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "ASSISTANCE_NEEDED: household qualifies for food assistance but not enrolled at [1999:2003]",
+                  "description": "ASSISTANCE_NEEDED: household qualifies for food assistance but not enrolled at [1995:1999]",
                   "action": "Benefits navigator outreach; screen for SNAP/WIC eligibility; food bank connection"
                 }
               }
@@ -287,7 +287,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "FOOD_SECURE: household food access adequate at [1999:2003]",
+                  "description": "FOOD_SECURE: household food access adequate at [1995:1999]",
                   "action": "Downstream adolescent mental health monitor registers stable food environment"
                 }
               }

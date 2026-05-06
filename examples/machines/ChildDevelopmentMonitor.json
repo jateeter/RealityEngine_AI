@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Child Development Monitor",
-    "description": "Tracks developmental milestone progress, social-emotional engagement, language acquisition, and learning readiness for children ages 0–12 in low- and medium-income home care settings. Early identification of developmental delays in economically vulnerable households is critical because access to early intervention services (EI, speech therapy, occupational therapy) is income- and geography-dependent. Output at [2011:2015] feeds the Home Caregiver Burden Monitor alongside the Pediatric Nutrition Monitor.",
+    "description": "Tracks developmental milestone progress, social-emotional engagement, language acquisition, and learning readiness for children ages 0–12 in low- and medium-income home care settings. Early identification of developmental delays in economically vulnerable households is critical because access to early intervention services (EI, speech therapy, occupational therapy) is income- and geography-dependent. Output at [2007:2011] feeds the Home Caregiver Burden Monitor alongside the Pediatric Nutrition Monitor.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Pediatric / Child Development",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [2011:2015]: [1,0,0,0]=REFERRAL_NEEDED, [0,1,0,0]=SOCIAL_DEVELOPMENTAL_CONCERN, [0,0,1,0]=LEARNING_CONCERN, [0,0,0,1]=DEVELOPMENT_OK",
+      "outputSpace": "4D binary at [2007:2011]: [1,0,0,0]=REFERRAL_NEEDED, [0,1,0,0]=SOCIAL_DEVELOPMENTAL_CONCERN, [0,0,1,0]=LEARNING_CONCERN, [0,0,0,1]=DEVELOPMENT_OK",
       "tags": [
         "healthcare",
         "pediatric",
@@ -26,16 +26,16 @@
         "language_score_norm": "0.0=non-verbal or severely limited expressive/receptive language for age, 0.5=borderline language development, 1.0=age-appropriate or advanced language",
         "learning_engagement_norm": "0.0=disengaged; unable to focus; school-readiness concerns, 0.5=partial engagement with support needs, 1.0=curious and engaged learner"
       },
-      "downstreamMachine": "HomeCaregiverBurdenMonitor (reads [2007:2015])"
+      "downstreamMachine": "HomeCaregiverBurdenMonitor (reads [2003:2011])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 1979,
+        "offset": 1975,
         "length": 4
       },
       "output": {
-        "offset": 2011,
+        "offset": 2007,
         "length": 4
       }
     },
@@ -176,7 +176,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "REFERRAL_NEEDED: multi-domain developmental delay requiring early intervention referral at [2011:2015]",
+                  "description": "REFERRAL_NEEDED: multi-domain developmental delay requiring early intervention referral at [2007:2011]",
                   "action": "Early intervention referral; developmental pediatrician evaluation; speech/OT/PT screening"
                 }
               }
@@ -290,7 +290,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "SOCIAL_DEVELOPMENTAL_CONCERN: child social-emotional withdrawal requiring behavioral health screening at [2011:2015]",
+                  "description": "SOCIAL_DEVELOPMENTAL_CONCERN: child social-emotional withdrawal requiring behavioral health screening at [2007:2011]",
                   "action": "Developmental-behavioral pediatrics referral; ACE screening; caregiver mental health check"
                 }
               }
@@ -343,7 +343,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "DEVELOPMENT_OK: child development on track for age and context at [2011:2015]",
+                  "description": "DEVELOPMENT_OK: child development on track for age and context at [2007:2011]",
                   "action": "Caregiver burden monitor registers healthy child developmental state"
                 }
               }

@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Ag Plant Growth Cycle Monitor",
-    "description": "Aggregates temperature and irrigation state signals to assess overall plant growth conditions. Reads binary output signals from AgZoneTemperatureController [20:24] and AgIrrigationFlowController [24:28]. Detects temperature stress, water stress, and dual-stress combinations that suppress vegetative growth rate. Output feeds AgHarvestReadinessAssessor at [3555:3559].",
+    "description": "Aggregates temperature and irrigation state signals to assess overall plant growth conditions. Reads binary output signals from AgZoneTemperatureController [20:24] and AgIrrigationFlowController [24:28]. Detects temperature stress, water stress, and dual-stress combinations that suppress vegetative growth rate. Output feeds AgHarvestReadinessAssessor at [3955:3959].",
     "metadata": {
       "category": "agriculture",
       "domain": "Agriculture — Plant Growth / Crop Monitoring",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [3555:3559]: [1,0,0,0]=TEMP_STRESS, [0,1,0,0]=WATER_STRESS, [0,0,1,0]=DUAL_STRESS, [0,0,0,1]=GROWTH_OK",
+      "outputSpace": "4D binary at [3955:3959]: [1,0,0,0]=TEMP_STRESS, [0,1,0,0]=WATER_STRESS, [0,0,1,0]=DUAL_STRESS, [0,0,0,1]=GROWTH_OK",
       "tags": [
         "agriculture",
         "plant growth",
@@ -32,7 +32,7 @@
         "AgZoneTemperatureController (output at [20:24])",
         "AgIrrigationFlowController (output at [24:28])"
       ],
-      "downstreamMachine": "AgHarvestReadinessAssessor (reads [3555:3559])"
+      "downstreamMachine": "AgHarvestReadinessAssessor (reads [3955:3959])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -41,7 +41,7 @@
         "length": 8
       },
       "output": {
-        "offset": 3555,
+        "offset": 3955,
         "length": 4
       }
     },
@@ -200,7 +200,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "GROWTH_OK: plant growth conditions optimal at [3555:3559]",
+                  "description": "GROWTH_OK: plant growth conditions optimal at [3955:3959]",
                   "action": "Harvest readiness assessor registers healthy vegetative state"
                 }
               }
@@ -362,7 +362,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "TEMP_STRESS: temperature-induced growth suppression detected at [3555:3559]",
+                  "description": "TEMP_STRESS: temperature-induced growth suppression detected at [3955:3959]",
                   "action": "Harvest timeline extended; AI optimizer informed of stress condition"
                 }
               }
@@ -524,7 +524,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "WATER_STRESS: water-deficit growth suppression detected at [3555:3559]",
+                  "description": "WATER_STRESS: water-deficit growth suppression detected at [3955:3959]",
                   "action": "Harvest timeline extended; AI optimizer adjusts irrigation strategy"
                 }
               }

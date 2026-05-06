@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for document version control.",
         "Mark document version control ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2399:2403]",
-      "outputSpace": "4D binary at [2403:2407]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2395:2399]",
+      "outputSpace": "4D binary at [2399:2403]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2399,
+        "offset": 2395,
         "length": 4
       },
       "output": {
-        "offset": 2403,
+        "offset": 2399,
         "length": 4
       }
     },

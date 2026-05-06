@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for contractor contributor controls.",
         "Mark contractor contributor controls ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2303:2307]",
-      "outputSpace": "4D binary at [2307:2311]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2299:2303]",
+      "outputSpace": "4D binary at [2303:2307]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2303,
+        "offset": 2299,
         "length": 4
       },
       "output": {
-        "offset": 2307,
+        "offset": 2303,
         "length": 4
       }
     },

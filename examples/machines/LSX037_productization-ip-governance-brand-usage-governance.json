@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for brand usage governance.",
         "Mark brand usage governance ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2335:2339]",
-      "outputSpace": "4D binary at [2339:2343]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2331:2335]",
+      "outputSpace": "4D binary at [2335:2339]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2335,
+        "offset": 2331,
         "length": 4
       },
       "output": {
-        "offset": 2339,
+        "offset": 2335,
         "length": 4
       }
     },

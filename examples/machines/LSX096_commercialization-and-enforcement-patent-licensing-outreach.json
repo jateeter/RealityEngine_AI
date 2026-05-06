@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for patent licensing outreach.",
         "Mark patent licensing outreach ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2807:2811]",
-      "outputSpace": "4D binary at [2811:2815]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2803:2807]",
+      "outputSpace": "4D binary at [2807:2811]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2807,
+        "offset": 2803,
         "length": 4
       },
       "output": {
-        "offset": 2811,
+        "offset": 2807,
         "length": 4
       }
     },

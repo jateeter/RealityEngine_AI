@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for certificate and record docket.",
         "Mark certificate and record docket ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2271:2275]",
-      "outputSpace": "4D binary at [2275:2279]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2267:2271]",
+      "outputSpace": "4D binary at [2271:2275]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2271,
+        "offset": 2267,
         "length": 4
       },
       "output": {
-        "offset": 2275,
+        "offset": 2271,
         "length": 4
       }
     },

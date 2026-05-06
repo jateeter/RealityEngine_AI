@@ -10,7 +10,7 @@
       "operationalFocus": "Fire Suppression Readiness",
       "focusDescription": "pre-action pressure, detection loop health, bottle pressure, and inspection status",
       "upstreamMachine": "Data Center Leak Detection Response",
-      "upstreamOutputRegion": "[3699:3703]",
+      "upstreamOutputRegion": "[4099:4103]",
       "downstreamMachines": [],
       "projectionHorizon": "24h",
       "projectionWindows": [
@@ -29,8 +29,8 @@
         "Keep 24/7 monitoring active for fire suppression readiness.",
         "Project fire suppression readiness forward over the next 24 hours and prescribe maintenance or upgrade work before the risk window opens."
       ],
-      "inputSpace": "4D binary at [3699:3703]",
-      "outputSpace": "4D binary at [3705:3709]: [1,0,0,0]=URGENT_INTERVENTION, [0,1,0,0]=SCHEDULE_MAINTENANCE, [0,0,1,0]=PLAN_UPGRADE, [0,0,0,1]=OPERATING_NOMINAL",
+      "inputSpace": "4D binary at [4099:4103]",
+      "outputSpace": "4D binary at [4105:4109]: [1,0,0,0]=URGENT_INTERVENTION, [0,1,0,0]=SCHEDULE_MAINTENANCE, [0,0,1,0]=PLAN_UPGRADE, [0,0,0,1]=OPERATING_NOMINAL",
       "inputSemantics": [
         "availability margin",
         "maintenance readiness",
@@ -47,16 +47,16 @@
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Use as a 24/7 operational guardrail. Map telemetry, CMDB, change, or AI-dispatch signals into the 4D input lane; map outputs to incident, maintenance, upgrade, or executive-summary machines.",
-      "downstreamPattern": "Output region [3705:3709] is available to incident, maintenance, upgrade, and executive-summary automation."
+      "downstreamPattern": "Output region [4105:4109] is available to incident, maintenance, upgrade, and executive-summary automation."
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3699,
+        "offset": 4099,
         "length": 4
       },
       "output": {
-        "offset": 3705,
+        "offset": 4105,
         "length": 4
       }
     },

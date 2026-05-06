@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for artifact classification agent.",
         "Mark artifact classification agent ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2495:2499]",
-      "outputSpace": "4D binary at [2499:2503]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2491:2495]",
+      "outputSpace": "4D binary at [2495:2499]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2495,
+        "offset": 2491,
         "length": 4
       },
       "output": {
-        "offset": 2499,
+        "offset": 2495,
         "length": 4
       }
     },

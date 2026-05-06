@@ -30,7 +30,7 @@
         "Maintain monitored service path for encampment risk assessment."
       ],
       "inputSpace": "4D binary at [1200:1204]",
-      "outputSpace": "4D binary at [3455:3459]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
+      "outputSpace": "4D binary at [3855:3859]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
       "inputSemantics": [
         "resident need severity",
         "eligibility and documentation readiness",
@@ -52,7 +52,7 @@
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map 311, case-management, CAD/RMS, shelter HMIS, benefit enrollment, outreach, public health, and transit-access signals into the 4D input lane. Route outputs to case workers, mobile crisis, public safety, housing navigators, field crews, transportation dispatch, or health-service agents.",
-      "downstreamPattern": "Output region [3455:3459] feeds Community Services Homelessness Outreach Unsheltered Health Referral."
+      "downstreamPattern": "Output region [3855:3859] feeds Community Services Homelessness Outreach Unsheltered Health Referral."
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -61,7 +61,7 @@
         "length": 4
       },
       "output": {
-        "offset": 3455,
+        "offset": 3855,
         "length": 4
       }
     },

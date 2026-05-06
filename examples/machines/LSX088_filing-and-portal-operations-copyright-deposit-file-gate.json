@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for copyright deposit file gate.",
         "Mark copyright deposit file gate ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2743:2747]",
-      "outputSpace": "4D binary at [2747:2751]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2739:2743]",
+      "outputSpace": "4D binary at [2743:2747]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2743,
+        "offset": 2739,
         "length": 4
       },
       "output": {
-        "offset": 2747,
+        "offset": 2743,
         "length": 4
       }
     },

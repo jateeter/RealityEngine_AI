@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for joint development ip gate.",
         "Mark joint development ip gate ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2815:2819]",
-      "outputSpace": "4D binary at [2819:2823]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2811:2815]",
+      "outputSpace": "4D binary at [2815:2819]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2815,
+        "offset": 2811,
         "length": 4
       },
       "output": {
-        "offset": 2819,
+        "offset": 2815,
         "length": 4
       }
     },

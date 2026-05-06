@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Chronic Pain Monitor",
-    "description": "Monitors pain intensity, functional impairment, opioid risk indicators, and physical activity for adults managing chronic pain at home in low- and medium-income settings. Chronic pain is disproportionately prevalent in low-income populations due to occupational injury, inadequate early treatment, and limited access to non-pharmacological interventions. Unmanaged chronic pain is a primary driver of depression and social isolation. Output at [2027:2031] feeds the Home Mental Health Access Monitor alongside the Chronic Disease Monitor.",
+    "description": "Monitors pain intensity, functional impairment, opioid risk indicators, and physical activity for adults managing chronic pain at home in low- and medium-income settings. Chronic pain is disproportionately prevalent in low-income populations due to occupational injury, inadequate early treatment, and limited access to non-pharmacological interventions. Unmanaged chronic pain is a primary driver of depression and social isolation. Output at [2023:2027] feeds the Home Mental Health Access Monitor alongside the Chronic Disease Monitor.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Chronic Pain Management",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [2027:2031]: [1,0,0,0]=PAIN_CRISIS, [0,1,0,0]=OPIOID_RISK_ELEVATED, [0,0,1,0]=FUNCTIONAL_IMPAIRMENT, [0,0,0,1]=PAIN_MANAGED",
+      "outputSpace": "4D binary at [2023:2027]: [1,0,0,0]=PAIN_CRISIS, [0,1,0,0]=OPIOID_RISK_ELEVATED, [0,0,1,0]=FUNCTIONAL_IMPAIRMENT, [0,0,0,1]=PAIN_MANAGED",
       "tags": [
         "healthcare",
         "home health",
@@ -26,16 +26,16 @@
         "opioid_risk_norm": "0.0=multiple opioid risk flags (early refills, sedation signs, diversion indicators, dose escalation without consult), 0.5=one risk factor present (borderline early refill; PRN overuse), 1.0=no opioid risk indicators; stable prescribed use or non-opioid pain management",
         "physical_activity_norm": "0.0=zero physical activity; complete deconditioning, 0.5=minimal movement with assistance; ADL-level activity only, 1.0=regular therapeutic activity; walking program or PT adherent"
       },
-      "downstreamMachine": "HomeMentalHealthAccessMonitor (reads [2023:2031])"
+      "downstreamMachine": "HomeMentalHealthAccessMonitor (reads [2019:2027])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 1995,
+        "offset": 1991,
         "length": 4
       },
       "output": {
-        "offset": 2027,
+        "offset": 2023,
         "length": 4
       }
     },
@@ -146,7 +146,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "PAIN_CRISIS: uncontrolled acute pain episode requiring urgent pain management intervention at [2027:2031]",
+                  "description": "PAIN_CRISIS: uncontrolled acute pain episode requiring urgent pain management intervention at [2023:2027]",
                   "action": "Urgent nurse visit; physician pain consult; medication adjustment; crisis pain plan activation"
                 }
               }
@@ -230,7 +230,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "OPIOID_RISK_ELEVATED: opioid misuse or overuse pattern detected at [2027:2031]",
+                  "description": "OPIOID_RISK_ELEVATED: opioid misuse or overuse pattern detected at [2023:2027]",
                   "action": "ORT/DIRE risk re-screening; physician medication review; urine drug screen; PDMP check; non-opioid alternative assessment"
                 }
               }
@@ -283,7 +283,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "FUNCTIONAL_IMPAIRMENT: chronic pain causing sustained ADL and activity limitation at [2027:2031]",
+                  "description": "FUNCTIONAL_IMPAIRMENT: chronic pain causing sustained ADL and activity limitation at [2023:2027]",
                   "action": "PT referral; pain management plan review; occupational therapy for adaptive function; depression screening"
                 }
               }
@@ -336,7 +336,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "PAIN_MANAGED: chronic pain adequately controlled with maintained function at [2027:2031]",
+                  "description": "PAIN_MANAGED: chronic pain adequately controlled with maintained function at [2023:2027]",
                   "action": "Mental health access monitor registers pain management stable"
                 }
               }

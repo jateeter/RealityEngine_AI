@@ -12,7 +12,7 @@
       "workstream": "Workforce Operations",
       "focusDescription": "license status, route qualification, safety training, and expiry date",
       "upstreamMachine": "Transportation Fleet Workforce Operations Fatigue Risk Monitor",
-      "upstreamOutputRegion": "[3155:3159]",
+      "upstreamOutputRegion": "[3551:3555]",
       "downstreamMachines": [
         "Transportation Fleet Workforce Operations Mechanic Skill Routing"
       ],
@@ -27,8 +27,8 @@
       ],
       "criticalEventSequenceLength": 5,
       "criticalEventSequenceLengthBasis": "Every TFX machine has one critical inputSequence containing exactly 5 vectors; the generated family average is 5.0.",
-      "inputSpace": "4D binary at [3155:3159]",
-      "outputSpace": "4D binary at [3159:3163]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
+      "inputSpace": "4D binary at [3551:3555]",
+      "outputSpace": "4D binary at [3555:3559]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
       "inputSemantics": [
         "service reliability",
         "rider impact",
@@ -51,16 +51,16 @@
       ],
       "sequenceCount": 4,
       "reuseGuideline": "Map AVL, APC, CAD/AVL, fare, work-order, cleaning, security, rider feedback, and depot signals into the 4D input lane. Route outputs to dispatch, service control, maintenance, cleaning, security, customer communications, or executive fleet optimization agents.",
-      "downstreamPattern": "Output region [3159:3163] feeds Transportation Fleet Workforce Operations Mechanic Skill Routing for predictive fleet-flow management."
+      "downstreamPattern": "Output region [3555:3559] feeds Transportation Fleet Workforce Operations Mechanic Skill Routing for predictive fleet-flow management."
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3155,
+        "offset": 3551,
         "length": 4
       },
       "output": {
-        "offset": 3159,
+        "offset": 3555,
         "length": 4
       }
     },

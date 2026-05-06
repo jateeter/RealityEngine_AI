@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for goods services classification.",
         "Mark goods services classification ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2151:2155]",
-      "outputSpace": "4D binary at [2155:2159]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2147:2151]",
+      "outputSpace": "4D binary at [2151:2155]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2151,
+        "offset": 2147,
         "length": 4
       },
       "output": {
-        "offset": 2155,
+        "offset": 2151,
         "length": 4
       }
     },

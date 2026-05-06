@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for marketing claims review.",
         "Mark marketing claims review ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2343:2347]",
-      "outputSpace": "4D binary at [2347:2351]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2339:2343]",
+      "outputSpace": "4D binary at [2343:2347]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2343,
+        "offset": 2339,
         "length": 4
       },
       "output": {
-        "offset": 2347,
+        "offset": 2343,
         "length": 4
       }
     },

@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for freedom to operate intake.",
         "Mark freedom to operate intake ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2767:2771]",
-      "outputSpace": "4D binary at [2771:2775]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2763:2767]",
+      "outputSpace": "4D binary at [2767:2771]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2767,
+        "offset": 2763,
         "length": 4
       },
       "output": {
-        "offset": 2771,
+        "offset": 2767,
         "length": 4
       }
     },

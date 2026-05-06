@@ -12,7 +12,7 @@
       "focusDescription": "data sharing purpose, consent scope, retention rule, and audit status",
       "upstreamMachine": "transportation mapped output",
       "upstreamDomain": "transportation",
-      "upstreamOutputRegion": "[3483:3487]",
+      "upstreamOutputRegion": "[3883:3887]",
       "upstreamPurpose": "detour coordination signal",
       "downstreamMachines": [
         "Community Services Community Executive Optimization Predictive Prevention Planner"
@@ -29,7 +29,7 @@
         "Create field work order or mobile team task for privacy consent governance.",
         "Maintain monitored service path for privacy consent governance."
       ],
-      "inputSpace": "4D binary at [3483:3487]",
+      "inputSpace": "4D binary at [3883:3887]",
       "outputSpace": "4D binary at [1328:1332]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
       "inputSemantics": [
         "resident need severity",
@@ -57,7 +57,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3483,
+        "offset": 3883,
         "length": 4
       },
       "output": {

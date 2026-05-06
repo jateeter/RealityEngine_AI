@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for eco application assembly.",
         "Mark eco application assembly ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2263:2267]",
-      "outputSpace": "4D binary at [2267:2271]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2259:2263]",
+      "outputSpace": "4D binary at [2263:2267]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2263,
+        "offset": 2259,
         "length": 4
       },
       "output": {
-        "offset": 2267,
+        "offset": 2263,
         "length": 4
       }
     },

@@ -1,0 +1,359 @@
+{
+  "version": "1.0.0",
+  "machine": {
+    "name": "Life Balance Social Connection And Harm Reduction Social Rhythm Stabilizer",
+    "description": "Life-balance machine for social rhythm stabilizer in the social connection and harm reduction workstream. It monitors regular meals, sleep, movement, social contact, and routine anchors to support lifestyle-psychiatry workflows spanning psychiatric care, nutrition, sleep, movement, stress resilience, monitoring, and projection. Example only; not medical advice.",
+    "metadata": {
+      "category": "life-balance",
+      "domain": "Life Balance - Social Connection And Harm Reduction",
+      "author": "Reality Engine",
+      "workstream": "Social Connection And Harm Reduction",
+      "operationalFocus": "Social Rhythm Stabilizer",
+      "focusDescription": "regular meals, sleep, movement, social contact, and routine anchors",
+      "sourceContext": [
+        "Ann Childers, MD public lifestyle-psychiatry biography emphasizing mainstream psychiatry, nutrition, sleep, general health, CGM, genetics, and temperament testing.",
+        "Lifestyle psychiatry six-pillar framing: nutrition, sleep, movement, stress management, relationships, and harm reduction."
+      ],
+      "clinicalSafety": "Example workflow automation only; outputs route to review, plan adjustment, monitoring, or stable status and are not diagnosis or treatment.",
+      "upstreamMachine": "Life Balance Social Connection And Harm Reduction Care Team Communication",
+      "upstreamDomain": "life-balance",
+      "upstreamOutputRegion": "[3191:3195]",
+      "upstreamPurpose": null,
+      "downstreamMachines": [
+        "Life Balance Social Connection And Harm Reduction Relapse Prevention Support"
+      ],
+      "crossDomainInterconnect": false,
+      "crossDomainOutputTarget": null,
+      "crossDomainOutputPurpose": null,
+      "dispatchableAgent": "testing_personalization_agent",
+      "aiTrigger": "life-balance-social-connection-and-harm-reduction-social-rhythm-stabilizer",
+      "predictiveProjectionTrigger": "life-balance-projection-social-connection-and-harm-reduction-social-rhythm-stabilizer",
+      "agentActions": [
+        "Route social rhythm stabilizer concern to licensed care-team review.",
+        "Adjust the life-balance plan for social rhythm stabilizer using patient goals, barriers, and preferences.",
+        "Create monitoring or follow-up task for social rhythm stabilizer.",
+        "Continue stable life-balance monitoring for social rhythm stabilizer."
+      ],
+      "inputSpace": "4D binary at [3191:3195]",
+      "outputSpace": "4D binary at [3195:3199]: [1,0,0,0]=CARE_TEAM_REVIEW, [0,1,0,0]=LIFESTYLE_PLAN_ADJUST, [0,0,1,0]=MONITORING_TASK, [0,0,0,1]=STABLE_BALANCE",
+      "inputSemantics": [
+        "symptom or functional concern",
+        "lifestyle barrier or preference",
+        "monitoring data quality or readiness",
+        "risk, safety, or care-team urgency"
+      ],
+      "tags": [
+        "life-balance",
+        "lifestyle-psychiatry",
+        "nutrition",
+        "sleep",
+        "metabolic-health",
+        "cgm",
+        "temperament-testing",
+        "adolescent-psychiatry",
+        "projection",
+        "automation",
+        "social-connection-and-harm-reduction",
+        "social-rhythm-stabilizer"
+      ],
+      "sequenceCount": 4,
+      "reuseGuideline": "Map patient-reported outcomes, sleep logs, nutrition journals, CGM summaries, activity data, medication observations, temperament/genetics notes, and care-team review status into the 4D input lane. Route outputs to licensed clinician review, plan adjustment, monitoring tasks, or stable follow-up.",
+      "domainEndToEndSequenceCount": 0
+    },
+    "arbiterRule": "PASSTHROUGH",
+    "perceptualMapping": {
+      "input": {
+        "offset": 3191,
+        "length": 4
+      },
+      "output": {
+        "offset": 3195,
+        "length": 4
+      }
+    },
+    "sequences": [
+      {
+        "id": "lbl-088-care-team-review",
+        "name": "Social Rhythm Stabilizer: WATCH -> CARE_TEAM_REVIEW",
+        "metadata": {
+          "description": "Escalates clinical or safety concern for care-team review.",
+          "output": "[1,0,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "lbl-088-watch",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "nextVectorIds": [
+              "lbl-088-review"
+            ]
+          },
+          {
+            "id": "lbl-088-review",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": false,
+            "outputVectors": [
+              {
+                "id": "lbl-088-review-output",
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Route social rhythm stabilizer concern to licensed care-team review."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lbl-088-plan-adjust",
+        "name": "Social Rhythm Stabilizer: BARRIER -> LIFESTYLE_PLAN_ADJUST",
+        "metadata": {
+          "description": "Adjusts lifestyle plan based on barriers and preferences.",
+          "output": "[0,1,0,0]"
+        },
+        "vectors": [
+          {
+            "id": "lbl-088-barrier",
+            "elements": [
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "lbl-088-plan-output",
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                "metadata": {
+                  "action": "Adjust the life-balance plan for social rhythm stabilizer using patient goals, barriers, and preferences."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lbl-088-monitoring-task",
+        "name": "Social Rhythm Stabilizer: DATA_GAP -> MONITORING_TASK",
+        "metadata": {
+          "description": "Creates monitoring, journaling, lab, CGM, wearable, or follow-up task.",
+          "output": "[0,0,1,0]"
+        },
+        "vectors": [
+          {
+            "id": "lbl-088-data-gap",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 1
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "lbl-088-monitor-output",
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                "metadata": {
+                  "action": "Create monitoring or follow-up task for social rhythm stabilizer."
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lbl-088-stable-balance",
+        "name": "Social Rhythm Stabilizer: STABLE -> STABLE_BALANCE",
+        "metadata": {
+          "description": "Confirms stable life-balance plan state.",
+          "output": "[0,0,0,1]"
+        },
+        "vectors": [
+          {
+            "id": "lbl-088-stable",
+            "elements": [
+              {
+                "value": 1
+              },
+              {
+                "value": 1
+              },
+              {
+                "value": 0
+              },
+              {
+                "value": 0
+              }
+            ],
+            "isInitial": true,
+            "outputVectors": [
+              {
+                "id": "lbl-088-stable-output",
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                "metadata": {
+                  "action": "Continue stable life-balance monitoring for social rhythm stabilizer."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "inputSequences": [
+      {
+        "name": "Care team review",
+        "description": "Two-step concern escalation ending in care-team review.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[1,0,0,0]",
+          "scenario": "care-team-review",
+          "sequenceLength": 2
+        }
+      },
+      {
+        "name": "Lifestyle plan adjustment",
+        "description": "Barrier or preference signal adjusts the lifestyle plan.",
+        "vectors": [
+          [
+            0,
+            1,
+            1,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,1,0,0]",
+          "scenario": "lifestyle-plan-adjust"
+        }
+      },
+      {
+        "name": "Monitoring task",
+        "description": "Data gap creates a monitoring or follow-up task.",
+        "vectors": [
+          [
+            1,
+            0,
+            0,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,1,0]",
+          "scenario": "monitoring-task"
+        }
+      },
+      {
+        "name": "Stable balance",
+        "description": "Stable state confirms the plan remains in range.",
+        "vectors": [
+          [
+            1,
+            1,
+            0,
+            0
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 1,
+          "expectedOutputVector": "[0,0,0,1]",
+          "scenario": "stable-balance"
+        }
+      },
+      {
+        "name": "Baseline without output",
+        "description": "Initial observation arms the review path without firing.",
+        "vectors": [
+          [
+            1,
+            0,
+            1,
+            1
+          ]
+        ],
+        "metadata": {
+          "expectedOutputCount": 0,
+          "scenario": "baseline-no-output"
+        }
+      }
+    ]
+  }
+}

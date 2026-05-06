@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for portfolio cost optimization.",
         "Mark portfolio cost optimization ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2655:2659]",
-      "outputSpace": "4D binary at [2659:2663]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2651:2655]",
+      "outputSpace": "4D binary at [2655:2659]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2655,
+        "offset": 2651,
         "length": 4
       },
       "output": {
-        "offset": 2659,
+        "offset": 2655,
         "length": 4
       }
     },

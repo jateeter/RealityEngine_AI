@@ -189,7 +189,7 @@ Frontend → Visualizer Backend (port 3001) → Reality Engine (port 3000)
 
 ## Initialization on Startup
 
-The Reality Engine automatically loads **every** `*.json` file in `examples/machines/` at startup via `scala/.../Routes.scala::loadDefaultMachines`. No allowlist to edit — add a file and restart the stack to register it. The current corpus contains 906 machines across 10 domains.
+The Reality Engine automatically loads **every** `*.json` file in `examples/machines/` at startup via `scala/.../Routes.scala::loadDefaultMachines`. No allowlist to edit — add a file and restart the stack to register it. The current corpus contains 1006 machines across 11 domains.
 
 ---
 

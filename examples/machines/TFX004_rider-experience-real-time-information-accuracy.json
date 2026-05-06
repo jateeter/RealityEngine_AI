@@ -12,7 +12,7 @@
       "workstream": "Rider Experience",
       "focusDescription": "arrival prediction drift, sign availability, app latency, and rider trust",
       "upstreamMachine": "Transportation Fleet Rider Experience Accessibility Boarding Support",
-      "upstreamOutputRegion": "[2859:2863]",
+      "upstreamOutputRegion": "[3255:3259]",
       "downstreamMachines": [
         "Transportation Fleet Rider Experience Fare Media Friction"
       ],
@@ -27,8 +27,8 @@
       ],
       "criticalEventSequenceLength": 5,
       "criticalEventSequenceLengthBasis": "Every TFX machine has one critical inputSequence containing exactly 5 vectors; the generated family average is 5.0.",
-      "inputSpace": "4D binary at [2859:2863]",
-      "outputSpace": "4D binary at [2863:2867]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
+      "inputSpace": "4D binary at [3255:3259]",
+      "outputSpace": "4D binary at [3259:3263]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
       "inputSemantics": [
         "service reliability",
         "rider impact",
@@ -51,16 +51,16 @@
       ],
       "sequenceCount": 4,
       "reuseGuideline": "Map AVL, APC, CAD/AVL, fare, work-order, cleaning, security, rider feedback, and depot signals into the 4D input lane. Route outputs to dispatch, service control, maintenance, cleaning, security, customer communications, or executive fleet optimization agents.",
-      "downstreamPattern": "Output region [2863:2867] feeds Transportation Fleet Rider Experience Fare Media Friction for predictive fleet-flow management."
+      "downstreamPattern": "Output region [3259:3263] feeds Transportation Fleet Rider Experience Fare Media Friction for predictive fleet-flow management."
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2859,
+        "offset": 3255,
         "length": 4
       },
       "output": {
-        "offset": 2863,
+        "offset": 3259,
         "length": 4
       }
     },

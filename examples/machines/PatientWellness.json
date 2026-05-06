@@ -82,11 +82,11 @@
     "matchAlgorithm": "gte",
     "perceptualMapping": {
       "input": {
-        "offset": 1959,
+        "offset": 1955,
         "length": 8
       },
       "output": {
-        "offset": 3531,
+        "offset": 3931,
         "length": 8
       }
     },

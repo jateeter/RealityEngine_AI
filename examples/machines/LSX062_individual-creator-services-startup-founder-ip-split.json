@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for startup founder ip split.",
         "Mark startup founder ip split ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2535:2539]",
-      "outputSpace": "4D binary at [2539:2543]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2531:2535]",
+      "outputSpace": "4D binary at [2535:2539]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2535,
+        "offset": 2531,
         "length": 4
       },
       "output": {
-        "offset": 2539,
+        "offset": 2535,
         "length": 4
       }
     },

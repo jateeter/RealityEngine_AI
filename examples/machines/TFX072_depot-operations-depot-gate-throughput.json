@@ -12,7 +12,7 @@
       "workstream": "Depot Operations",
       "focusDescription": "gate queue, inspection stop, operator check-in, and departure delay",
       "upstreamMachine": "Transportation Fleet Depot Operations Yard Location Accuracy",
-      "upstreamOutputRegion": "[3111:3115]",
+      "upstreamOutputRegion": "[3507:3511]",
       "downstreamMachines": [
         "Transportation Fleet Depot Operations Pre Trip Inspection Monitor"
       ],
@@ -27,8 +27,8 @@
       ],
       "criticalEventSequenceLength": 5,
       "criticalEventSequenceLengthBasis": "Every TFX machine has one critical inputSequence containing exactly 5 vectors; the generated family average is 5.0.",
-      "inputSpace": "4D binary at [3111:3115]",
-      "outputSpace": "4D binary at [3115:3119]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
+      "inputSpace": "4D binary at [3507:3511]",
+      "outputSpace": "4D binary at [3511:3515]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
       "inputSemantics": [
         "service reliability",
         "rider impact",
@@ -51,16 +51,16 @@
       ],
       "sequenceCount": 4,
       "reuseGuideline": "Map AVL, APC, CAD/AVL, fare, work-order, cleaning, security, rider feedback, and depot signals into the 4D input lane. Route outputs to dispatch, service control, maintenance, cleaning, security, customer communications, or executive fleet optimization agents.",
-      "downstreamPattern": "Output region [3115:3119] feeds Transportation Fleet Depot Operations Pre Trip Inspection Monitor for predictive fleet-flow management."
+      "downstreamPattern": "Output region [3511:3515] feeds Transportation Fleet Depot Operations Pre Trip Inspection Monitor for predictive fleet-flow management."
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3111,
+        "offset": 3507,
         "length": 4
       },
       "output": {
-        "offset": 3115,
+        "offset": 3511,
         "length": 4
       }
     },

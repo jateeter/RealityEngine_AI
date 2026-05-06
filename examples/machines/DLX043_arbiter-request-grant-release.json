@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "machine": {
     "name": "Logical Infrastructure Arbiter Request Grant Release",
-    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `REQ GRANT RELEASE`. Detects arbitration service lifecycle. Reads a 4D control/status lane at [1715:1719] and emits a 2D match lane at [3677:3679].",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `REQ GRANT RELEASE`. Detects arbitration service lifecycle. Reads a 4D control/status lane at [1715:1719] and emits a 2D match lane at [4077:4079].",
     "metadata": {
       "category": "digital-logic",
       "domain": "Digital Logic - Infrastructure",
@@ -11,7 +11,7 @@
       "asicPattern": "Arbiter Request Grant Release",
       "reuseRole": "general-purpose logical connective tissue",
       "inputSpace": "4D binary at [1715:1719]",
-      "outputSpace": "2D binary at [3677:3679]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "outputSpace": "2D binary at [4077:4079]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
       "inputSemantics": [
         "primary",
         "secondary",
@@ -35,7 +35,7 @@
         "length": 4
       },
       "output": {
-        "offset": 3677,
+        "offset": 4077,
         "length": 2
       }
     },

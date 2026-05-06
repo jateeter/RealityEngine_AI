@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for trademark account identity gate.",
         "Mark trademark account identity gate ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2719:2723]",
-      "outputSpace": "4D binary at [2723:2727]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2715:2719]",
+      "outputSpace": "4D binary at [2719:2723]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2719,
+        "offset": 2715,
         "length": 4
       },
       "output": {
-        "offset": 2723,
+        "offset": 2719,
         "length": 4
       }
     },

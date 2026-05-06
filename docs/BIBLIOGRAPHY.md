@@ -12,6 +12,8 @@
 | TypeScript documentation | Frontend and Node service implementation language. |
 | WELL Building Standard | Built-space example-machine concepts and operational checks. |
 | localAIStack repository | Shared Ollama, Redis, Qdrant, RAG, graph, and agent integration surface. |
+| Ann Childers, MD public speaker biographies | Life-balance domain themes: lifestyle psychiatry, nutrition, sleep, metabolic and temperament personalization. |
+| Psychiatric Times lifestyle psychiatry overview | Six-pillar lifestyle psychiatry framing used for life-balance workflow categories. |
 
 Project-local references:
 

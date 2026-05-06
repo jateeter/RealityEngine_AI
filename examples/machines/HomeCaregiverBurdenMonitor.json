@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Caregiver Burden Monitor",
-    "description": "Integration machine that reads combined output signals from the Pediatric Nutrition Monitor [2007:2011] and the Child Development Monitor [2011:2015] to assess caregiver burden driven by child health challenges. Child nutritional problems and developmental delays are the primary pediatric-driven stressors for at-home caregivers in low-income settings. Caregiver burnout reduces care quality across all household members and is a leading predictor of preventable pediatric ED visits. Output at [2035:2039] is available to downstream care coordination systems.",
+    "description": "Integration machine that reads combined output signals from the Pediatric Nutrition Monitor [2003:2007] and the Child Development Monitor [2007:2011] to assess caregiver burden driven by child health challenges. Child nutritional problems and developmental delays are the primary pediatric-driven stressors for at-home caregivers in low-income settings. Caregiver burnout reduces care quality across all household members and is a leading predictor of preventable pediatric ED visits. Output at [2031:2035] is available to downstream care coordination systems.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Caregiver Support / Burden Assessment",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [2035:2039]: [1,0,0,0]=CAREGIVER_BURNOUT, [0,1,0,0]=HIGH_BURDEN, [0,0,1,0]=MODERATE_BURDEN, [0,0,0,1]=CAREGIVER_COPING",
+      "outputSpace": "4D binary at [2031:2035]: [1,0,0,0]=CAREGIVER_BURNOUT, [0,1,0,0]=HIGH_BURDEN, [0,0,1,0]=MODERATE_BURDEN, [0,0,0,1]=CAREGIVER_COPING",
       "tags": [
         "healthcare",
         "home health",
@@ -27,18 +27,18 @@
         "respite_access_norm": "0.0=zero respite support (no family, no programs, no childcare), 0.5=limited respite (one source available but insufficient), 1.0=adequate respite network; regular relief available"
       },
       "upstreamMachines": [
-        "PediatricNutritionMonitor (output [2007:2011])",
-        "ChildDevelopmentMonitor (output [2011:2015])"
+        "PediatricNutritionMonitor (output [2003:2007])",
+        "ChildDevelopmentMonitor (output [2007:2011])"
       ]
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2007,
+        "offset": 2003,
         "length": 8
       },
       "output": {
-        "offset": 2035,
+        "offset": 2031,
         "length": 4
       }
     },
@@ -197,7 +197,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "CAREGIVER_BURNOUT: dual child health crises causing caregiver decompensation at [2035:2039]",
+                  "description": "CAREGIVER_BURNOUT: dual child health crises causing caregiver decompensation at [2031:2035]",
                   "action": "Caregiver respite referral; home visitor crisis support; behavioral health intake for caregiver; family services engagement"
                 }
               }
@@ -266,7 +266,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "HIGH_BURDEN: significant caregiver stress from multiple active child health concerns at [2035:2039]",
+                  "description": "HIGH_BURDEN: significant caregiver stress from multiple active child health concerns at [2031:2035]",
                   "action": "Care coordinator contact; respite options screening; caregiver coping assessment; CHW home visit"
                 }
               }
@@ -335,7 +335,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "CAREGIVER_COPING: child health and development supported; caregiver managing adequately at [2035:2039]",
+                  "description": "CAREGIVER_COPING: child health and development supported; caregiver managing adequately at [2031:2035]",
                   "action": "No additional intervention needed; continue monitoring schedule"
                 }
               }

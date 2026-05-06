@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for knockout search review.",
         "Mark knockout search review ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2143:2147]",
-      "outputSpace": "4D binary at [2147:2151]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2139:2143]",
+      "outputSpace": "4D binary at [2143:2147]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2143,
+        "offset": 2139,
         "length": 4
       },
       "output": {
-        "offset": 2147,
+        "offset": 2143,
         "length": 4
       }
     },

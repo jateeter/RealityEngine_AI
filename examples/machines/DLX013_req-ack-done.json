@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "machine": {
     "name": "Logical Infrastructure Req Ack Done",
-    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `REQ ACK DONE`. Detects request, acknowledge, then completion. Reads a 4D control/status lane at [3627:3631] and emits a 2D match lane at [3631:3633].",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `REQ ACK DONE`. Detects request, acknowledge, then completion. Reads a 4D control/status lane at [4027:4031] and emits a 2D match lane at [4031:4033].",
     "metadata": {
       "category": "digital-logic",
       "domain": "Digital Logic - Infrastructure",
@@ -10,8 +10,8 @@
       "regularExpression": "REQ ACK DONE",
       "asicPattern": "Req Ack Done",
       "reuseRole": "general-purpose logical connective tissue",
-      "inputSpace": "4D binary at [3627:3631]",
-      "outputSpace": "2D binary at [3631:3633]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSpace": "4D binary at [4027:4031]",
+      "outputSpace": "2D binary at [4031:4033]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
       "inputSemantics": [
         "primary",
         "secondary",
@@ -31,11 +31,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3627,
+        "offset": 4027,
         "length": 4
       },
       "output": {
-        "offset": 3631,
+        "offset": 4031,
         "length": 2
       }
     },

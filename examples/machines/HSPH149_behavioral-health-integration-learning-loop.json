@@ -57,7 +57,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3435,
+        "offset": 3835,
         "length": 4
       },
       "output": {

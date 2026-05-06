@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for specification support builder.",
         "Mark specification support builder ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2087:2091]",
-      "outputSpace": "4D binary at [2091:2095]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2083:2087]",
+      "outputSpace": "4D binary at [2087:2091]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2087,
+        "offset": 2083,
         "length": 4
       },
       "output": {
-        "offset": 2091,
+        "offset": 2087,
         "length": 4
       }
     },

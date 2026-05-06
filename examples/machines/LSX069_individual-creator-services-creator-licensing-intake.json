@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for creator licensing intake.",
         "Mark creator licensing intake ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2591:2595]",
-      "outputSpace": "4D binary at [2595:2599]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2587:2591]",
+      "outputSpace": "4D binary at [2591:2595]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2591,
+        "offset": 2587,
         "length": 4
       },
       "output": {
-        "offset": 2595,
+        "offset": 2591,
         "length": 4
       }
     },

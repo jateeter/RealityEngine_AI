@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Pediatric Nutrition Monitor",
-    "description": "Tracks child nutrition adequacy, growth trajectory, and micronutrient status for children ages 0–12 in low- and medium-income home settings. Monitors growth percentile trends, caloric adequacy, iron/vitamin D/B12 micronutrient balance, and dietary diversity — the four dimensions most predictive of developmental outcomes in under-resourced households. Output at [2007:2011] feeds the Home Caregiver Burden Monitor, as child nutritional problems are a primary driver of caregiver stress and care coordination demand.",
+    "description": "Tracks child nutrition adequacy, growth trajectory, and micronutrient status for children ages 0–12 in low- and medium-income home settings. Monitors growth percentile trends, caloric adequacy, iron/vitamin D/B12 micronutrient balance, and dietary diversity — the four dimensions most predictive of developmental outcomes in under-resourced households. Output at [2003:2007] feeds the Home Caregiver Burden Monitor, as child nutritional problems are a primary driver of caregiver stress and care coordination demand.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Pediatric / Child Nutrition",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [2007:2011]: [1,0,0,0]=GROWTH_ALERT, [0,1,0,0]=NUTRITION_DEFICIT, [0,0,1,0]=MICRONUTRIENT_CONCERN, [0,0,0,1]=NUTRITION_OK",
+      "outputSpace": "4D binary at [2003:2007]: [1,0,0,0]=GROWTH_ALERT, [0,1,0,0]=NUTRITION_DEFICIT, [0,0,1,0]=MICRONUTRIENT_CONCERN, [0,0,0,1]=NUTRITION_OK",
       "tags": [
         "healthcare",
         "pediatric",
@@ -26,16 +26,16 @@
         "micronutrient_score_norm": "0.0=multiple confirmed deficiencies (Fe, Vit D, B12 all low), 0.5=borderline adequate, 1.0=well-supplemented across all tracked nutrients",
         "dietary_diversity_norm": "0.0=single food group only (calorie-dense, low-nutrient), 0.5=moderate variety (3+ food groups), 1.0=high diversity (5+ food groups consistently)"
       },
-      "downstreamMachine": "HomeCaregiverBurdenMonitor (reads [2007:2011])"
+      "downstreamMachine": "HomeCaregiverBurdenMonitor (reads [2003:2007])"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 1975,
+        "offset": 1971,
         "length": 4
       },
       "output": {
-        "offset": 2007,
+        "offset": 2003,
         "length": 4
       }
     },
@@ -146,7 +146,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "GROWTH_ALERT: failure-to-thrive pattern; pediatric nutrition consult required at [2007:2011]",
+                  "description": "GROWTH_ALERT: failure-to-thrive pattern; pediatric nutrition consult required at [2003:2007]",
                   "action": "WIC referral; pediatrician growth review; food prescription program screening"
                 }
               }
@@ -260,7 +260,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "MICRONUTRIENT_CONCERN: iron-deficiency anemia or vitamin D/B12 deficiency risk at [2007:2011]",
+                  "description": "MICRONUTRIENT_CONCERN: iron-deficiency anemia or vitamin D/B12 deficiency risk at [2003:2007]",
                   "action": "Lab screening referral; WIC food package review; supplement prescription; dietitian consult"
                 }
               }
@@ -313,7 +313,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "NUTRITION_OK: pediatric nutrition adequate for developmental support at [2007:2011]",
+                  "description": "NUTRITION_OK: pediatric nutrition adequate for developmental support at [2003:2007]",
                   "action": "Caregiver burden monitor registers healthy child nutrition state"
                 }
               }

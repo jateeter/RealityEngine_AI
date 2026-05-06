@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "machine": {
     "name": "Logical Infrastructure Mutex Lock Unlock",
-    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `LOCK+ UNLOCK`. Detects mutual exclusion lock interval followed by unlock. Reads a 4D control/status lane at [3671:3675] and emits a 2D match lane at [3675:3677].",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `LOCK+ UNLOCK`. Detects mutual exclusion lock interval followed by unlock. Reads a 4D control/status lane at [4071:4075] and emits a 2D match lane at [4075:4077].",
     "metadata": {
       "category": "digital-logic",
       "domain": "Digital Logic - Infrastructure",
@@ -10,8 +10,8 @@
       "regularExpression": "LOCK+ UNLOCK",
       "asicPattern": "Mutex Lock Unlock",
       "reuseRole": "general-purpose logical connective tissue",
-      "inputSpace": "4D binary at [3671:3675]",
-      "outputSpace": "2D binary at [3675:3677]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSpace": "4D binary at [4071:4075]",
+      "outputSpace": "2D binary at [4075:4077]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
       "inputSemantics": [
         "primary",
         "secondary",
@@ -31,11 +31,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3671,
+        "offset": 4071,
         "length": 4
       },
       "output": {
-        "offset": 3675,
+        "offset": 4075,
         "length": 2
       }
     },

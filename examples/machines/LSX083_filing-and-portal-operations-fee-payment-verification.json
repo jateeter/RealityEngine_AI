@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for fee payment verification.",
         "Mark fee payment verification ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2703:2707]",
-      "outputSpace": "4D binary at [2707:2711]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2699:2703]",
+      "outputSpace": "4D binary at [2703:2707]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2703,
+        "offset": 2699,
         "length": 4
       },
       "output": {
-        "offset": 2707,
+        "offset": 2703,
         "length": 4
       }
     },

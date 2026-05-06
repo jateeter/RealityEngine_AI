@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "machine": {
     "name": "Logical Infrastructure Glitch Detect One High",
-    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `010`. Detects a narrow one-cycle glitch. Reads a 4D control/status lane at [3599:3603] and emits a 2D match lane at [1577:1579].",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `010`. Detects a narrow one-cycle glitch. Reads a 4D control/status lane at [3999:4003] and emits a 2D match lane at [1577:1579].",
     "metadata": {
       "category": "digital-logic",
       "domain": "Digital Logic - Infrastructure",
@@ -10,7 +10,7 @@
       "regularExpression": "010",
       "asicPattern": "Glitch Detect One High",
       "reuseRole": "general-purpose logical connective tissue",
-      "inputSpace": "4D binary at [3599:3603]",
+      "inputSpace": "4D binary at [3999:4003]",
       "outputSpace": "2D binary at [1577:1579]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
       "inputSemantics": [
         "primary",
@@ -31,7 +31,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3599,
+        "offset": 3999,
         "length": 4
       },
       "output": {

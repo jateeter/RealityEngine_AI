@@ -12,7 +12,7 @@
       "focusDescription": "facility availability, cleaning state, supply status, and security concern",
       "upstreamMachine": "health-services mapped output",
       "upstreamDomain": "health-services",
-      "upstreamOutputRegion": "[3419:3423]",
+      "upstreamOutputRegion": "[3819:3823]",
       "upstreamPurpose": "foundational public health signal",
       "downstreamMachines": [
         "Community Services City Service Operations Cooling Warming Center Activation"
@@ -29,8 +29,8 @@
         "Create field work order or mobile team task for public restroom operations.",
         "Maintain monitored service path for public restroom operations."
       ],
-      "inputSpace": "4D binary at [3419:3423]",
-      "outputSpace": "4D binary at [3459:3463]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
+      "inputSpace": "4D binary at [3819:3823]",
+      "outputSpace": "4D binary at [3859:3863]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
       "inputSemantics": [
         "resident need severity",
         "eligibility and documentation readiness",
@@ -52,16 +52,16 @@
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map 311, case-management, CAD/RMS, shelter HMIS, benefit enrollment, outreach, public health, and transit-access signals into the 4D input lane. Route outputs to case workers, mobile crisis, public safety, housing navigators, field crews, transportation dispatch, or health-service agents.",
-      "downstreamPattern": "Output region [3459:3463] feeds Community Services City Service Operations Cooling Warming Center Activation."
+      "downstreamPattern": "Output region [3859:3863] feeds Community Services City Service Operations Cooling Warming Center Activation."
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3419,
+        "offset": 3819,
         "length": 4
       },
       "output": {
-        "offset": 3459,
+        "offset": 3859,
         "length": 4
       }
     },

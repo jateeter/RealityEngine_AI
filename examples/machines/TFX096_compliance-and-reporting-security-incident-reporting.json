@@ -12,7 +12,7 @@
       "workstream": "Compliance And Reporting",
       "focusDescription": "incident category, response time, evidence, and external notification",
       "upstreamMachine": "Transportation Fleet Compliance And Reporting Cleaning Standard Compliance",
-      "upstreamOutputRegion": "[3207:3211]",
+      "upstreamOutputRegion": "[3603:3607]",
       "downstreamMachines": [
         "Transportation Fleet Compliance And Reporting Service Reliability KPI"
       ],
@@ -27,8 +27,8 @@
       ],
       "criticalEventSequenceLength": 5,
       "criticalEventSequenceLengthBasis": "Every TFX machine has one critical inputSequence containing exactly 5 vectors; the generated family average is 5.0.",
-      "inputSpace": "4D binary at [3207:3211]",
-      "outputSpace": "4D binary at [3211:3215]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
+      "inputSpace": "4D binary at [3603:3607]",
+      "outputSpace": "4D binary at [3607:3611]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
       "inputSemantics": [
         "service reliability",
         "rider impact",
@@ -51,16 +51,16 @@
       ],
       "sequenceCount": 4,
       "reuseGuideline": "Map AVL, APC, CAD/AVL, fare, work-order, cleaning, security, rider feedback, and depot signals into the 4D input lane. Route outputs to dispatch, service control, maintenance, cleaning, security, customer communications, or executive fleet optimization agents.",
-      "downstreamPattern": "Output region [3211:3215] feeds Transportation Fleet Compliance And Reporting Service Reliability KPI for predictive fleet-flow management."
+      "downstreamPattern": "Output region [3607:3611] feeds Transportation Fleet Compliance And Reporting Service Reliability KPI for predictive fleet-flow management."
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3207,
+        "offset": 3603,
         "length": 4
       },
       "output": {
-        "offset": 3211,
+        "offset": 3607,
         "length": 4
       }
     },

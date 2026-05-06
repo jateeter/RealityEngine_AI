@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for client intake chat guardrail.",
         "Mark client intake chat guardrail ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2487:2491]",
-      "outputSpace": "4D binary at [2491:2495]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2483:2487]",
+      "outputSpace": "4D binary at [2487:2491]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2487,
+        "offset": 2483,
         "length": 4
       },
       "output": {
-        "offset": 2491,
+        "offset": 2487,
         "length": 4
       }
     },

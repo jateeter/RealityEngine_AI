@@ -12,7 +12,7 @@
       "focusDescription": "overdose risk, harm-reduction need, treatment readiness, and peer-support capacity",
       "upstreamMachine": "health-services mapped output",
       "upstreamDomain": "health-services",
-      "upstreamOutputRegion": "[3431:3435]",
+      "upstreamOutputRegion": "[3831:3835]",
       "upstreamPurpose": "behavioral health crisis signal",
       "downstreamMachines": [
         "Community Services Behavioral Health And Crisis Mental Health Shelter Referral"
@@ -29,7 +29,7 @@
         "Create field work order or mobile team task for substance use outreach.",
         "Maintain monitored service path for substance use outreach."
       ],
-      "inputSpace": "4D binary at [3431:3435]",
+      "inputSpace": "4D binary at [3831:3835]",
       "outputSpace": "4D binary at [1092:1096]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
       "inputSemantics": [
         "resident need severity",
@@ -57,7 +57,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3431,
+        "offset": 3831,
         "length": 4
       },
       "output": {

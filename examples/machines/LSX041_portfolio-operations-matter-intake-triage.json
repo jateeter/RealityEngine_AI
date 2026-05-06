@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for matter intake triage.",
         "Mark matter intake triage ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2367:2371]",
-      "outputSpace": "4D binary at [2371:2375]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2363:2367]",
+      "outputSpace": "4D binary at [2367:2371]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2367,
+        "offset": 2363,
         "length": 4
       },
       "output": {
-        "offset": 2371,
+        "offset": 2367,
         "length": 4
       }
     },

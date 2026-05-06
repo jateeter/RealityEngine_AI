@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for founder evidence timeline.",
         "Mark founder evidence timeline ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2583:2587]",
-      "outputSpace": "4D binary at [2587:2591]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2579:2583]",
+      "outputSpace": "4D binary at [2583:2587]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2583,
+        "offset": 2579,
         "length": 4
       },
       "output": {
-        "offset": 2587,
+        "offset": 2583,
         "length": 4
       }
     },

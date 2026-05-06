@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "machine": {
     "name": "Logical Infrastructure Read Response",
-    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `ARVALID RVALID`. Detects read address accepted then read data valid. Reads a 4D control/status lane at [1723:1727] and emits a 2D match lane at [3693:3695].",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `ARVALID RVALID`. Detects read address accepted then read data valid. Reads a 4D control/status lane at [1723:1727] and emits a 2D match lane at [4093:4095].",
     "metadata": {
       "category": "digital-logic",
       "domain": "Digital Logic - Infrastructure",
@@ -11,7 +11,7 @@
       "asicPattern": "Read Response",
       "reuseRole": "general-purpose logical connective tissue",
       "inputSpace": "4D binary at [1723:1727]",
-      "outputSpace": "2D binary at [3693:3695]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "outputSpace": "2D binary at [4093:4095]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
       "inputSemantics": [
         "primary",
         "secondary",
@@ -35,7 +35,7 @@
         "length": 4
       },
       "output": {
-        "offset": 3693,
+        "offset": 4093,
         "length": 2
       }
     },

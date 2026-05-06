@@ -12,7 +12,7 @@
       "focusDescription": "health and human services, public safety, homelessness, transit access, and city operations posture",
       "upstreamMachine": "transportation mapped output",
       "upstreamDomain": "transportation",
-      "upstreamOutputRegion": "[3503:3507]",
+      "upstreamOutputRegion": "[3903:3907]",
       "upstreamPurpose": "fleet command center signal",
       "downstreamMachines": [],
       "crossDomainInterconnect": true,
@@ -27,7 +27,7 @@
         "Create field work order or mobile team task for community services command center.",
         "Maintain monitored service path for community services command center."
       ],
-      "inputSpace": "4D binary at [3503:3507]",
+      "inputSpace": "4D binary at [3903:3907]",
       "outputSpace": "4D binary at [1340:1344]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
       "inputSemantics": [
         "resident need severity",
@@ -55,7 +55,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3503,
+        "offset": 3903,
         "length": 4
       },
       "output": {

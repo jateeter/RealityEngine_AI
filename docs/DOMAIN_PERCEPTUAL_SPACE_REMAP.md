@@ -16,8 +16,8 @@ Use `--dry-run` to inspect the proposed layout without rewriting machine JSON.
 
 ## Current Layout
 
-The current universe contains `906` mapped machines and remains packed into
-`3709` used vector positions with no holes.
+The current universe contains `1006` mapped machines and remains packed into
+`4109` used vector positions with no holes.
 
 | Block | Vector range | Length | Components |
 | --- | ---: | ---: | ---: |
@@ -28,10 +28,11 @@ The current universe contains `906` mapped machines and remains packed into
 | data-center | `[1344:1569]` | 225 | 56 |
 | digital-logic | `[1569:1731]` | 162 | 57 |
 | health-services | `[1731:1931]` | 200 | 50 |
-| healthcare | `[1931:2047]` | 116 | 28 |
-| legal-services | `[2047:2847]` | 800 | 200 |
-| transportation | `[2847:3415]` | 568 | 142 |
-| cross-domain bridge | `[3415:3709]` | 294 | 54 |
+| healthcare | `[1931:2043]` | 112 | 26 |
+| legal-services | `[2043:2843]` | 800 | 200 |
+| life-balance | `[2843:3243]` | 400 | 100 |
+| transportation | `[3243:3811]` | 568 | 142 |
+| cross-domain bridge | `[3811:4109]` | 298 | 55 |
 
 This layout keeps each domain's local input/output flow contiguous, while the
 bridge block makes cross-domain PE.xRE.xPE throughput visible and measurable.
@@ -44,16 +45,38 @@ lane.
 
 Current throughput gauge:
 
-- Total mapped regions: `991`
-- Connected regions: `476`
-- Total machine-level interconnects: `1178`
-- Cross-domain machine-level interconnects: `72`
-- Cross-domain interconnect ratio: `6.11%`
+- Total mapped regions: `1094`
+- Connected regions: `567`
+- Total machine-level interconnects: `1293`
+- Cross-domain machine-level interconnects: `96`
+- Cross-domain interconnect ratio: `7.42%`
 
 The searchable compendium reports pairwise interval overlaps and currently sees
-`1241` machine-level interconnections and `106` cross-domain interconnections.
+`1361` machine-level interconnections and `135` cross-domain interconnections.
 The remapper gauge is stricter: it counts exact shared regions in the packed
 matrix.
+
+## Life Balance Domain
+
+The life-balance domain contains `100` generated `LBL` machines. It models
+lifestyle-psychiatry operations for intake, nutrition, sleep, movement, stress
+resilience, psychiatric care, adolescent/family support, testing and monitoring,
+connection/harm reduction, and projection automation.
+
+Each `LBL` machine includes five or more startup-loadable `inputSequences`:
+
+- `care-team-review`: two-step concern escalation to `[1,0,0,0]`
+- `lifestyle-plan-adjust`: barrier or preference adjustment to `[0,1,0,0]`
+- `monitoring-task`: data-gap or follow-up tasking to `[0,0,1,0]`
+- `stable-balance`: monitored stable state to `[0,0,0,1]`
+- `baseline-no-output`: initial observation with no expected output
+
+Five domain e2e sequences are embedded in `LBL096` through `LBL100` for
+metabolic mood projection, adolescent sleep/school projection, medication and
+lifestyle review, stress/connection projection, and command-center stabilization.
+The domain-local block is `[2843:3243]`; cross-domain bridge regions connect
+life-balance with health-services, healthcare, community-services, and
+ai-services.
 
 ## Community Services Expansion
 
@@ -94,29 +117,16 @@ health-services and transportation.
 
 | Bridge range | Crossed domains | Representative flow |
 | --- | --- | --- |
-| `[3415:3419]` | community-services <-> health-services | Housing voucher navigation and community health outcomes |
-| `[3419:3423]` | community-services <-> health-services | Public restroom operations and foundational public health |
-| `[3423:3427]` | community-services <-> health-services | Youth crisis pathway and care coordination |
-| `[3427:3431]` | community-services <-> health-services | Unsheltered health referral and care coordination |
-| `[3431:3435]` | community-services <-> health-services | 988 warm handoff and behavioral health integration |
-| `[3435:3439]` | community-services <-> health-services | Mental health shelter referral and behavioral health routing |
-| `[3439:3443]` | community-services <-> health-services | Shelter health isolation and environmental health response |
-| `[3443:3447]` | community-services <-> health-services | Public safety hotspot and emergency preparedness |
-| `[3447:3451]` | community-services <-> health-services | Community digital twin and learning health system |
-| `[3451:3455]` | community-services <-> health-services | Interagency dispatch board and learning-system routing |
-| `[3455:3459]` | community-services <-> transportation | Encampment risk, rider alerts, and transfer protection |
-| `[3459:3463]` | community-services <-> transportation | Public restroom operations and fleet pullout readiness |
-| `[3463:3467]` | community-services <-> transportation | Missing vulnerable person coordination and onboard security |
-| `[3467:3471]` | community-services <-> transportation | Community policing and fare-evasion/security triage |
-| `[3471:3475]` | community-services <-> transportation | Shelter incident response and weather hazard safety |
-| `[3475:3479]` | community-services <-> transportation | Cooling/warming center activation and fleet pullout readiness |
-| `[3479:3483]` | community-services <-> transportation | Supportive housing match and relief-bus allocation |
-| `[3483:3487]` | community-services <-> transportation | Privacy/consent governance and detour coordination |
-| `[3487:3491]` | community-services <-> transportation | Rapid rehousing and energy resilience |
-| `[3491:3495]` | community-services <-> transportation | Victim advocate assignment and emergency communications |
-| `[3495:3499]` | community-services <-> transportation | Hygiene access and rider feedback loop |
-| `[3499:3503]` | community-services <-> transportation | Equity service gaps and stop shelter conditions |
-| `[3503:3507]` | community-services <-> transportation | Community command center and 100-bus fleet command center |
+| `[3811:3815]` | healthcare <-> life-balance | Patient wellness and outcome-score synthesis |
+| `[3815:3819]` | community-services <-> health-services <-> life-balance | Housing voucher navigation, community health outcomes, and temperament review |
+| `[3827:3831]` | community-services <-> health-services <-> life-balance | Unsheltered health referral, care coordination, and therapy homework |
+| `[3831:3839]` | community-services <-> health-services <-> life-balance | Behavioral health routing, escalation, and sleep-risk review |
+| `[3847:3855]` | community-services <-> health-services <-> life-balance | Learning-system routing, command center projection, and weekly balance projection |
+| `[3855:3907]` | community-services <-> transportation | Fleet, safety, shelter, emergency, rider, and city-service coordination |
+| `[3907:3923]` | data-center <-> digital-logic <-> healthcare | Data-center operations and healthcare/digital infrastructure bridge |
+| `[3931:3939]` | ai-services <-> healthcare <-> life-balance | Patient wellness, wellness analytics, and plan adjustment |
+| `[3939:3955]` | ai-services <-> healthcare <-> life-balance | Care transition, stress/connection, and AI service bridge |
+| `[3955:4109]` | agriculture/data-center <-> digital-logic | Operational infrastructure and logic-pattern bridge regions |
 
 Other bridge regions preserve existing agriculture/digital-logic,
 data-center/digital-logic, and ai-services/healthcare crossings.
@@ -127,8 +137,9 @@ The expanded graph is materially better for PE.xRE.xPE bridge validation, but
 several points still deserve attention:
 
 - Cross-domain traffic is now concentrated in community-services, health-services,
-  transportation, digital-logic, agriculture, data-center, ai-services, and
-  healthcare. Legal-services and built-space remain mostly domain-isolated.
+  life-balance, transportation, digital-logic, agriculture, data-center,
+  ai-services, and healthcare. Legal-services and built-space remain mostly
+  domain-isolated.
 - Health-services and transportation bridge fan-out is high: several shared
   regions feed multiple downstream machines. This is useful for throughput tests,
   but it should be watched for noisy output attribution in diagnostics.
@@ -145,9 +156,9 @@ Use the bridge block to gauge PE.xRE.xPE throughput:
 
 - Replay one domain-local input sequence in each domain block and measure emitted
   output count per push.
-- Replay each community-services bridge region in `[3415:3507]` and measure
-  propagation latency from producer output to downstream health-services or
-  transportation consumer activation.
+- Replay each community-services/life-balance bridge region in `[3811:3855]`
+  and measure propagation latency from producer output to downstream
+  health-services, healthcare, or life-balance consumer activation.
 - Compare cross-domain bridge throughput against total interconnect throughput:
   `crossDomainMachineInterconnects / totalMachineInterconnects`.
 - Activate all community-services bridge producers in one PE push and verify

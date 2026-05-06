@@ -64,11 +64,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 1943,
+        "offset": 3813,
         "length": 2
       },
       "output": {
-        "offset": 1945,
+        "offset": 1941,
         "length": 2
       }
     },

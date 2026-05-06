@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for prototype disclosure guard.",
         "Mark prototype disclosure guard ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2567:2571]",
-      "outputSpace": "4D binary at [2571:2575]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2563:2567]",
+      "outputSpace": "4D binary at [2567:2571]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2567,
+        "offset": 2563,
         "length": 4
       },
       "output": {
-        "offset": 2571,
+        "offset": 2567,
         "length": 4
       }
     },

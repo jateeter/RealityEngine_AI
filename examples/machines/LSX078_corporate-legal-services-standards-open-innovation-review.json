@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for standards open innovation review.",
         "Mark standards open innovation review ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2663:2667]",
-      "outputSpace": "4D binary at [2667:2671]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2659:2663]",
+      "outputSpace": "4D binary at [2663:2667]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2663,
+        "offset": 2659,
         "length": 4
       },
       "output": {
-        "offset": 2667,
+        "offset": 2663,
         "length": 4
       }
     },

@@ -12,7 +12,7 @@
       "workstream": "Charging And Fueling",
       "focusDescription": "compressor health, storage pressure, dryer status, and queue length",
       "upstreamMachine": "Transportation Fleet Charging And Fueling Diesel Fuel Inventory",
-      "upstreamOutputRegion": "[3075:3079]",
+      "upstreamOutputRegion": "[3471:3475]",
       "downstreamMachines": [
         "Transportation Fleet Charging And Fueling Electric Charger Uptime"
       ],
@@ -27,8 +27,8 @@
       ],
       "criticalEventSequenceLength": 5,
       "criticalEventSequenceLengthBasis": "Every TFX machine has one critical inputSequence containing exactly 5 vectors; the generated family average is 5.0.",
-      "inputSpace": "4D binary at [3075:3079]",
-      "outputSpace": "4D binary at [3079:3083]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
+      "inputSpace": "4D binary at [3471:3475]",
+      "outputSpace": "4D binary at [3475:3479]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
       "inputSemantics": [
         "service reliability",
         "rider impact",
@@ -51,16 +51,16 @@
       ],
       "sequenceCount": 4,
       "reuseGuideline": "Map AVL, APC, CAD/AVL, fare, work-order, cleaning, security, rider feedback, and depot signals into the 4D input lane. Route outputs to dispatch, service control, maintenance, cleaning, security, customer communications, or executive fleet optimization agents.",
-      "downstreamPattern": "Output region [3079:3083] feeds Transportation Fleet Charging And Fueling Electric Charger Uptime for predictive fleet-flow management."
+      "downstreamPattern": "Output region [3475:3479] feeds Transportation Fleet Charging And Fueling Electric Charger Uptime for predictive fleet-flow management."
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3075,
+        "offset": 3471,
         "length": 4
       },
       "output": {
-        "offset": 3079,
+        "offset": 3475,
         "length": 4
       }
     },

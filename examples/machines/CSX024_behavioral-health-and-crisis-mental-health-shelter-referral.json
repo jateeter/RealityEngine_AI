@@ -12,7 +12,7 @@
       "focusDescription": "unsheltered distress, shelter fit, clinical follow-up, and transport need",
       "upstreamMachine": "health-services mapped output",
       "upstreamDomain": "health-services",
-      "upstreamOutputRegion": "[3435:3439]",
+      "upstreamOutputRegion": "[3835:3839]",
       "upstreamPurpose": "behavioral health resource routing",
       "downstreamMachines": [
         "Community Services Behavioral Health And Crisis Youth Crisis Pathway"
@@ -29,7 +29,7 @@
         "Create field work order or mobile team task for mental health shelter referral.",
         "Maintain monitored service path for mental health shelter referral."
       ],
-      "inputSpace": "4D binary at [3435:3439]",
+      "inputSpace": "4D binary at [3835:3839]",
       "outputSpace": "4D binary at [1096:1100]: [1,0,0,0]=URGENT_RESPONSE, [0,1,0,0]=COORDINATE_SERVICES, [0,0,1,0]=FIELD_WORK_ORDER, [0,0,0,1]=STABLE_SERVICE_PATH",
       "inputSemantics": [
         "resident need severity",
@@ -57,7 +57,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3435,
+        "offset": 3835,
         "length": 4
       },
       "output": {

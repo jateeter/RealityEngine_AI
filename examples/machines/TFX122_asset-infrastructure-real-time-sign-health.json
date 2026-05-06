@@ -12,7 +12,7 @@
       "workstream": "Asset Infrastructure",
       "focusDescription": "display online status, prediction feed, power, and vandalism state",
       "upstreamMachine": "Transportation Fleet Asset Infrastructure Stop Shelter Condition",
-      "upstreamOutputRegion": "[3499:3503]",
+      "upstreamOutputRegion": "[3899:3903]",
       "downstreamMachines": [
         "Transportation Fleet Asset Infrastructure Bus Stop Accessibility"
       ],
@@ -27,8 +27,8 @@
       ],
       "criticalEventSequenceLength": 5,
       "criticalEventSequenceLengthBasis": "Every TFX machine has one critical inputSequence containing exactly 5 vectors; the generated family average is 5.0.",
-      "inputSpace": "4D binary at [3499:3503]",
-      "outputSpace": "4D binary at [3303:3307]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
+      "inputSpace": "4D binary at [3899:3903]",
+      "outputSpace": "4D binary at [3699:3703]: [1,0,0,0]=CRITICAL_EVENT, [0,1,0,0]=PREDICTIVE_FLOW_ADJUST, [0,0,1,0]=OPS_TASK, [0,0,0,1]=SERVICE_NOMINAL",
       "inputSemantics": [
         "service reliability",
         "rider impact",
@@ -51,16 +51,16 @@
       ],
       "sequenceCount": 4,
       "reuseGuideline": "Map AVL, APC, CAD/AVL, fare, work-order, cleaning, security, rider feedback, and depot signals into the 4D input lane. Route outputs to dispatch, service control, maintenance, cleaning, security, customer communications, or executive fleet optimization agents.",
-      "downstreamPattern": "Output region [3303:3307] feeds Transportation Fleet Asset Infrastructure Bus Stop Accessibility for predictive fleet-flow management."
+      "downstreamPattern": "Output region [3699:3703] feeds Transportation Fleet Asset Infrastructure Bus Stop Accessibility for predictive fleet-flow management."
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3499,
+        "offset": 3899,
         "length": 4
       },
       "output": {
-        "offset": 3303,
+        "offset": 3699,
         "length": 4
       }
     },

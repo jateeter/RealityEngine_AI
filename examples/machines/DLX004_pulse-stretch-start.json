@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "machine": {
     "name": "Logical Infrastructure Pulse Stretch Start",
-    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `01+`. Detects a pulse that remains asserted for multiple cycles. Reads a 4D control/status lane at [3583:3587] and emits a 2D match lane at [3587:3589].",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `01+`. Detects a pulse that remains asserted for multiple cycles. Reads a 4D control/status lane at [3983:3987] and emits a 2D match lane at [3987:3989].",
     "metadata": {
       "category": "digital-logic",
       "domain": "Digital Logic - Infrastructure",
@@ -10,8 +10,8 @@
       "regularExpression": "01+",
       "asicPattern": "Pulse Stretch Start",
       "reuseRole": "general-purpose logical connective tissue",
-      "inputSpace": "4D binary at [3583:3587]",
-      "outputSpace": "2D binary at [3587:3589]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSpace": "4D binary at [3983:3987]",
+      "outputSpace": "2D binary at [3987:3989]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
       "inputSemantics": [
         "primary",
         "secondary",
@@ -31,11 +31,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3583,
+        "offset": 3983,
         "length": 4
       },
       "output": {
-        "offset": 3587,
+        "offset": 3987,
         "length": 2
       }
     },

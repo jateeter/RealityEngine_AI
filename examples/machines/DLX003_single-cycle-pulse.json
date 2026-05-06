@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "machine": {
     "name": "Logical Infrastructure Single Cycle Pulse",
-    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `0*10`. Detects a one-cycle pulse returning low. Reads a 4D control/status lane at [3579:3583] and emits a 2D match lane at [1573:1575].",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `0*10`. Detects a one-cycle pulse returning low. Reads a 4D control/status lane at [3979:3983] and emits a 2D match lane at [1573:1575].",
     "metadata": {
       "category": "digital-logic",
       "domain": "Digital Logic - Infrastructure",
@@ -10,7 +10,7 @@
       "regularExpression": "0*10",
       "asicPattern": "Single Cycle Pulse",
       "reuseRole": "general-purpose logical connective tissue",
-      "inputSpace": "4D binary at [3579:3583]",
+      "inputSpace": "4D binary at [3979:3983]",
       "outputSpace": "2D binary at [1573:1575]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
       "inputSemantics": [
         "primary",
@@ -31,7 +31,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3579,
+        "offset": 3979,
         "length": 4
       },
       "output": {

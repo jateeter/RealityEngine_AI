@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for owner identity verification.",
         "Mark owner identity verification ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2175:2179]",
-      "outputSpace": "4D binary at [2179:2183]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2171:2175]",
+      "outputSpace": "4D binary at [2175:2179]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2175,
+        "offset": 2171,
         "length": 4
       },
       "output": {
-        "offset": 2179,
+        "offset": 2175,
         "length": 4
       }
     },

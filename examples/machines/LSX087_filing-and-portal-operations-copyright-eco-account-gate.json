@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for copyright eco account gate.",
         "Mark copyright eco account gate ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2735:2739]",
-      "outputSpace": "4D binary at [2739:2743]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2731:2735]",
+      "outputSpace": "4D binary at [2735:2739]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2735,
+        "offset": 2731,
         "length": 4
       },
       "output": {
-        "offset": 2739,
+        "offset": 2735,
         "length": 4
       }
     },

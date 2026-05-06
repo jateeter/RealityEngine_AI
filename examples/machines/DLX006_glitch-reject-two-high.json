@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "machine": {
     "name": "Logical Infrastructure Glitch Reject Two High",
-    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `0*11`. Accepts high only after two consecutive asserted samples. Reads a 4D control/status lane at [3595:3599] and emits a 2D match lane at [1575:1577].",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `0*11`. Accepts high only after two consecutive asserted samples. Reads a 4D control/status lane at [3995:3999] and emits a 2D match lane at [1575:1577].",
     "metadata": {
       "category": "digital-logic",
       "domain": "Digital Logic - Infrastructure",
@@ -10,7 +10,7 @@
       "regularExpression": "0*11",
       "asicPattern": "Glitch Reject Two High",
       "reuseRole": "general-purpose logical connective tissue",
-      "inputSpace": "4D binary at [3595:3599]",
+      "inputSpace": "4D binary at [3995:3999]",
       "outputSpace": "2D binary at [1575:1577]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
       "inputSemantics": [
         "primary",
@@ -31,7 +31,7 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3595,
+        "offset": 3995,
         "length": 4
       },
       "output": {

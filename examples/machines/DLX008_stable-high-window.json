@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "machine": {
     "name": "Logical Infrastructure Stable High Window",
-    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `1{3}`. Detects three consecutive stable-high samples. Reads a 4D control/status lane at [3603:3607] and emits a 2D match lane at [3607:3609].",
+    "description": "Reusable digital-logic infrastructure machine for ASIC-style connective tissue. It implements the temporal regular expression `1{3}`. Detects three consecutive stable-high samples. Reads a 4D control/status lane at [4003:4007] and emits a 2D match lane at [4007:4009].",
     "metadata": {
       "category": "digital-logic",
       "domain": "Digital Logic - Infrastructure",
@@ -10,8 +10,8 @@
       "regularExpression": "1{3}",
       "asicPattern": "Stable High Window",
       "reuseRole": "general-purpose logical connective tissue",
-      "inputSpace": "4D binary at [3603:3607]",
-      "outputSpace": "2D binary at [3607:3609]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
+      "inputSpace": "4D binary at [4003:4007]",
+      "outputSpace": "2D binary at [4007:4009]: [1,0]=MATCH, [0,1]=CLEAR_OR_AVAILABLE",
       "inputSemantics": [
         "primary",
         "secondary",
@@ -31,11 +31,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 3603,
+        "offset": 4003,
         "length": 4
       },
       "output": {
-        "offset": 3607,
+        "offset": 4007,
         "length": 2
       }
     },

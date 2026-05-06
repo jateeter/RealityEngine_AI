@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for independent contractor cleanup.",
         "Mark independent contractor cleanup ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2559:2563]",
-      "outputSpace": "4D binary at [2563:2567]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2555:2559]",
+      "outputSpace": "4D binary at [2559:2563]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2559,
+        "offset": 2555,
         "length": 4
       },
       "output": {
-        "offset": 2563,
+        "offset": 2559,
         "length": 4
       }
     },

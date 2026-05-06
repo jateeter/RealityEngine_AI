@@ -2,12 +2,12 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Mental Health Access Monitor",
-    "description": "Integration machine that reads combined output signals from the Home Chronic Disease Monitor [2023:2027] and the Home Chronic Pain Monitor [2027:2031] to detect mental health access needs driven by chronic illness burden. Chronic disease and chronic pain are bidirectionally linked to depression and anxiety — each worsens the other — and low-income patients carrying both have the least access to mental health services. This machine identifies patients who need mental health integration into their medical home care plan. Output at [2043:2047] is available to downstream care coordination systems.",
+    "description": "Integration machine that reads combined output signals from the Home Chronic Disease Monitor [2019:2023] and the Home Chronic Pain Monitor [2023:2027] to detect mental health access needs driven by chronic illness burden. Chronic disease and chronic pain are bidirectionally linked to depression and anxiety — each worsens the other — and low-income patients carrying both have the least access to mental health services. This machine identifies patients who need mental health integration into their medical home care plan. Output at [2039:2043] is available to downstream care coordination systems.",
     "metadata": {
       "category": "healthcare",
       "domain": "Home Health — Mental Health Access / Chronic Illness Comorbidity",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [2043:2047]: [1,0,0,0]=MENTAL_HEALTH_CRISIS, [0,1,0,0]=MH_REFERRAL_NEEDED, [0,0,1,0]=COMORBIDITY_RISK, [0,0,0,1]=MH_ACCESS_ADEQUATE",
+      "outputSpace": "4D binary at [2039:2043]: [1,0,0,0]=MENTAL_HEALTH_CRISIS, [0,1,0,0]=MH_REFERRAL_NEEDED, [0,0,1,0]=COMORBIDITY_RISK, [0,0,0,1]=MH_ACCESS_ADEQUATE",
       "tags": [
         "healthcare",
         "home health",
@@ -28,18 +28,18 @@
         "mh_access_norm": "0.0=no mental health provider access; no telehealth option; no peer support; all cost barriers, 0.5=limited access (long waitlist; one session per month; crisis line only), 1.0=regular mental health engagement; adequate support"
       },
       "upstreamMachines": [
-        "HomeChronicDiseaseMonitor (output [2023:2027])",
-        "HomeChronicPainMonitor (output [2027:2031])"
+        "HomeChronicDiseaseMonitor (output [2019:2023])",
+        "HomeChronicPainMonitor (output [2023:2027])"
       ]
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2023,
+        "offset": 2019,
         "length": 8
       },
       "output": {
-        "offset": 2043,
+        "offset": 2039,
         "length": 4
       }
     },
@@ -198,7 +198,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "MENTAL_HEALTH_CRISIS: dual chronic illness crisis driving acute mental health decompensation at [2043:2047]",
+                  "description": "MENTAL_HEALTH_CRISIS: dual chronic illness crisis driving acute mental health decompensation at [2039:2043]",
                   "action": "Urgent PHQ-9 administration; suicidality screening; crisis counselor contact; integrated behavioral health referral; physician notification for pain/disease management review"
                 }
               }
@@ -267,7 +267,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "MH_REFERRAL_NEEDED: chronic illness burden driving mental health comorbidity requiring behavioral health integration at [2043:2047]",
+                  "description": "MH_REFERRAL_NEEDED: chronic illness burden driving mental health comorbidity requiring behavioral health integration at [2039:2043]",
                   "action": "Integrated behavioral health referral; telehealth therapy option assessment; peer support program enrollment; PHQ-9 formal scoring; SBIRT screening"
                 }
               }
@@ -336,7 +336,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "MH_ACCESS_ADEQUATE: chronic illness managed; mental health comorbidity risk low; no access gap at [2043:2047]",
+                  "description": "MH_ACCESS_ADEQUATE: chronic illness managed; mental health comorbidity risk low; no access gap at [2039:2043]",
                   "action": "No additional mental health intervention required; maintain current support level"
                 }
               }

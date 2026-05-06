@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for twelve month conversion docket.",
         "Mark twelve month conversion docket ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2119:2123]",
-      "outputSpace": "4D binary at [2123:2127]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2115:2119]",
+      "outputSpace": "4D binary at [2119:2123]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2119,
+        "offset": 2115,
         "length": 4
       },
       "output": {
-        "offset": 2123,
+        "offset": 2119,
         "length": 4
       }
     },

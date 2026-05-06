@@ -26,8 +26,8 @@
         "Create or update docket/checklist tasks for solo inventor intake.",
         "Mark solo inventor intake ready for the next controlled workflow step."
       ],
-      "inputSpace": "4D binary at [2527:2531]",
-      "outputSpace": "4D binary at [2531:2535]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "inputSpace": "4D binary at [2523:2527]",
+      "outputSpace": "4D binary at [2527:2531]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,11 +50,11 @@
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 2527,
+        "offset": 2523,
         "length": 4
       },
       "output": {
-        "offset": 2531,
+        "offset": 2527,
         "length": 4
       }
     },
