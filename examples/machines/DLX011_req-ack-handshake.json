@@ -54,7 +54,6 @@
           "digital-logic-infrastructure",
           "dlx011",
           "logical-infrastructure",
-          "logical-infrastructure-req-ack-handshake",
           "regular-expression",
           "req-ack-handshake"
         ],

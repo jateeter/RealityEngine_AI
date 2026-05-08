@@ -4,7 +4,7 @@
     "name": "Home Transportation Barrier Monitor",
     "description": "Monitors transportation access barriers that prevent low- and medium-income home health patients from attending medical appointments, filling prescriptions, and accessing community services. Transportation is a top driver of missed care in rural and low-income urban settings — more predictive of care gaps than insurance status alone. Output at [2015:2019] feeds the Home Social Isolation Monitor alongside the Medication Cost Barrier Monitor.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Social Determinants / Transportation Access",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2015:2019]: [1,0,0,0]=CRITICAL_ACCESS_FAILURE, [0,1,0,0]=APPOINTMENT_BARRIER, [0,0,1,0]=TRANSIT_DEPENDENT_RISK, [0,0,0,1]=TRANSPORTATION_ADEQUATE",
@@ -12,7 +12,7 @@
         "appointment-attendance",
         "ces-sequences",
         "ces-sequences-3",
-        "healthcare",
+        "health-personal",
         "home-health",
         "home-health-social-determinants-transportation-access",
         "home-transportation-barrier-monitor",
@@ -38,9 +38,9 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
-          "healthcare",
+          "health-personal",
           "home-health",
           "social-determinants",
           "transportation-access"
@@ -58,7 +58,7 @@
           "transportation"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -71,7 +71,7 @@
           "appointment-attendance",
           "ces-sequences",
           "ces-sequences-3",
-          "healthcare",
+          "health-personal",
           "home-health",
           "home-health-social-determinants-transportation-access",
           "home-transportation-barrier-monitor",

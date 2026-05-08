@@ -97,7 +97,6 @@
           "tfx126",
           "transit-security-agent",
           "transportation-fleet-asset-infrastructure",
-          "transportation-fleet-asset-infrastructure-avl-infrastructure-health",
           "transportation-generated"
         ],
         "integrationTags": [

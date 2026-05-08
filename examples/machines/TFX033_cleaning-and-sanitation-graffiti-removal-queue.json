@@ -97,7 +97,6 @@
           "tfx033",
           "transit-vehicle-health-agent",
           "transportation-fleet-cleaning-and-sanitation",
-          "transportation-fleet-cleaning-and-sanitation-graffiti-removal-queue",
           "transportation-generated"
         ],
         "integrationTags": [

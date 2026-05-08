@@ -97,7 +97,6 @@
           "tfx011",
           "transit-customer-comms-agent",
           "transportation-fleet-vehicle-operations",
-          "transportation-fleet-vehicle-operations-bus-telematics-health",
           "transportation-generated"
         ],
         "integrationTags": [

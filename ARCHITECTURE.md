@@ -29,8 +29,8 @@ flowchart LR
   TLS --> G
   PEUI --> PE
   VF --> VB
-  PE --> VB
-  VB --> RE
+  VB -.->|SSE observer| RE
+  PE --> RE
   RE --> Q
   PE --> AI
   RE --> L
@@ -64,15 +64,14 @@ sequenceDiagram
 
   Source->>PE: current values for assigned region
   PE->>PE: assemble persistent vector
-  PE->>VB: POST /api/perceive
-  VB->>RE: POST /api/perceive
+  PE->>RE: POST /api/perceive (direct — VB not in path)
   RE->>RE: snapshot machine inputs
   RE->>RE: process CES graphs
   RE->>RE: merge machine outputs
-  RE-->>VB: SimulationStep
-  VB-->>UI: WebSocket perceptual-simulation-stepped
-  VB-->>PE: SimulationStep
+  RE-->>PE: SimulationStep
   PE->>PE: persist post-merge vector for next push
+  RE-->>VB: SSE push (async, skip-ahead)
+  VB-->>UI: WebSocket perceptual-simulation-stepped
 ```
 
 ## Perceptual Vector Model
@@ -119,7 +118,8 @@ flowchart TD
 | 2 | Reality Engine loads every `examples/machines/*.json`. |
 | 3 | Perception Engine creates startup sources for machine `inputSequences`. |
 | 4 | Optional localAIStack bootstrap registers bridge sensor sources. |
-| 5 | Visualizer connects through nginx and subscribes to step broadcasts. |
+| 5 | Visualizer Backend subscribes to RE's SSE stream as a passive observer. |
+| 6 | Visualizer UI connects through nginx and subscribes to VB WebSocket broadcasts. |
 
 ## Documentation Set
 

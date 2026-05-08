@@ -97,7 +97,6 @@
           "tfx121",
           "transit-rider-experience-agent",
           "transportation-fleet-asset-infrastructure",
-          "transportation-fleet-asset-infrastructure-stop-shelter-condition",
           "transportation-generated"
         ],
         "integrationTags": [

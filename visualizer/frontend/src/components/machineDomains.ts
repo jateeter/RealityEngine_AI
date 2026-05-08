@@ -89,7 +89,7 @@ export const DOMAIN_ORDER: DomainId[] = ['healthservices', 'ai', 'datacenter', '
 
 const HEALTH_KEYWORDS = [
   'elder-care', 'eldercare', 'patient', 'wellness', 'assisted living',
-  'healthcare', 'health services', 'care transition', 'facilitiesmaintenance',
+  'healthcare', 'health-personal', 'health services', 'care transition', 'facilitiesmaintenance',
   'facilities-maintenance', 'residential', 'clinical',
 ];
 
@@ -168,7 +168,7 @@ export function classifyMachine(m: MinimalMachine): ClassifiedMachine {
   // 1) metadata.category enum — explicit override that beats name-prefix heuristics.
   //    Authors use this to reclassify machines whose name prefix is misleading
   //    (e.g. "AI Cooling Regulator" is really a data-center concern).
-  if (category === 'elder-care' || category === 'eldercare' || category === 'healthcare')
+  if (category === 'elder-care' || category === 'eldercare' || category === 'healthcare' || category === 'health-personal')
     return { domain: 'healthservices', isExternal, reason: `category=${category}` };
   if (category === 'ai-pipeline' || category === 'ai')
     return { domain: 'ai', isExternal, reason: `category=${category}` };

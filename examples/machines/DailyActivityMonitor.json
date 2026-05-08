@@ -4,7 +4,7 @@
     "name": "Daily Activity Monitor",
     "description": "Compares today's in-home movement against the patient's 7-day baseline. Flags sedentary days as AMBER and prolonged inactivity (multiple consecutive sedentary days) as RED so the local AI can escalate wellness outreach.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "wellness",
       "author": "Reality Engine",
       "created": "2026-04-21T00:00:00Z",
@@ -17,7 +17,7 @@
         "ces-sequences-3",
         "daily-activity-monitor",
         "elder-care",
-        "healthcare",
+        "health-personal",
         "in-home-monitoring",
         "input-sequences",
         "input-sequences-2",
@@ -68,9 +68,9 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
-          "healthcare",
+          "health-personal",
           "wellness"
         ],
         "family": "daily-activity-monitor",
@@ -79,14 +79,13 @@
           "in-home-monitoring"
         ],
         "workflowTags": [
-          "activity",
           "daily-activity-monitor",
           "elder-care",
-          "trend",
+          "anomaly-detection",
           "trigger"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -101,7 +100,7 @@
           "ces-sequences-3",
           "daily-activity-monitor",
           "elder-care",
-          "healthcare",
+          "health-personal",
           "in-home-monitoring",
           "input-sequences",
           "input-sequences-2",

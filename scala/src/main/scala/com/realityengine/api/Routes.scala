@@ -13,6 +13,10 @@ import io.circe.syntax._
 import JsonProtocol._
 
 import akka.actor.Cancellable
+import akka.stream.scaladsl.{BroadcastHub, Keep, Source}
+import akka.stream.{Materializer, OverflowStrategy}
+import akka.http.scaladsl.model.sse.ServerSentEvent
+import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
@@ -57,6 +61,15 @@ class Routes(
   // Auto-play scheduler
   private val autoPlayTask = new AtomicReference[Option[Cancellable]](None)
 
+  // SSE broadcast hub — dropHead means slow subscribers always see the latest step,
+  // never accumulate a backlog that would stall the PE.x.RE.x.PE cycle.
+  private val (sseQueue, sseBroadcast) = {
+    implicit val m: Materializer = Materializer(system)
+    Source.queue[SimulationStep](1, OverflowStrategy.dropHead)
+      .toMat(BroadcastHub.sink[SimulationStep](bufferSize = 1))(Keep.both)
+      .run()
+  }
+
   private def cancelAutoPlay(): Unit = {
     autoPlayTask.getAndSet(None).foreach(_.cancel())
   }
@@ -65,8 +78,8 @@ class Routes(
     cancelAutoPlay()
     val task = system.scheduler.scheduleWithFixedDelay(0.milliseconds, delayMs.milliseconds) { () =>
       simulator.step() match {
-        case None    => cancelAutoPlay()
-        case Some(_) => ()
+        case None       => cancelAutoPlay()
+        case Some(step) => sseQueue.offer(step); ()
       }
     }
     autoPlayTask.set(Some(task))
@@ -569,8 +582,17 @@ class Routes(
           val step     = simulator.processImmediate(vec, matchOvr)
           // Sync PreceptionEngine's space with post-merge state
           engine.preceptionEngine.getPerceptualSpace.setPerceptualVector(step.perceptualSpace)
+          // Non-blocking push to the SSE broadcast hub so observers never stall the caller
+          sseQueue.offer(step)
           complete(step.asJson)
         } } },
+
+        // SSE step-stream — Visualizer Backend subscribes here as a passive observer.
+        // Each subscriber gets a live-only feed; the dropHead queue ensures the VB
+        // always sees the latest step and never blocks the PE.x.RE.x.PE cycle.
+        path("engine" / "stream") { get {
+          complete(sseBroadcast.map(step => ServerSentEvent(step.asJson.noSpaces)))
+        } },
 
         // Root
         pathEndOrSingleSlash { get { complete(Json.obj(

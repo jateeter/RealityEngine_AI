@@ -97,7 +97,6 @@
           "tfx107",
           "transit-dispatch-agent",
           "transportation-fleet-customer-communications",
-          "transportation-fleet-customer-communications-event-service-messaging",
           "transportation-generated"
         ],
         "integrationTags": [

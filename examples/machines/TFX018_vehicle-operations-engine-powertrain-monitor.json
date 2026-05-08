@@ -97,7 +97,6 @@
           "tfx018",
           "transit-vehicle-health-agent",
           "transportation-fleet-vehicle-operations",
-          "transportation-fleet-vehicle-operations-engine-powertrain-monitor",
           "transportation-generated"
         ],
         "integrationTags": [

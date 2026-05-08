@@ -97,7 +97,6 @@
           "tfx127",
           "transit-energy-agent",
           "transportation-fleet-asset-infrastructure",
-          "transportation-fleet-asset-infrastructure-fare-validator-asset-health",
           "transportation-generated"
         ],
         "integrationTags": [

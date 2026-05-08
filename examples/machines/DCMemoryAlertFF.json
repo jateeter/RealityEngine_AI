@@ -49,7 +49,7 @@
         "machineCode": "dcmemory-alert-ff",
         "capabilityTags": [],
         "workflowTags": [
-          "data-center-memory-alert-latch",
+          "data-center",
           "dc-memory-alert-flip-flop",
           "dcmemory-alert-ff",
           "flip-flop"

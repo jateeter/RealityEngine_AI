@@ -4,7 +4,7 @@
     "name": "Medication Adherence Monitor",
     "description": "Tracks whether scheduled medication doses are acknowledged within the allotted window. Signals the local AI to trigger reminders, caregiver alerts, or clinical follow-up when doses are delayed or missed outright.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "wellness",
       "author": "Reality Engine",
       "created": "2026-04-21T00:00:00Z",
@@ -15,7 +15,7 @@
         "ces-sequences",
         "ces-sequences-3",
         "elder-care",
-        "healthcare",
+        "health-personal",
         "in-home-monitoring",
         "input-sequences",
         "input-sequences-2",
@@ -67,9 +67,9 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
-          "healthcare",
+          "health-personal",
           "wellness"
         ],
         "family": "medication-adherence-monitor",
@@ -80,11 +80,10 @@
         "workflowTags": [
           "elder-care",
           "medication",
-          "medication-adherence-monitor",
           "trigger"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -97,7 +96,7 @@
           "ces-sequences",
           "ces-sequences-3",
           "elder-care",
-          "healthcare",
+          "health-personal",
           "in-home-monitoring",
           "input-sequences",
           "input-sequences-2",

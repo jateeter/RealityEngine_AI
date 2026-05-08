@@ -4,7 +4,7 @@
     "name": "Child Development Monitor",
     "description": "Tracks developmental milestone progress, social-emotional engagement, language acquisition, and learning readiness for children ages 0–12 in low- and medium-income home care settings. Early identification of developmental delays in economically vulnerable households is critical because access to early intervention services (EI, speech therapy, occupational therapy) is income- and geography-dependent. Output at [2007:2011] feeds the Home Caregiver Burden Monitor alongside the Pediatric Nutrition Monitor.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Pediatric / Child Development",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2007:2011]: [1,0,0,0]=REFERRAL_NEEDED, [0,1,0,0]=SOCIAL_DEVELOPMENTAL_CONCERN, [0,0,1,0]=LEARNING_CONCERN, [0,0,0,1]=DEVELOPMENT_OK",
@@ -15,7 +15,7 @@
         "child-development-monitor",
         "developmental-delay",
         "early-intervention",
-        "healthcare",
+        "health-personal",
         "home-health",
         "home-health-pediatric-child-development",
         "input-sequences",
@@ -37,10 +37,10 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "child-development",
-          "healthcare",
+          "health-personal",
           "home-health",
           "pediatric"
         ],
@@ -56,7 +56,7 @@
           "low-income"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -72,7 +72,7 @@
           "child-development-monitor",
           "developmental-delay",
           "early-intervention",
-          "healthcare",
+          "health-personal",
           "home-health",
           "home-health-pediatric-child-development",
           "input-sequences",

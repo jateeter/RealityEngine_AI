@@ -49,11 +49,9 @@
           "ph-monitoring"
         ],
         "workflowTags": [
-          "ag-nutrient-solution-monitor",
-          "agriculture-nutrient-management-hydroponics",
           "indoor-growing",
           "kleene-plus",
-          "nutrient-solution"
+          "nutrition"
         ],
         "integrationTags": [],
         "validationTags": [

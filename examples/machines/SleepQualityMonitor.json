@@ -4,7 +4,7 @@
     "name": "Sleep Quality Monitor",
     "description": "Classifies nightly sleep into RESTFUL, DISTURBED, or POOR based on bed-sensor-derived signals (duration, fragmentation). Triggers the local AI when sleep degrades so it can surface trends, adjust reminders, or notify caregivers.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "wellness",
       "author": "Reality Engine",
       "created": "2026-04-21T00:00:00Z",
@@ -15,7 +15,7 @@
         "ces-sequences",
         "ces-sequences-3",
         "elder-care",
-        "healthcare",
+        "health-personal",
         "in-home-monitoring",
         "input-sequences",
         "input-sequences-2",
@@ -68,9 +68,9 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
-          "healthcare",
+          "health-personal",
           "wellness"
         ],
         "family": "sleep-quality-monitor",
@@ -81,12 +81,11 @@
         "workflowTags": [
           "elder-care",
           "sleep",
-          "sleep-quality-monitor",
-          "trend",
+          "anomaly-detection",
           "trigger"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -99,7 +98,7 @@
           "ces-sequences",
           "ces-sequences-3",
           "elder-care",
-          "healthcare",
+          "health-personal",
           "in-home-monitoring",
           "input-sequences",
           "input-sequences-2",

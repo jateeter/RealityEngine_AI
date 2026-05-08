@@ -4,7 +4,7 @@
     "name": "Home Chronic Disease Monitor",
     "description": "Monitors primary biomarker control, symptom burden, self-management capacity, and lifestyle adherence for adults managing one or more chronic conditions (diabetes, hypertension, COPD, heart failure) at home in low- and medium-income settings. Poor chronic disease control in home care populations is driven by compounding social stressors rather than clinical non-compliance. Output at [2019:2023] feeds the Home Mental Health Access Monitor, reflecting the bidirectional chronic disease — depression comorbidity pathway.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Chronic Disease Management",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2019:2023]: [1,0,0,0]=DISEASE_EXACERBATION, [0,1,0,0]=POOR_CONTROL, [0,0,1,0]=BORDERLINE_CONTROL, [0,0,0,1]=DISEASE_CONTROLLED",
@@ -15,7 +15,7 @@
         "chronic-disease-management",
         "copd",
         "diabetes",
-        "healthcare",
+        "health-personal",
         "home-chronic-disease-monitor",
         "home-health",
         "home-health-chronic-disease-management",
@@ -39,10 +39,10 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "chronic-disease-management",
-          "healthcare",
+          "health-personal",
           "home-health"
         ],
         "family": "home-chronic-disease-monitor",
@@ -60,7 +60,7 @@
           "self-management"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -76,7 +76,7 @@
           "chronic-disease-management",
           "copd",
           "diabetes",
-          "healthcare",
+          "health-personal",
           "home-chronic-disease-monitor",
           "home-health",
           "home-health-chronic-disease-management",

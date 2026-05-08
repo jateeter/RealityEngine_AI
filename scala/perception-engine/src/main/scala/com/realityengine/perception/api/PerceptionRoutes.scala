@@ -23,7 +23,6 @@ class PerceptionRoutes(
   engine: PerceptionEngine,
   store: SourceStore,
   broadcastActor: ActorRef,
-  perceptionTargetUrl: String,
   realityEngineUrl: String,
   auditCfg: AuditConfig,
 )(implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext) {
@@ -70,7 +69,7 @@ class PerceptionRoutes(
       "matchAlgorithm" -> algoStr.asJson,
     ).noSpaces
 
-    // T-2: push directly to Reality Engine (was perceptionTargetUrl / visualizer-backend)
+    // Push directly to the Reality Engine — VB is a passive SSE observer, not in the path
     val request = basicRequest
       .post(uri"$realityEngineUrl/api/perceive")
       .contentType("application/json")
@@ -104,27 +103,6 @@ class PerceptionRoutes(
         )
         broadcastState()
         broadcast(Json.obj("type" -> "push-result".asJson).deepMerge(encodePushResult(result)))
-
-        // Notify visualizer backend so it can fan out the step to its WS clients.
-        // Fire-and-forget: never awaited, never blocks the push cycle.
-        val notifyPayload = Json.obj(
-          "step"       -> parsed,
-          "globalStep" -> engine.globalStep.asJson,
-          "timestamp"  -> ts.asJson,
-        ).noSpaces
-        Future {
-          try {
-            basicRequest
-              .post(uri"$perceptionTargetUrl/api/perceive-notify")
-              .contentType("application/json")
-              .body(notifyPayload)
-              .response(ignore)
-              .send(sttpBackend)
-          } catch {
-            case e: Exception =>
-              System.err.println(s"[doPush] Visualizer notify skipped: ${e.getMessage}")
-          }
-        }(system.dispatchers.lookup("blocking-io-dispatcher"))
 
         result
 

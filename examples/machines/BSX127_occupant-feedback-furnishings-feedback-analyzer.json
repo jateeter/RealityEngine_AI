@@ -91,7 +91,6 @@
           "bsx127",
           "built-space-well-generated",
           "built-space-well-occupant-feedback",
-          "built-space-well-occupant-feedback-furnishings-feedback-analyzer",
           "dispatchable-agent",
           "furnishings-feedback-analyzer",
           "occupant-feedback",

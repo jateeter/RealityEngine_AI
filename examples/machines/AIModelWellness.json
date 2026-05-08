@@ -98,7 +98,7 @@
         "machineCode": "aimodel-wellness",
         "capabilityTags": [],
         "workflowTags": [
-          "ai",
+          "ai-trigger",
           "ai-infrastructure-model-serving-health",
           "ai-model-wellness-monitor",
           "aimodel-wellness",

@@ -97,7 +97,6 @@
           "tfx073",
           "transit-asset-agent",
           "transportation-fleet-depot-operations",
-          "transportation-fleet-depot-operations-pre-trip-inspection-monitor",
           "transportation-generated"
         ],
         "integrationTags": [

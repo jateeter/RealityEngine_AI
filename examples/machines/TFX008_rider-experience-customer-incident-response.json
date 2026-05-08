@@ -96,7 +96,6 @@
           "tfx008",
           "transit-depot-agent",
           "transportation-fleet-rider-experience",
-          "transportation-fleet-rider-experience-customer-incident-response",
           "transportation-generated"
         ],
         "integrationTags": [

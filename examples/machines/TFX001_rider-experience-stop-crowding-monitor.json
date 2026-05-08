@@ -95,7 +95,6 @@
           "tfx001",
           "transit-rider-experience-agent",
           "transportation-fleet-rider-experience",
-          "transportation-fleet-rider-experience-stop-crowding-monitor",
           "transportation-generated"
         ],
         "integrationTags": [

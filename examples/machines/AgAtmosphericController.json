@@ -47,11 +47,8 @@
         "machineCode": "ag-atmospheric-controller",
         "capabilityTags": [],
         "workflowTags": [
-          "ag-atmospheric-controller",
-          "agriculture-atmospheric-co2-humidity-control",
-          "climate-control",
+          "thermal-comfort",
           "co2-enrichment",
-          "humidity",
           "indoor-growing",
           "kleene-plus",
           "vpd"

@@ -4,7 +4,7 @@
     "name": "Fall Detection",
     "description": "Classifies motion-sensor events from wearables or in-home cameras into NOMINAL, NEAR-FALL (stumble recovered), or FALL (impact detected). A FALL triggers an immediate RED upstream signal so the local AI can dispatch help.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "wellness",
       "author": "Reality Engine",
       "created": "2026-04-21T00:00:00Z",
@@ -16,7 +16,7 @@
         "ces-sequences-3",
         "elder-care",
         "fall-detection",
-        "healthcare",
+        "health-personal",
         "in-home-monitoring",
         "input-sequences",
         "input-sequences-2",
@@ -68,9 +68,9 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
-          "healthcare",
+          "health-personal",
           "wellness"
         ],
         "family": "fall-detection",
@@ -80,12 +80,12 @@
         ],
         "workflowTags": [
           "elder-care",
-          "fall-detection",
-          "safety",
+          "anomaly-detection",
+          "security",
           "trigger"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -99,7 +99,7 @@
           "ces-sequences-3",
           "elder-care",
           "fall-detection",
-          "healthcare",
+          "health-personal",
           "in-home-monitoring",
           "input-sequences",
           "input-sequences-2",

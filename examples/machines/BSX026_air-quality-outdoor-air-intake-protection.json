@@ -88,10 +88,8 @@
         ],
         "workflowTags": [
           "ai-trigger",
-          "air-quality",
           "bsx026",
           "built-space-well-air-quality",
-          "built-space-well-air-quality-outdoor-air-intake-protection",
           "built-space-well-generated",
           "dispatchable-agent",
           "occupant-health",

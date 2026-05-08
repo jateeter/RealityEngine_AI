@@ -63,8 +63,8 @@
         ],
         "workflowTags": [
           "cascading-failure",
-          "continuous",
-          "data-center-memory-pressure",
+          "anomaly-detection",
+          "data-center",
           "dc-memory-pressure-detector",
           "dcmemory-pressure",
           "thrashing"

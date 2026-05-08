@@ -59,7 +59,7 @@
         "capabilityTags": [],
         "workflowTags": [
           "correlation",
-          "data-center-critical-alert-synthesizer",
+          "data-center",
           "dc-critical-synthesizer",
           "dccritical-synthesizer",
           "multi-alarm"

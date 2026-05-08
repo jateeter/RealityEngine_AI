@@ -97,7 +97,6 @@
           "tfx129",
           "transit-workforce-agent",
           "transportation-fleet-asset-infrastructure",
-          "transportation-fleet-asset-infrastructure-charger-grid-infrastructure",
           "transportation-generated"
         ],
         "integrationTags": [

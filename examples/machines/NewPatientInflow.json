@@ -4,7 +4,7 @@
     "name": "NewPatientInflow",
     "description": "New patient evaluation workflow for an elder care assisted living organization. Detects structured intake sequences and classifies each candidate as ACCEPTED or PROVISIONAL_REJECT.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "author": "Reality Engine",
       "created": "2026-04-09T00:00:00Z",
       "domain": "Healthcare Intake — Assisted Living",
@@ -50,7 +50,7 @@
         "ces-sequences",
         "ces-sequences-4",
         "elder-care",
-        "healthcare",
+        "health-personal",
         "healthcare-intake",
         "healthcare-intake-assisted-living",
         "input-sequences",
@@ -64,10 +64,10 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "assisted-living",
-          "healthcare",
+          "health-personal",
           "healthcare-intake"
         ],
         "family": "new-patient-inflow",
@@ -76,15 +76,14 @@
           "workflow"
         ],
         "workflowTags": [
-          "binary",
+          "digital-logic-generated",
           "elder-care",
-          "healthcare-intake-assisted-living",
+          "health-personal-operations",
           "intake",
-          "new-patient-inflow",
           "patient-evaluation"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -99,7 +98,7 @@
           "ces-sequences",
           "ces-sequences-4",
           "elder-care",
-          "healthcare",
+          "health-personal",
           "healthcare-intake",
           "healthcare-intake-assisted-living",
           "input-sequences",

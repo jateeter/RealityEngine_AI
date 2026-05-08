@@ -97,7 +97,6 @@
           "tfx137",
           "transit-dispatch-agent",
           "transportation-fleet-finance-and-cost",
-          "transportation-fleet-finance-and-cost-service-change-cost",
           "transportation-generated"
         ],
         "integrationTags": [

@@ -55,7 +55,6 @@
           "digital-logic-infrastructure",
           "dlx023",
           "logical-infrastructure",
-          "logical-infrastructure-clock-gate-request-grant",
           "regular-expression"
         ],
         "integrationTags": [

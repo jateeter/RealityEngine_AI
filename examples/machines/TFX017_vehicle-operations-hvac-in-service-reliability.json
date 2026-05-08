@@ -97,7 +97,6 @@
           "tfx017",
           "transit-dispatch-agent",
           "transportation-fleet-vehicle-operations",
-          "transportation-fleet-vehicle-operations-hvac-in-service-reliability",
           "transportation-generated"
         ],
         "integrationTags": [

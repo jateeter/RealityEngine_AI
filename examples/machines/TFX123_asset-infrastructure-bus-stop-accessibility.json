@@ -97,7 +97,6 @@
           "tfx123",
           "transit-vehicle-health-agent",
           "transportation-fleet-asset-infrastructure",
-          "transportation-fleet-asset-infrastructure-bus-stop-accessibility",
           "transportation-generated"
         ],
         "integrationTags": [

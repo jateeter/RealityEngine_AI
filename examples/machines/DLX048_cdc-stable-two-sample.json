@@ -55,7 +55,6 @@
           "digital-logic-infrastructure",
           "dlx048",
           "logical-infrastructure",
-          "logical-infrastructure-cdc-stable-two-sample",
           "regular-expression"
         ],
         "integrationTags": [

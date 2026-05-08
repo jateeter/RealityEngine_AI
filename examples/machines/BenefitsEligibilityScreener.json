@@ -50,13 +50,12 @@
           "qualification-workflow"
         ],
         "workflowTags": [
-          "benefits-eligibility-screener",
+          "benefits-eligibility",
           "community-services-benefits-eligibility-qualification",
           "intake",
           "kleene-plus",
           "liheap",
-          "low-income",
-          "snap"
+          "low-income"
         ],
         "integrationTags": [],
         "validationTags": [

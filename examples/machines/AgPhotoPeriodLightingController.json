@@ -51,8 +51,7 @@
         "machineCode": "ag-photo-period-lighting-controller",
         "capabilityTags": [],
         "workflowTags": [
-          "ag-photo-period-lighting-controller",
-          "agriculture-photoperiod-lighting-control",
+          "agriculture-indoor-grow-house",
           "dli",
           "indoor-growing",
           "kleene-plus",

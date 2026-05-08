@@ -56,7 +56,7 @@
           "ai-infrastructure-thermal-cooling-control",
           "ai-workload",
           "aicooling-regulator",
-          "cooling",
+          "thermal-comfort",
           "data-center",
           "hvac"
         ],

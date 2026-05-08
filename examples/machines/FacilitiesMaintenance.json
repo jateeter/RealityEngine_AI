@@ -4,7 +4,7 @@
     "name": "FacilitiesMaintenance",
     "description": "Integrates facilities maintenance workflows into the eldercare patient health pipeline. Models janitorial, hygiene, and general living space maintenance activities as structured observational sequences. Each maintenance visit is an observational opportunity — facilities staff serve as a frontline sensing layer, reporting hygiene deficits, fall hazards, nutritional gaps, and patient wellness concerns to the clinical care workflow engines (DailyPatientCare, WellnessAnalytics). Produces six outputs: two completion signals (daily, weekly) and four clinical alert signals feeding downstream eldercare machines.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "author": "Reality Engine",
       "created": "2026-04-10T00:00:00Z",
       "domain": "Facilities Management — Eldercare Integration and Environmental Monitoring",
@@ -97,7 +97,7 @@
         "facilities-management",
         "facilities-management-eldercare-integration-and-environmental-monitoring",
         "fall-prevention",
-        "healthcare",
+        "health-personal",
         "hygiene",
         "input-sequences",
         "input-sequences-15",
@@ -111,11 +111,11 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "eldercare-integration-and-environmental-monitoring",
           "facilities-management",
-          "healthcare"
+          "health-personal"
         ],
         "family": "facilities-maintenance",
         "machineCode": "facilities-maintenance",
@@ -126,17 +126,16 @@
           "weekly-maintenance"
         ],
         "workflowTags": [
-          "daily-care",
           "elder-care",
           "facilities",
           "fall-prevention",
           "hygiene",
           "janitorial",
-          "safety",
-          "wellness-observation"
+          "security",
+          "wellness"
         ],
         "integrationTags": [
-          "healthcare",
+          "health-personal",
           "machine-interconnect"
         ],
         "validationTags": [
@@ -157,7 +156,7 @@
           "facilities-management",
           "facilities-management-eldercare-integration-and-environmental-monitoring",
           "fall-prevention",
-          "healthcare",
+          "health-personal",
           "hygiene",
           "input-sequences",
           "input-sequences-15",

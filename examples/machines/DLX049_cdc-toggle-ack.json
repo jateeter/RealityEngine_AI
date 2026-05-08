@@ -55,7 +55,6 @@
           "digital-logic-infrastructure",
           "dlx049",
           "logical-infrastructure",
-          "logical-infrastructure-cdc-toggle-ack",
           "regular-expression"
         ],
         "integrationTags": [

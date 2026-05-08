@@ -39,7 +39,6 @@
       ],
       "tags": [
         "ai-trigger",
-        "ai-triggers",
         "benefits-and-eligibility",
         "benefits-navigation-agent",
         "ces-sequences",
@@ -53,7 +52,6 @@
         "cross-domain",
         "csx011",
         "dispatchable-agent",
-        "dispatchable-agents",
         "health-and-human-services",
         "homelessness",
         "input-sequences",
@@ -87,7 +85,6 @@
           "benefits-navigation-agent",
           "city-services",
           "community-services-benefits-and-eligibility",
-          "community-services-benefits-and-eligibility-medicaid-renewal-watch",
           "community-services-generated",
           "cross-domain",
           "csx011",

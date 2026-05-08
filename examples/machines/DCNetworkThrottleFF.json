@@ -49,7 +49,7 @@
         "machineCode": "dcnetwork-throttle-ff",
         "capabilityTags": [],
         "workflowTags": [
-          "data-center-network-throttle-control",
+          "data-center",
           "dc-network-throttle-flip-flop",
           "dcnetwork-throttle-ff",
           "flip-flop"

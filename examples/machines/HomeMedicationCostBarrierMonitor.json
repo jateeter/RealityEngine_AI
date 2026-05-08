@@ -4,7 +4,7 @@
     "name": "Home Medication Cost Barrier Monitor",
     "description": "Monitors prescription fill rates, dose adherence, cost-driven non-adherence, and generic/assistance program access for low- and medium-income adults managing chronic conditions at home. Medication cost barriers are a leading driver of avoidable hospitalization and disease progression in economically vulnerable populations. Output at [2011:2015] feeds the Home Social Isolation Monitor, capturing how pharmacy access barriers compound transportation and social barriers.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Medication Access / Cost Barriers",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2011:2015]: [1,0,0,0]=ADHERENCE_CRISIS, [0,1,0,0]=COST_BARRIER_ACTIVE, [0,0,1,0]=PARTIAL_ADHERENCE, [0,0,0,1]=MEDICATION_MANAGED",
@@ -14,7 +14,7 @@
         "chronic-disease",
         "cost-barrier",
         "cost-barriers",
-        "healthcare",
+        "health-personal",
         "home-health",
         "home-health-medication-access-cost-barriers",
         "home-medication-cost-barrier-monitor",
@@ -39,10 +39,10 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "cost-barriers",
-          "healthcare",
+          "health-personal",
           "home-health",
           "medication-access"
         ],
@@ -56,11 +56,11 @@
           "home-medication-cost-barrier-monitor",
           "kleene-plus",
           "low-income",
-          "medication-adherence",
+          "medication",
           "pharmacy-access"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -75,7 +75,7 @@
           "chronic-disease",
           "cost-barrier",
           "cost-barriers",
-          "healthcare",
+          "health-personal",
           "home-health",
           "home-health-medication-access-cost-barriers",
           "home-medication-cost-barrier-monitor",

@@ -55,7 +55,6 @@
           "dlx002",
           "falling-edge-detector",
           "logical-infrastructure",
-          "logical-infrastructure-falling-edge-detector",
           "regular-expression"
         ],
         "integrationTags": [

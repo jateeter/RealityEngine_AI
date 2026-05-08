@@ -54,7 +54,6 @@
           "digital-logic-infrastructure",
           "dlx030",
           "logical-infrastructure",
-          "logical-infrastructure-scan-enable-deassert",
           "regular-expression",
           "scan-enable-deassert"
         ],

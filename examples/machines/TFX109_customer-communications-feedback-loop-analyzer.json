@@ -97,7 +97,6 @@
           "security",
           "tfx109",
           "transportation-fleet-customer-communications",
-          "transportation-fleet-customer-communications-feedback-loop-analyzer",
           "transportation-generated"
         ],
         "integrationTags": [

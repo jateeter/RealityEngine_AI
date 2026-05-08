@@ -97,7 +97,6 @@
           "tfx061",
           "transit-rider-experience-agent",
           "transportation-fleet-charging-and-fueling",
-          "transportation-fleet-charging-and-fueling-diesel-fuel-inventory",
           "transportation-generated"
         ],
         "integrationTags": [

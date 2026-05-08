@@ -57,10 +57,8 @@
           "crop-monitoring"
         ],
         "workflowTags": [
-          "ag-harvest-readiness-assessor",
-          "agriculture-harvest-management-crop-readiness",
+          "agriculture-generated",
           "growth-cycle",
-          "harvest",
           "indoor-growing",
           "kleene-plus",
           "yield"

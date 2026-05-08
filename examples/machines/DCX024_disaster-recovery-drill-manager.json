@@ -79,7 +79,7 @@
         "workflowTags": [
           "ai-trigger",
           "data-center-24x7-operations",
-          "data-center-disaster-recovery-drill-manager",
+          "data-center",
           "data-center-generated",
           "dc-network-agent",
           "dcx024",

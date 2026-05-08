@@ -4,7 +4,7 @@
     "name": "Home Social Isolation Monitor",
     "description": "Integration machine that reads combined output signals from the Home Medication Cost Barrier Monitor [2011:2015] and the Home Transportation Barrier Monitor [2015:2019] to detect social isolation driven by access barriers. For low- and medium-income adults managing chronic conditions at home, the combination of medication cost barriers and transportation failures systematically restricts social participation, community connection, and human contact — accelerating depression, cognitive decline, and self-neglect. Output at [2035:2039] is available to downstream care coordination systems.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Social Isolation / Access Barriers",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2035:2039]: [1,0,0,0]=SEVERE_ISOLATION, [0,1,0,0]=SOCIAL_WITHDRAWAL, [0,0,1,0]=ISOLATION_RISK, [0,0,0,1]=SOCIALLY_CONNECTED",
@@ -13,7 +13,7 @@
         "ces-sequences",
         "ces-sequences-3",
         "elder-care",
-        "healthcare",
+        "health-personal",
         "home-health",
         "home-health-social-isolation-access-barriers",
         "home-social-isolation-monitor",
@@ -41,10 +41,10 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "access-barriers",
-          "healthcare",
+          "health-personal",
           "home-health",
           "social-isolation"
         ],
@@ -57,11 +57,11 @@
           "home-social-isolation-monitor",
           "kleene-plus",
           "low-income",
-          "medication-access",
+          "medication",
           "transportation"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -75,7 +75,7 @@
           "ces-sequences",
           "ces-sequences-3",
           "elder-care",
-          "healthcare",
+          "health-personal",
           "home-health",
           "home-health-social-isolation-access-barriers",
           "home-social-isolation-monitor",

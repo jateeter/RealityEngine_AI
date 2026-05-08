@@ -60,8 +60,8 @@
           "monitoring"
         ],
         "workflowTags": [
-          "continuous",
-          "data-center-network-burst-detection",
+          "anomaly-detection",
+          "data-center",
           "dc-network-burst-detector",
           "dcnetwork-burst-detector"
         ],

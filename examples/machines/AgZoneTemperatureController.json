@@ -47,10 +47,8 @@
         "machineCode": "ag-zone-temperature-controller",
         "capabilityTags": [],
         "workflowTags": [
-          "ag-zone-temperature-controller",
-          "agriculture-zone-climate-temperature",
-          "climate-control",
-          "cooling",
+          "agriculture-indoor-grow-house",
+          "thermal-comfort",
           "heating",
           "indoor-growing",
           "kleene-plus",

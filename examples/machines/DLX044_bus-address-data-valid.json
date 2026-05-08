@@ -55,7 +55,6 @@
           "digital-logic-infrastructure",
           "dlx044",
           "logical-infrastructure",
-          "logical-infrastructure-bus-address-data-valid",
           "regular-expression"
         ],
         "integrationTags": [

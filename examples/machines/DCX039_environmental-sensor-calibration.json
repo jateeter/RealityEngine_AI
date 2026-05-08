@@ -79,7 +79,7 @@
         "workflowTags": [
           "ai-trigger",
           "data-center-24x7-operations",
-          "data-center-environmental-sensor-calibration",
+          "data-center",
           "data-center-generated",
           "dc-change-manager-agent",
           "dcx039",

@@ -97,7 +97,6 @@
           "tfx118",
           "transit-asset-agent",
           "transportation-fleet-network-planning",
-          "transportation-fleet-network-planning-construction-impact-planner",
           "transportation-generated"
         ],
         "integrationTags": [

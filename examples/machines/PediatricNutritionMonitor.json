@@ -4,7 +4,7 @@
     "name": "Pediatric Nutrition Monitor",
     "description": "Tracks child nutrition adequacy, growth trajectory, and micronutrient status for children ages 0–12 in low- and medium-income home settings. Monitors growth percentile trends, caloric adequacy, iron/vitamin D/B12 micronutrient balance, and dietary diversity — the four dimensions most predictive of developmental outcomes in under-resourced households. Output at [2003:2007] feeds the Home Caregiver Burden Monitor, as child nutritional problems are a primary driver of caregiver stress and care coordination demand.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Pediatric / Child Nutrition",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2003:2007]: [1,0,0,0]=GROWTH_ALERT, [0,1,0,0]=NUTRITION_DEFICIT, [0,0,1,0]=MICRONUTRIENT_CONCERN, [0,0,0,1]=NUTRITION_OK",
@@ -14,7 +14,7 @@
         "child-nutrition",
         "failure-to-thrive",
         "growth-monitoring",
-        "healthcare",
+        "health-personal",
         "home-health",
         "home-health-pediatric-child-nutrition",
         "input-sequences",
@@ -37,10 +37,10 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "child-nutrition",
-          "healthcare",
+          "health-personal",
           "home-health",
           "pediatric"
         ],
@@ -57,7 +57,7 @@
           "pediatric-nutrition-monitor"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -72,7 +72,7 @@
           "child-nutrition",
           "failure-to-thrive",
           "growth-monitoring",
-          "healthcare",
+          "health-personal",
           "home-health",
           "home-health-pediatric-child-nutrition",
           "input-sequences",

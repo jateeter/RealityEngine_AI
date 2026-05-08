@@ -4,7 +4,7 @@
     "name": "PatientWellness",
     "description": "Holistic wellness monitoring for assisted living residents across six dimensions: mental acuity, anxiety, stress, socialization, nutrition, and exercise. Produces a four-level wellness metric (OPTIMAL / GOOD / ALERT / CRITICAL) routed into the perceptual resolution space for longitudinal tracking and intervention planning. Sequences are calibrated to age-group norms for the 65-74, 75-84, and 85+ cohorts.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "author": "Reality Engine",
       "created": "2026-04-12T00:00:00Z",
       "domain": "Healthcare Operations — Resident Wellness Assessment",
@@ -72,7 +72,7 @@
         "ces-sequences-5",
         "elder-care",
         "exercise",
-        "healthcare",
+        "health-personal",
         "healthcare-operations",
         "healthcare-operations-resident-wellness-assessment",
         "input-sequences",
@@ -90,9 +90,9 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
-          "healthcare",
+          "health-personal",
           "healthcare-operations",
           "resident-wellness-assessment"
         ],
@@ -100,21 +100,20 @@
         "machineCode": "patient-wellness",
         "capabilityTags": [],
         "workflowTags": [
-          "age-cohort",
+          "adolescent-psychiatry",
           "anxiety",
           "elder-care",
           "exercise",
-          "healthcare-operations-resident-wellness-assessment",
+          "health-personal-operations",
           "mental-acuity",
           "multi-level-metric",
           "nutrition",
-          "patient-wellness",
+          "wellness",
           "socialization",
-          "stress",
-          "wellness"
+          "stress"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -130,7 +129,7 @@
           "ces-sequences-5",
           "elder-care",
           "exercise",
-          "healthcare",
+          "health-personal",
           "healthcare-operations",
           "healthcare-operations-resident-wellness-assessment",
           "input-sequences",

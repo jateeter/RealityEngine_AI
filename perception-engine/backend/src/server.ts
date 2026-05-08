@@ -12,7 +12,6 @@ import { mountMcp } from './mcp.js';
 import type { SourceConfig, PushResult, MatchAlgorithm } from './types.js';
 
 const PORT = parseInt(process.env['PORT'] ?? '3004', 10);
-const PERCEPTION_TARGET_URL = process.env['PERCEPTION_TARGET_URL'] ?? 'http://localhost:3001';
 const REALITY_ENGINE_URL = process.env['REALITY_ENGINE_URL'] ?? 'http://localhost:3000';
 const DATA_PATH = process.env['DATA_PATH'] ?? './data';
 const VECTOR_SIZE = parseInt(process.env['VECTOR_SIZE'] ?? '256', 10);
@@ -125,19 +124,6 @@ async function doPush(): Promise<PushResult> {
     const state = engine.getState(lastPush, { running: autoTimer !== null, intervalMs: autoIntervalMs });
     broadcast({ type: 'state-update', state });
     broadcast({ type: 'push-result', ...result });
-
-    // Passive visualizer notification — fire-and-forget, never awaited.
-    // The visualizer uses this to fan out to its own WebSocket clients.
-    // If the visualizer is unavailable the perception loop is unaffected.
-    setImmediate(() => {
-      axios.post(`${PERCEPTION_TARGET_URL}/api/perceive-notify`, {
-        step,
-        globalStep: result.globalStep,
-        timestamp: result.timestamp,
-      }).catch((err: any) => {
-        console.warn(`[doPush] Visualizer notify skipped:`, err.message);
-      });
-    });
 
     return result;
   } catch (err: any) {
@@ -388,6 +374,5 @@ app.get('/api/machines', async (_req: Request, res: Response) => {
 server.listen(PORT, () => {
   const protocol = tlsEnabled ? 'HTTPS' : 'HTTP';
   console.log(`Perception Engine backend listening on port ${PORT} (${protocol})`);
-  console.log(`  Push target    : ${PERCEPTION_TARGET_URL}/api/perceive`);
   console.log(`  Reality Engine : ${REALITY_ENGINE_URL}`);
 });

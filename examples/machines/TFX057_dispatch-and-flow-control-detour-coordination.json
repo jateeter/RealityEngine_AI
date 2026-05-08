@@ -97,7 +97,6 @@
           "tfx057",
           "transit-planning-agent",
           "transportation-fleet-dispatch-and-flow-control",
-          "transportation-fleet-dispatch-and-flow-control-detour-coordination",
           "transportation-generated"
         ],
         "integrationTags": [

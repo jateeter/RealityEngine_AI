@@ -81,7 +81,7 @@
         "workflowTags": [
           "ai-trigger",
           "data-center-24x7-operations",
-          "data-center-decommission-safety-controller",
+          "data-center",
           "data-center-generated",
           "dc-change-manager-agent",
           "dcx049",

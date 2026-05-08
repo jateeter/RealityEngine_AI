@@ -97,12 +97,10 @@
           "life-balance-generated",
           "life-balance-intake-agent",
           "life-balance-sleep-and-circadian-rhythm",
-          "life-balance-sleep-and-circadian-rhythm-sleep-schedule-regularity",
           "lifestyle-psychiatry",
           "metabolic-health",
           "nutrition",
           "sleep",
-          "sleep-schedule-regularity",
           "temperament-testing"
         ],
         "integrationTags": [

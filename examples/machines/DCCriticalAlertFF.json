@@ -49,7 +49,7 @@
         "machineCode": "dccritical-alert-ff",
         "capabilityTags": [],
         "workflowTags": [
-          "data-center-critical-alert-latch",
+          "data-center",
           "dc-critical-alert-flip-flop",
           "dccritical-alert-ff",
           "flip-flop"

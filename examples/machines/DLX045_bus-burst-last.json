@@ -55,7 +55,6 @@
           "digital-logic-infrastructure",
           "dlx045",
           "logical-infrastructure",
-          "logical-infrastructure-bus-burst-last",
           "regular-expression"
         ],
         "integrationTags": [

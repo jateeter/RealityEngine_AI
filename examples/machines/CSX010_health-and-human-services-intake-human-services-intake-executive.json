@@ -39,7 +39,6 @@
       ],
       "tags": [
         "ai-trigger",
-        "ai-triggers",
         "ces-sequences",
         "ces-sequences-4",
         "city-services",
@@ -52,7 +51,6 @@
         "cross-domain",
         "csx010",
         "dispatchable-agent",
-        "dispatchable-agents",
         "health-and-human-services",
         "health-and-human-services-intake",
         "homelessness",
@@ -88,7 +86,6 @@
           "community-intake-agent",
           "community-services-generated",
           "community-services-health-and-human-services-intake",
-          "community-services-health-and-human-services-intake-human-services-intake-executive",
           "cross-domain",
           "csx010",
           "dispatchable-agent",

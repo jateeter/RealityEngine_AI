@@ -39,7 +39,6 @@
       ],
       "tags": [
         "ai-trigger",
-        "ai-triggers",
         "ces-sequences",
         "ces-sequences-4",
         "citation-court-reminder",
@@ -53,7 +52,6 @@
         "cross-domain",
         "csx042",
         "dispatchable-agent",
-        "dispatchable-agents",
         "health-and-human-services",
         "homeless-outreach-agent",
         "homelessness",
@@ -87,7 +85,6 @@
           "citation-court-reminder",
           "city-services",
           "community-services-courts-diversion-and-victim-services",
-          "community-services-courts-diversion-and-victim-services-citation-court-reminder",
           "community-services-generated",
           "cross-domain",
           "csx042",

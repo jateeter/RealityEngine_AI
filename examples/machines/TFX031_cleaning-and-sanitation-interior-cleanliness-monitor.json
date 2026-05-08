@@ -97,7 +97,6 @@
           "tfx031",
           "transit-rider-experience-agent",
           "transportation-fleet-cleaning-and-sanitation",
-          "transportation-fleet-cleaning-and-sanitation-interior-cleanliness-monitor",
           "transportation-generated"
         ],
         "integrationTags": [

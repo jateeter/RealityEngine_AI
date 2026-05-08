@@ -4,7 +4,7 @@
     "name": "Home Chronic Pain Monitor",
     "description": "Monitors pain intensity, functional impairment, opioid risk indicators, and physical activity for adults managing chronic pain at home in low- and medium-income settings. Chronic pain is disproportionately prevalent in low-income populations due to occupational injury, inadequate early treatment, and limited access to non-pharmacological interventions. Unmanaged chronic pain is a primary driver of depression and social isolation. Output at [2023:2027] feeds the Home Mental Health Access Monitor alongside the Chronic Disease Monitor.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Chronic Pain Management",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2023:2027]: [1,0,0,0]=PAIN_CRISIS, [0,1,0,0]=OPIOID_RISK_ELEVATED, [0,0,1,0]=FUNCTIONAL_IMPAIRMENT, [0,0,0,1]=PAIN_MANAGED",
@@ -14,7 +14,7 @@
         "chronic-pain",
         "chronic-pain-management",
         "functional-impairment",
-        "healthcare",
+        "health-personal",
         "home-chronic-pain-monitor",
         "home-health",
         "home-health-chronic-pain-management",
@@ -38,10 +38,10 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "chronic-pain-management",
-          "healthcare",
+          "health-personal",
           "home-health"
         ],
         "family": "home-chronic-pain-monitor",
@@ -50,7 +50,7 @@
           "opioid-risk"
         ],
         "workflowTags": [
-          "chronic-pain",
+          "chronic-disease",
           "functional-impairment",
           "home-chronic-pain-monitor",
           "home-health-chronic-pain-management",
@@ -59,7 +59,7 @@
           "occupational-injury"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -74,7 +74,7 @@
           "chronic-pain",
           "chronic-pain-management",
           "functional-impairment",
-          "healthcare",
+          "health-personal",
           "home-chronic-pain-monitor",
           "home-health",
           "home-health-chronic-pain-management",

@@ -57,7 +57,7 @@
           "community-services-community-access-network-health",
           "kleene-plus",
           "service-delivery",
-          "social-services"
+          "community-services-generated"
         ],
         "integrationTags": [],
         "validationTags": [

@@ -79,7 +79,7 @@
         "workflowTags": [
           "ai-trigger",
           "data-center-24x7-operations",
-          "data-center-firmware-rollback-readiness",
+          "data-center",
           "data-center-generated",
           "dc-storage-agent",
           "dcx046",

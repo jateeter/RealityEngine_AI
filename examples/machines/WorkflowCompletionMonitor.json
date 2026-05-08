@@ -57,7 +57,7 @@
         ],
         "workflowTags": [
           "document-signing",
-          "enrollment",
+          "intake",
           "kleene-plus"
         ],
         "integrationTags": [],

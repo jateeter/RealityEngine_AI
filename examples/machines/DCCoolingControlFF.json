@@ -50,8 +50,8 @@
         "machineCode": "dccooling-control-ff",
         "capabilityTags": [],
         "workflowTags": [
-          "cooling",
-          "data-center-thermal-cooling-control",
+          "thermal-comfort",
+          "data-center",
           "dc-cooling-control-flip-flop",
           "dccooling-control-ff",
           "flip-flop"

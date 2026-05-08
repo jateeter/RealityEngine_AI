@@ -56,7 +56,6 @@
           "crop-monitoring"
         ],
         "workflowTags": [
-          "ag-plant-growth-cycle-monitor",
           "grow-cycle",
           "indoor-growing",
           "kleene-plus",

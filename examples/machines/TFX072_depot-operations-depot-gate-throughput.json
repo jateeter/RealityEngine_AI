@@ -97,7 +97,6 @@
           "tfx072",
           "transit-planning-agent",
           "transportation-fleet-depot-operations",
-          "transportation-fleet-depot-operations-depot-gate-throughput",
           "transportation-generated"
         ],
         "integrationTags": [

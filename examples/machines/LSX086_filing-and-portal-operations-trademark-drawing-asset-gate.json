@@ -76,13 +76,11 @@
           "filing-portal-agent",
           "intellectual-property",
           "legal-services-filing-and-portal-operations",
-          "legal-services-filing-and-portal-operations-trademark-drawing-asset-gate",
           "legal-services-generated",
           "lsx086",
           "productization",
           "provisional-patent",
-          "trademark",
-          "trademark-drawing-asset-gate"
+          "trademark"
         ],
         "integrationTags": [
           "ai-trigger",

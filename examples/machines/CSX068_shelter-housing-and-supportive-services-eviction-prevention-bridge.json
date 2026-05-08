@@ -39,7 +39,6 @@
       ],
       "tags": [
         "ai-trigger",
-        "ai-triggers",
         "ces-sequences",
         "ces-sequences-4",
         "city-services",
@@ -51,7 +50,6 @@
         "cross-domain",
         "csx068",
         "dispatchable-agent",
-        "dispatchable-agents",
         "eviction-prevention-bridge",
         "health-and-human-services",
         "homelessness",
@@ -87,7 +85,6 @@
           "city-services",
           "community-services-generated",
           "community-services-shelter-housing-and-supportive-services",
-          "community-services-shelter-housing-and-supportive-services-eviction-prevention-bridge",
           "cross-domain",
           "csx068",
           "dispatchable-agent",

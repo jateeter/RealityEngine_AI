@@ -4,7 +4,7 @@
     "name": "Home Mental Health Access Monitor",
     "description": "Integration machine that reads combined output signals from the Home Chronic Disease Monitor [2019:2023] and the Home Chronic Pain Monitor [2023:2027] to detect mental health access needs driven by chronic illness burden. Chronic disease and chronic pain are bidirectionally linked to depression and anxiety — each worsens the other — and low-income patients carrying both have the least access to mental health services. This machine identifies patients who need mental health integration into their medical home care plan. Output at [2039:2043] is available to downstream care coordination systems.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Mental Health Access / Chronic Illness Comorbidity",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2039:2043]: [1,0,0,0]=MENTAL_HEALTH_CRISIS, [0,1,0,0]=MH_REFERRAL_NEEDED, [0,0,1,0]=COMORBIDITY_RISK, [0,0,0,1]=MH_ACCESS_ADEQUATE",
@@ -16,7 +16,7 @@
         "chronic-pain",
         "comorbidity",
         "depression",
-        "healthcare",
+        "health-personal",
         "home-health",
         "home-health-mental-health-access-chronic-illness-comorbidity",
         "home-mental-health-access-monitor",
@@ -43,10 +43,10 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "chronic-illness-comorbidity",
-          "healthcare",
+          "health-personal",
           "home-health",
           "mental-health-access"
         ],
@@ -55,7 +55,6 @@
         "capabilityTags": [],
         "workflowTags": [
           "chronic-disease",
-          "chronic-pain",
           "comorbidity",
           "depression",
           "home-health-mental-health-access-chronic-illness-comorbidity",
@@ -65,7 +64,7 @@
           "mental-health"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -82,7 +81,7 @@
           "chronic-pain",
           "comorbidity",
           "depression",
-          "healthcare",
+          "health-personal",
           "home-health",
           "home-health-mental-health-access-chronic-illness-comorbidity",
           "home-mental-health-access-monitor",

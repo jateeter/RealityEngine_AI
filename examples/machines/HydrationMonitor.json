@@ -4,7 +4,7 @@
     "name": "Hydration Monitor",
     "description": "Infers hydration status from in-home intake proxies (smart-cup sips, fridge/faucet opens, bathroom visits). Signals the local AI when intake falls below daily targets so it can surface reminders or caregiver check-ins.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "wellness",
       "author": "Reality Engine",
       "created": "2026-04-21T00:00:00Z",
@@ -15,7 +15,7 @@
         "ces-sequences",
         "ces-sequences-3",
         "elder-care",
-        "healthcare",
+        "health-personal",
         "hydration",
         "hydration-monitor",
         "in-home-monitoring",
@@ -68,9 +68,9 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
-          "healthcare",
+          "health-personal",
           "wellness"
         ],
         "family": "hydration-monitor",
@@ -86,7 +86,7 @@
           "trigger"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -99,7 +99,7 @@
           "ces-sequences",
           "ces-sequences-3",
           "elder-care",
-          "healthcare",
+          "health-personal",
           "hydration",
           "hydration-monitor",
           "in-home-monitoring",

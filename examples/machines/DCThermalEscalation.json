@@ -66,8 +66,8 @@
           "monitoring"
         ],
         "workflowTags": [
-          "continuous",
-          "data-center-thermal-escalation",
+          "anomaly-detection",
+          "data-center",
           "dc-thermal-escalation-detector",
           "dcthermal-escalation",
           "kleene-plus"

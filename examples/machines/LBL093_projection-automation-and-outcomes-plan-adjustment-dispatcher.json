@@ -23,7 +23,7 @@
         "Life Balance Projection Automation And Outcomes Care Team Escalation Router"
       ],
       "crossDomainInterconnect": true,
-      "crossDomainOutputTarget": "healthcare",
+      "crossDomainOutputTarget": "health-personal",
       "crossDomainOutputPurpose": "plan-adjustment signal into wellness analytics",
       "dispatchableAgent": "sleep_circadian_agent",
       "aiTrigger": "life-balance-projection-automation-and-outcomes-plan-adjustment-dispatcher",
@@ -51,7 +51,7 @@
         "cgm",
         "cross-domain-interconnect",
         "dispatchable-agent",
-        "healthcare",
+        "health-personal",
         "input-sequences",
         "input-sequences-5",
         "lbl093",
@@ -112,7 +112,7 @@
           "ai-trigger",
           "cross-domain-interconnect",
           "dispatchable-agent",
-          "healthcare",
+          "health-personal",
           "machine-interconnect"
         ],
         "validationTags": [
@@ -131,7 +131,7 @@
           "cgm",
           "cross-domain-interconnect",
           "dispatchable-agent",
-          "healthcare",
+          "health-personal",
           "input-sequences",
           "input-sequences-5",
           "lbl093",

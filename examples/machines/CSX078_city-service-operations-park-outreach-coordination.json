@@ -39,7 +39,6 @@
       ],
       "tags": [
         "ai-trigger",
-        "ai-triggers",
         "ces-sequences",
         "ces-sequences-4",
         "city-service-operations",
@@ -52,7 +51,6 @@
         "cross-domain",
         "csx078",
         "dispatchable-agent",
-        "dispatchable-agents",
         "health-and-human-services",
         "homeless-outreach-agent",
         "homelessness",
@@ -86,7 +84,6 @@
           "ai-trigger",
           "city-services",
           "community-services-city-service-operations",
-          "community-services-city-service-operations-park-outreach-coordination",
           "community-services-generated",
           "cross-domain",
           "csx078",

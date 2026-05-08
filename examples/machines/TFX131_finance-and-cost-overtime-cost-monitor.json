@@ -97,7 +97,6 @@
           "tfx131",
           "transit-customer-comms-agent",
           "transportation-fleet-finance-and-cost",
-          "transportation-fleet-finance-and-cost-overtime-cost-monitor",
           "transportation-generated"
         ],
         "integrationTags": [

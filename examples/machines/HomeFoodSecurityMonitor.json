@@ -4,7 +4,7 @@
     "name": "Home Food Security Monitor",
     "description": "Monitors household food access, meal frequency, and nutrition assistance engagement for low- and medium-income families receiving home-based care. Tracks the progression from adequate food access through food insecurity to crisis conditions requiring immediate SNAP, WIC, or food-bank referral. Output at [1995:1999] feeds the Adolescent Mental Health Monitor, reflecting the documented link between food insecurity and adolescent behavioral health outcomes.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Social Determinants / Food Security",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [1995:1999]: [1,0,0,0]=FOOD_CRISIS, [0,1,0,0]=FOOD_INSECURE, [0,0,1,0]=ASSISTANCE_NEEDED, [0,0,0,1]=FOOD_SECURE",
@@ -13,7 +13,7 @@
         "ces-sequences-3",
         "food-insecurity",
         "food-security",
-        "healthcare",
+        "health-personal",
         "home-food-security-monitor",
         "home-health",
         "home-health-social-determinants-food-security",
@@ -38,10 +38,10 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "food-security",
-          "healthcare",
+          "health-personal",
           "home-health",
           "social-determinants"
         ],
@@ -54,11 +54,10 @@
           "home-health-social-determinants-food-security",
           "kleene-plus",
           "low-income",
-          "snap",
-          "wic"
+          "benefits-eligibility"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -72,7 +71,7 @@
           "ces-sequences-3",
           "food-insecurity",
           "food-security",
-          "healthcare",
+          "health-personal",
           "home-food-security-monitor",
           "home-health",
           "home-health-social-determinants-food-security",

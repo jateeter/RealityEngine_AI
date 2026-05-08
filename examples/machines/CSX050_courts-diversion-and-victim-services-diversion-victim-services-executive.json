@@ -37,7 +37,6 @@
       ],
       "tags": [
         "ai-trigger",
-        "ai-triggers",
         "ces-sequences",
         "ces-sequences-4",
         "city-services",
@@ -50,7 +49,6 @@
         "cross-domain",
         "csx050",
         "dispatchable-agent",
-        "dispatchable-agents",
         "diversion-victim-services-executive",
         "health-and-human-services",
         "homelessness",
@@ -84,7 +82,6 @@
           "ai-trigger",
           "city-services",
           "community-services-courts-diversion-and-victim-services",
-          "community-services-courts-diversion-and-victim-services-diversion-victim-services-executive",
           "community-services-generated",
           "cross-domain",
           "csx050",

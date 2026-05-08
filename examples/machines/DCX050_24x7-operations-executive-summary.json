@@ -78,10 +78,9 @@
           "maintenance"
         ],
         "workflowTags": [
-          "24x7-operations-executive-summary",
+          "24x7-operations",
           "ai-trigger",
           "data-center-24x7-operations",
-          "data-center-24x7-operations-executive-summary",
           "data-center-generated",
           "dcx050",
           "dispatchable-agent",

@@ -45,8 +45,7 @@
         "machineCode": "ag-irrigation-flow-controller",
         "capabilityTags": [],
         "workflowTags": [
-          "ag-irrigation-flow-controller",
-          "agriculture-water-management-irrigation",
+          "agriculture-generated",
           "hydroponics",
           "indoor-growing",
           "kleene-plus",

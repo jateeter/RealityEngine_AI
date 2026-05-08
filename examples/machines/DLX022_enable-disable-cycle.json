@@ -55,7 +55,6 @@
           "dlx022",
           "enable-disable-cycle",
           "logical-infrastructure",
-          "logical-infrastructure-enable-disable-cycle",
           "regular-expression"
         ],
         "integrationTags": [

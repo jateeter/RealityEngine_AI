@@ -58,7 +58,6 @@
           "community-services-service-delivery-integrity-operations",
           "kleene-plus",
           "service-delivery",
-          "service-delivery-integrity-monitor",
           "service-integrity"
         ],
         "integrationTags": [],

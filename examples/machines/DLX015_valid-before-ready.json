@@ -54,7 +54,6 @@
           "digital-logic-infrastructure",
           "dlx015",
           "logical-infrastructure",
-          "logical-infrastructure-valid-before-ready",
           "regular-expression",
           "valid-before-ready"
         ],

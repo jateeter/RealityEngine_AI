@@ -97,7 +97,6 @@
           "tfx065",
           "transit-cleaning-agent",
           "transportation-fleet-charging-and-fueling",
-          "transportation-fleet-charging-and-fueling-fueling-queue-optimizer",
           "transportation-generated"
         ],
         "integrationTags": [

@@ -97,7 +97,6 @@
           "tfx122",
           "transit-dispatch-agent",
           "transportation-fleet-asset-infrastructure",
-          "transportation-fleet-asset-infrastructure-real-time-sign-health",
           "transportation-generated"
         ],
         "integrationTags": [

@@ -4,14 +4,14 @@
     "name": "Home Environment Safety Monitor",
     "description": "Monitors housing quality conditions that directly affect resident health in low- and medium-income households. Tracks temperature stability (heating/cooling reliability), air quality (mold, lead, particulates), structural hazards, and utility shutoff risk. These social determinants of health are disproportionately present in aging rental housing stock occupied by economically vulnerable families. Output at [1999:2003] feeds the Adolescent Mental Health Monitor.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Social Determinants / Housing Safety",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [1999:2003]: [1,0,0,0]=UNSAFE_HOUSING, [0,1,0,0]=UTILITY_FAILURE, [0,0,1,0]=HEALTH_HAZARD_RISK, [0,0,0,1]=ENVIRONMENT_SAFE",
       "tags": [
         "ces-sequences",
         "ces-sequences-3",
-        "healthcare",
+        "health-personal",
         "home-environment-safety-monitor",
         "home-health",
         "home-health-social-determinants-housing-safety",
@@ -38,9 +38,9 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
-          "healthcare",
+          "health-personal",
           "home-health",
           "housing-safety",
           "social-determinants"
@@ -58,7 +58,7 @@
           "utility"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -70,7 +70,7 @@
         "allTags": [
           "ces-sequences",
           "ces-sequences-3",
-          "healthcare",
+          "health-personal",
           "home-environment-safety-monitor",
           "home-health",
           "home-health-social-determinants-housing-safety",

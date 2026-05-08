@@ -97,7 +97,6 @@
           "tfx041",
           "transit-customer-comms-agent",
           "transportation-fleet-security-and-safety",
-          "transportation-fleet-security-and-safety-onboard-security-alert",
           "transportation-generated"
         ],
         "integrationTags": [

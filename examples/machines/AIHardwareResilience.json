@@ -111,7 +111,7 @@
           "data-center",
           "ecc",
           "hardware",
-          "network",
+          "logical-infrastructure",
           "smart"
         ],
         "integrationTags": [

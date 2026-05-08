@@ -55,7 +55,6 @@
           "dlx039",
           "fifo-full-to-not-full",
           "logical-infrastructure",
-          "logical-infrastructure-fifo-full-to-not-full",
           "regular-expression"
         ],
         "integrationTags": [

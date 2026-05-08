@@ -55,7 +55,6 @@
           "digital-logic-infrastructure",
           "dlx040",
           "logical-infrastructure",
-          "logical-infrastructure-credit-decrement-increment",
           "regular-expression"
         ],
         "integrationTags": [

@@ -97,7 +97,6 @@
           "tfx077",
           "transit-dispatch-agent",
           "transportation-fleet-depot-operations",
-          "transportation-fleet-depot-operations-depot-staffing-coverage",
           "transportation-generated"
         ],
         "integrationTags": [

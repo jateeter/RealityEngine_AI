@@ -54,7 +54,6 @@
           "digital-logic-infrastructure",
           "dlx036",
           "logical-infrastructure",
-          "logical-infrastructure-timeout-retry-success",
           "regular-expression",
           "timeout-retry-success"
         ],

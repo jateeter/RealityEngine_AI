@@ -55,7 +55,6 @@
           "digital-logic-infrastructure",
           "dlx010",
           "logical-infrastructure",
-          "logical-infrastructure-alternating-toggle",
           "regular-expression"
         ],
         "integrationTags": [

@@ -38,3 +38,9 @@ The tag manager normalizes tags to lowercase ASCII kebab-case and derives
 consistent domain, family, integration, and validation tags from each machine's
 metadata, filename, perceptual interconnects, CES sequences, and input
 sequences.
+
+## workflowTag Vocabulary
+
+See [TAG_REGISTRY.md](TAG_REGISTRY.md) for the full canonical tag vocabulary,
+including established (≥ 10), provisional (2–9), and single-use tiers, plus
+consolidation rules and governance.

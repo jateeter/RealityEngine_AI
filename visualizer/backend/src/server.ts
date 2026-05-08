@@ -237,30 +237,75 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'healthy', service: 'reality-engine-visualizer', timestamp: Date.now() });
 });
 
-// ── Passive step-notification endpoint ───────────────────────────────────────
-// The Perception Engine calls this asynchronously (fire-and-forget) after it has
-// pushed a vector directly to the Reality Engine.  The visualizer is NOT in the
-// perception loop critical path — this endpoint exists solely to fan out the
-// already-computed step result to connected frontend WebSocket clients.
-app.post('/api/perceive-notify', (req: Request, res: Response) => {
-  // Respond immediately so the PE is never kept waiting.
-  res.status(204).end();
-  const { step } = req.body;
-  if (step && typeof step.stepNumber === 'number') {
-    setImmediate(() => broadcast({
-      type: 'perceptual-simulation-stepped',
-      step,
-      data: { activeMachineIds: Object.keys(step.machineResults ?? {}) },
-      timestamp: Date.now()
-    }));
-  }
-});
+// ── RE step-stream subscriber ─────────────────────────────────────────────────
+// The Visualizer Backend subscribes to the Reality Engine's SSE endpoint and
+// fans out each step to connected frontend WebSocket clients.  This makes the
+// VB a fully passive observer: it never sits in the PE→RE critical path and
+// automatically skips ahead when it falls behind (RE uses dropHead buffering).
+
+function connectToREStream(): void {
+  const reUrl = new URL(`${REALITY_ENGINE_URL}/api/engine/stream`);
+  const transport = reUrl.protocol === 'https:' ? https : http;
+
+  const req = transport.get(
+    {
+      hostname: reUrl.hostname,
+      port: reUrl.port ? parseInt(reUrl.port, 10) : (reUrl.protocol === 'https:' ? 443 : 80),
+      path: reUrl.pathname,
+      headers: { Accept: 'text/event-stream', 'Cache-Control': 'no-cache' },
+    },
+    (res) => {
+      if (res.statusCode !== 200) {
+        console.warn(`[SSE] RE stream returned ${res.statusCode}, retrying in 3 s`);
+        res.resume();
+        setTimeout(connectToREStream, 3000);
+        return;
+      }
+      console.log('[SSE] Connected to Reality Engine step stream');
+      let buf = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk: string) => {
+        buf += chunk;
+        const lines = buf.split('\n');
+        buf = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice(5).trimStart();
+          if (!payload) continue;
+          try {
+            const step = JSON.parse(payload);
+            broadcast({
+              type: 'perceptual-simulation-stepped',
+              step,
+              data: { activeMachineIds: Object.keys(step.machineResults ?? {}) },
+              timestamp: Date.now(),
+            });
+          } catch { /* ignore malformed events */ }
+        }
+      });
+      res.on('end', () => {
+        console.log('[SSE] RE stream closed, reconnecting in 2 s');
+        setTimeout(connectToREStream, 2000);
+      });
+      res.on('error', (e: Error) => {
+        console.warn(`[SSE] RE stream error: ${e.message}, reconnecting in 2 s`);
+        setTimeout(connectToREStream, 2000);
+      });
+    }
+  );
+
+  req.on('error', (e: Error) => {
+    console.warn(`[SSE] RE connection failed: ${e.message}, retrying in 3 s`);
+    setTimeout(connectToREStream, 3000);
+  });
+
+  req.end();
+}
 
 // ── Legacy direct-perceive path ───────────────────────────────────────────────
-// Kept for backward-compatibility.  In production the PE calls RE directly and
-// notifies this server via /api/perceive-notify above.  If this path IS called
-// the response is sent before the WS broadcast so the caller is never blocked
-// by fan-out latency.
+// Retained for backward-compatibility (e.g. manual curl calls).  In production
+// the PE calls RE directly and RE pushes steps to the VB via SSE.  Responses
+// are sent before the WS broadcast so the caller is never blocked by fan-out.
 app.post('/api/perceive', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceive`, req.body);
@@ -592,6 +637,8 @@ server.listen(PORT, () => {
     audit_level:   auditConfig.level,
     port:          PORT,
   });
+  // Subscribe to RE's SSE step stream — VB is a passive observer of the PE.x.RE.x.PE cycle.
+  connectToREStream();
 });
 
 process.on('SIGTERM', () => { console.log('SIGTERM received, shutting down gracefully...'); clearInterval(heartbeatInterval); server.close(() => process.exit(0)); });

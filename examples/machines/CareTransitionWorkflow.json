@@ -4,7 +4,7 @@
     "name": "CareTransitionWorkflow",
     "description": "Models patient readiness for changes in living situation across three care transition scenarios: (1) non-assisted home/community living to acute hospital admission for life-threatening conditions; (2) acute hospital discharge to a rehabilitation facility as a transitional environment; (3) rehabilitation facility discharge to assisted living for the next phase of life. Produces transition-specific readiness outputs with embedded external communication requirements.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "author": "Reality Engine",
       "created": "2026-04-13T00:00:00Z",
       "domain": "Healthcare Operations — Care Level Transition Management",
@@ -208,7 +208,7 @@
         "elder-care",
         "emergency",
         "external-communications",
-        "healthcare",
+        "health-personal",
         "healthcare-operations",
         "healthcare-operations-care-level-transition-management",
         "hospital",
@@ -221,10 +221,10 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "care-level-transition-management",
-          "healthcare",
+          "health-personal",
           "healthcare-operations"
         ],
         "family": "care-transition-workflow",
@@ -235,17 +235,17 @@
         ],
         "workflowTags": [
           "assisted-living",
-          "care-transition",
+          "community-services-health-and-human-services-intake",
           "discharge-planning",
           "elder-care",
           "emergency",
           "external-communications",
-          "healthcare-operations-care-level-transition-management",
+          "health-personal-operations",
           "hospital",
           "rehab"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -265,7 +265,7 @@
           "elder-care",
           "emergency",
           "external-communications",
-          "healthcare",
+          "health-personal",
           "healthcare-operations",
           "healthcare-operations-care-level-transition-management",
           "hospital",

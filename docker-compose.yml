@@ -177,7 +177,6 @@ services:
     container_name: reality-engine-perception-backend
     environment:
       - PORT=3004
-      - PERCEPTION_TARGET_URL=https://visualizer-backend:3001
       - REALITY_ENGINE_URL=https://reality-engine:3000
       - DATA_PATH=/app/data
       - KEYSTORE_PATH=/etc/certs/keystore.p12
@@ -190,7 +189,7 @@ services:
       - perception_sources_data:/app/data
       - ./certs:/etc/certs:ro
     depends_on:
-      visualizer-backend:
+      reality-engine:
         condition: service_healthy
       loki:
         condition: service_healthy

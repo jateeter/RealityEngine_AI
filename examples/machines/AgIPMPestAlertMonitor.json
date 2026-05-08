@@ -56,12 +56,10 @@
         "machineCode": "ag-ipmpest-alert-monitor",
         "capabilityTags": [],
         "workflowTags": [
-          "ag-ipm-pest-alert-monitor",
-          "ag-ipmpest-alert-monitor",
-          "agriculture-ipm-pest-management",
+          "agriculture-generated",
           "botrytis",
           "fungal",
-          "humidity",
+          "thermal-comfort",
           "indoor-growing",
           "kleene-plus",
           "pest"

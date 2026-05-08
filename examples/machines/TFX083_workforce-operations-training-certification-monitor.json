@@ -97,7 +97,6 @@
           "training-certification-monitor",
           "transit-depot-agent",
           "transportation-fleet-workforce-operations",
-          "transportation-fleet-workforce-operations-training-certification-monitor",
           "transportation-generated"
         ],
         "integrationTags": [

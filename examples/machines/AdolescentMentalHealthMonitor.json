@@ -4,7 +4,7 @@
     "name": "Adolescent Mental Health Monitor",
     "description": "Integration machine that reads combined output signals from the Home Food Security Monitor [1995:1999] and the Home Environment Safety Monitor [1999:2003] to detect adolescent mental health risk driven by co-occurring social adversities. Food insecurity and housing instability are the two most predictive household stressors for adolescent depression, anxiety, and behavioral health crises. Monitors mood indicators, school engagement, risk behavior, and family conflict as 8D integrated input. Output at [2027:2031] is available to downstream care coordination systems.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Adolescent / Behavioral Health",
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2027:2031]: [1,0,0,0]=CRISIS_RISK, [0,1,0,0]=BEHAVIORAL_CONCERN, [0,0,1,0]=ELEVATED_STRESS, [0,0,0,1]=MENTAL_HEALTH_OK",
@@ -15,7 +15,7 @@
         "ces-sequences",
         "ces-sequences-3",
         "food-insecurity",
-        "healthcare",
+        "health-personal",
         "home-health",
         "home-health-adolescent-behavioral-health",
         "housing-instability",
@@ -41,18 +41,18 @@
       "tagging": {
         "schemaVersion": "1.0.0",
         "managedBy": "scripts/manage_machine_tags.mjs",
-        "primaryDomain": "healthcare",
+        "primaryDomain": "health-personal",
         "domainTags": [
           "adolescent",
           "behavioral-health",
-          "healthcare",
+          "health-personal",
           "home-health"
         ],
         "family": "adolescent-mental-health-monitor",
         "machineCode": "adolescent-mental-health-monitor",
         "capabilityTags": [],
         "workflowTags": [
-          "adolescent-mental-health-monitor",
+          "life-balance-adolescent-family-and-school",
           "food-insecurity",
           "home-health-adolescent-behavioral-health",
           "housing-instability",
@@ -61,7 +61,7 @@
           "mental-health"
         ],
         "integrationTags": [
-          "healthcare"
+          "health-personal"
         ],
         "validationTags": [
           "ces-sequences",
@@ -77,7 +77,7 @@
           "ces-sequences",
           "ces-sequences-3",
           "food-insecurity",
-          "healthcare",
+          "health-personal",
           "home-health",
           "home-health-adolescent-behavioral-health",
           "housing-instability",

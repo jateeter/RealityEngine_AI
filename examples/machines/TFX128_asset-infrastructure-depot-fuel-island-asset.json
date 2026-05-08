@@ -97,7 +97,6 @@
           "tfx128",
           "transit-depot-agent",
           "transportation-fleet-asset-infrastructure",
-          "transportation-fleet-asset-infrastructure-depot-fuel-island-asset",
           "transportation-generated"
         ],
         "integrationTags": [

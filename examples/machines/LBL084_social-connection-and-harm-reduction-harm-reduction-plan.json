@@ -16,7 +16,7 @@
       ],
       "clinicalSafety": "Example workflow automation only; outputs route to review, plan adjustment, monitoring, or stable status and are not diagnosis or treatment.",
       "upstreamMachine": "healthcare mapped output",
-      "upstreamDomain": "healthcare",
+      "upstreamDomain": "health-personal",
       "upstreamOutputRegion": "[3931:3935]",
       "upstreamPurpose": "patient-wellness signal for outcome-score synthesis",
       "downstreamMachines": [
@@ -52,7 +52,7 @@
         "cross-domain-interconnect",
         "dispatchable-agent",
         "harm-reduction-plan",
-        "healthcare",
+        "health-personal",
         "input-sequences",
         "input-sequences-5",
         "lbl084",
@@ -99,7 +99,6 @@
           "lbl084",
           "life-balance-generated",
           "life-balance-social-connection-and-harm-reduction",
-          "life-balance-social-connection-and-harm-reduction-harm-reduction-plan",
           "lifestyle-psychiatry",
           "metabolic-health",
           "movement-health-agent",
@@ -111,7 +110,7 @@
           "ai-trigger",
           "cross-domain-interconnect",
           "dispatchable-agent",
-          "healthcare",
+          "health-personal",
           "machine-interconnect"
         ],
         "validationTags": [
@@ -131,7 +130,7 @@
           "cross-domain-interconnect",
           "dispatchable-agent",
           "harm-reduction-plan",
-          "healthcare",
+          "health-personal",
           "input-sequences",
           "input-sequences-5",
           "lbl084",

@@ -23,7 +23,7 @@
         "Life Balance Projection Automation And Outcomes Stress Connection E2E"
       ],
       "crossDomainInterconnect": true,
-      "crossDomainOutputTarget": "healthcare",
+      "crossDomainOutputTarget": "health-personal",
       "crossDomainOutputPurpose": "stress-connection e2e signal into care transition workflow",
       "dispatchableAgent": "testing_personalization_agent",
       "aiTrigger": "life-balance-projection-automation-and-outcomes-medication-lifestyle-e2e",
@@ -52,7 +52,7 @@
         "cross-domain-interconnect",
         "dispatchable-agent",
         "domain-e2e",
-        "healthcare",
+        "health-personal",
         "input-sequences",
         "input-sequences-6",
         "lbl098",
@@ -113,7 +113,7 @@
           "ai-trigger",
           "cross-domain-interconnect",
           "dispatchable-agent",
-          "healthcare",
+          "health-personal",
           "machine-interconnect"
         ],
         "validationTags": [
@@ -134,7 +134,7 @@
           "cross-domain-interconnect",
           "dispatchable-agent",
           "domain-e2e",
-          "healthcare",
+          "health-personal",
           "input-sequences",
           "input-sequences-6",
           "lbl098",
