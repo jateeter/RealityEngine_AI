@@ -39,9 +39,7 @@ const MachineInputsStrip: React.FC<MachineInputsStripProps> = ({
 
   // Group machines by domain for rendering and counts.
   const byDomain = useMemo(() => {
-    const groups: Record<DomainId, { machine: Machine; isExternal: boolean }[]> = {
-      healthservices: [], ai: [], datacenter: [], agriculture: [], communityservices: [], general: [],
-    };
+    const groups = Object.fromEntries(DOMAIN_ORDER.map(d => [d, [] as { machine: Machine; isExternal: boolean }[]])) as Record<DomainId, { machine: Machine; isExternal: boolean }[]>;
     for (const m of mapped) {
       const cls = classifyMachine(m);
       groups[cls.domain].push({ machine: m, isExternal: cls.isExternal });

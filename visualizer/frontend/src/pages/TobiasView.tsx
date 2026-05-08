@@ -359,9 +359,7 @@ const TobiasView: React.FC = () => {
   // Domain classification + counts from graphNodes — single pass, correct metadata.
   const { domainById, domainCounts } = useMemo(() => {
     const byId   = new Map(graphNodes.map(n => [n.id, classifyMachine(n).domain]));
-    const counts: Record<DomainId, number> = {
-      healthservices: 0, ai: 0, datacenter: 0, agriculture: 0, communityservices: 0, general: 0,
-    };
+    const counts = Object.fromEntries(DOMAIN_ORDER.map(d => [d, 0])) as Record<DomainId, number>;
     for (const n of graphNodes) counts[byId.get(n.id) ?? 'general']++;
     return { domainById: byId, domainCounts: counts };
   }, [graphNodes]);

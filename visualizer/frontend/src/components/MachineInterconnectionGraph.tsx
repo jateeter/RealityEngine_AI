@@ -105,10 +105,16 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
   // Domain filter — each entry enables/disables a whole domain cluster.
   const [enabledDomains, setEnabledDomains] = useState<Record<DomainId, boolean>>({
     healthservices: true,
-    ai: true,
-    datacenter: true,
-    agriculture: true,
+    lifebalance: true,
+    healthpersonal: true,
+    builtspace: true,
+    transportation: true,
+    legalservices: true,
     communityservices: true,
+    agriculture: true,
+    datacenter: true,
+    digitallogic: true,
+    ai: true,
     general: true,
   });
 
@@ -122,7 +128,10 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
   // Domain membership counts for the legend.
   const domainCounts = useMemo(() => {
     const counts: Record<DomainId, number> = {
-      healthservices: 0, ai: 0, datacenter: 0, agriculture: 0, communityservices: 0, general: 0,
+      healthservices: 0, lifebalance: 0, healthpersonal: 0,
+      builtspace: 0, transportation: 0, legalservices: 0,
+      communityservices: 0, agriculture: 0, datacenter: 0,
+      digitallogic: 0, ai: 0, general: 0,
     };
     for (const c of classifications.values()) counts[c.domain]++;
     return counts;
