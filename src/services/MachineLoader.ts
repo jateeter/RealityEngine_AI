@@ -60,9 +60,10 @@ export interface OutputVectorJSON {
 }
 
 export interface InputSequenceJSON {
+  id?: string;
   name: string;
   pattern?: string;
-  description: string;
+  description?: string;
   vectors: number[][];
   metadata?: Record<string, any>;
 }

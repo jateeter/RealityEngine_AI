@@ -9,7 +9,6 @@ import { readFileSync, existsSync } from 'fs';
 import { RealityEngine } from './engine/RealityEngine.js';
 import { VectorStore } from './services/VectorStore.js';
 import { RealityEngineAPI } from './api/routes.js';
-import { ExampleLoader } from './utils/exampleLoader.js';
 import config from './config/config.js';
 
 // Create Express app
@@ -27,11 +26,6 @@ console.log('✓ Vector store initialized');
 const engine = new RealityEngine(vectorStore);
 await engine.initialize();
 console.log('✓ Reality Engine initialized');
-
-// Load example data
-const exampleLoader = new ExampleLoader(engine);
-await exampleLoader.loadAllExamples();
-await exampleLoader.validateExamples();
 
 // Setup API routes
 const api = new RealityEngineAPI(engine);
