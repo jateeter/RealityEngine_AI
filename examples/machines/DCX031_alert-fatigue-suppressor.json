@@ -40,16 +40,91 @@
         "operational confidence"
       ],
       "tags": [
-        "data-center",
         "24x7-operations",
-        "maintenance",
-        "upgrade-cycle",
+        "ai-trigger",
+        "alert-fatigue-suppressor",
+        "ces-sequences",
+        "ces-sequences-5",
+        "data-center",
+        "data-center-24x7-operations",
+        "data-center-alert-fatigue-suppressor",
+        "data-center-alert-fatigue-suppressor-ops-maintenance-upgrade",
+        "data-center-generated",
+        "dc-facilities-agent",
+        "dcx031",
+        "dispatchable-agent",
         "incident-response",
-        "alert-fatigue-suppressor"
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "maintenance",
+        "startup-loadable",
+        "upgrade-cycle"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Use as a 24/7 operational guardrail. Map telemetry, CMDB, change, or AI-dispatch signals into the 4D input lane; map outputs to incident, maintenance, upgrade, or executive-summary machines.",
-      "downstreamPattern": "Output region [1489:1493] feeds Data Center SLO Error Budget Monitor for prescriptive 24/7 operations."
+      "downstreamPattern": "Output region [1489:1493] feeds Data Center SLO Error Budget Monitor for prescriptive 24/7 operations.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "24x7-operations",
+          "data-center"
+        ],
+        "family": "data-center-generated",
+        "machineCode": "dcx031",
+        "capabilityTags": [
+          "data-center-alert-fatigue-suppressor-ops-maintenance-upgrade",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "alert-fatigue-suppressor",
+          "data-center-24x7-operations",
+          "data-center-alert-fatigue-suppressor",
+          "data-center-generated",
+          "dc-facilities-agent",
+          "dcx031",
+          "dispatchable-agent",
+          "incident-response",
+          "upgrade-cycle"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "24x7-operations",
+          "ai-trigger",
+          "alert-fatigue-suppressor",
+          "ces-sequences",
+          "ces-sequences-5",
+          "data-center",
+          "data-center-24x7-operations",
+          "data-center-alert-fatigue-suppressor",
+          "data-center-alert-fatigue-suppressor-ops-maintenance-upgrade",
+          "data-center-generated",
+          "dc-facilities-agent",
+          "dcx031",
+          "dispatchable-agent",
+          "incident-response",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "maintenance",
+          "startup-loadable",
+          "upgrade-cycle"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

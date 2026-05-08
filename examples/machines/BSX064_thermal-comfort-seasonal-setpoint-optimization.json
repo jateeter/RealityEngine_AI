@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx064",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
+        "built-space-well-generated",
+        "built-space-well-thermal-comfort",
+        "built-space-well-thermal-comfort-seasonal-setpoint-optimization",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
         "occupant-health",
+        "predictive-optimization",
+        "seasonal-setpoint-optimization",
+        "startup-loadable",
         "thermal-comfort",
-        "seasonal-setpoint-optimization"
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-nourishment-agent",
+        "well-operations",
+        "well-predictive-optimization-thermal-comfort-seasonal-setpoint-optimization",
+        "well-thermal-comfort"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [572:576] feeds Built Space WELL Thermal Comfort Humidity Comfort Balance for WELL operations optimization."
+      "downstreamPattern": "Output region [572:576] feeds Built Space WELL Thermal Comfort Humidity Comfort Balance for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-thermal-comfort"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx064",
+        "capabilityTags": [
+          "built-space-well-thermal-comfort-seasonal-setpoint-optimization",
+          "predictive-optimization",
+          "seasonal-setpoint-optimization",
+          "well-predictive-optimization-thermal-comfort-seasonal-setpoint-optimization"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx064",
+          "built-space-well-generated",
+          "built-space-well-thermal-comfort",
+          "dispatchable-agent",
+          "occupant-health",
+          "thermal-comfort",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-nourishment-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx064",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-thermal-comfort",
+          "built-space-well-thermal-comfort-seasonal-setpoint-optimization",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "seasonal-setpoint-optimization",
+          "startup-loadable",
+          "thermal-comfort",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-nourishment-agent",
+          "well-operations",
+          "well-predictive-optimization-thermal-comfort-seasonal-setpoint-optimization",
+          "well-thermal-comfort"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

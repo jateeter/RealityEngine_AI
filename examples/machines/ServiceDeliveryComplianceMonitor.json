@@ -9,13 +9,20 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [972:976]: [1,0,0,0]=COMPLIANCE_VIOLATION, [0,1,0,0]=COMPLIANCE_AT_RISK, [0,0,1,0]=MONITORING_REQUIRED, [0,0,0,1]=COMPLIANT",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-3",
         "community-services",
-        "service delivery",
+        "community-services-service-delivery-compliance",
         "compliance",
-        "regulatory",
         "documentation",
-        "quality assurance",
-        "kleene-plus"
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "quality-assurance",
+        "regulatory",
+        "service-delivery",
+        "service-delivery-compliance-monitor",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Publicly funded community service programs; agencies with federal grant compliance requirements; organizations subject to state licensing and performance contracts",
@@ -25,7 +32,54 @@
         "regulatory_adherence_norm": "0.0=active regulatory violation (corrective action plan open, audit finding unresolved, licensing condition triggered), 0.5=no active violation but risk factors present (past finding; new regulation not yet implemented), 1.0=all regulatory requirements current; no open findings",
         "documentation_completeness_norm": "0.0=case files critically deficient (missing required assessments, unsigned plans, billing documentation absent), 0.5=partial documentation (non-critical items outstanding; no billing impact), 1.0=all documentation current and complete; audit-ready"
       },
-      "downstreamMachine": "ServiceDeliveryIntegrityMonitor (reads [968:976])"
+      "downstreamMachine": "ServiceDeliveryIntegrityMonitor (reads [968:976])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "community-services",
+          "compliance",
+          "service-delivery"
+        ],
+        "family": "service-delivery-compliance-monitor",
+        "machineCode": "service-delivery-compliance-monitor",
+        "capabilityTags": [
+          "community-services-service-delivery-compliance",
+          "compliance",
+          "service-delivery-compliance-monitor"
+        ],
+        "workflowTags": [
+          "documentation",
+          "kleene-plus",
+          "quality-assurance",
+          "regulatory"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-services",
+          "community-services-service-delivery-compliance",
+          "compliance",
+          "documentation",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "quality-assurance",
+          "regulatory",
+          "service-delivery",
+          "service-delivery-compliance-monitor",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

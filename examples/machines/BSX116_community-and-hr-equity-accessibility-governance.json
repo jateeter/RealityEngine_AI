@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx116",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-well-community-and-hr",
+        "built-space-well-community-and-hr-equity-accessibility-governance",
+        "built-space-well-generated",
+        "ces-sequences",
+        "ces-sequences-5",
         "community-and-hr",
-        "equity-accessibility-governance"
+        "dispatchable-agent",
+        "equity-accessibility-governance",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-community-and-hr",
+        "well-community-hr-agent",
+        "well-operations",
+        "well-predictive-optimization-community-and-hr-equity-accessibility-governance"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [780:784] feeds Built Space WELL Community And HR Community Engagement Calendar for WELL operations optimization."
+      "downstreamPattern": "Output region [780:784] feeds Built Space WELL Community And HR Community Engagement Calendar for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-community-and-hr"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx116",
+        "capabilityTags": [
+          "built-space-well-community-and-hr-equity-accessibility-governance",
+          "equity-accessibility-governance",
+          "predictive-optimization",
+          "well-predictive-optimization-community-and-hr-equity-accessibility-governance"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx116",
+          "built-space-well-community-and-hr",
+          "built-space-well-generated",
+          "community-and-hr",
+          "dispatchable-agent",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-community-hr-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx116",
+          "built-space",
+          "built-space-well-community-and-hr",
+          "built-space-well-community-and-hr-equity-accessibility-governance",
+          "built-space-well-generated",
+          "ces-sequences",
+          "ces-sequences-5",
+          "community-and-hr",
+          "dispatchable-agent",
+          "equity-accessibility-governance",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-community-and-hr",
+          "well-community-hr-agent",
+          "well-operations",
+          "well-predictive-optimization-community-and-hr-equity-accessibility-governance"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

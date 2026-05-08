@@ -35,17 +35,89 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "attorney-review-agent",
+        "board-level-ip-report",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
-        "productization",
         "corporate-legal-services",
-        "board-level-ip-report"
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-corporate-legal-services",
+        "legal-services-corporate-legal-services-board-level-ip-report",
+        "legal-services-generated",
+        "lsx080",
+        "productization",
+        "provisional-patent",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "corporate-legal-services",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx080",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-trigger",
+          "attorney-review-agent",
+          "board-level-ip-report",
+          "copyright",
+          "dispatchable-agent",
+          "intellectual-property",
+          "legal-services-corporate-legal-services",
+          "legal-services-corporate-legal-services-board-level-ip-report",
+          "legal-services-generated",
+          "lsx080",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "attorney-review-agent",
+          "board-level-ip-report",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "corporate-legal-services",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-corporate-legal-services",
+          "legal-services-corporate-legal-services-board-level-ip-report",
+          "legal-services-generated",
+          "lsx080",
+          "productization",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

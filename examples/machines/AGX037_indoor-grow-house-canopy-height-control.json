@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [3971:3975]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "indoor-grow-house",
-        "canopy-height-control",
+        "agriculture-generated",
+        "agriculture-indoor-grow-house",
+        "agriculture-indoor-grow-house-canopy-height-control",
+        "agx037",
+        "ai-trigger",
         "ai-triggers",
+        "canopy-height-control",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "growhouse-irrigation-agent",
+        "indoor-grow-house",
+        "indoor-grow-house-canopy-height-control-risk-maintenance-or-optimization",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -44,7 +58,70 @@
         "maintenance readiness"
       ],
       "downstreamMachines": [],
-      "downstreamPattern": "Output region [3971:3975] feeds agriculture automation and AI dispatch orchestration."
+      "downstreamPattern": "Output region [3971:3975] feeds agriculture automation and AI dispatch orchestration.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "indoor-grow-house"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx037",
+        "capabilityTags": [
+          "ai-triggers",
+          "dispatchable-agents",
+          "indoor-grow-house-canopy-height-control-risk-maintenance-or-optimization",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agriculture-indoor-grow-house-canopy-height-control",
+          "agx037",
+          "ai-trigger",
+          "canopy-height-control",
+          "dispatchable-agent",
+          "growhouse-irrigation-agent",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agriculture-indoor-grow-house-canopy-height-control",
+          "agx037",
+          "ai-trigger",
+          "ai-triggers",
+          "canopy-height-control",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "growhouse-irrigation-agent",
+          "indoor-grow-house",
+          "indoor-grow-house-canopy-height-control-risk-maintenance-or-optimization",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

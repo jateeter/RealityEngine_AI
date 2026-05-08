@@ -35,17 +35,90 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
-        "productization",
+        "copyright-workflow-agent",
+        "dispatchable-agent",
+        "engagement-scope-control",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-generated",
+        "legal-services-portfolio-operations",
+        "legal-services-portfolio-operations-engagement-scope-control",
+        "lsx043",
         "portfolio-operations",
-        "engagement-scope-control"
+        "productization",
+        "provisional-patent",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "legal-services",
+          "portfolio-operations"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx043",
+        "capabilityTags": [
+          "copyright-workflow-agent"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "dispatchable-agent",
+          "engagement-scope-control",
+          "intellectual-property",
+          "legal-services-generated",
+          "legal-services-portfolio-operations",
+          "legal-services-portfolio-operations-engagement-scope-control",
+          "lsx043",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "copyright-workflow-agent",
+          "dispatchable-agent",
+          "engagement-scope-control",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-generated",
+          "legal-services-portfolio-operations",
+          "legal-services-portfolio-operations-engagement-scope-control",
+          "lsx043",
+          "portfolio-operations",
+          "productization",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

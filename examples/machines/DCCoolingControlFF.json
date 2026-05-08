@@ -11,10 +11,21 @@
       "eventSpace": "2D binary control signal at [1375:1377]: [1,0]=ALARM, [0,1]=SAFE",
       "outputSpace": "2D binary at [1371:1373]: [1,0]=COOLING_ACTIVE, [0,1]=COOLING_OFF",
       "tags": [
-        "flip-flop",
-        "digital-logic",
+        "ces-sequences",
+        "ces-sequences-2",
+        "cooling",
+        "cooling-control",
         "data-center",
-        "cooling"
+        "data-center-thermal-cooling-control",
+        "dc-cooling-control-flip-flop",
+        "dccooling-control-ff",
+        "digital-logic",
+        "flip-flop",
+        "input-sequences",
+        "input-sequences-3",
+        "machine-interconnect",
+        "startup-loadable",
+        "thermal"
       ],
       "sequenceCount": 2,
       "role": "Latches thermal escalation alarm; downstream input to DCCriticalSynthesizer",
@@ -25,6 +36,54 @@
         "scope": "not applicable — all event vectors are isInitial (combinatorial)",
         "compliant": true,
         "notes": "Both SET and RESET events are isInitial. The FF responds combinatorially on every cycle. The 'state' persists through the perceptual space value retention: once SET writes [1,0] to [1371:1373], that value remains until RESET overwrites it with [0,1]. Multi-bit transitions between [1,0] and [0,1] (HD=2) work correctly since both events are always active."
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "cooling-control",
+          "data-center",
+          "thermal"
+        ],
+        "family": "dc-cooling-control-flip-flop",
+        "machineCode": "dccooling-control-ff",
+        "capabilityTags": [],
+        "workflowTags": [
+          "cooling",
+          "data-center-thermal-cooling-control",
+          "dc-cooling-control-flip-flop",
+          "dccooling-control-ff",
+          "flip-flop"
+        ],
+        "integrationTags": [
+          "digital-logic",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "cooling",
+          "cooling-control",
+          "data-center",
+          "data-center-thermal-cooling-control",
+          "dc-cooling-control-flip-flop",
+          "dccooling-control-ff",
+          "digital-logic",
+          "flip-flop",
+          "input-sequences",
+          "input-sequences-3",
+          "machine-interconnect",
+          "startup-loadable",
+          "thermal"
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

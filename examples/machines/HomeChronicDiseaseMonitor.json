@@ -9,15 +9,23 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2019:2023]: [1,0,0,0]=DISEASE_EXACERBATION, [0,1,0,0]=POOR_CONTROL, [0,0,1,0]=BORDERLINE_CONTROL, [0,0,0,1]=DISEASE_CONTROLLED",
       "tags": [
-        "healthcare",
-        "home health",
-        "chronic disease",
+        "ces-sequences",
+        "ces-sequences-4",
+        "chronic-disease",
+        "chronic-disease-management",
+        "copd",
         "diabetes",
+        "healthcare",
+        "home-chronic-disease-monitor",
+        "home-health",
+        "home-health-chronic-disease-management",
         "hypertension",
-        "COPD",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
         "low-income",
         "self-management",
-        "kleene-plus"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "populationFocus": "Adults with one or more chronic conditions; patients in home-based care programs; low-income adults with limited specialist access",
@@ -27,7 +35,60 @@
         "self_management_norm": "0.0=unable to self-monitor or self-treat (no glucometer, no BP cuff, no inhaler technique), 0.5=partial self-management (monitoring inconsistently; some technique errors), 1.0=confident and consistent self-management",
         "lifestyle_adherence_norm": "0.0=no dietary modification or physical activity; smoking active; high-risk behaviors, 0.5=partial lifestyle change with barriers (diet improved but exercise impossible due to pain/environment), 1.0=fully adherent to prescribed lifestyle plan"
       },
-      "downstreamMachine": "HomeMentalHealthAccessMonitor (reads [2019:2027])"
+      "downstreamMachine": "HomeMentalHealthAccessMonitor (reads [2019:2027])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "chronic-disease-management",
+          "healthcare",
+          "home-health"
+        ],
+        "family": "home-chronic-disease-monitor",
+        "machineCode": "home-chronic-disease-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "chronic-disease",
+          "copd",
+          "diabetes",
+          "home-chronic-disease-monitor",
+          "home-health-chronic-disease-management",
+          "hypertension",
+          "kleene-plus",
+          "low-income",
+          "self-management"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "chronic-disease",
+          "chronic-disease-management",
+          "copd",
+          "diabetes",
+          "healthcare",
+          "home-chronic-disease-monitor",
+          "home-health",
+          "home-health-chronic-disease-management",
+          "hypertension",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "low-income",
+          "self-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

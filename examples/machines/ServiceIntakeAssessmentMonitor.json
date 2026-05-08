@@ -9,13 +9,21 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [956:960]: [1,0,0,0]=PRIORITY_INTAKE, [0,1,0,0]=COMPLEX_INTAKE, [0,0,1,0]=STANDARD_INTAKE, [0,0,0,1]=INTAKE_COMPLETE",
       "tags": [
+        "case-management",
+        "ces-sequences",
+        "ces-sequences-3",
         "community-services",
-        "intake assessment",
-        "case management",
-        "needs assessment",
-        "service delivery",
-        "triage",
-        "kleene-plus"
+        "community-services-intake-needs-assessment",
+        "input-sequences",
+        "input-sequences-1",
+        "intake",
+        "intake-assessment",
+        "kleene-plus",
+        "needs-assessment",
+        "service-delivery",
+        "service-intake-assessment-monitor",
+        "startup-loadable",
+        "triage"
       ],
       "sequenceCount": 3,
       "populationFocus": "New community service applicants; crisis walk-ins; referrals from partner agencies; individuals experiencing housing, food, or safety crises",
@@ -25,7 +33,54 @@
         "safety_risk_norm": "0.0=imminent safety risk (DV, child abuse, elder abuse, suicidality reported), 0.5=elevated risk factors present but not acute (past DV, unstable housing, substance use), 1.0=no safety concerns identified during screening",
         "support_network_norm": "0.0=completely isolated; no family, friends, or existing services engaged, 0.5=limited support (one informal contact; partial service engagement), 1.0=strong support network; family engaged; existing services active"
       },
-      "downstreamMachine": "EnrollmentCoordinationMonitor (reads [952:960])"
+      "downstreamMachine": "EnrollmentCoordinationMonitor (reads [952:960])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "community-services",
+          "intake",
+          "needs-assessment"
+        ],
+        "family": "service-intake-assessment-monitor",
+        "machineCode": "service-intake-assessment-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "case-management",
+          "community-services-intake-needs-assessment",
+          "intake-assessment",
+          "kleene-plus",
+          "service-delivery",
+          "service-intake-assessment-monitor",
+          "triage"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "case-management",
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-services",
+          "community-services-intake-needs-assessment",
+          "input-sequences",
+          "input-sequences-1",
+          "intake",
+          "intake-assessment",
+          "kleene-plus",
+          "needs-assessment",
+          "service-delivery",
+          "service-intake-assessment-monitor",
+          "startup-loadable",
+          "triage"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

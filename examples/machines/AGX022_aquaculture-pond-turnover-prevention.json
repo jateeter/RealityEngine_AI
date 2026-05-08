@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [164:168]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "pond-turnover-prevention",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-pond-turnover-prevention",
+        "agriculture-generated",
+        "agx022",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-health-agent",
+        "aquaculture-pond-turnover-prevention-risk-maintenance-or-optimization",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "pond-turnover-prevention",
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -44,7 +58,70 @@
         "maintenance readiness"
       ],
       "downstreamMachines": [],
-      "downstreamPattern": "Output region [164:168] feeds agriculture automation and AI dispatch orchestration."
+      "downstreamPattern": "Output region [164:168] feeds agriculture automation and AI dispatch orchestration.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx022",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-pond-turnover-prevention-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-pond-turnover-prevention",
+          "agriculture-generated",
+          "agx022",
+          "ai-trigger",
+          "aquaculture-health-agent",
+          "dispatchable-agent",
+          "operational-management",
+          "pond-turnover-prevention"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-pond-turnover-prevention",
+          "agriculture-generated",
+          "agx022",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-health-agent",
+          "aquaculture-pond-turnover-prevention-risk-maintenance-or-optimization",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "pond-turnover-prevention",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

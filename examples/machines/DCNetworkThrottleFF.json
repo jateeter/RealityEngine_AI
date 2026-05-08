@@ -11,10 +11,20 @@
       "eventSpace": "2D binary control signal at [1365:1367]: [1,0]=ALARM, [0,1]=SAFE",
       "outputSpace": "2D binary at [1373:1375]: [1,0]=THROTTLE_ACTIVE, [0,1]=THROTTLE_OFF",
       "tags": [
-        "flip-flop",
-        "digital-logic",
+        "ces-sequences",
+        "ces-sequences-2",
         "data-center",
-        "network"
+        "data-center-network-throttle-control",
+        "dc-network-throttle-flip-flop",
+        "dcnetwork-throttle-ff",
+        "digital-logic",
+        "flip-flop",
+        "input-sequences",
+        "input-sequences-3",
+        "machine-interconnect",
+        "network",
+        "startup-loadable",
+        "throttle-control"
       ],
       "sequenceCount": 2,
       "role": "Latches network burst alarm; downstream input to DCCriticalSynthesizer",
@@ -25,6 +35,52 @@
         "scope": "not applicable — all event vectors are isInitial (combinatorial)",
         "compliant": true,
         "notes": "Both SET and RESET events are isInitial. The FF responds combinatorially on every cycle. The 'state' persists through the perceptual space value retention: once SET writes [1,0] to [1373:1375], that value remains until RESET overwrites it with [0,1]."
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "data-center",
+          "network",
+          "throttle-control"
+        ],
+        "family": "dc-network-throttle-flip-flop",
+        "machineCode": "dcnetwork-throttle-ff",
+        "capabilityTags": [],
+        "workflowTags": [
+          "data-center-network-throttle-control",
+          "dc-network-throttle-flip-flop",
+          "dcnetwork-throttle-ff",
+          "flip-flop"
+        ],
+        "integrationTags": [
+          "digital-logic",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "data-center",
+          "data-center-network-throttle-control",
+          "dc-network-throttle-flip-flop",
+          "dcnetwork-throttle-ff",
+          "digital-logic",
+          "flip-flop",
+          "input-sequences",
+          "input-sequences-3",
+          "machine-interconnect",
+          "network",
+          "startup-loadable",
+          "throttle-control"
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

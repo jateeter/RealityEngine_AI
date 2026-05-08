@@ -9,14 +9,23 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [3963:3967]: [1,0,0,0]=FUNGAL_ALERT, [0,1,0,0]=INSECT_ALERT, [0,0,1,0]=IPM_WARNING, [0,0,0,1]=IPM_OK",
       "tags": [
+        "ag-ipm-pest-alert-monitor",
+        "ag-ipmpest-alert-monitor",
         "agriculture",
-        "pest",
-        "ipm",
-        "indoor growing",
-        "fungal",
+        "agriculture-ipm-pest-management",
         "botrytis",
+        "ces-sequences",
+        "ces-sequences-3",
+        "fungal",
         "humidity",
-        "kleene-plus"
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-1",
+        "ipm",
+        "kleene-plus",
+        "pest",
+        "pest-management",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "inputSignalMap": {
@@ -33,7 +42,58 @@
         "AgPhotoPeriodLightingController (output at [32:36])",
         "AgAtmosphericController (output at [36:40])"
       ],
-      "downstreamMachine": "AgYieldOptimizationAI (reads [3963:3967])"
+      "downstreamMachine": "AgYieldOptimizationAI (reads [3963:3967])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "ipm",
+          "pest-management"
+        ],
+        "family": "ag-ipm-pest-alert-monitor",
+        "machineCode": "ag-ipmpest-alert-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ag-ipm-pest-alert-monitor",
+          "ag-ipmpest-alert-monitor",
+          "agriculture-ipm-pest-management",
+          "botrytis",
+          "fungal",
+          "humidity",
+          "indoor-growing",
+          "kleene-plus",
+          "pest"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-ipm-pest-alert-monitor",
+          "ag-ipmpest-alert-monitor",
+          "agriculture",
+          "agriculture-ipm-pest-management",
+          "botrytis",
+          "ces-sequences",
+          "ces-sequences-3",
+          "fungal",
+          "humidity",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-1",
+          "ipm",
+          "kleene-plus",
+          "pest",
+          "pest-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [136:140]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "harvest-readiness",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-harvest-readiness",
+        "agriculture-generated",
+        "agx017",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-harvest-readiness-risk-maintenance-or-optimization",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "growhouse-irrigation-agent",
+        "harvest-readiness",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -46,7 +60,70 @@
       "downstreamMachines": [
         "Agriculture Indoor Grow House Harvest Labor Coordination"
       ],
-      "downstreamPattern": "Output region [136:140] feeds Agriculture Indoor Grow House Harvest Labor Coordination for predictive agriculture management."
+      "downstreamPattern": "Output region [136:140] feeds Agriculture Indoor Grow House Harvest Labor Coordination for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx017",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-harvest-readiness-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-harvest-readiness",
+          "agriculture-generated",
+          "agx017",
+          "ai-trigger",
+          "dispatchable-agent",
+          "growhouse-irrigation-agent",
+          "harvest-readiness",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-harvest-readiness",
+          "agriculture-generated",
+          "agx017",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-harvest-readiness-risk-maintenance-or-optimization",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "growhouse-irrigation-agent",
+          "harvest-readiness",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

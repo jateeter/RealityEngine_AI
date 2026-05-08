@@ -9,14 +9,23 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [32:36]: [1,0,0,0]=LIGHTS_ON, [0,1,0,0]=LIGHTS_OFF, [0,0,1,0]=DLI_ALERT, [0,0,0,1]=PHOTO_OK",
       "tags": [
+        "ag-photo-period-lighting-controller",
         "agriculture",
-        "photoperiod",
-        "indoor growing",
-        "lighting",
-        "par",
+        "agriculture-photoperiod-lighting-control",
+        "ces-sequences",
+        "ces-sequences-3",
         "dli",
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "lighting",
+        "lighting-control",
+        "machine-interconnect",
+        "par",
+        "photoperiod",
         "photosynthesis",
-        "kleene-plus"
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "sensorNormalization": {
@@ -28,7 +37,59 @@
       "downstreamMachines": [
         "AgNutrientCycleOptimizer (reads [32:36])",
         "AgIPMPestAlertMonitor (reads [32:36])"
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "lighting-control",
+          "photoperiod"
+        ],
+        "family": "ag-photo-period-lighting-controller",
+        "machineCode": "ag-photo-period-lighting-controller",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ag-photo-period-lighting-controller",
+          "agriculture-photoperiod-lighting-control",
+          "dli",
+          "indoor-growing",
+          "kleene-plus",
+          "lighting",
+          "par",
+          "photosynthesis"
+        ],
+        "integrationTags": [
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-photo-period-lighting-controller",
+          "agriculture",
+          "agriculture-photoperiod-lighting-control",
+          "ces-sequences",
+          "ces-sequences-3",
+          "dli",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "lighting",
+          "lighting-control",
+          "machine-interconnect",
+          "par",
+          "photoperiod",
+          "photosynthesis",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

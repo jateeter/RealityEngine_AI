@@ -9,13 +9,20 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [980:984]: [1,0,0,0]=OUTREACH_FAILURE, [0,1,0,0]=LOW_ENGAGEMENT, [0,0,1,0]=ENGAGEMENT_BUILDING, [0,0,0,1]=OUTREACH_EFFECTIVE",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-3",
+        "community-outreach",
+        "community-outreach-monitor",
         "community-services",
-        "community outreach",
+        "community-services-community-outreach-engagement",
         "engagement",
-        "social services",
-        "unreached populations",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "social-services",
+        "startup-loadable",
         "trust",
-        "kleene-plus"
+        "unreached-populations"
       ],
       "sequenceCount": 3,
       "populationFocus": "Outreach-dependent service populations: immigrant communities, homeless individuals, returning citizens, domestic violence survivors, isolated elders; organizations running street outreach, community health worker programs, and peer outreach",
@@ -25,7 +32,52 @@
         "outreach_frequency_norm": "0.0=no active outreach occurring (program paused, staff unavailable, funding lapsed), 0.5=intermittent outreach (monthly or less; insufficient for trust-building), 1.0=regular intensive outreach (weekly or more; consistent presence in target locations)",
         "trust_score_norm": "0.0=community actively avoiding outreach workers; prior incident damaging trust; fear of contact with services, 0.5=neutral trust; some community members engaging; others avoidant, 1.0=high trust; community initiating contact; peer referrals active"
       },
-      "downstreamMachine": "CommunityAccessMonitor (reads [976:984])"
+      "downstreamMachine": "CommunityAccessMonitor (reads [976:984])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "community-outreach",
+          "community-services",
+          "engagement"
+        ],
+        "family": "community-outreach-monitor",
+        "machineCode": "community-outreach-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "community-outreach-monitor",
+          "community-services-community-outreach-engagement",
+          "kleene-plus",
+          "social-services",
+          "trust",
+          "unreached-populations"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-outreach",
+          "community-outreach-monitor",
+          "community-services",
+          "community-services-community-outreach-engagement",
+          "engagement",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "social-services",
+          "startup-loadable",
+          "trust",
+          "unreached-populations"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -35,17 +35,90 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
-        "copyright",
-        "productization",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
         "commercialization-and-enforcement",
-        "notice-letter-evidence-gate"
+        "copyright",
+        "copyright-workflow-agent",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-commercialization-and-enforcement",
+        "legal-services-commercialization-and-enforcement-notice-letter-evidence-gate",
+        "legal-services-generated",
+        "lsx093",
+        "notice-letter-evidence-gate",
+        "productization",
+        "provisional-patent",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "commercialization-and-enforcement",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx093",
+        "capabilityTags": [
+          "copyright-workflow-agent",
+          "legal-services-commercialization-and-enforcement-notice-letter-evidence-gate",
+          "notice-letter-evidence-gate"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "dispatchable-agent",
+          "intellectual-property",
+          "legal-services-commercialization-and-enforcement",
+          "legal-services-generated",
+          "lsx093",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "commercialization-and-enforcement",
+          "copyright",
+          "copyright-workflow-agent",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-commercialization-and-enforcement",
+          "legal-services-commercialization-and-enforcement-notice-letter-evidence-gate",
+          "legal-services-generated",
+          "lsx093",
+          "notice-letter-evidence-gate",
+          "productization",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

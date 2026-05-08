@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [3979:3983]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "indoor-grow-house",
-        "hvac-preventive-maintenance",
+        "agriculture-generated",
+        "agriculture-indoor-grow-house",
+        "agriculture-indoor-grow-house-hvac-preventive-maintenance",
+        "agx038",
+        "ai-trigger",
         "ai-triggers",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "growhouse-ipm-agent",
+        "hvac-preventive-maintenance",
+        "indoor-grow-house",
+        "indoor-grow-house-hvac-preventive-maintenance-risk-maintenance-or-optimization",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -47,7 +61,70 @@
         "Agriculture Indoor Grow House Dehumidifier Reliability",
         "Agriculture Indoor Grow House Energy Demand Response"
       ],
-      "downstreamPattern": "Output region [3979:3983] feeds Agriculture Indoor Grow House Dehumidifier Reliability, Agriculture Indoor Grow House Energy Demand Response for predictive agriculture management."
+      "downstreamPattern": "Output region [3979:3983] feeds Agriculture Indoor Grow House Dehumidifier Reliability, Agriculture Indoor Grow House Energy Demand Response for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "indoor-grow-house"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx038",
+        "capabilityTags": [
+          "agriculture-indoor-grow-house-hvac-preventive-maintenance",
+          "ai-triggers",
+          "dispatchable-agents",
+          "hvac-preventive-maintenance",
+          "indoor-grow-house-hvac-preventive-maintenance-risk-maintenance-or-optimization",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agx038",
+          "ai-trigger",
+          "dispatchable-agent",
+          "growhouse-ipm-agent",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agriculture-indoor-grow-house-hvac-preventive-maintenance",
+          "agx038",
+          "ai-trigger",
+          "ai-triggers",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "growhouse-ipm-agent",
+          "hvac-preventive-maintenance",
+          "indoor-grow-house",
+          "indoor-grow-house-hvac-preventive-maintenance-risk-maintenance-or-optimization",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

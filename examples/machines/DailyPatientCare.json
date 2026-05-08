@@ -50,15 +50,81 @@
       },
       "sequenceCount": 7,
       "tags": [
-        "elder-care",
-        "daily-care",
-        "monitoring",
-        "fall-detection",
-        "medication",
-        "routine",
         "anomaly-detection",
-        "binary"
-      ]
+        "assisted-living-daily-care",
+        "binary",
+        "ces-sequences",
+        "ces-sequences-7",
+        "daily-care",
+        "daily-patient-care",
+        "elder-care",
+        "fall-detection",
+        "healthcare",
+        "healthcare-operations",
+        "healthcare-operations-assisted-living-daily-care",
+        "input-sequences",
+        "input-sequences-8",
+        "medication",
+        "monitoring",
+        "routine",
+        "startup-loadable"
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "assisted-living-daily-care",
+          "healthcare",
+          "healthcare-operations"
+        ],
+        "family": "daily-patient-care",
+        "machineCode": "daily-patient-care",
+        "capabilityTags": [
+          "monitoring"
+        ],
+        "workflowTags": [
+          "anomaly-detection",
+          "binary",
+          "daily-care",
+          "daily-patient-care",
+          "elder-care",
+          "fall-detection",
+          "healthcare-operations-assisted-living-daily-care",
+          "medication",
+          "routine"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-7",
+          "input-sequences",
+          "input-sequences-8",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "anomaly-detection",
+          "assisted-living-daily-care",
+          "binary",
+          "ces-sequences",
+          "ces-sequences-7",
+          "daily-care",
+          "daily-patient-care",
+          "elder-care",
+          "fall-detection",
+          "healthcare",
+          "healthcare-operations",
+          "healthcare-operations-assisted-living-daily-care",
+          "input-sequences",
+          "input-sequences-8",
+          "medication",
+          "monitoring",
+          "routine",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",

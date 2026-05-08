@@ -9,15 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [1995:1999]: [1,0,0,0]=FOOD_CRISIS, [0,1,0,0]=FOOD_INSECURE, [0,0,1,0]=ASSISTANCE_NEEDED, [0,0,0,1]=FOOD_SECURE",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-3",
+        "food-insecurity",
+        "food-security",
         "healthcare",
-        "home health",
-        "food security",
-        "social determinants",
+        "home-food-security-monitor",
+        "home-health",
+        "home-health-social-determinants-food-security",
+        "input-sequences",
+        "input-sequences-2",
+        "kleene-plus",
         "low-income",
         "snap",
-        "wic",
-        "food insecurity",
-        "kleene-plus"
+        "social-determinants",
+        "startup-loadable",
+        "wic"
       ],
       "sequenceCount": 3,
       "populationFocus": "Low- and medium-income households; families with children; adults on fixed incomes",
@@ -27,7 +34,58 @@
         "pantry_days_norm": "0.0=empty pantry (0 days supply), 0.5=3–5 day supply, 1.0=2+ week supply",
         "food_assistance_norm": "0.0=no assistance active (not enrolled or access lapsed), 0.5=partial benefit (SNAP pending/partial), 1.0=full assistance active (SNAP/WIC/food bank regular)"
       },
-      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [1995:1999])"
+      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [1995:1999])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "food-security",
+          "healthcare",
+          "home-health",
+          "social-determinants"
+        ],
+        "family": "home-food-security-monitor",
+        "machineCode": "home-food-security-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "food-insecurity",
+          "home-food-security-monitor",
+          "home-health-social-determinants-food-security",
+          "kleene-plus",
+          "low-income",
+          "snap",
+          "wic"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "food-insecurity",
+          "food-security",
+          "healthcare",
+          "home-food-security-monitor",
+          "home-health",
+          "home-health-social-determinants-food-security",
+          "input-sequences",
+          "input-sequences-2",
+          "kleene-plus",
+          "low-income",
+          "snap",
+          "social-determinants",
+          "startup-loadable",
+          "wic"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

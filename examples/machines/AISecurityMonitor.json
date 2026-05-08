@@ -20,12 +20,23 @@
       "category": "ai-services",
       "domain": "AI Infrastructure — Security Monitoring",
       "tags": [
-        "data-center",
-        "security",
-        "soc",
+        "ai-infrastructure",
+        "ai-infrastructure-security-monitoring",
+        "ai-security-monitor",
+        "ai-services",
+        "ai-workload",
+        "aisecurity-monitor",
         "auth",
+        "ces-sequences",
+        "ces-sequences-2",
+        "data-center",
+        "input-sequences",
+        "input-sequences-3",
         "network",
-        "ai-workload"
+        "security",
+        "security-monitoring",
+        "soc",
+        "startup-loadable"
       ],
       "rationale": "Auth anomalies, exfiltration detection, and network isolation are data-center security concerns.",
       "inputDimensions": [
@@ -75,7 +86,62 @@
           "index": 5,
           "name": "ACT_ISOLATE_NETWORK_SEGMENT"
         }
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "ai-infrastructure",
+          "ai-services",
+          "security-monitoring"
+        ],
+        "family": "ai-security-monitor",
+        "machineCode": "aisecurity-monitor",
+        "capabilityTags": [
+          "ai-infrastructure-security-monitoring",
+          "security-monitoring"
+        ],
+        "workflowTags": [
+          "ai-security-monitor",
+          "ai-workload",
+          "aisecurity-monitor",
+          "auth",
+          "data-center",
+          "network",
+          "security",
+          "soc"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-infrastructure",
+          "ai-infrastructure-security-monitoring",
+          "ai-security-monitor",
+          "ai-services",
+          "ai-workload",
+          "aisecurity-monitor",
+          "auth",
+          "ces-sequences",
+          "ces-sequences-2",
+          "data-center",
+          "input-sequences",
+          "input-sequences-3",
+          "network",
+          "security",
+          "security-monitoring",
+          "soc",
+          "startup-loadable"
+        ]
+      }
     },
     "sequences": [
       {

@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx108",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-well-generated",
+        "built-space-well-mind-and-wellness-policy",
+        "built-space-well-mind-and-wellness-policy-mental-health-resource-awareness",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "mental-health-resource-awareness",
         "mind-and-wellness-policy",
-        "mental-health-resource-awareness"
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-mind-and-wellness-policy",
+        "well-operations",
+        "well-predictive-optimization-mind-and-wellness-policy-mental-health-resource-awareness",
+        "well-water-quality-agent"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [748:752] feeds Built Space WELL Mind And Wellness Policy Mind Policy Evidence Archive for WELL operations optimization."
+      "downstreamPattern": "Output region [748:752] feeds Built Space WELL Mind And Wellness Policy Mind Policy Evidence Archive for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-mind-and-wellness-policy"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx108",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-mind-and-wellness-policy-mental-health-resource-awareness"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx108",
+          "built-space-well-generated",
+          "built-space-well-mind-and-wellness-policy",
+          "built-space-well-mind-and-wellness-policy-mental-health-resource-awareness",
+          "dispatchable-agent",
+          "mental-health-resource-awareness",
+          "mind-and-wellness-policy",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-operations",
+          "well-water-quality-agent"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx108",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-mind-and-wellness-policy",
+          "built-space-well-mind-and-wellness-policy-mental-health-resource-awareness",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "mental-health-resource-awareness",
+          "mind-and-wellness-policy",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-mind-and-wellness-policy",
+          "well-operations",
+          "well-predictive-optimization-mind-and-wellness-policy-mental-health-resource-awareness",
+          "well-water-quality-agent"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

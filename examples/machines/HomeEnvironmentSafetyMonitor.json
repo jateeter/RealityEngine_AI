@@ -9,15 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [1999:2003]: [1,0,0,0]=UNSAFE_HOUSING, [0,1,0,0]=UTILITY_FAILURE, [0,0,1,0]=HEALTH_HAZARD_RISK, [0,0,0,1]=ENVIRONMENT_SAFE",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-3",
         "healthcare",
-        "home health",
-        "housing safety",
-        "social determinants",
+        "home-environment-safety-monitor",
+        "home-health",
+        "home-health-social-determinants-housing-safety",
+        "housing-safety",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "lead",
         "low-income",
         "mold",
-        "lead",
-        "utility",
-        "kleene-plus"
+        "social-determinants",
+        "startup-loadable",
+        "utility"
       ],
       "sequenceCount": 3,
       "populationFocus": "Renters in aging housing stock; low-income families; households in utility shutoff risk zones",
@@ -27,7 +34,58 @@
         "structural_safety_norm": "0.0=multiple active structural hazards (roof leak, electrical, falling plaster), 0.5=minor deferred maintenance, 1.0=structurally sound",
         "utility_reliability_norm": "0.0=active shutoff notice or disconnected, 0.5=past-due balance with shutoff risk, 1.0=current and reliable service"
       },
-      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [1999:2003])"
+      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [1999:2003])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "healthcare",
+          "home-health",
+          "housing-safety",
+          "social-determinants"
+        ],
+        "family": "home-environment-safety-monitor",
+        "machineCode": "home-environment-safety-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "home-environment-safety-monitor",
+          "home-health-social-determinants-housing-safety",
+          "kleene-plus",
+          "lead",
+          "low-income",
+          "mold",
+          "utility"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "healthcare",
+          "home-environment-safety-monitor",
+          "home-health",
+          "home-health-social-determinants-housing-safety",
+          "housing-safety",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "lead",
+          "low-income",
+          "mold",
+          "social-determinants",
+          "startup-loadable",
+          "utility"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

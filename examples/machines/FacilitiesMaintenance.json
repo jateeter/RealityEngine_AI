@@ -87,17 +87,88 @@
       "sequenceCount": 6,
       "testCaseCount": 8,
       "tags": [
-        "elder-care",
-        "facilities",
-        "janitorial",
-        "hygiene",
-        "safety",
-        "wellness-observation",
-        "machine-interconnect",
+        "ces-sequences",
+        "ces-sequences-6",
         "daily-care",
+        "elder-care",
+        "eldercare-integration-and-environmental-monitoring",
+        "facilities",
+        "facilities-maintenance",
+        "facilities-management",
+        "facilities-management-eldercare-integration-and-environmental-monitoring",
+        "fall-prevention",
+        "healthcare",
+        "hygiene",
+        "input-sequences",
+        "input-sequences-15",
+        "janitorial",
+        "machine-interconnect",
+        "safety",
+        "startup-loadable",
         "weekly-maintenance",
-        "fall-prevention"
-      ]
+        "wellness-observation"
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "eldercare-integration-and-environmental-monitoring",
+          "facilities-management",
+          "healthcare"
+        ],
+        "family": "facilities-maintenance",
+        "machineCode": "facilities-maintenance",
+        "capabilityTags": [
+          "eldercare-integration-and-environmental-monitoring",
+          "facilities-maintenance",
+          "facilities-management-eldercare-integration-and-environmental-monitoring",
+          "weekly-maintenance"
+        ],
+        "workflowTags": [
+          "daily-care",
+          "elder-care",
+          "facilities",
+          "fall-prevention",
+          "hygiene",
+          "janitorial",
+          "safety",
+          "wellness-observation"
+        ],
+        "integrationTags": [
+          "healthcare",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-6",
+          "input-sequences",
+          "input-sequences-15",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-6",
+          "daily-care",
+          "elder-care",
+          "eldercare-integration-and-environmental-monitoring",
+          "facilities",
+          "facilities-maintenance",
+          "facilities-management",
+          "facilities-management-eldercare-integration-and-environmental-monitoring",
+          "fall-prevention",
+          "healthcare",
+          "hygiene",
+          "input-sequences",
+          "input-sequences-15",
+          "janitorial",
+          "machine-interconnect",
+          "safety",
+          "startup-loadable",
+          "weekly-maintenance",
+          "wellness-observation"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",

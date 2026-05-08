@@ -9,15 +9,24 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2039:2043]: [1,0,0,0]=MENTAL_HEALTH_CRISIS, [0,1,0,0]=MH_REFERRAL_NEEDED, [0,0,1,0]=COMORBIDITY_RISK, [0,0,0,1]=MH_ACCESS_ADEQUATE",
       "tags": [
-        "healthcare",
-        "home health",
-        "mental health",
-        "chronic disease",
-        "chronic pain",
-        "depression",
-        "low-income",
+        "ces-sequences",
+        "ces-sequences-3",
+        "chronic-disease",
+        "chronic-illness-comorbidity",
+        "chronic-pain",
         "comorbidity",
-        "kleene-plus"
+        "depression",
+        "healthcare",
+        "home-health",
+        "home-health-mental-health-access-chronic-illness-comorbidity",
+        "home-mental-health-access-monitor",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "low-income",
+        "mental-health",
+        "mental-health-access",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Adults managing chronic disease and/or chronic pain with comorbid depression/anxiety risk; home care patients without mental health access; low-income adults below mental health parity enforcement threshold",
@@ -30,7 +39,62 @@
       "upstreamMachines": [
         "HomeChronicDiseaseMonitor (output [2019:2023])",
         "HomeChronicPainMonitor (output [2023:2027])"
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "chronic-illness-comorbidity",
+          "healthcare",
+          "home-health",
+          "mental-health-access"
+        ],
+        "family": "home-mental-health-access-monitor",
+        "machineCode": "home-mental-health-access-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "chronic-disease",
+          "chronic-pain",
+          "comorbidity",
+          "depression",
+          "home-health-mental-health-access-chronic-illness-comorbidity",
+          "home-mental-health-access-monitor",
+          "kleene-plus",
+          "low-income",
+          "mental-health"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "chronic-disease",
+          "chronic-illness-comorbidity",
+          "chronic-pain",
+          "comorbidity",
+          "depression",
+          "healthcare",
+          "home-health",
+          "home-health-mental-health-access-chronic-illness-comorbidity",
+          "home-mental-health-access-monitor",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "low-income",
+          "mental-health",
+          "mental-health-access",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

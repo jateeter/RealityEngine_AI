@@ -34,6 +34,7 @@ reports and obsolete fixed-vector notes have been removed.
 | [INTERCONNECTED_MACHINES_SETUP.md](INTERCONNECTED_MACHINES_SETUP.md) | Checklist for adding connected machines. |
 | [MACHINE_JSON_FORMAT.md](MACHINE_JSON_FORMAT.md) | Machine JSON authoring reference. |
 | [MACHINE_JSON_API.md](MACHINE_JSON_API.md) | Machine JSON API usage. |
+| [MACHINE_TAGGING.md](MACHINE_TAGGING.md) | Managed machine metadata tag structure. |
 
 ## Domain Pages
 

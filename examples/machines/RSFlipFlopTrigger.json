@@ -10,10 +10,17 @@
       "eventSpace": "2D binary vectors: [S, R] inputs (00, 01, 10, 11)",
       "outputSpace": "2D binary: {[1,0]=SET/AMBER, [0,1]=RESET/GREEN}",
       "tags": [
-        "flip-flop",
+        "ces-sequences",
+        "ces-sequences-2",
         "digital-logic",
-        "trigger",
-        "localai-bridge"
+        "flip-flop",
+        "input-sequences",
+        "input-sequences-3",
+        "localai-bridge",
+        "rs-flipflop-trigger",
+        "rsflip-flop-trigger",
+        "startup-loadable",
+        "trigger"
       ],
       "sequenceCount": 2,
       "triggerConfig": {
@@ -42,6 +49,47 @@
             "processStatus": "ok",
             "description": "Machine reset — clear upstream AMBER/RED"
           }
+        ]
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "digital-logic",
+        "domainTags": [
+          "digital-logic"
+        ],
+        "family": "rs-flipflop-trigger",
+        "machineCode": "rsflip-flop-trigger",
+        "capabilityTags": [],
+        "workflowTags": [
+          "flip-flop",
+          "localai-bridge",
+          "rs-flipflop-trigger",
+          "rsflip-flop-trigger",
+          "trigger"
+        ],
+        "integrationTags": [
+          "digital-logic"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "digital-logic",
+          "flip-flop",
+          "input-sequences",
+          "input-sequences-3",
+          "localai-bridge",
+          "rs-flipflop-trigger",
+          "rsflip-flop-trigger",
+          "startup-loadable",
+          "trigger"
         ]
       }
     },

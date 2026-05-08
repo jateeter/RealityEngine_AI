@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx113",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-well-community-and-hr",
+        "built-space-well-community-and-hr-childcare-support",
+        "built-space-well-generated",
+        "ces-sequences",
+        "ces-sequences-5",
+        "childcare-support",
         "community-and-hr",
-        "childcare-support"
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-community-and-hr",
+        "well-materials-cleaning-agent",
+        "well-operations",
+        "well-predictive-optimization-community-and-hr-childcare-support"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [768:772] feeds Built Space WELL Community And HR Nursing Mother Breaks for WELL operations optimization."
+      "downstreamPattern": "Output region [768:772] feeds Built Space WELL Community And HR Nursing Mother Breaks for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-community-and-hr"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx113",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-community-and-hr-childcare-support"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx113",
+          "built-space-well-community-and-hr",
+          "built-space-well-community-and-hr-childcare-support",
+          "built-space-well-generated",
+          "childcare-support",
+          "community-and-hr",
+          "dispatchable-agent",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-materials-cleaning-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx113",
+          "built-space",
+          "built-space-well-community-and-hr",
+          "built-space-well-community-and-hr-childcare-support",
+          "built-space-well-generated",
+          "ces-sequences",
+          "ces-sequences-5",
+          "childcare-support",
+          "community-and-hr",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-community-and-hr",
+          "well-materials-cleaning-agent",
+          "well-operations",
+          "well-predictive-optimization-community-and-hr-childcare-support"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

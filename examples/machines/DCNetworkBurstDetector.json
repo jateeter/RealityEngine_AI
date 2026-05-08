@@ -11,11 +11,19 @@
       "eventSpace": "4D continuous sensor vector at [1348:1352]: [bandwidth_util_norm, packet_loss_norm, latency_norm, queue_depth_norm]",
       "outputSpace": "2D binary at [1365:1367]: [1,0]=NETWORK_ALARM, [0,1]=NETWORK_NORMAL",
       "tags": [
-        "monitoring",
-        "data-center",
-        "network",
         "burst-detection",
-        "continuous"
+        "ces-sequences",
+        "ces-sequences-2",
+        "continuous",
+        "data-center",
+        "data-center-network-burst-detection",
+        "dc-network-burst-detector",
+        "dcnetwork-burst-detector",
+        "input-sequences",
+        "input-sequences-1",
+        "monitoring",
+        "network",
+        "startup-loadable"
       ],
       "sequenceCount": 2,
       "downstreamMachine": "DCNetworkThrottleFF (reads [1365:1367])",
@@ -36,6 +44,50 @@
         "scope": "continuous sensor space — STA not applicable as defined for binary vectors",
         "compliant": true,
         "notes": "Same continuous-space STA analog as DCThermalEscalation: gradual bandwidth progression through bands. Sudden traffic bursts that skip intermediate stages (e.g., BASELINE directly to OVERFLOW) will not trigger the alarm — consistent with the design requirement that genuine overflow events follow observable escalation patterns. BASELINE is isInitial (A*A = A+): at least one BASELINE reading is required to arm ELEVATED."
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "burst-detection",
+          "data-center",
+          "network"
+        ],
+        "family": "dc-network-burst-detector",
+        "machineCode": "dcnetwork-burst-detector",
+        "capabilityTags": [
+          "monitoring"
+        ],
+        "workflowTags": [
+          "continuous",
+          "data-center-network-burst-detection",
+          "dc-network-burst-detector",
+          "dcnetwork-burst-detector"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "burst-detection",
+          "ces-sequences",
+          "ces-sequences-2",
+          "continuous",
+          "data-center",
+          "data-center-network-burst-detection",
+          "dc-network-burst-detector",
+          "dcnetwork-burst-detector",
+          "input-sequences",
+          "input-sequences-1",
+          "monitoring",
+          "network",
+          "startup-loadable"
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

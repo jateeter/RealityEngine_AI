@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx058",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-well-generated",
+        "built-space-well-light-and-circadian",
+        "built-space-well-light-and-circadian-daylight-energy-optimization",
+        "ces-sequences",
+        "ces-sequences-5",
+        "daylight-energy-optimization",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
         "light-and-circadian",
-        "daylight-energy-optimization"
+        "machine-interconnect",
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-light-and-circadian",
+        "well-operations",
+        "well-predictive-optimization-light-and-circadian-daylight-energy-optimization",
+        "well-verification-agent"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [548:552] feeds Built Space WELL Light And Circadian Lighting Maintenance Planner for WELL operations optimization."
+      "downstreamPattern": "Output region [548:552] feeds Built Space WELL Light And Circadian Lighting Maintenance Planner for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-light-and-circadian"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx058",
+        "capabilityTags": [
+          "built-space-well-light-and-circadian-daylight-energy-optimization",
+          "daylight-energy-optimization",
+          "predictive-optimization",
+          "well-predictive-optimization-light-and-circadian-daylight-energy-optimization"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx058",
+          "built-space-well-generated",
+          "built-space-well-light-and-circadian",
+          "dispatchable-agent",
+          "light-and-circadian",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-operations",
+          "well-verification-agent"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx058",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-light-and-circadian",
+          "built-space-well-light-and-circadian-daylight-energy-optimization",
+          "ces-sequences",
+          "ces-sequences-5",
+          "daylight-energy-optimization",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "light-and-circadian",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-light-and-circadian",
+          "well-operations",
+          "well-predictive-optimization-light-and-circadian-daylight-energy-optimization",
+          "well-verification-agent"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

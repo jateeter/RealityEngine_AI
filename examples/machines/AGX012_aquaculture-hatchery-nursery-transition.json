@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [104:108]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "hatchery-nursery-transition",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-hatchery-nursery-transition",
+        "agriculture-generated",
+        "agx012",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-hatchery-nursery-transition-risk-maintenance-or-optimization",
+        "aquaculture-health-agent",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "hatchery-nursery-transition",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -46,7 +60,70 @@
       "downstreamMachines": [
         "Agriculture Aquaculture Larval Survival Optimization"
       ],
-      "downstreamPattern": "Output region [104:108] feeds Agriculture Aquaculture Larval Survival Optimization for predictive agriculture management."
+      "downstreamPattern": "Output region [104:108] feeds Agriculture Aquaculture Larval Survival Optimization for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx012",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-hatchery-nursery-transition-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-hatchery-nursery-transition",
+          "agriculture-generated",
+          "agx012",
+          "ai-trigger",
+          "aquaculture-health-agent",
+          "dispatchable-agent",
+          "hatchery-nursery-transition",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-hatchery-nursery-transition",
+          "agriculture-generated",
+          "agx012",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-hatchery-nursery-transition-risk-maintenance-or-optimization",
+          "aquaculture-health-agent",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "hatchery-nursery-transition",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

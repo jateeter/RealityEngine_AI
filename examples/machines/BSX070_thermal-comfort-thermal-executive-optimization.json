@@ -42,18 +42,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx070",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
+        "built-space-well-generated",
+        "built-space-well-thermal-comfort",
+        "built-space-well-thermal-comfort-thermal-executive-optimization",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
         "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
         "thermal-comfort",
-        "thermal-executive-optimization"
+        "thermal-executive-optimization",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-mind-policy-agent",
+        "well-operations",
+        "well-predictive-optimization-thermal-comfort-thermal-executive-optimization",
+        "well-thermal-comfort"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [596:600] is available to WELL operations and predictive optimization workflows."
+      "downstreamPattern": "Output region [596:600] is available to WELL operations and predictive optimization workflows.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-thermal-comfort"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx070",
+        "capabilityTags": [
+          "built-space-well-thermal-comfort-thermal-executive-optimization",
+          "predictive-optimization",
+          "thermal-executive-optimization",
+          "well-predictive-optimization-thermal-comfort-thermal-executive-optimization"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx070",
+          "built-space-well-generated",
+          "built-space-well-thermal-comfort",
+          "dispatchable-agent",
+          "occupant-health",
+          "thermal-comfort",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-mind-policy-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx070",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-thermal-comfort",
+          "built-space-well-thermal-comfort-thermal-executive-optimization",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "thermal-comfort",
+          "thermal-executive-optimization",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-mind-policy-agent",
+          "well-operations",
+          "well-predictive-optimization-thermal-comfort-thermal-executive-optimization",
+          "well-thermal-comfort"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

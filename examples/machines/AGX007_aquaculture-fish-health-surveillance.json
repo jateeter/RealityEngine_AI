@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [76:80]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "fish-health-surveillance",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-fish-health-surveillance",
+        "agriculture-generated",
+        "agx007",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-fish-health-surveillance-risk-maintenance-or-optimization",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "fish-health-surveillance",
+        "growhouse-irrigation-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -48,7 +62,70 @@
         "Agriculture Aquaculture Harvest Readiness",
         "Agriculture Aquaculture Probiotic Treatment Tracking"
       ],
-      "downstreamPattern": "Output region [76:80] feeds Agriculture Aquaculture Hatchery Nursery Transition, Agriculture Aquaculture Harvest Readiness, Agriculture Aquaculture Probiotic Treatment Tracking for predictive agriculture management."
+      "downstreamPattern": "Output region [76:80] feeds Agriculture Aquaculture Hatchery Nursery Transition, Agriculture Aquaculture Harvest Readiness, Agriculture Aquaculture Probiotic Treatment Tracking for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx007",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-fish-health-surveillance-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-fish-health-surveillance",
+          "agriculture-generated",
+          "agx007",
+          "ai-trigger",
+          "dispatchable-agent",
+          "fish-health-surveillance",
+          "growhouse-irrigation-agent",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-fish-health-surveillance",
+          "agriculture-generated",
+          "agx007",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-fish-health-surveillance-risk-maintenance-or-optimization",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "fish-health-surveillance",
+          "growhouse-irrigation-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

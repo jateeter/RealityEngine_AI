@@ -35,17 +35,91 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
-        "productization",
         "copyright-workflow",
-        "software-source-code-deposit"
+        "dispatchable-agent",
+        "docketing-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-copyright-workflow",
+        "legal-services-copyright-workflow-software-source-code-deposit",
+        "legal-services-generated",
+        "lsx025",
+        "productization",
+        "provisional-patent",
+        "software-source-code-deposit",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "copyright-workflow",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx025",
+        "capabilityTags": [
+          "copyright-workflow",
+          "legal-services-copyright-workflow",
+          "legal-services-copyright-workflow-software-source-code-deposit"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "dispatchable-agent",
+          "docketing-agent",
+          "intellectual-property",
+          "legal-services-generated",
+          "lsx025",
+          "productization",
+          "provisional-patent",
+          "software-source-code-deposit",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "copyright-workflow",
+          "dispatchable-agent",
+          "docketing-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-copyright-workflow",
+          "legal-services-copyright-workflow-software-source-code-deposit",
+          "legal-services-generated",
+          "lsx025",
+          "productization",
+          "provisional-patent",
+          "software-source-code-deposit",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -35,17 +35,89 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "attorney-review-agent",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
-        "productization",
+        "dispatchable-agent",
         "filing-and-portal-operations",
-        "receipt-and-certificate-archive"
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-filing-and-portal-operations",
+        "legal-services-filing-and-portal-operations-receipt-and-certificate-archive",
+        "legal-services-generated",
+        "lsx090",
+        "productization",
+        "provisional-patent",
+        "receipt-and-certificate-archive",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "filing-and-portal-operations",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx090",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-trigger",
+          "attorney-review-agent",
+          "copyright",
+          "dispatchable-agent",
+          "intellectual-property",
+          "legal-services-filing-and-portal-operations",
+          "legal-services-filing-and-portal-operations-receipt-and-certificate-archive",
+          "legal-services-generated",
+          "lsx090",
+          "productization",
+          "provisional-patent",
+          "receipt-and-certificate-archive",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "attorney-review-agent",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "dispatchable-agent",
+          "filing-and-portal-operations",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-filing-and-portal-operations",
+          "legal-services-filing-and-portal-operations-receipt-and-certificate-archive",
+          "legal-services-generated",
+          "lsx090",
+          "productization",
+          "provisional-patent",
+          "receipt-and-certificate-archive",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

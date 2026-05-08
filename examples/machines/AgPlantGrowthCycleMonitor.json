@@ -9,13 +9,20 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [3955:3959]: [1,0,0,0]=TEMP_STRESS, [0,1,0,0]=WATER_STRESS, [0,0,1,0]=DUAL_STRESS, [0,0,0,1]=GROWTH_OK",
       "tags": [
+        "ag-plant-growth-cycle-monitor",
         "agriculture",
-        "plant growth",
-        "crop monitoring",
-        "indoor growing",
-        "grow cycle",
-        "stress detection",
-        "kleene-plus"
+        "agriculture-plant-growth-crop-monitoring",
+        "ces-sequences",
+        "ces-sequences-3",
+        "crop-monitoring",
+        "grow-cycle",
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "plant-growth",
+        "startup-loadable",
+        "stress-detection"
       ],
       "sequenceCount": 3,
       "inputSignalMap": {
@@ -32,7 +39,54 @@
         "AgZoneTemperatureController (output at [20:24])",
         "AgIrrigationFlowController (output at [24:28])"
       ],
-      "downstreamMachine": "AgHarvestReadinessAssessor (reads [3955:3959])"
+      "downstreamMachine": "AgHarvestReadinessAssessor (reads [3955:3959])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "crop-monitoring",
+          "plant-growth"
+        ],
+        "family": "ag-plant-growth-cycle-monitor",
+        "machineCode": "ag-plant-growth-cycle-monitor",
+        "capabilityTags": [
+          "agriculture-plant-growth-crop-monitoring",
+          "crop-monitoring"
+        ],
+        "workflowTags": [
+          "ag-plant-growth-cycle-monitor",
+          "grow-cycle",
+          "indoor-growing",
+          "kleene-plus",
+          "stress-detection"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-plant-growth-cycle-monitor",
+          "agriculture",
+          "agriculture-plant-growth-crop-monitoring",
+          "ces-sequences",
+          "ces-sequences-3",
+          "crop-monitoring",
+          "grow-cycle",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "plant-growth",
+          "startup-loadable",
+          "stress-detection"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

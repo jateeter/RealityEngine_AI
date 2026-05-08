@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
-        "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "ai-trigger",
         "air-quality",
-        "air-quality-incident-response"
+        "air-quality-incident-response",
+        "bsx028",
+        "built-space",
+        "built-space-well-air-quality",
+        "built-space-well-air-quality-air-quality-incident-response",
+        "built-space-well-generated",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-air-quality",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-operations",
+        "well-predictive-optimization-air-quality-air-quality-incident-response",
+        "well-verification-agent"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [428:432] feeds Built Space WELL Air Quality IAQ Evidence Archive for WELL operations optimization."
+      "downstreamPattern": "Output region [428:432] feeds Built Space WELL Air Quality IAQ Evidence Archive for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-air-quality"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx028",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-air-quality-air-quality-incident-response"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "air-quality",
+          "air-quality-incident-response",
+          "bsx028",
+          "built-space-well-air-quality",
+          "built-space-well-air-quality-air-quality-incident-response",
+          "built-space-well-generated",
+          "dispatchable-agent",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-operations",
+          "well-verification-agent"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "air-quality",
+          "air-quality-incident-response",
+          "bsx028",
+          "built-space",
+          "built-space-well-air-quality",
+          "built-space-well-air-quality-air-quality-incident-response",
+          "built-space-well-generated",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-air-quality",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-operations",
+          "well-predictive-optimization-air-quality-air-quality-incident-response",
+          "well-verification-agent"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

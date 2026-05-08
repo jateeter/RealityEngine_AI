@@ -35,17 +35,90 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
-        "productization",
         "corporate-legal-services",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-corporate-legal-services",
+        "legal-services-corporate-legal-services-vendor-ip-risk-review",
+        "legal-services-generated",
+        "lsx074",
+        "product-counsel-agent",
+        "productization",
+        "provisional-patent",
+        "startup-loadable",
+        "trademark",
         "vendor-ip-risk-review"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "corporate-legal-services",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx074",
+        "capabilityTags": [
+          "legal-services-corporate-legal-services-vendor-ip-risk-review",
+          "vendor-ip-risk-review"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "dispatchable-agent",
+          "intellectual-property",
+          "legal-services-corporate-legal-services",
+          "legal-services-generated",
+          "lsx074",
+          "product-counsel-agent",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "corporate-legal-services",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-corporate-legal-services",
+          "legal-services-corporate-legal-services-vendor-ip-risk-review",
+          "legal-services-generated",
+          "lsx074",
+          "product-counsel-agent",
+          "productization",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark",
+          "vendor-ip-risk-review"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

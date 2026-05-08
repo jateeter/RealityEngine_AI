@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [4009:4013]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "indoor-grow-house",
-        "postharvest-cold-chain",
+        "agriculture-generated",
+        "agriculture-indoor-grow-house",
+        "agriculture-indoor-grow-house-postharvest-cold-chain",
+        "agx043",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture-maintenance-agent",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "indoor-grow-house",
+        "indoor-grow-house-postharvest-cold-chain-risk-maintenance-or-optimization",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "postharvest-cold-chain",
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -44,7 +58,70 @@
         "maintenance readiness"
       ],
       "downstreamMachines": [],
-      "downstreamPattern": "Output region [4009:4013] feeds agriculture automation and AI dispatch orchestration."
+      "downstreamPattern": "Output region [4009:4013] feeds agriculture automation and AI dispatch orchestration.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "indoor-grow-house"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx043",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-maintenance-agent",
+          "dispatchable-agents",
+          "indoor-grow-house-postharvest-cold-chain-risk-maintenance-or-optimization",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agriculture-indoor-grow-house-postharvest-cold-chain",
+          "agx043",
+          "ai-trigger",
+          "dispatchable-agent",
+          "operational-management",
+          "postharvest-cold-chain"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agriculture-indoor-grow-house-postharvest-cold-chain",
+          "agx043",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture-maintenance-agent",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "indoor-grow-house",
+          "indoor-grow-house-postharvest-cold-chain-risk-maintenance-or-optimization",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "postharvest-cold-chain",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

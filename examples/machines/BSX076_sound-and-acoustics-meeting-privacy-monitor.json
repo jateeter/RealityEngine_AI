@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx076",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
+        "built-space-well-generated",
+        "built-space-well-sound-and-acoustics",
+        "built-space-well-sound-and-acoustics-meeting-privacy-monitor",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "meeting-privacy-monitor",
         "occupant-health",
+        "predictive-optimization",
         "sound-and-acoustics",
-        "meeting-privacy-monitor"
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-integrative-agent",
+        "well-operations",
+        "well-predictive-optimization-sound-and-acoustics-meeting-privacy-monitor",
+        "well-sound-and-acoustics"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [620:624] feeds Built Space WELL Sound And Acoustics Acoustic Performance Testing for WELL operations optimization."
+      "downstreamPattern": "Output region [620:624] feeds Built Space WELL Sound And Acoustics Acoustic Performance Testing for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-sound-and-acoustics"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx076",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-sound-and-acoustics-meeting-privacy-monitor"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx076",
+          "built-space-well-generated",
+          "built-space-well-sound-and-acoustics",
+          "built-space-well-sound-and-acoustics-meeting-privacy-monitor",
+          "dispatchable-agent",
+          "meeting-privacy-monitor",
+          "occupant-health",
+          "sound-and-acoustics",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-integrative-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx076",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-sound-and-acoustics",
+          "built-space-well-sound-and-acoustics-meeting-privacy-monitor",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "meeting-privacy-monitor",
+          "occupant-health",
+          "predictive-optimization",
+          "sound-and-acoustics",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-integrative-agent",
+          "well-operations",
+          "well-predictive-optimization-sound-and-acoustics-meeting-privacy-monitor",
+          "well-sound-and-acoustics"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

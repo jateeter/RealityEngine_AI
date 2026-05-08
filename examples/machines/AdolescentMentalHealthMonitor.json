@@ -9,15 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2027:2031]: [1,0,0,0]=CRISIS_RISK, [0,1,0,0]=BEHAVIORAL_CONCERN, [0,0,1,0]=ELEVATED_STRESS, [0,0,0,1]=MENTAL_HEALTH_OK",
       "tags": [
-        "healthcare",
-        "home health",
         "adolescent",
-        "mental health",
-        "behavioral health",
+        "adolescent-mental-health-monitor",
+        "behavioral-health",
+        "ces-sequences",
+        "ces-sequences-3",
+        "food-insecurity",
+        "healthcare",
+        "home-health",
+        "home-health-adolescent-behavioral-health",
+        "housing-instability",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
         "low-income",
-        "food insecurity",
-        "housing instability",
-        "kleene-plus"
+        "mental-health",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Adolescents ages 12–18 in food-insecure and housing-unstable households; low-income youth without behavioral health access",
@@ -30,7 +37,58 @@
       "upstreamMachines": [
         "HomeFoodSecurityMonitor (output [1995:1999])",
         "HomeEnvironmentSafetyMonitor (output [1999:2003])"
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "adolescent",
+          "behavioral-health",
+          "healthcare",
+          "home-health"
+        ],
+        "family": "adolescent-mental-health-monitor",
+        "machineCode": "adolescent-mental-health-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "adolescent-mental-health-monitor",
+          "food-insecurity",
+          "home-health-adolescent-behavioral-health",
+          "housing-instability",
+          "kleene-plus",
+          "low-income",
+          "mental-health"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "adolescent",
+          "adolescent-mental-health-monitor",
+          "behavioral-health",
+          "ces-sequences",
+          "ces-sequences-3",
+          "food-insecurity",
+          "healthcare",
+          "home-health",
+          "home-health-adolescent-behavioral-health",
+          "housing-instability",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "low-income",
+          "mental-health",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

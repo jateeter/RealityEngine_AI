@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [220:224]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "indoor-grow-house",
-        "integrated-pest-management",
+        "agriculture-generated",
+        "agriculture-indoor-grow-house",
+        "agriculture-indoor-grow-house-integrated-pest-management",
+        "agx030",
+        "ai-trigger",
         "ai-triggers",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "growhouse-crop-steering-agent",
+        "indoor-grow-house",
+        "indoor-grow-house-integrated-pest-management-risk-maintenance-or-optimization",
+        "input-sequences",
+        "input-sequences-5",
+        "integrated-pest-management",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -47,7 +61,70 @@
         "Agriculture Indoor Grow House Sanitation Turnover",
         "Agriculture Indoor Grow House Beneficial Insect Release"
       ],
-      "downstreamPattern": "Output region [220:224] feeds Agriculture Indoor Grow House Sanitation Turnover, Agriculture Indoor Grow House Beneficial Insect Release for predictive agriculture management."
+      "downstreamPattern": "Output region [220:224] feeds Agriculture Indoor Grow House Sanitation Turnover, Agriculture Indoor Grow House Beneficial Insect Release for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "indoor-grow-house"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx030",
+        "capabilityTags": [
+          "ai-triggers",
+          "dispatchable-agents",
+          "indoor-grow-house-integrated-pest-management-risk-maintenance-or-optimization",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agriculture-indoor-grow-house-integrated-pest-management",
+          "agx030",
+          "ai-trigger",
+          "dispatchable-agent",
+          "growhouse-crop-steering-agent",
+          "integrated-pest-management",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agriculture-indoor-grow-house-integrated-pest-management",
+          "agx030",
+          "ai-trigger",
+          "ai-triggers",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "growhouse-crop-steering-agent",
+          "indoor-grow-house",
+          "indoor-grow-house-integrated-pest-management-risk-maintenance-or-optimization",
+          "input-sequences",
+          "input-sequences-5",
+          "integrated-pest-management",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

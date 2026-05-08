@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx098",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-well-generated",
+        "built-space-well-movement-and-fitness",
+        "built-space-well-movement-and-fitness-outdoor-movement-connection",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
         "movement-and-fitness",
-        "outdoor-movement-connection"
+        "occupant-health",
+        "outdoor-movement-connection",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-materials-cleaning-agent",
+        "well-movement-and-fitness",
+        "well-operations",
+        "well-predictive-optimization-movement-and-fitness-outdoor-movement-connection"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [708:712] feeds Built Space WELL Movement And Fitness Movement Feedback Archive for WELL operations optimization."
+      "downstreamPattern": "Output region [708:712] feeds Built Space WELL Movement And Fitness Movement Feedback Archive for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-movement-and-fitness"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx098",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-movement-and-fitness-outdoor-movement-connection"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx098",
+          "built-space-well-generated",
+          "built-space-well-movement-and-fitness",
+          "built-space-well-movement-and-fitness-outdoor-movement-connection",
+          "dispatchable-agent",
+          "movement-and-fitness",
+          "occupant-health",
+          "outdoor-movement-connection",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-materials-cleaning-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx098",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-movement-and-fitness",
+          "built-space-well-movement-and-fitness-outdoor-movement-connection",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "movement-and-fitness",
+          "occupant-health",
+          "outdoor-movement-connection",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-materials-cleaning-agent",
+          "well-movement-and-fitness",
+          "well-operations",
+          "well-predictive-optimization-movement-and-fitness-outdoor-movement-connection"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

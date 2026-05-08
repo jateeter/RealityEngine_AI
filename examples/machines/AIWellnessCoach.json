@@ -23,13 +23,24 @@
       "domain": "AI — Wellness Coaching / Health-AI Bridge",
       "tags": [
         "ai",
-        "wellness",
-        "elder-care",
-        "coaching",
-        "multi-domain",
+        "ai-services",
+        "ai-wellness-coach",
+        "ai-wellness-coaching-health-ai-bridge",
+        "aiwellness-coach",
         "bridge",
+        "ces-sequences",
+        "ces-sequences-4",
+        "clinical",
+        "coaching",
+        "elder-care",
+        "health-ai-bridge",
+        "input-sequences",
+        "input-sequences-4",
+        "multi-domain",
         "patient",
-        "clinical"
+        "startup-loadable",
+        "wellness",
+        "wellness-coaching"
       ],
       "crossDomain": {
         "reads": "healthservices (PatientWellness output region 210..218)",
@@ -119,7 +130,64 @@
           "name": "ACT_PAGE_ONCALL_CLINICIAN",
           "description": "Page the on-call attending physician for immediate consultation"
         }
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "ai",
+          "ai-services",
+          "health-ai-bridge",
+          "wellness-coaching"
+        ],
+        "family": "ai-wellness-coach",
+        "machineCode": "aiwellness-coach",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-wellness-coach",
+          "ai-wellness-coaching-health-ai-bridge",
+          "aiwellness-coach",
+          "bridge",
+          "clinical",
+          "coaching",
+          "elder-care",
+          "multi-domain",
+          "patient",
+          "wellness"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-4",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai",
+          "ai-services",
+          "ai-wellness-coach",
+          "ai-wellness-coaching-health-ai-bridge",
+          "aiwellness-coach",
+          "bridge",
+          "ces-sequences",
+          "ces-sequences-4",
+          "clinical",
+          "coaching",
+          "elder-care",
+          "health-ai-bridge",
+          "input-sequences",
+          "input-sequences-4",
+          "multi-domain",
+          "patient",
+          "startup-loadable",
+          "wellness",
+          "wellness-coaching"
+        ]
+      }
     },
     "sequences": [
       {

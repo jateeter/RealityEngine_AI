@@ -37,7 +37,14 @@ The Machine JSON API provides endpoints for loading, saving, and managing Realit
       "metadata": {
         "category": "digital-logic",
         "author": "Reality Engine",
-        "tags": ["flip-flop", "digital-logic", "two-step"]
+        "tags": ["digital-logic", "flip-flop", "startup-loadable", "two-step"],
+        "tagging": {
+          "schemaVersion": "1.0.0",
+          "primaryDomain": "digital-logic",
+          "domainTags": ["digital-logic"],
+          "workflowTags": ["flip-flop", "two-step"],
+          "validationTags": ["startup-loadable"]
+        }
       },
       "sequenceCount": 2
     }

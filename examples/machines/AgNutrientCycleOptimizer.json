@@ -9,13 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [3959:3963]: [1,0,0,0]=NUTRIENT_LOCKOUT, [0,1,0,0]=UPTAKE_MISMATCH, [0,0,1,0]=NIGHT_REST, [0,0,0,1]=NUTRIENT_OK",
       "tags": [
+        "ag-nutrient-cycle-optimizer",
         "agriculture",
-        "nutrient solution",
-        "indoor growing",
+        "agriculture-nutrient-management-crop-optimization",
+        "ces-sequences",
+        "ces-sequences-3",
+        "crop-optimization",
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "machine-interconnect",
+        "nutrient-management",
+        "nutrient-solution",
+        "nutrient-uptake",
         "photoperiod",
-        "nutrient uptake",
-        "crop optimization",
-        "kleene-plus"
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "inputSignalMap": {
@@ -35,7 +44,59 @@
       "downstreamMachines": [
         "AgHarvestReadinessAssessor (reads [3959:3963])",
         "AgYieldOptimizationAI (reads [3959:3963])"
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "crop-optimization",
+          "nutrient-management"
+        ],
+        "family": "ag-nutrient-cycle-optimizer",
+        "machineCode": "ag-nutrient-cycle-optimizer",
+        "capabilityTags": [
+          "agriculture-nutrient-management-crop-optimization",
+          "crop-optimization"
+        ],
+        "workflowTags": [
+          "ag-nutrient-cycle-optimizer",
+          "indoor-growing",
+          "kleene-plus",
+          "nutrient-solution",
+          "nutrient-uptake",
+          "photoperiod"
+        ],
+        "integrationTags": [
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-nutrient-cycle-optimizer",
+          "agriculture",
+          "agriculture-nutrient-management-crop-optimization",
+          "ces-sequences",
+          "ces-sequences-3",
+          "crop-optimization",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "machine-interconnect",
+          "nutrient-management",
+          "nutrient-solution",
+          "nutrient-uptake",
+          "photoperiod",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

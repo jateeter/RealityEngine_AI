@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [252:256]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "indoor-grow-house",
-        "crop-steering",
+        "agriculture-generated",
+        "agriculture-indoor-grow-house",
+        "agriculture-indoor-grow-house-crop-steering",
+        "agx036",
+        "ai-trigger",
         "ai-triggers",
+        "ces-sequences",
+        "ces-sequences-4",
+        "crop-steering",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "growhouse-climate-agent",
+        "indoor-grow-house",
+        "indoor-grow-house-crop-steering-risk-maintenance-or-optimization",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -46,7 +60,70 @@
       "downstreamMachines": [
         "Agriculture Indoor Grow House Canopy Height Control"
       ],
-      "downstreamPattern": "Output region [252:256] feeds Agriculture Indoor Grow House Canopy Height Control for predictive agriculture management."
+      "downstreamPattern": "Output region [252:256] feeds Agriculture Indoor Grow House Canopy Height Control for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "indoor-grow-house"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx036",
+        "capabilityTags": [
+          "ai-triggers",
+          "dispatchable-agents",
+          "indoor-grow-house-crop-steering-risk-maintenance-or-optimization",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agriculture-indoor-grow-house-crop-steering",
+          "agx036",
+          "ai-trigger",
+          "crop-steering",
+          "dispatchable-agent",
+          "growhouse-climate-agent",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agriculture-indoor-grow-house-crop-steering",
+          "agx036",
+          "ai-trigger",
+          "ai-triggers",
+          "ces-sequences",
+          "ces-sequences-4",
+          "crop-steering",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "growhouse-climate-agent",
+          "indoor-grow-house",
+          "indoor-grow-house-crop-steering-risk-maintenance-or-optimization",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

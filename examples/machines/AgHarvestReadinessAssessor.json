@@ -9,13 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [3967:3971]: [1,0,0,0]=HARVEST_DELAYED, [0,1,0,0]=STRESS_RECOVERY, [0,0,1,0]=HARVEST_APPROACHING, [0,0,0,1]=HARVEST_READY",
       "tags": [
+        "ag-harvest-readiness-assessor",
         "agriculture",
+        "agriculture-harvest-management-crop-readiness",
+        "ces-sequences",
+        "ces-sequences-3",
+        "crop-monitoring",
+        "crop-readiness",
+        "growth-cycle",
         "harvest",
-        "crop monitoring",
-        "indoor growing",
-        "growth cycle",
-        "yield",
-        "kleene-plus"
+        "harvest-management",
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "startup-loadable",
+        "yield"
       ],
       "sequenceCount": 3,
       "inputSignalMap": {
@@ -32,7 +41,57 @@
         "AgPlantGrowthCycleMonitor (output at [3955:3959])",
         "AgNutrientCycleOptimizer (output at [3959:3963])"
       ],
-      "downstreamMachine": "AgYieldOptimizationAI (reads [3967:3971])"
+      "downstreamMachine": "AgYieldOptimizationAI (reads [3967:3971])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "crop-readiness",
+          "harvest-management"
+        ],
+        "family": "ag-harvest-readiness-assessor",
+        "machineCode": "ag-harvest-readiness-assessor",
+        "capabilityTags": [
+          "crop-monitoring"
+        ],
+        "workflowTags": [
+          "ag-harvest-readiness-assessor",
+          "agriculture-harvest-management-crop-readiness",
+          "growth-cycle",
+          "harvest",
+          "indoor-growing",
+          "kleene-plus",
+          "yield"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-harvest-readiness-assessor",
+          "agriculture",
+          "agriculture-harvest-management-crop-readiness",
+          "ces-sequences",
+          "ces-sequences-3",
+          "crop-monitoring",
+          "crop-readiness",
+          "growth-cycle",
+          "harvest",
+          "harvest-management",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "startup-loadable",
+          "yield"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

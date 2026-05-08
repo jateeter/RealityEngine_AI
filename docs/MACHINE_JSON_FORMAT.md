@@ -31,7 +31,20 @@ The Machine JSON format provides a complete, serializable representation of a Re
       "author": "Author Name",
       "created": "2026-02-02T00:00:00Z",
       "modified": "2026-02-02T00:00:00Z",
-      "tags": ["tag1", "tag2"],
+      "tags": ["digital-logic", "flip-flop", "startup-loadable"],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "digital-logic",
+        "domainTags": ["digital-logic"],
+        "family": "rs2",
+        "machineCode": "rs2",
+        "capabilityTags": [],
+        "workflowTags": ["flip-flop"],
+        "integrationTags": [],
+        "validationTags": ["startup-loadable"],
+        "allTags": ["digital-logic", "flip-flop", "rs2", "startup-loadable"]
+      },
       "eventSpace": "Description of event space",
       "outputSpace": "Description of output space",
       "customField": "Any custom metadata"
@@ -137,7 +150,8 @@ The Machine JSON format provides a complete, serializable representation of a Re
 | `author` | string | No | Author name |
 | `created` | string | No | ISO 8601 timestamp |
 | `modified` | string | No | ISO 8601 timestamp |
-| `tags` | array | No | Array of tag strings |
+| `tags` | array | No | Backwards-compatible flattened tag search index |
+| `tagging` | object | No | Managed structured tag groups; see `MACHINE_TAGGING.md` |
 | `eventSpace` | string | No | Event space description |
 | `outputSpace` | string | No | Output space description |
 

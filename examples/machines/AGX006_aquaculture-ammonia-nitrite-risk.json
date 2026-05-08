@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [72:76]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "ammonia-nitrite-risk",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-ammonia-nitrite-risk",
+        "agriculture-generated",
+        "agx006",
+        "ai-trigger",
         "ai-triggers",
+        "ammonia-nitrite-risk",
+        "aquaculture",
+        "aquaculture-ammonia-nitrite-risk-risk-maintenance-or-optimization",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "growhouse-climate-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -46,7 +60,70 @@
       "downstreamMachines": [
         "Agriculture Aquaculture Aquaponic Nutrient Coupling"
       ],
-      "downstreamPattern": "Output region [72:76] feeds Agriculture Aquaculture Aquaponic Nutrient Coupling for predictive agriculture management."
+      "downstreamPattern": "Output region [72:76] feeds Agriculture Aquaculture Aquaponic Nutrient Coupling for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx006",
+        "capabilityTags": [
+          "agriculture-aquaculture-ammonia-nitrite-risk",
+          "ai-triggers",
+          "ammonia-nitrite-risk",
+          "aquaculture-ammonia-nitrite-risk-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-generated",
+          "agx006",
+          "ai-trigger",
+          "dispatchable-agent",
+          "growhouse-climate-agent",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-ammonia-nitrite-risk",
+          "agriculture-generated",
+          "agx006",
+          "ai-trigger",
+          "ai-triggers",
+          "ammonia-nitrite-risk",
+          "aquaculture",
+          "aquaculture-ammonia-nitrite-risk-risk-maintenance-or-optimization",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "growhouse-climate-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

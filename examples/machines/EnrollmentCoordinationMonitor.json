@@ -9,12 +9,20 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [984:988]: [1,0,0,0]=ENROLLMENT_FAILURE, [0,1,0,0]=ENROLLMENT_BARRIER, [0,0,1,0]=ENROLLMENT_DELAYED, [0,0,0,1]=ENROLLMENT_ON_TRACK",
       "tags": [
+        "access",
+        "benefits-eligibility",
+        "ces-sequences",
+        "ces-sequences-3",
         "community-services",
-        "enrollment coordination",
-        "benefits eligibility",
-        "intake assessment",
-        "service delivery",
-        "kleene-plus"
+        "community-services-enrollment-coordination-access",
+        "enrollment-coordination",
+        "enrollment-coordination-monitor",
+        "input-sequences",
+        "input-sequences-1",
+        "intake-assessment",
+        "kleene-plus",
+        "service-delivery",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Eligible community service applicants who have completed intake but not enrolled; clients in the gap between determination and benefits issuance",
@@ -27,7 +35,52 @@
       "upstreamMachines": [
         "BenefitsEligibilityScreener (output [952:956])",
         "ServiceIntakeAssessmentMonitor (output [956:960])"
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "access",
+          "community-services",
+          "enrollment-coordination"
+        ],
+        "family": "enrollment-coordination-monitor",
+        "machineCode": "enrollment-coordination-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "benefits-eligibility",
+          "community-services-enrollment-coordination-access",
+          "enrollment-coordination-monitor",
+          "intake-assessment",
+          "kleene-plus",
+          "service-delivery"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "access",
+          "benefits-eligibility",
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-services",
+          "community-services-enrollment-coordination-access",
+          "enrollment-coordination",
+          "enrollment-coordination-monitor",
+          "input-sequences",
+          "input-sequences-1",
+          "intake-assessment",
+          "kleene-plus",
+          "service-delivery",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

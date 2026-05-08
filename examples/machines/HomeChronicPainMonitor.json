@@ -9,14 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2023:2027]: [1,0,0,0]=PAIN_CRISIS, [0,1,0,0]=OPIOID_RISK_ELEVATED, [0,0,1,0]=FUNCTIONAL_IMPAIRMENT, [0,0,0,1]=PAIN_MANAGED",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-4",
+        "chronic-pain",
+        "chronic-pain-management",
+        "functional-impairment",
         "healthcare",
-        "home health",
-        "chronic pain",
-        "opioid risk",
+        "home-chronic-pain-monitor",
+        "home-health",
+        "home-health-chronic-pain-management",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
         "low-income",
-        "functional impairment",
-        "occupational injury",
-        "kleene-plus"
+        "occupational-injury",
+        "opioid-risk",
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "populationFocus": "Adults with chronic pain from occupational injury, musculoskeletal conditions, fibromyalgia; opioid-prescribed patients in home care; low-income adults with limited PT/pain clinic access",
@@ -26,7 +34,59 @@
         "opioid_risk_norm": "0.0=multiple opioid risk flags (early refills, sedation signs, diversion indicators, dose escalation without consult), 0.5=one risk factor present (borderline early refill; PRN overuse), 1.0=no opioid risk indicators; stable prescribed use or non-opioid pain management",
         "physical_activity_norm": "0.0=zero physical activity; complete deconditioning, 0.5=minimal movement with assistance; ADL-level activity only, 1.0=regular therapeutic activity; walking program or PT adherent"
       },
-      "downstreamMachine": "HomeMentalHealthAccessMonitor (reads [2019:2027])"
+      "downstreamMachine": "HomeMentalHealthAccessMonitor (reads [2019:2027])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "chronic-pain-management",
+          "healthcare",
+          "home-health"
+        ],
+        "family": "home-chronic-pain-monitor",
+        "machineCode": "home-chronic-pain-monitor",
+        "capabilityTags": [
+          "opioid-risk"
+        ],
+        "workflowTags": [
+          "chronic-pain",
+          "functional-impairment",
+          "home-chronic-pain-monitor",
+          "home-health-chronic-pain-management",
+          "kleene-plus",
+          "low-income",
+          "occupational-injury"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "chronic-pain",
+          "chronic-pain-management",
+          "functional-impairment",
+          "healthcare",
+          "home-chronic-pain-monitor",
+          "home-health",
+          "home-health-chronic-pain-management",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "low-income",
+          "occupational-injury",
+          "opioid-risk",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

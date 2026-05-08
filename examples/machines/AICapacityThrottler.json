@@ -20,13 +20,77 @@
       "category": "ai-services",
       "domain": "AI Infrastructure — AI Workload Capacity Throttling",
       "tags": [
-        "data-center",
+        "ai-capacity-throttler",
+        "ai-infrastructure",
+        "ai-infrastructure-ai-workload-capacity-throttling",
+        "ai-services",
+        "ai-workload",
+        "ai-workload-capacity-throttling",
+        "aicapacity-throttler",
         "capacity",
+        "ces-sequences",
+        "ces-sequences-2",
+        "data-center",
         "gpu",
-        "throttling",
-        "ai-workload"
+        "input-sequences",
+        "input-sequences-3",
+        "startup-loadable",
+        "throttling"
       ],
-      "rationale": "Manages AI-workload-driven GPU/memory saturation — a data-center infrastructure concern, not an AI-pipeline concern."
+      "rationale": "Manages AI-workload-driven GPU/memory saturation — a data-center infrastructure concern, not an AI-pipeline concern.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "ai-infrastructure",
+          "ai-services",
+          "ai-workload-capacity-throttling"
+        ],
+        "family": "ai-capacity-throttler",
+        "machineCode": "aicapacity-throttler",
+        "capabilityTags": [
+          "ai-capacity-throttler",
+          "ai-infrastructure-ai-workload-capacity-throttling",
+          "ai-workload-capacity-throttling",
+          "aicapacity-throttler",
+          "capacity"
+        ],
+        "workflowTags": [
+          "ai-workload",
+          "data-center",
+          "gpu",
+          "throttling"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-capacity-throttler",
+          "ai-infrastructure",
+          "ai-infrastructure-ai-workload-capacity-throttling",
+          "ai-services",
+          "ai-workload",
+          "ai-workload-capacity-throttling",
+          "aicapacity-throttler",
+          "capacity",
+          "ces-sequences",
+          "ces-sequences-2",
+          "data-center",
+          "gpu",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable",
+          "throttling"
+        ]
+      }
     },
     "sequences": [
       {

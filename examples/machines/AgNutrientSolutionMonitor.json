@@ -9,13 +9,21 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [28:32]: [1,0,0,0]=PH_ALERT, [0,1,0,0]=EC_ALERT, [0,0,1,0]=DEFICIENCY_ALERT, [0,0,0,1]=SOLUTION_OK",
       "tags": [
+        "ag-nutrient-solution-monitor",
         "agriculture",
-        "nutrient solution",
+        "agriculture-nutrient-management-hydroponics",
+        "ces-sequences",
+        "ces-sequences-3",
+        "ec-monitoring",
         "hydroponics",
-        "indoor growing",
-        "ph monitoring",
-        "ec monitoring",
-        "kleene-plus"
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "nutrient-management",
+        "nutrient-solution",
+        "ph-monitoring",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "sensorNormalization": {
@@ -24,7 +32,55 @@
         "nitrogen_norm": "0.0=severe N deficit, 0.5=optimal N level, 1.0=N excess/toxicity",
         "micronutrient_norm": "0.0=severe deficit, 0.5=balanced trace minerals, 1.0=excess/lockout"
       },
-      "downstreamMachine": "AgNutrientCycleOptimizer (reads [28:32])"
+      "downstreamMachine": "AgNutrientCycleOptimizer (reads [28:32])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "hydroponics",
+          "nutrient-management"
+        ],
+        "family": "ag-nutrient-solution-monitor",
+        "machineCode": "ag-nutrient-solution-monitor",
+        "capabilityTags": [
+          "ec-monitoring",
+          "ph-monitoring"
+        ],
+        "workflowTags": [
+          "ag-nutrient-solution-monitor",
+          "agriculture-nutrient-management-hydroponics",
+          "indoor-growing",
+          "kleene-plus",
+          "nutrient-solution"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-nutrient-solution-monitor",
+          "agriculture",
+          "agriculture-nutrient-management-hydroponics",
+          "ces-sequences",
+          "ces-sequences-3",
+          "ec-monitoring",
+          "hydroponics",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "nutrient-management",
+          "nutrient-solution",
+          "ph-monitoring",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

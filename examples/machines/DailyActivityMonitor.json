@@ -12,13 +12,19 @@
       "eventSpace": "2D binary: [below_baseline_today, sedentary_streak_active]",
       "outputSpace": "2D binary: {[0,0]=ACTIVE, [1,0]=SEDENTARY, [1,1]=PROLONGED_INACTIVITY}",
       "tags": [
-        "wellness",
-        "healthcare",
         "activity",
+        "ces-sequences",
+        "ces-sequences-3",
+        "daily-activity-monitor",
         "elder-care",
+        "healthcare",
         "in-home-monitoring",
+        "input-sequences",
+        "input-sequences-2",
+        "startup-loadable",
         "trend",
-        "trigger"
+        "trigger",
+        "wellness"
       ],
       "sequenceCount": 3,
       "triggerConfig": {
@@ -57,6 +63,52 @@
             "processStatus": "error",
             "description": "Multi-day inactivity streak — escalate to caregiver / clinician"
           }
+        ]
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "healthcare",
+          "wellness"
+        ],
+        "family": "daily-activity-monitor",
+        "machineCode": "daily-activity-monitor",
+        "capabilityTags": [
+          "in-home-monitoring"
+        ],
+        "workflowTags": [
+          "activity",
+          "daily-activity-monitor",
+          "elder-care",
+          "trend",
+          "trigger"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "activity",
+          "ces-sequences",
+          "ces-sequences-3",
+          "daily-activity-monitor",
+          "elder-care",
+          "healthcare",
+          "in-home-monitoring",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable",
+          "trend",
+          "trigger",
+          "wellness"
         ]
       }
     },

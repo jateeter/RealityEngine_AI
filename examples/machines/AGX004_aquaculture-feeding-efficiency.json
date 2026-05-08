@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [64:68]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "feeding-efficiency",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-feeding-efficiency",
+        "agriculture-generated",
+        "agx004",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-feed-optimization-agent",
+        "aquaculture-feeding-efficiency-risk-maintenance-or-optimization",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "feeding-efficiency",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -46,7 +60,70 @@
       "downstreamMachines": [
         "Agriculture Aquaculture Solids Removal"
       ],
-      "downstreamPattern": "Output region [64:68] feeds Agriculture Aquaculture Solids Removal for predictive agriculture management."
+      "downstreamPattern": "Output region [64:68] feeds Agriculture Aquaculture Solids Removal for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx004",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-feed-optimization-agent",
+          "aquaculture-feeding-efficiency-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-feeding-efficiency",
+          "agriculture-generated",
+          "agx004",
+          "ai-trigger",
+          "dispatchable-agent",
+          "feeding-efficiency",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-feeding-efficiency",
+          "agriculture-generated",
+          "agx004",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-feed-optimization-agent",
+          "aquaculture-feeding-efficiency-risk-maintenance-or-optimization",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "feeding-efficiency",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

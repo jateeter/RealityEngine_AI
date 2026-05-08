@@ -45,12 +45,72 @@
       },
       "sequenceCount": 4,
       "tags": [
+        "assisted-living",
+        "binary",
+        "ces-sequences",
+        "ces-sequences-4",
         "elder-care",
+        "healthcare",
+        "healthcare-intake",
+        "healthcare-intake-assisted-living",
+        "input-sequences",
+        "input-sequences-7",
         "intake",
+        "new-patient-inflow",
         "patient-evaluation",
-        "workflow",
-        "binary"
-      ]
+        "startup-loadable",
+        "workflow"
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "assisted-living",
+          "healthcare",
+          "healthcare-intake"
+        ],
+        "family": "new-patient-inflow",
+        "machineCode": "new-patient-inflow",
+        "capabilityTags": [
+          "workflow"
+        ],
+        "workflowTags": [
+          "binary",
+          "elder-care",
+          "healthcare-intake-assisted-living",
+          "intake",
+          "new-patient-inflow",
+          "patient-evaluation"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-7",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "assisted-living",
+          "binary",
+          "ces-sequences",
+          "ces-sequences-4",
+          "elder-care",
+          "healthcare",
+          "healthcare-intake",
+          "healthcare-intake-assisted-living",
+          "input-sequences",
+          "input-sequences-7",
+          "intake",
+          "new-patient-inflow",
+          "patient-evaluation",
+          "startup-loadable",
+          "workflow"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",

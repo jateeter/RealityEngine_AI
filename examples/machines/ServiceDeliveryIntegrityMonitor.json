@@ -9,13 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [992:996]: [1,0,0,0]=INTEGRITY_FAILURE, [0,1,0,0]=INTEGRITY_AT_RISK, [0,0,1,0]=INTEGRITY_STRAINED, [0,0,0,1]=SERVICE_INTEGRITY_OK",
       "tags": [
-        "community-services",
-        "service delivery",
-        "compliance",
-        "case management",
         "capacity",
-        "service integrity",
-        "kleene-plus"
+        "case-management",
+        "ces-sequences",
+        "ces-sequences-3",
+        "community-services",
+        "community-services-service-delivery-integrity-operations",
+        "compliance",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "operations",
+        "service-delivery",
+        "service-delivery-integrity",
+        "service-delivery-integrity-monitor",
+        "service-integrity",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Community service organizations under capacity pressure; publicly funded programs with compliance obligations; agencies managing both staffing and regulatory requirements simultaneously",
@@ -28,7 +37,57 @@
       "upstreamMachines": [
         "CaseWorkerCapacityMonitor (output [968:972])",
         "ServiceDeliveryComplianceMonitor (output [972:976])"
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "community-services",
+          "operations",
+          "service-delivery-integrity"
+        ],
+        "family": "service-delivery-integrity-monitor",
+        "machineCode": "service-delivery-integrity-monitor",
+        "capabilityTags": [
+          "capacity",
+          "compliance"
+        ],
+        "workflowTags": [
+          "case-management",
+          "community-services-service-delivery-integrity-operations",
+          "kleene-plus",
+          "service-delivery",
+          "service-delivery-integrity-monitor",
+          "service-integrity"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "capacity",
+          "case-management",
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-services",
+          "community-services-service-delivery-integrity-operations",
+          "compliance",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "operations",
+          "service-delivery",
+          "service-delivery-integrity",
+          "service-delivery-integrity-monitor",
+          "service-integrity",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

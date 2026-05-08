@@ -23,12 +23,25 @@
       "outputSpace": "4D binary at [4017:4021]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "indoor-grow-house",
-        "safety-compliance",
+        "agriculture-generated",
+        "agriculture-indoor-grow-house",
+        "agriculture-indoor-grow-house-safety-compliance",
+        "agx044",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture-feed-optimization-agent",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "indoor-grow-house",
+        "indoor-grow-house-safety-compliance-risk-maintenance-or-optimization",
+        "input-sequences",
+        "input-sequences-5",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "safety-compliance",
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -44,7 +57,68 @@
         "maintenance readiness"
       ],
       "downstreamMachines": [],
-      "downstreamPattern": "Output region [4017:4021] feeds agriculture automation and AI dispatch orchestration."
+      "downstreamPattern": "Output region [4017:4021] feeds agriculture automation and AI dispatch orchestration.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "indoor-grow-house"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx044",
+        "capabilityTags": [
+          "agriculture-indoor-grow-house-safety-compliance",
+          "ai-triggers",
+          "aquaculture-feed-optimization-agent",
+          "dispatchable-agents",
+          "indoor-grow-house-safety-compliance-risk-maintenance-or-optimization",
+          "maintenance",
+          "safety-compliance"
+        ],
+        "workflowTags": [
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agx044",
+          "ai-trigger",
+          "dispatchable-agent",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-generated",
+          "agriculture-indoor-grow-house",
+          "agriculture-indoor-grow-house-safety-compliance",
+          "agx044",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture-feed-optimization-agent",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "indoor-grow-house",
+          "indoor-grow-house-safety-compliance-risk-maintenance-or-optimization",
+          "input-sequences",
+          "input-sequences-5",
+          "maintenance",
+          "operational-management",
+          "safety-compliance",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

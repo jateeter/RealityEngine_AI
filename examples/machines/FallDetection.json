@@ -12,13 +12,18 @@
       "eventSpace": "2D binary: [motion_anomaly, impact_confirmed]",
       "outputSpace": "2D binary: {[0,0]=NOMINAL, [1,0]=NEAR_FALL, [1,1]=FALL}",
       "tags": [
-        "wellness",
-        "healthcare",
-        "fall-detection",
+        "ces-sequences",
+        "ces-sequences-3",
         "elder-care",
+        "fall-detection",
+        "healthcare",
         "in-home-monitoring",
+        "input-sequences",
+        "input-sequences-2",
         "safety",
-        "trigger"
+        "startup-loadable",
+        "trigger",
+        "wellness"
       ],
       "sequenceCount": 3,
       "severity": "life-safety",
@@ -58,6 +63,50 @@
             "processStatus": "error",
             "description": "Fall with impact confirmed — dispatch caregiver / emergency contact"
           }
+        ]
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "healthcare",
+          "wellness"
+        ],
+        "family": "fall-detection",
+        "machineCode": "fall-detection",
+        "capabilityTags": [
+          "in-home-monitoring"
+        ],
+        "workflowTags": [
+          "elder-care",
+          "fall-detection",
+          "safety",
+          "trigger"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "elder-care",
+          "fall-detection",
+          "healthcare",
+          "in-home-monitoring",
+          "input-sequences",
+          "input-sequences-2",
+          "safety",
+          "startup-loadable",
+          "trigger",
+          "wellness"
         ]
       }
     },

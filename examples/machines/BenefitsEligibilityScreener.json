@@ -9,14 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [952:956]: [1,0,0,0]=ELIGIBILITY_DENIED, [0,1,0,0]=ELIGIBILITY_CONDITIONAL, [0,0,1,0]=DOCUMENTATION_NEEDED, [0,0,0,1]=ELIGIBILITY_CONFIRMED",
       "tags": [
+        "benefits-eligibility",
+        "benefits-eligibility-screener",
+        "ces-sequences",
+        "ces-sequences-3",
         "community-services",
-        "benefits eligibility",
-        "snap",
-        "liheap",
-        "qualification workflow",
-        "low-income",
+        "community-services-benefits-eligibility-qualification",
+        "input-sequences",
+        "input-sequences-1",
         "intake",
-        "kleene-plus"
+        "kleene-plus",
+        "liheap",
+        "low-income",
+        "qualification",
+        "qualification-workflow",
+        "snap",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Applicants for means-tested community benefits programs; newly unemployed; families with recent income changes; aging-out youth; immigrants with pending status",
@@ -26,7 +34,57 @@
         "categorical_eligibility_norm": "0.0=no categorical qualifier met (not disabled, not elderly, no minor children, not pregnant), 0.5=one categorical qualifier pending verification, 1.0=categorical eligibility confirmed (SSI recipient, Medicaid enrolled, TANF active)",
         "application_completeness_norm": "0.0=application not started or less than 50% complete, 0.5=application submitted but key fields missing, 1.0=application complete and all required fields populated"
       },
-      "downstreamMachine": "EnrollmentCoordinationMonitor (reads [952:960])"
+      "downstreamMachine": "EnrollmentCoordinationMonitor (reads [952:960])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "benefits-eligibility",
+          "community-services",
+          "qualification"
+        ],
+        "family": "benefits-eligibility-screener",
+        "machineCode": "benefits-eligibility-screener",
+        "capabilityTags": [
+          "qualification-workflow"
+        ],
+        "workflowTags": [
+          "benefits-eligibility-screener",
+          "community-services-benefits-eligibility-qualification",
+          "intake",
+          "kleene-plus",
+          "liheap",
+          "low-income",
+          "snap"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "benefits-eligibility",
+          "benefits-eligibility-screener",
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-services",
+          "community-services-benefits-eligibility-qualification",
+          "input-sequences",
+          "input-sequences-1",
+          "intake",
+          "kleene-plus",
+          "liheap",
+          "low-income",
+          "qualification",
+          "qualification-workflow",
+          "snap",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

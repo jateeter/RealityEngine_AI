@@ -42,18 +42,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx080",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
+        "built-space-well-generated",
+        "built-space-well-sound-and-acoustics",
+        "built-space-well-sound-and-acoustics-sound-executive-optimization",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
         "occupant-health",
+        "predictive-optimization",
         "sound-and-acoustics",
-        "sound-executive-optimization"
+        "sound-executive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-light-agent",
+        "well-operations",
+        "well-predictive-optimization-sound-and-acoustics-sound-executive-optimization",
+        "well-sound-and-acoustics"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [636:640] is available to WELL operations and predictive optimization workflows."
+      "downstreamPattern": "Output region [636:640] is available to WELL operations and predictive optimization workflows.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-sound-and-acoustics"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx080",
+        "capabilityTags": [
+          "built-space-well-sound-and-acoustics-sound-executive-optimization",
+          "predictive-optimization",
+          "sound-executive-optimization",
+          "well-predictive-optimization-sound-and-acoustics-sound-executive-optimization"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx080",
+          "built-space-well-generated",
+          "built-space-well-sound-and-acoustics",
+          "dispatchable-agent",
+          "occupant-health",
+          "sound-and-acoustics",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-light-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx080",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-sound-and-acoustics",
+          "built-space-well-sound-and-acoustics-sound-executive-optimization",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "sound-and-acoustics",
+          "sound-executive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-light-agent",
+          "well-operations",
+          "well-predictive-optimization-sound-and-acoustics-sound-executive-optimization",
+          "well-sound-and-acoustics"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

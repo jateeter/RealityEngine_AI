@@ -42,18 +42,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx140",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
+        "built-space-well-generated",
+        "built-space-well-performance-verification",
+        "built-space-well-performance-verification-verification-executive-dashboard",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
         "occupant-health",
         "performance-verification",
-        "verification-executive-dashboard"
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "verification-executive-dashboard",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-light-agent",
+        "well-operations",
+        "well-performance-verification",
+        "well-predictive-optimization-performance-verification-verification-executive-dashboard"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [876:880] is available to WELL operations and predictive optimization workflows."
+      "downstreamPattern": "Output region [876:880] is available to WELL operations and predictive optimization workflows.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-performance-verification"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx140",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-performance-verification-verification-executive-dashboard"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx140",
+          "built-space-well-generated",
+          "built-space-well-performance-verification",
+          "built-space-well-performance-verification-verification-executive-dashboard",
+          "dispatchable-agent",
+          "occupant-health",
+          "performance-verification",
+          "verification",
+          "verification-executive-dashboard",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-light-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx140",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-performance-verification",
+          "built-space-well-performance-verification-verification-executive-dashboard",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "performance-verification",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "verification-executive-dashboard",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-light-agent",
+          "well-operations",
+          "well-performance-verification",
+          "well-predictive-optimization-performance-verification-verification-executive-dashboard"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

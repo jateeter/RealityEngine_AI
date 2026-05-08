@@ -9,13 +9,21 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [964:968]: [1,0,0,0]=QUALIFICATION_FAILED, [0,1,0,0]=REVERIFICATION_REQUIRED, [0,0,1,0]=CONDITIONALLY_QUALIFIED, [0,0,0,1]=FULLY_QUALIFIED",
       "tags": [
+        "benefits-eligibility",
+        "ces-sequences",
+        "ces-sequences-3",
         "community-services",
-        "qualification workflow",
-        "benefits eligibility",
-        "identity verification",
-        "income verification",
+        "community-services-qualification-verification-enrollment",
         "enrollment",
-        "kleene-plus"
+        "identity-verification",
+        "income-verification",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "qualification-verification",
+        "qualification-verification-monitor",
+        "qualification-workflow",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Benefits program enrollees requiring formal qualification determination; participants at annual redetermination; newly enrolled individuals with pending verification holds",
@@ -25,7 +33,55 @@
         "program_qualification_norm": "0.0=program-specific rules not met (asset limit exceeded, residency duration insufficient, household composition mismatch), 0.5=program rules met but one qualifier requires additional documentation, 1.0=all program-specific qualification criteria confirmed",
         "enrollment_active_norm": "0.0=enrollment lapsed, suspended, or terminated; benefits not flowing, 0.5=enrollment conditionally active (provisional benefits; verification hold), 1.0=enrollment fully active; benefits flowing without restriction"
       },
-      "downstreamMachine": "WorkflowCompletionMonitor (reads [960:968])"
+      "downstreamMachine": "WorkflowCompletionMonitor (reads [960:968])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "community-services",
+          "enrollment",
+          "qualification-verification"
+        ],
+        "family": "qualification-verification-monitor",
+        "machineCode": "qualification-verification-monitor",
+        "capabilityTags": [
+          "qualification-workflow"
+        ],
+        "workflowTags": [
+          "benefits-eligibility",
+          "community-services-qualification-verification-enrollment",
+          "identity-verification",
+          "income-verification",
+          "kleene-plus",
+          "qualification-verification-monitor"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "benefits-eligibility",
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-services",
+          "community-services-qualification-verification-enrollment",
+          "enrollment",
+          "identity-verification",
+          "income-verification",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "qualification-verification",
+          "qualification-verification-monitor",
+          "qualification-workflow",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

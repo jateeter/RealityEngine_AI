@@ -9,15 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2035:2039]: [1,0,0,0]=SEVERE_ISOLATION, [0,1,0,0]=SOCIAL_WITHDRAWAL, [0,0,1,0]=ISOLATION_RISK, [0,0,0,1]=SOCIALLY_CONNECTED",
       "tags": [
+        "access-barriers",
+        "ces-sequences",
+        "ces-sequences-3",
+        "elder-care",
         "healthcare",
-        "home health",
-        "social isolation",
-        "access barriers",
+        "home-health",
+        "home-health-social-isolation-access-barriers",
+        "home-social-isolation-monitor",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
         "low-income",
-        "elder care",
-        "transportation",
-        "medication access",
-        "kleene-plus"
+        "medication-access",
+        "social-isolation",
+        "startup-loadable",
+        "transportation"
       ],
       "sequenceCount": 3,
       "populationFocus": "Home-bound adults managing chronic illness; elderly patients without transportation; low-income adults in medication or transport deserts",
@@ -30,7 +37,58 @@
       "upstreamMachines": [
         "HomeMedicationCostBarrierMonitor (output [2011:2015])",
         "HomeTransportationBarrierMonitor (output [2015:2019])"
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "access-barriers",
+          "healthcare",
+          "home-health",
+          "social-isolation"
+        ],
+        "family": "home-social-isolation-monitor",
+        "machineCode": "home-social-isolation-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "elder-care",
+          "home-health-social-isolation-access-barriers",
+          "home-social-isolation-monitor",
+          "kleene-plus",
+          "low-income",
+          "medication-access",
+          "transportation"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "access-barriers",
+          "ces-sequences",
+          "ces-sequences-3",
+          "elder-care",
+          "healthcare",
+          "home-health",
+          "home-health-social-isolation-access-barriers",
+          "home-social-isolation-monitor",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "low-income",
+          "medication-access",
+          "social-isolation",
+          "startup-loadable",
+          "transportation"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

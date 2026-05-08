@@ -9,13 +9,20 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [24:28]: [1,0,0,0]=IRRIGATE_ON, [0,1,0,0]=DRAIN_ALERT, [0,0,1,0]=EC_ALERT, [0,0,0,1]=FLOW_OK",
       "tags": [
+        "ag-irrigation-flow-controller",
         "agriculture",
-        "irrigation",
-        "indoor growing",
+        "agriculture-water-management-irrigation",
+        "ces-sequences",
+        "ces-sequences-3",
         "hydroponics",
-        "water management",
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-1",
+        "irrigation",
+        "kleene-plus",
         "moisture",
-        "kleene-plus"
+        "startup-loadable",
+        "water-management"
       ],
       "sequenceCount": 3,
       "sensorNormalization": {
@@ -24,7 +31,52 @@
         "substrate_ec_norm": "0.0=distilled water, 0.5=2.0 mS/cm (target), 1.0=4.0+ mS/cm (toxic)",
         "runoff_ratio_norm": "0.0=zero runoff, 0.5=15–20% (healthy drainage), 1.0=100% runoff"
       },
-      "downstreamMachine": "AgPlantGrowthCycleMonitor (reads [24:28])"
+      "downstreamMachine": "AgPlantGrowthCycleMonitor (reads [24:28])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "irrigation",
+          "water-management"
+        ],
+        "family": "ag-irrigation-flow-controller",
+        "machineCode": "ag-irrigation-flow-controller",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ag-irrigation-flow-controller",
+          "agriculture-water-management-irrigation",
+          "hydroponics",
+          "indoor-growing",
+          "kleene-plus",
+          "moisture"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-irrigation-flow-controller",
+          "agriculture",
+          "agriculture-water-management-irrigation",
+          "ces-sequences",
+          "ces-sequences-3",
+          "hydroponics",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-1",
+          "irrigation",
+          "kleene-plus",
+          "moisture",
+          "startup-loadable",
+          "water-management"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

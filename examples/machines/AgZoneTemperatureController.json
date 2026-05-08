@@ -9,13 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [20:24]: [1,0,0,0]=HEATING_ON, [0,1,0,0]=COOLING_ON, [0,0,1,0]=VPD_ALERT, [0,0,0,1]=TEMP_OK",
       "tags": [
+        "ag-zone-temperature-controller",
         "agriculture",
-        "zone temperature",
-        "indoor growing",
-        "climate control",
-        "heating",
+        "agriculture-zone-climate-temperature",
+        "ces-sequences",
+        "ces-sequences-3",
+        "climate-control",
         "cooling",
-        "kleene-plus"
+        "heating",
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-2",
+        "kleene-plus",
+        "startup-loadable",
+        "temperature",
+        "zone-climate",
+        "zone-temperature"
       ],
       "sequenceCount": 3,
       "sensorNormalization": {
@@ -24,7 +33,56 @@
         "heater_status": "0.0=off, 1.0=on (active heating)",
         "cooler_status": "0.0=off, 1.0=on (active cooling)"
       },
-      "downstreamMachine": "AgPlantGrowthCycleMonitor (reads [20:24])"
+      "downstreamMachine": "AgPlantGrowthCycleMonitor (reads [20:24])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "temperature",
+          "zone-climate"
+        ],
+        "family": "ag-zone-temperature-controller",
+        "machineCode": "ag-zone-temperature-controller",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ag-zone-temperature-controller",
+          "agriculture-zone-climate-temperature",
+          "climate-control",
+          "cooling",
+          "heating",
+          "indoor-growing",
+          "kleene-plus",
+          "zone-temperature"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-zone-temperature-controller",
+          "agriculture",
+          "agriculture-zone-climate-temperature",
+          "ces-sequences",
+          "ces-sequences-3",
+          "climate-control",
+          "cooling",
+          "heating",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-2",
+          "kleene-plus",
+          "startup-loadable",
+          "temperature",
+          "zone-climate",
+          "zone-temperature"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -35,17 +35,90 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
-        "copyright",
-        "productization",
         "ai-assisted-legal-operations",
-        "disclosure-completeness-scorer"
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
+        "copyright",
+        "disclosure-completeness-scorer",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-ai-assisted-legal-operations",
+        "legal-services-ai-assisted-legal-operations-disclosure-completeness-scorer",
+        "legal-services-generated",
+        "lsx051",
+        "patent-workflow-agent",
+        "productization",
+        "provisional-patent",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "ai-assisted-legal-operations",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx051",
+        "capabilityTags": [
+          "patent-workflow-agent"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "disclosure-completeness-scorer",
+          "dispatchable-agent",
+          "intellectual-property",
+          "legal-services-ai-assisted-legal-operations",
+          "legal-services-ai-assisted-legal-operations-disclosure-completeness-scorer",
+          "legal-services-generated",
+          "lsx051",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-assisted-legal-operations",
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "disclosure-completeness-scorer",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-ai-assisted-legal-operations",
+          "legal-services-ai-assisted-legal-operations-disclosure-completeness-scorer",
+          "legal-services-generated",
+          "lsx051",
+          "patent-workflow-agent",
+          "productization",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

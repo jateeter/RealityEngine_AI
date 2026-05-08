@@ -9,13 +9,21 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [996:1000]: [1,0,0,0]=ACCESS_FAILURE, [0,1,0,0]=ACCESS_BARRIERS, [0,0,1,0]=ACCESS_LIMITED, [0,0,0,1]=ACCESS_ADEQUATE",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-3",
+        "community-access",
+        "community-access-monitor",
+        "community-outreach",
         "community-services",
-        "community access",
-        "referral network",
-        "community outreach",
-        "social services",
-        "service delivery",
-        "kleene-plus"
+        "community-services-community-access-network-health",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "network-health",
+        "referral-network",
+        "service-delivery",
+        "social-services",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Community members needing access to services who depend on outreach to be reached and referral networks to be connected; geographic and demographic service deserts",
@@ -28,7 +36,55 @@
       "upstreamMachines": [
         "ReferralNetworkMonitor (output [976:980])",
         "CommunityOutreachMonitor (output [980:984])"
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "community-access",
+          "community-services",
+          "network-health"
+        ],
+        "family": "community-access-monitor",
+        "machineCode": "community-access-monitor",
+        "capabilityTags": [
+          "referral-network"
+        ],
+        "workflowTags": [
+          "community-access-monitor",
+          "community-outreach",
+          "community-services-community-access-network-health",
+          "kleene-plus",
+          "service-delivery",
+          "social-services"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-access",
+          "community-access-monitor",
+          "community-outreach",
+          "community-services",
+          "community-services-community-access-network-health",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "network-health",
+          "referral-network",
+          "service-delivery",
+          "social-services",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

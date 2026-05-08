@@ -23,12 +23,25 @@
       "outputSpace": "4D binary at [120:124]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "shellfish-nursery-flow",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-shellfish-nursery-flow",
+        "agriculture-generated",
+        "agx014",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-feed-optimization-agent",
+        "aquaculture-shellfish-nursery-flow-risk-maintenance-or-optimization",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "input-sequences",
+        "input-sequences-5",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "shellfish-nursery-flow",
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -44,7 +57,68 @@
         "maintenance readiness"
       ],
       "downstreamMachines": [],
-      "downstreamPattern": "Output region [120:124] feeds agriculture automation and AI dispatch orchestration."
+      "downstreamPattern": "Output region [120:124] feeds agriculture automation and AI dispatch orchestration.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx014",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-feed-optimization-agent",
+          "aquaculture-shellfish-nursery-flow-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-shellfish-nursery-flow",
+          "agriculture-generated",
+          "agx014",
+          "ai-trigger",
+          "dispatchable-agent",
+          "operational-management",
+          "shellfish-nursery-flow"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-shellfish-nursery-flow",
+          "agriculture-generated",
+          "agx014",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-feed-optimization-agent",
+          "aquaculture-shellfish-nursery-flow-risk-maintenance-or-optimization",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "input-sequences",
+          "input-sequences-5",
+          "maintenance",
+          "operational-management",
+          "shellfish-nursery-flow",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

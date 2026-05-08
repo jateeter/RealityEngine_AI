@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [180:184]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "aquaponic-nutrient-coupling",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-aquaponic-nutrient-coupling",
+        "agriculture-generated",
+        "agx025",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-aquaponic-nutrient-coupling-risk-maintenance-or-optimization",
+        "aquaculture-compliance-agent",
+        "aquaponic-nutrient-coupling",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -44,7 +58,70 @@
         "maintenance readiness"
       ],
       "downstreamMachines": [],
-      "downstreamPattern": "Output region [180:184] feeds agriculture automation and AI dispatch orchestration."
+      "downstreamPattern": "Output region [180:184] feeds agriculture automation and AI dispatch orchestration.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx025",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-aquaponic-nutrient-coupling-risk-maintenance-or-optimization",
+          "aquaculture-compliance-agent",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-aquaponic-nutrient-coupling",
+          "agriculture-generated",
+          "agx025",
+          "ai-trigger",
+          "aquaponic-nutrient-coupling",
+          "dispatchable-agent",
+          "operational-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-aquaponic-nutrient-coupling",
+          "agriculture-generated",
+          "agx025",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-aquaponic-nutrient-coupling-risk-maintenance-or-optimization",
+          "aquaculture-compliance-agent",
+          "aquaponic-nutrient-coupling",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

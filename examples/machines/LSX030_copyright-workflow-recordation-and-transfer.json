@@ -35,17 +35,91 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "attorney-review-agent",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
-        "productization",
         "copyright-workflow",
-        "recordation-and-transfer"
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-copyright-workflow",
+        "legal-services-copyright-workflow-recordation-and-transfer",
+        "legal-services-generated",
+        "lsx030",
+        "productization",
+        "provisional-patent",
+        "recordation-and-transfer",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "copyright-workflow",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx030",
+        "capabilityTags": [
+          "copyright-workflow",
+          "legal-services-copyright-workflow",
+          "legal-services-copyright-workflow-recordation-and-transfer"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "attorney-review-agent",
+          "copyright",
+          "dispatchable-agent",
+          "intellectual-property",
+          "legal-services-generated",
+          "lsx030",
+          "productization",
+          "provisional-patent",
+          "recordation-and-transfer",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "attorney-review-agent",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "copyright-workflow",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-copyright-workflow",
+          "legal-services-copyright-workflow-recordation-and-transfer",
+          "legal-services-generated",
+          "lsx030",
+          "productization",
+          "provisional-patent",
+          "recordation-and-transfer",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

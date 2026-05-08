@@ -9,14 +9,21 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2003:2007]: [1,0,0,0]=GROWTH_ALERT, [0,1,0,0]=NUTRITION_DEFICIT, [0,0,1,0]=MICRONUTRIENT_CONCERN, [0,0,0,1]=NUTRITION_OK",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-3",
+        "child-nutrition",
+        "failure-to-thrive",
+        "growth-monitoring",
         "healthcare",
-        "pediatric",
-        "child nutrition",
-        "home health",
+        "home-health",
+        "home-health-pediatric-child-nutrition",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
         "low-income",
-        "growth monitoring",
-        "failure to thrive",
-        "kleene-plus"
+        "pediatric",
+        "pediatric-nutrition-monitor",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Children ages 0–12; WIC-eligible families; households with limited grocery access or food insecurity",
@@ -26,7 +33,57 @@
         "micronutrient_score_norm": "0.0=multiple confirmed deficiencies (Fe, Vit D, B12 all low), 0.5=borderline adequate, 1.0=well-supplemented across all tracked nutrients",
         "dietary_diversity_norm": "0.0=single food group only (calorie-dense, low-nutrient), 0.5=moderate variety (3+ food groups), 1.0=high diversity (5+ food groups consistently)"
       },
-      "downstreamMachine": "HomeCaregiverBurdenMonitor (reads [2003:2007])"
+      "downstreamMachine": "HomeCaregiverBurdenMonitor (reads [2003:2007])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "child-nutrition",
+          "healthcare",
+          "home-health",
+          "pediatric"
+        ],
+        "family": "pediatric-nutrition-monitor",
+        "machineCode": "pediatric-nutrition-monitor",
+        "capabilityTags": [
+          "growth-monitoring"
+        ],
+        "workflowTags": [
+          "failure-to-thrive",
+          "home-health-pediatric-child-nutrition",
+          "kleene-plus",
+          "low-income",
+          "pediatric-nutrition-monitor"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "child-nutrition",
+          "failure-to-thrive",
+          "growth-monitoring",
+          "healthcare",
+          "home-health",
+          "home-health-pediatric-child-nutrition",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "low-income",
+          "pediatric",
+          "pediatric-nutrition-monitor",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

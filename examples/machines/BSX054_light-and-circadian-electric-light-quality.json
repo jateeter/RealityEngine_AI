@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx054",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-well-generated",
+        "built-space-well-light-and-circadian",
+        "built-space-well-light-and-circadian-electric-light-quality",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "electric-light-quality",
+        "input-sequences",
+        "input-sequences-6",
         "light-and-circadian",
-        "electric-light-quality"
+        "machine-interconnect",
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-light-and-circadian",
+        "well-movement-agent",
+        "well-operations",
+        "well-predictive-optimization-light-and-circadian-electric-light-quality"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [532:536] feeds Built Space WELL Light And Circadian Lighting Controls Usability for WELL operations optimization."
+      "downstreamPattern": "Output region [532:536] feeds Built Space WELL Light And Circadian Lighting Controls Usability for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-light-and-circadian"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx054",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-light-and-circadian-electric-light-quality"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx054",
+          "built-space-well-generated",
+          "built-space-well-light-and-circadian",
+          "built-space-well-light-and-circadian-electric-light-quality",
+          "dispatchable-agent",
+          "electric-light-quality",
+          "light-and-circadian",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-movement-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx054",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-light-and-circadian",
+          "built-space-well-light-and-circadian-electric-light-quality",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "electric-light-quality",
+          "input-sequences",
+          "input-sequences-6",
+          "light-and-circadian",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-light-and-circadian",
+          "well-movement-agent",
+          "well-operations",
+          "well-predictive-optimization-light-and-circadian-electric-light-quality"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

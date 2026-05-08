@@ -10,8 +10,15 @@
       "eventSpace": "3D binary vectors: 000-111",
       "outputSpace": "2D binary vectors: {00, 01, 10, 11}",
       "tags": [
-        "state-machine",
+        "ces-sequences",
+        "ces-sequences-2",
+        "digital-logic",
+        "input-sequences",
+        "input-sequences-3",
         "multi-step",
+        "multi-step-state-machine",
+        "startup-loadable",
+        "state-machine",
         "three-step"
       ],
       "sequenceCount": 2,
@@ -31,6 +38,45 @@
             "intent": "Inter-sequence jump: Seq1 final → Seq2 initial. Safe because initial vectors are always active.",
             "behavior": "Correct — ms-seq2-100 matches immediately"
           }
+        ]
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "digital-logic",
+        "domainTags": [
+          "digital-logic"
+        ],
+        "family": "multi-step-state-machine",
+        "machineCode": "multi-step",
+        "capabilityTags": [],
+        "workflowTags": [
+          "multi-step",
+          "multi-step-state-machine",
+          "state-machine",
+          "three-step"
+        ],
+        "integrationTags": [
+          "digital-logic"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "digital-logic",
+          "input-sequences",
+          "input-sequences-3",
+          "multi-step",
+          "multi-step-state-machine",
+          "startup-loadable",
+          "state-machine",
+          "three-step"
         ]
       }
     },

@@ -35,17 +35,91 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
+        "dispatchable-agent",
+        "filing-portal-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-generated",
+        "legal-services-productization-ip-governance",
+        "legal-services-productization-ip-governance-patent-marking-readiness",
+        "lsx036",
+        "patent-marking-readiness",
         "productization",
         "productization-ip-governance",
-        "patent-marking-readiness"
+        "provisional-patent",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "legal-services",
+          "productization-ip-governance"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx036",
+        "capabilityTags": [
+          "legal-services-productization-ip-governance",
+          "legal-services-productization-ip-governance-patent-marking-readiness",
+          "productization-ip-governance"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "dispatchable-agent",
+          "filing-portal-agent",
+          "intellectual-property",
+          "legal-services-generated",
+          "lsx036",
+          "patent-marking-readiness",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "dispatchable-agent",
+          "filing-portal-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-generated",
+          "legal-services-productization-ip-governance",
+          "legal-services-productization-ip-governance-patent-marking-readiness",
+          "lsx036",
+          "patent-marking-readiness",
+          "productization",
+          "productization-ip-governance",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

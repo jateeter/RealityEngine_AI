@@ -9,14 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2015:2019]: [1,0,0,0]=CRITICAL_ACCESS_FAILURE, [0,1,0,0]=APPOINTMENT_BARRIER, [0,0,1,0]=TRANSIT_DEPENDENT_RISK, [0,0,0,1]=TRANSPORTATION_ADEQUATE",
       "tags": [
+        "appointment-attendance",
+        "ces-sequences",
+        "ces-sequences-3",
         "healthcare",
-        "home health",
-        "transportation",
-        "social determinants",
+        "home-health",
+        "home-health-social-determinants-transportation-access",
+        "home-transportation-barrier-monitor",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
         "low-income",
-        "rural health",
-        "appointment attendance",
-        "kleene-plus"
+        "rural-health",
+        "social-determinants",
+        "startup-loadable",
+        "transportation",
+        "transportation-access"
       ],
       "sequenceCount": 3,
       "populationFocus": "Rural and low-income urban patients; elderly without vehicles; patients relying on public transit or ride programs in transit deserts",
@@ -26,7 +34,58 @@
         "missed_critical_care_norm": "0.0=critical care missed (dialysis, chemotherapy, specialty follow-up) due to transport, 0.5=non-critical missed (primary care, routine labs), 1.0=no care missed due to transport",
         "proximity_norm": "0.0=>30 miles from nearest relevant provider with no transit, 0.5=10–30 miles with unreliable transit, 1.0=within 5 miles or transport resolved"
       },
-      "downstreamMachine": "HomeSocialIsolationMonitor (reads [2011:2019])"
+      "downstreamMachine": "HomeSocialIsolationMonitor (reads [2011:2019])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "healthcare",
+          "home-health",
+          "social-determinants",
+          "transportation-access"
+        ],
+        "family": "home-transportation-barrier-monitor",
+        "machineCode": "home-transportation-barrier-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "appointment-attendance",
+          "home-health-social-determinants-transportation-access",
+          "home-transportation-barrier-monitor",
+          "kleene-plus",
+          "low-income",
+          "rural-health",
+          "transportation"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "appointment-attendance",
+          "ces-sequences",
+          "ces-sequences-3",
+          "healthcare",
+          "home-health",
+          "home-health-social-determinants-transportation-access",
+          "home-transportation-barrier-monitor",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "low-income",
+          "rural-health",
+          "social-determinants",
+          "startup-loadable",
+          "transportation",
+          "transportation-access"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

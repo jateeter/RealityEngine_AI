@@ -49,18 +49,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx010",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-well-generated",
+        "built-space-well-integrative-planning",
+        "built-space-well-integrative-planning-integrative-executive-readiness",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "integrative-executive-readiness",
         "integrative-planning",
-        "integrative-executive-readiness"
+        "machine-interconnect",
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-integrative-planning",
+        "well-mind-policy-agent",
+        "well-operations",
+        "well-predictive-optimization-integrative-planning-integrative-executive-readiness"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [356:360] feeds Built Space WELL Design And Biophilia Biophilic Area Coverage, Built Space WELL Nourishment Cold Storage Compliance, Built Space WELL Materials And Cleaning Material Transparency Register, Built Space WELL Movement And Fitness Active Stair Promotion, Built Space WELL Mind And Wellness Policy EAP Counselor Access, Built Space WELL Occupant Feedback Annual IEQ Survey Launch for WELL operations optimization."
+      "downstreamPattern": "Output region [356:360] feeds Built Space WELL Design And Biophilia Biophilic Area Coverage, Built Space WELL Nourishment Cold Storage Compliance, Built Space WELL Materials And Cleaning Material Transparency Register, Built Space WELL Movement And Fitness Active Stair Promotion, Built Space WELL Mind And Wellness Policy EAP Counselor Access, Built Space WELL Occupant Feedback Annual IEQ Survey Launch for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-integrative-planning"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx010",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-integrative-planning-integrative-executive-readiness"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx010",
+          "built-space-well-generated",
+          "built-space-well-integrative-planning",
+          "built-space-well-integrative-planning-integrative-executive-readiness",
+          "dispatchable-agent",
+          "integrative-executive-readiness",
+          "integrative-planning",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-mind-policy-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx010",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-integrative-planning",
+          "built-space-well-integrative-planning-integrative-executive-readiness",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "integrative-executive-readiness",
+          "integrative-planning",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-integrative-planning",
+          "well-mind-policy-agent",
+          "well-operations",
+          "well-predictive-optimization-integrative-planning-integrative-executive-readiness"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

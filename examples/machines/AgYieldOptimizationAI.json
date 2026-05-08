@@ -9,14 +9,23 @@
       "author": "Reality Engine",
       "outputSpace": "6D binary at [310:316]: [1,0,0,0,0,0]=EMERGENCY_INTERVENTION, [0,1,0,0,0,0]=CORRECTIVE_ACTION, [0,0,1,0,0,0]=OPTIMIZE_HARVEST, [0,0,0,1,0,0]=YIELD_FORECAST_UPDATE, [0,0,0,0,1,0]=NOMINAL_MONITORING, [0,0,0,0,0,1]=PEAK_YIELD_CONFIRMED",
       "tags": [
+        "ag-yield-optimization-ai",
         "agriculture",
+        "agriculture-ai-yield-optimization",
         "ai-pipeline",
-        "yield optimization",
-        "indoor growing",
-        "harvest",
+        "ai-services",
+        "ai-yield-optimization",
+        "ces-sequences",
+        "ces-sequences-3",
         "corrective-rag",
         "cross-domain",
-        "kleene-plus"
+        "harvest",
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-2",
+        "kleene-plus",
+        "startup-loadable",
+        "yield-optimization"
       ],
       "sequenceCount": 3,
       "crossDomainNote": "This machine is authored as an AI-pipeline component. Its input reads from the Agriculture domain perceptual space [3959:3971] while its outputs can trigger actions processed by the broader AI/decision layer at [310:316]. Category 'ai-pipeline' overrides the 'Ag' name prefix to correctly classify it in the AI domain.",
@@ -44,6 +53,61 @@
         "optimize": "NUTRIENT_OK + IPM_OK + HARVEST_APPROACHING → OPTIMIZE_HARVEST → PEAK_YIELD",
         "nominal": "NUTRIENT_OK + IPM_OK + NOMINAL_STATE → NOMINAL_MONITORING",
         "combined": "Three concurrent sequences: emergency detection runs continuously alongside harvest optimization and nominal monitoring. Emergency sequence fires EMERGENCY_INTERVENTION when crisis signals co-occur; harvest sequence fires PEAK_YIELD_CONFIRMED when all positive signals align; nominal fires NOMINAL_MONITORING during healthy steady-state."
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "agriculture",
+          "ai-services",
+          "ai-yield-optimization"
+        ],
+        "family": "ag-yield-optimization-ai",
+        "machineCode": "ag-yield-optimization-ai",
+        "capabilityTags": [
+          "ag-yield-optimization-ai",
+          "agriculture-ai-yield-optimization",
+          "ai-yield-optimization",
+          "yield-optimization"
+        ],
+        "workflowTags": [
+          "ai-pipeline",
+          "corrective-rag",
+          "cross-domain",
+          "harvest",
+          "indoor-growing",
+          "kleene-plus"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-yield-optimization-ai",
+          "agriculture",
+          "agriculture-ai-yield-optimization",
+          "ai-pipeline",
+          "ai-services",
+          "ai-yield-optimization",
+          "ces-sequences",
+          "ces-sequences-3",
+          "corrective-rag",
+          "cross-domain",
+          "harvest",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-2",
+          "kleene-plus",
+          "startup-loadable",
+          "yield-optimization"
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

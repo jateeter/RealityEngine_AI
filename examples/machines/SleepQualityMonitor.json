@@ -12,13 +12,19 @@
       "eventSpace": "2D binary: [adequate_duration, fragmented]",
       "outputSpace": "2D binary: {[0,0]=RESTFUL, [0,1]=DISTURBED, [1,1]=POOR}",
       "tags": [
-        "wellness",
-        "healthcare",
-        "sleep",
+        "ces-sequences",
+        "ces-sequences-3",
         "elder-care",
+        "healthcare",
         "in-home-monitoring",
+        "input-sequences",
+        "input-sequences-2",
+        "sleep",
+        "sleep-quality-monitor",
+        "startup-loadable",
         "trend",
-        "trigger"
+        "trigger",
+        "wellness"
       ],
       "sequenceCount": 3,
       "triggerConfig": {
@@ -57,6 +63,52 @@
             "processStatus": "error",
             "description": "Short + fragmented sleep — recommend clinical follow-up"
           }
+        ]
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "healthcare",
+          "wellness"
+        ],
+        "family": "sleep-quality-monitor",
+        "machineCode": "sleep-quality-monitor",
+        "capabilityTags": [
+          "in-home-monitoring"
+        ],
+        "workflowTags": [
+          "elder-care",
+          "sleep",
+          "sleep-quality-monitor",
+          "trend",
+          "trigger"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "elder-care",
+          "healthcare",
+          "in-home-monitoring",
+          "input-sequences",
+          "input-sequences-2",
+          "sleep",
+          "sleep-quality-monitor",
+          "startup-loadable",
+          "trend",
+          "trigger",
+          "wellness"
         ]
       }
     },

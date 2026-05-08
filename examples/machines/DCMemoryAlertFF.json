@@ -11,10 +11,20 @@
       "eventSpace": "2D binary control signal at [1367:1369]: [1,0]=ALARM, [0,1]=SAFE",
       "outputSpace": "2D binary at [1377:1379]: [1,0]=MEMORY_ALERT_ACTIVE, [0,1]=MEMORY_ALERT_OFF",
       "tags": [
-        "flip-flop",
-        "digital-logic",
+        "alert-latch",
+        "ces-sequences",
+        "ces-sequences-2",
         "data-center",
-        "memory"
+        "data-center-memory-alert-latch",
+        "dc-memory-alert-flip-flop",
+        "dcmemory-alert-ff",
+        "digital-logic",
+        "flip-flop",
+        "input-sequences",
+        "input-sequences-3",
+        "machine-interconnect",
+        "memory",
+        "startup-loadable"
       ],
       "sequenceCount": 2,
       "role": "Latches memory pressure alarm; available for future synthesis machines",
@@ -25,6 +35,52 @@
         "scope": "not applicable — all event vectors are isInitial (combinatorial)",
         "compliant": true,
         "notes": "Both SET and RESET events are isInitial. Combinatorial RS flip-flop; state persists via perceptual space value retention."
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "alert-latch",
+          "data-center",
+          "memory"
+        ],
+        "family": "dc-memory-alert-flip-flop",
+        "machineCode": "dcmemory-alert-ff",
+        "capabilityTags": [],
+        "workflowTags": [
+          "data-center-memory-alert-latch",
+          "dc-memory-alert-flip-flop",
+          "dcmemory-alert-ff",
+          "flip-flop"
+        ],
+        "integrationTags": [
+          "digital-logic",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "alert-latch",
+          "ces-sequences",
+          "ces-sequences-2",
+          "data-center",
+          "data-center-memory-alert-latch",
+          "dc-memory-alert-flip-flop",
+          "dcmemory-alert-ff",
+          "digital-logic",
+          "flip-flop",
+          "input-sequences",
+          "input-sequences-3",
+          "machine-interconnect",
+          "memory",
+          "startup-loadable"
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

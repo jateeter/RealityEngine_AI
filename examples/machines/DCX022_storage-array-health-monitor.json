@@ -41,16 +41,91 @@
         "operational confidence"
       ],
       "tags": [
-        "data-center",
         "24x7-operations",
-        "maintenance",
-        "upgrade-cycle",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-5",
+        "data-center",
+        "data-center-24x7-operations",
+        "data-center-generated",
+        "data-center-storage-array-health-monitor",
+        "data-center-storage-array-health-monitor-ops-maintenance-upgrade",
+        "dc-power-agent",
+        "dcx022",
+        "dispatchable-agent",
         "incident-response",
-        "storage-array-health-monitor"
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "maintenance",
+        "startup-loadable",
+        "storage-array-health-monitor",
+        "upgrade-cycle"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Use as a 24/7 operational guardrail. Map telemetry, CMDB, change, or AI-dispatch signals into the 4D input lane; map outputs to incident, maintenance, upgrade, or executive-summary machines.",
-      "downstreamPattern": "Output region [1445:1449] feeds Data Center Backup Completion Assurance, Data Center Storage Migration Coordinator for prescriptive 24/7 operations."
+      "downstreamPattern": "Output region [1445:1449] feeds Data Center Backup Completion Assurance, Data Center Storage Migration Coordinator for prescriptive 24/7 operations.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "24x7-operations",
+          "data-center"
+        ],
+        "family": "data-center-generated",
+        "machineCode": "dcx022",
+        "capabilityTags": [
+          "data-center-storage-array-health-monitor-ops-maintenance-upgrade",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "data-center-24x7-operations",
+          "data-center-generated",
+          "data-center-storage-array-health-monitor",
+          "dc-power-agent",
+          "dcx022",
+          "dispatchable-agent",
+          "incident-response",
+          "storage-array-health-monitor",
+          "upgrade-cycle"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "24x7-operations",
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-5",
+          "data-center",
+          "data-center-24x7-operations",
+          "data-center-generated",
+          "data-center-storage-array-health-monitor",
+          "data-center-storage-array-health-monitor-ops-maintenance-upgrade",
+          "dc-power-agent",
+          "dcx022",
+          "dispatchable-agent",
+          "incident-response",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "maintenance",
+          "startup-loadable",
+          "storage-array-health-monitor",
+          "upgrade-cycle"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -20,13 +20,75 @@
       "category": "ai-services",
       "domain": "AI Infrastructure — Power Efficiency / PUE",
       "tags": [
-        "data-center",
-        "power",
-        "pue",
+        "ai-infrastructure",
+        "ai-infrastructure-power-efficiency-pue",
+        "ai-power-efficiency-monitor",
+        "ai-services",
+        "ai-workload",
+        "aipower-efficiency",
         "carbon",
-        "ai-workload"
+        "ces-sequences",
+        "ces-sequences-2",
+        "data-center",
+        "input-sequences",
+        "input-sequences-3",
+        "power",
+        "power-efficiency",
+        "pue",
+        "startup-loadable"
       ],
-      "rationale": "PUE, grid carbon intensity, and power draw are data-center facility concerns."
+      "rationale": "PUE, grid carbon intensity, and power draw are data-center facility concerns.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "ai-infrastructure",
+          "ai-services",
+          "power-efficiency",
+          "pue"
+        ],
+        "family": "ai-power-efficiency-monitor",
+        "machineCode": "aipower-efficiency",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-infrastructure-power-efficiency-pue",
+          "ai-power-efficiency-monitor",
+          "ai-workload",
+          "aipower-efficiency",
+          "carbon",
+          "data-center",
+          "power"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-infrastructure",
+          "ai-infrastructure-power-efficiency-pue",
+          "ai-power-efficiency-monitor",
+          "ai-services",
+          "ai-workload",
+          "aipower-efficiency",
+          "carbon",
+          "ces-sequences",
+          "ces-sequences-2",
+          "data-center",
+          "input-sequences",
+          "input-sequences-3",
+          "power",
+          "power-efficiency",
+          "pue",
+          "startup-loadable"
+        ]
+      }
     },
     "sequences": [
       {

@@ -38,16 +38,91 @@
         "operational confidence"
       ],
       "tags": [
-        "data-center",
         "24x7-operations",
-        "maintenance",
-        "upgrade-cycle",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-5",
+        "data-center",
+        "data-center-24x7-operations",
+        "data-center-disaster-recovery-drill-manager",
+        "data-center-disaster-recovery-drill-manager-ops-maintenance-upgrade",
+        "data-center-generated",
+        "dc-network-agent",
+        "dcx024",
+        "disaster-recovery-drill-manager",
+        "dispatchable-agent",
         "incident-response",
-        "disaster-recovery-drill-manager"
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "maintenance",
+        "startup-loadable",
+        "upgrade-cycle"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Use as a 24/7 operational guardrail. Map telemetry, CMDB, change, or AI-dispatch signals into the 4D input lane; map outputs to incident, maintenance, upgrade, or executive-summary machines.",
-      "downstreamPattern": "Output region [1453:1457] is available to incident, maintenance, upgrade, and executive-summary automation."
+      "downstreamPattern": "Output region [1453:1457] is available to incident, maintenance, upgrade, and executive-summary automation.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "24x7-operations",
+          "data-center"
+        ],
+        "family": "data-center-generated",
+        "machineCode": "dcx024",
+        "capabilityTags": [
+          "data-center-disaster-recovery-drill-manager-ops-maintenance-upgrade",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "data-center-24x7-operations",
+          "data-center-disaster-recovery-drill-manager",
+          "data-center-generated",
+          "dc-network-agent",
+          "dcx024",
+          "disaster-recovery-drill-manager",
+          "dispatchable-agent",
+          "incident-response",
+          "upgrade-cycle"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "24x7-operations",
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-5",
+          "data-center",
+          "data-center-24x7-operations",
+          "data-center-disaster-recovery-drill-manager",
+          "data-center-disaster-recovery-drill-manager-ops-maintenance-upgrade",
+          "data-center-generated",
+          "dc-network-agent",
+          "dcx024",
+          "disaster-recovery-drill-manager",
+          "dispatchable-agent",
+          "incident-response",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "maintenance",
+          "startup-loadable",
+          "upgrade-cycle"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

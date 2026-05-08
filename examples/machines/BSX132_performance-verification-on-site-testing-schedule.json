@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx132",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
+        "built-space-well-generated",
+        "built-space-well-performance-verification",
+        "built-space-well-performance-verification-on-site-testing-schedule",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
         "occupant-health",
+        "on-site-testing-schedule",
         "performance-verification",
-        "on-site-testing-schedule"
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-feedback-agent",
+        "well-operations",
+        "well-performance-verification",
+        "well-predictive-optimization-performance-verification-on-site-testing-schedule"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [844:848] feeds Built Space WELL Performance Verification Water Performance Evidence for WELL operations optimization."
+      "downstreamPattern": "Output region [844:848] feeds Built Space WELL Performance Verification Water Performance Evidence for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-performance-verification"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx132",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-performance-verification-on-site-testing-schedule"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx132",
+          "built-space-well-generated",
+          "built-space-well-performance-verification",
+          "built-space-well-performance-verification-on-site-testing-schedule",
+          "dispatchable-agent",
+          "occupant-health",
+          "on-site-testing-schedule",
+          "performance-verification",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-feedback-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx132",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-performance-verification",
+          "built-space-well-performance-verification-on-site-testing-schedule",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "on-site-testing-schedule",
+          "performance-verification",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-feedback-agent",
+          "well-operations",
+          "well-performance-verification",
+          "well-predictive-optimization-performance-verification-on-site-testing-schedule"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -9,14 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [36:40]: [1,0,0,0]=CO2_INJECT, [0,1,0,0]=VENT_OPEN, [0,0,1,0]=HUMIDITY_ALERT, [0,0,0,1]=ATMOS_OK",
       "tags": [
+        "ag-atmospheric-controller",
         "agriculture",
-        "atmospheric co2",
-        "indoor growing",
-        "co2 enrichment",
+        "agriculture-atmospheric-co2-humidity-control",
+        "atmospheric-co2",
+        "ces-sequences",
+        "ces-sequences-3",
+        "climate-control",
+        "co2-enrichment",
         "humidity",
-        "vpd",
-        "climate control",
-        "kleene-plus"
+        "humidity-control",
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "startup-loadable",
+        "vpd"
       ],
       "sequenceCount": 3,
       "sensorNormalization": {
@@ -25,7 +33,56 @@
         "vpd_norm": "0.0=0.0 kPa (zero VPD, no transpiration), 0.5=1.0 kPa (optimal), 1.0=2.5 kPa (excessive)",
         "air_exchange_norm": "0.0=stagnant, 0.5=nominal ACH, 1.0=maximum ventilation"
       },
-      "downstreamMachine": "AgIPMPestAlertMonitor (reads [36:40])"
+      "downstreamMachine": "AgIPMPestAlertMonitor (reads [36:40])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "atmospheric-co2",
+          "humidity-control"
+        ],
+        "family": "ag-atmospheric-controller",
+        "machineCode": "ag-atmospheric-controller",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ag-atmospheric-controller",
+          "agriculture-atmospheric-co2-humidity-control",
+          "climate-control",
+          "co2-enrichment",
+          "humidity",
+          "indoor-growing",
+          "kleene-plus",
+          "vpd"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-atmospheric-controller",
+          "agriculture",
+          "agriculture-atmospheric-co2-humidity-control",
+          "atmospheric-co2",
+          "ces-sequences",
+          "ces-sequences-3",
+          "climate-control",
+          "co2-enrichment",
+          "humidity",
+          "humidity-control",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "startup-loadable",
+          "vpd"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

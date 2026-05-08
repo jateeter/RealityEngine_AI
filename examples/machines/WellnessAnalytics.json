@@ -100,16 +100,82 @@
       },
       "sequenceCount": 6,
       "tags": [
-        "elder-care",
-        "wellness-analytics",
-        "routing",
         "anomaly-detection",
-        "machine-interconnect",
         "care-coordination",
-        "patient-wellness",
+        "care-transition",
+        "ces-sequences",
+        "ces-sequences-6",
+        "elder-care",
+        "healthcare",
+        "healthcare-analytics",
+        "healthcare-analytics-wellness-monitoring-and-care-routing",
+        "input-sequences",
+        "input-sequences-8",
+        "machine-interconnect",
         "new-patient-inflow",
-        "care-transition"
-      ]
+        "patient-wellness",
+        "routing",
+        "startup-loadable",
+        "wellness-analytics",
+        "wellness-monitoring-and-care-routing"
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "healthcare",
+          "healthcare-analytics",
+          "wellness-monitoring-and-care-routing"
+        ],
+        "family": "wellness-analytics",
+        "machineCode": "wellness-analytics",
+        "capabilityTags": [
+          "healthcare-analytics-wellness-monitoring-and-care-routing",
+          "routing",
+          "wellness-monitoring-and-care-routing"
+        ],
+        "workflowTags": [
+          "anomaly-detection",
+          "care-coordination",
+          "care-transition",
+          "elder-care",
+          "new-patient-inflow",
+          "patient-wellness",
+          "wellness-analytics"
+        ],
+        "integrationTags": [
+          "healthcare",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-6",
+          "input-sequences",
+          "input-sequences-8",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "anomaly-detection",
+          "care-coordination",
+          "care-transition",
+          "ces-sequences",
+          "ces-sequences-6",
+          "elder-care",
+          "healthcare",
+          "healthcare-analytics",
+          "healthcare-analytics-wellness-monitoring-and-care-routing",
+          "input-sequences",
+          "input-sequences-8",
+          "machine-interconnect",
+          "new-patient-inflow",
+          "patient-wellness",
+          "routing",
+          "startup-loadable",
+          "wellness-analytics",
+          "wellness-monitoring-and-care-routing"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",

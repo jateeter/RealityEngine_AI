@@ -42,18 +42,104 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx150",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
+        "built-space-command-agent",
+        "built-space-command-center",
+        "built-space-well-generated",
+        "built-space-well-predictive-operations",
+        "built-space-well-predictive-operations-built-space-command-center",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
         "occupant-health",
         "predictive-operations",
-        "built-space-command-center"
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-operations",
+        "well-predictive-operations",
+        "well-predictive-optimization-predictive-operations-built-space-command-center"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [916:920] is available to WELL operations and predictive optimization workflows."
+      "downstreamPattern": "Output region [916:920] is available to WELL operations and predictive optimization workflows.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-predictive-operations"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx150",
+        "capabilityTags": [
+          "built-space-well-predictive-operations",
+          "built-space-well-predictive-operations-built-space-command-center",
+          "predictive-operations",
+          "predictive-optimization",
+          "well-predictive-operations",
+          "well-predictive-optimization-predictive-operations-built-space-command-center"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx150",
+          "built-space-command-agent",
+          "built-space-command-center",
+          "built-space-well-generated",
+          "dispatchable-agent",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx150",
+          "built-space",
+          "built-space-command-agent",
+          "built-space-command-center",
+          "built-space-well-generated",
+          "built-space-well-predictive-operations",
+          "built-space-well-predictive-operations-built-space-command-center",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-operations",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-operations",
+          "well-predictive-operations",
+          "well-predictive-optimization-predictive-operations-built-space-command-center"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -11,10 +11,19 @@
       "eventSpace": "4D binary FF-state vector at [1371:1375]: [CoolingQ, CoolingQ̄, NetworkQ, NetworkQ̄]",
       "outputSpace": "2D binary at [1369:1371]: [1,0]=MULTI_ALARM, [0,1]=ALL_CLEAR",
       "tags": [
-        "synthesizer",
+        "ces-sequences",
+        "ces-sequences-2",
+        "correlation",
+        "critical-alert",
         "data-center",
+        "data-center-critical-alert-synthesizer",
+        "dc-critical-synthesizer",
+        "dccritical-synthesizer",
+        "input-sequences",
+        "input-sequences-3",
         "multi-alarm",
-        "correlation"
+        "startup-loadable",
+        "synthesizer"
       ],
       "sequenceCount": 2,
       "role": "Detects simultaneous thermal AND network failure conditions; drives DCCriticalAlertFF",
@@ -35,6 +44,49 @@
         "pattern_0101": "Thermal CLEAR + Network CLEAR → ALL systems nominal",
         "pattern_1001": "Thermal ALARM + Network CLEAR → single-system failure, not critical",
         "pattern_0110": "Thermal CLEAR + Network ALARM → single-system failure, not critical"
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "critical-alert",
+          "data-center",
+          "synthesizer"
+        ],
+        "family": "dc-critical-synthesizer",
+        "machineCode": "dccritical-synthesizer",
+        "capabilityTags": [],
+        "workflowTags": [
+          "correlation",
+          "data-center-critical-alert-synthesizer",
+          "dc-critical-synthesizer",
+          "dccritical-synthesizer",
+          "multi-alarm"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "correlation",
+          "critical-alert",
+          "data-center",
+          "data-center-critical-alert-synthesizer",
+          "dc-critical-synthesizer",
+          "dccritical-synthesizer",
+          "input-sequences",
+          "input-sequences-3",
+          "multi-alarm",
+          "startup-loadable",
+          "synthesizer"
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

@@ -21,10 +21,21 @@
       "domain": "AI Infrastructure — Model Serving Health",
       "tags": [
         "ai",
-        "model-serving",
+        "ai-infrastructure",
+        "ai-infrastructure-model-serving-health",
+        "ai-model-wellness-monitor",
+        "ai-services",
+        "aimodel-wellness",
+        "ces-sequences",
+        "ces-sequences-2",
+        "drift",
         "inference",
+        "input-sequences",
+        "input-sequences-3",
+        "model-serving",
+        "model-serving-health",
         "slo",
-        "drift"
+        "startup-loadable"
       ],
       "inputDimensions": [
         {
@@ -73,7 +84,58 @@
           "index": 5,
           "name": "ACT_FAILOVER_TO_BACKUP"
         }
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "ai-infrastructure",
+          "ai-services",
+          "model-serving-health"
+        ],
+        "family": "ai-model-wellness-monitor",
+        "machineCode": "aimodel-wellness",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai",
+          "ai-infrastructure-model-serving-health",
+          "ai-model-wellness-monitor",
+          "aimodel-wellness",
+          "drift",
+          "inference",
+          "model-serving",
+          "slo"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai",
+          "ai-infrastructure",
+          "ai-infrastructure-model-serving-health",
+          "ai-model-wellness-monitor",
+          "ai-services",
+          "aimodel-wellness",
+          "ces-sequences",
+          "ces-sequences-2",
+          "drift",
+          "inference",
+          "input-sequences",
+          "input-sequences-3",
+          "model-serving",
+          "model-serving-health",
+          "slo",
+          "startup-loadable"
+        ]
+      }
     },
     "sequences": [
       {

@@ -23,12 +23,25 @@
       "outputSpace": "4D binary at [144:148]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "ras-thermal-management",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-ras-thermal-management",
+        "agriculture-generated",
+        "agx018",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-ras-thermal-management-risk-maintenance-or-optimization",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "growhouse-ipm-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "ras-thermal-management",
+        "startup-loadable"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -44,7 +57,68 @@
         "maintenance readiness"
       ],
       "downstreamMachines": [],
-      "downstreamPattern": "Output region [144:148] feeds agriculture automation and AI dispatch orchestration."
+      "downstreamPattern": "Output region [144:148] feeds agriculture automation and AI dispatch orchestration.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx018",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-ras-thermal-management-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-ras-thermal-management",
+          "agriculture-generated",
+          "agx018",
+          "ai-trigger",
+          "dispatchable-agent",
+          "growhouse-ipm-agent",
+          "operational-management",
+          "ras-thermal-management"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-ras-thermal-management",
+          "agriculture-generated",
+          "agx018",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-ras-thermal-management-risk-maintenance-or-optimization",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "growhouse-ipm-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "maintenance",
+          "operational-management",
+          "ras-thermal-management",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

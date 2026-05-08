@@ -12,12 +12,18 @@
       "eventSpace": "2D binary: [dose_pending, dose_confirmed]",
       "outputSpace": "2D binary: {[0,0]=NOMINAL, [1,0]=DELAYED, [1,1]=MISSED}",
       "tags": [
-        "wellness",
-        "healthcare",
-        "medication",
+        "ces-sequences",
+        "ces-sequences-3",
         "elder-care",
+        "healthcare",
         "in-home-monitoring",
-        "trigger"
+        "input-sequences",
+        "input-sequences-2",
+        "medication",
+        "medication-adherence-monitor",
+        "startup-loadable",
+        "trigger",
+        "wellness"
       ],
       "sequenceCount": 3,
       "triggerConfig": {
@@ -56,6 +62,50 @@
             "processStatus": "error",
             "description": "Dose missed past grace window — escalate to clinical contact"
           }
+        ]
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "healthcare",
+          "wellness"
+        ],
+        "family": "medication-adherence-monitor",
+        "machineCode": "medication-adherence-monitor",
+        "capabilityTags": [
+          "in-home-monitoring"
+        ],
+        "workflowTags": [
+          "elder-care",
+          "medication",
+          "medication-adherence-monitor",
+          "trigger"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "elder-care",
+          "healthcare",
+          "in-home-monitoring",
+          "input-sequences",
+          "input-sequences-2",
+          "medication",
+          "medication-adherence-monitor",
+          "startup-loadable",
+          "trigger",
+          "wellness"
         ]
       }
     },

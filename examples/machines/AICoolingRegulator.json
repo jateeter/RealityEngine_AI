@@ -20,13 +20,75 @@
       "category": "ai-services",
       "domain": "AI Infrastructure — Thermal / Cooling Control",
       "tags": [
-        "data-center",
+        "ai-cooling-regulator",
+        "ai-infrastructure",
+        "ai-infrastructure-thermal-cooling-control",
+        "ai-services",
+        "ai-workload",
+        "aicooling-regulator",
+        "ces-sequences",
+        "ces-sequences-2",
         "cooling",
-        "thermal",
+        "cooling-control",
+        "data-center",
         "hvac",
-        "ai-workload"
+        "input-sequences",
+        "input-sequences-3",
+        "startup-loadable",
+        "thermal"
       ],
-      "rationale": "Cooling is a physical data-center concern even when AI workloads drive the heat load."
+      "rationale": "Cooling is a physical data-center concern even when AI workloads drive the heat load.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "ai-infrastructure",
+          "ai-services",
+          "cooling-control",
+          "thermal"
+        ],
+        "family": "ai-cooling-regulator",
+        "machineCode": "aicooling-regulator",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-cooling-regulator",
+          "ai-infrastructure-thermal-cooling-control",
+          "ai-workload",
+          "aicooling-regulator",
+          "cooling",
+          "data-center",
+          "hvac"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-cooling-regulator",
+          "ai-infrastructure",
+          "ai-infrastructure-thermal-cooling-control",
+          "ai-services",
+          "ai-workload",
+          "aicooling-regulator",
+          "ces-sequences",
+          "ces-sequences-2",
+          "cooling",
+          "cooling-control",
+          "data-center",
+          "hvac",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable",
+          "thermal"
+        ]
+      }
     },
     "sequences": [
       {

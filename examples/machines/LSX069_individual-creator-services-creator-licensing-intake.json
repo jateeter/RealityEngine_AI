@@ -35,17 +35,90 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
-        "productization",
+        "creator-licensing-intake",
+        "dispatchable-agent",
+        "evidence-preservation-agent",
         "individual-creator-services",
-        "creator-licensing-intake"
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-generated",
+        "legal-services-individual-creator-services",
+        "legal-services-individual-creator-services-creator-licensing-intake",
+        "lsx069",
+        "productization",
+        "provisional-patent",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "individual-creator-services",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx069",
+        "capabilityTags": [
+          "evidence-preservation-agent"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "creator-licensing-intake",
+          "dispatchable-agent",
+          "intellectual-property",
+          "legal-services-generated",
+          "legal-services-individual-creator-services",
+          "legal-services-individual-creator-services-creator-licensing-intake",
+          "lsx069",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "creator-licensing-intake",
+          "dispatchable-agent",
+          "evidence-preservation-agent",
+          "individual-creator-services",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-generated",
+          "legal-services-individual-creator-services",
+          "legal-services-individual-creator-services-creator-licensing-intake",
+          "lsx069",
+          "productization",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

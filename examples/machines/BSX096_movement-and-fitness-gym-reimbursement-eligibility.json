@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx096",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-well-generated",
+        "built-space-well-movement-and-fitness",
+        "built-space-well-movement-and-fitness-gym-reimbursement-eligibility",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "gym-reimbursement-eligibility",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
         "movement-and-fitness",
-        "gym-reimbursement-eligibility"
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-movement-and-fitness",
+        "well-operations",
+        "well-predictive-optimization-movement-and-fitness-gym-reimbursement-eligibility",
+        "well-thermal-agent"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [700:704] feeds Built Space WELL Movement And Fitness Accessible Movement Paths for WELL operations optimization."
+      "downstreamPattern": "Output region [700:704] feeds Built Space WELL Movement And Fitness Accessible Movement Paths for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-movement-and-fitness"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx096",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-movement-and-fitness-gym-reimbursement-eligibility"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx096",
+          "built-space-well-generated",
+          "built-space-well-movement-and-fitness",
+          "built-space-well-movement-and-fitness-gym-reimbursement-eligibility",
+          "dispatchable-agent",
+          "gym-reimbursement-eligibility",
+          "movement-and-fitness",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-operations",
+          "well-thermal-agent"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx096",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-movement-and-fitness",
+          "built-space-well-movement-and-fitness-gym-reimbursement-eligibility",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "gym-reimbursement-eligibility",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "movement-and-fitness",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-movement-and-fitness",
+          "well-operations",
+          "well-predictive-optimization-movement-and-fitness-gym-reimbursement-eligibility",
+          "well-thermal-agent"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

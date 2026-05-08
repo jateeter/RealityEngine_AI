@@ -57,7 +57,10 @@ const machines = files.map((file) => {
   const metadata = machine.metadata || {};
   const mapping = machine.perceptualMapping || {};
   const inputSequences = machine.inputSequences || metadata.inputSequences || [];
-  const tags = Array.isArray(metadata.tags) ? metadata.tags : [];
+  const tagging = metadata.tagging || {};
+  const tags = Array.isArray(tagging.allTags)
+    ? tagging.allTags
+    : (Array.isArray(metadata.tags) ? metadata.tags : []);
   const downstream = Array.isArray(metadata.downstreamMachines) ? metadata.downstreamMachines : [];
   return {
     file,
@@ -73,6 +76,7 @@ const machines = files.map((file) => {
     upstreamMachine: metadata.upstreamMachine || '',
     downstreamMachines: downstream,
     tags,
+    tagging,
     input: mapping.input || null,
     output: mapping.output || null,
     sequenceCount: machine.sequenceCount ?? (Array.isArray(machine.sequences) ? machine.sequences.length : 0),
@@ -252,14 +256,47 @@ function domainSections() {
       [...workstreams.entries()].sort((a, b) => a[0].localeCompare(b[0]))
         .map(([name, count]) => `| ${esc(name)} | ${count} |`).join('\n') +
       '\n\n' +
-      '| Code | Machine | Input | Output | Input Sequences | AI Trigger | Agent | Tags |\n' +
-      '| --- | --- | ---: | ---: | ---: | --- | --- | --- |\n' +
+      '| Code | Machine | Input | Output | Input Sequences | AI Trigger | Agent | Tag Groups | Tags |\n' +
+      '| --- | --- | ---: | ---: | ---: | --- | --- | --- | --- |\n' +
       domainMachines
         .sort((a, b) => a.code.localeCompare(b.code) || a.name.localeCompare(b.name))
-        .map((machine) => `| ${esc(machine.code)} | [${esc(machine.name)}](${relMachinePath(machine.file)}) | ${range(machine.input)} | ${range(machine.output)} | ${machine.inputSequenceCount} | ${esc(machine.aiTrigger)} | ${esc(machine.dispatchableAgent)} | ${esc(machine.tags.join(', '))} |`)
+        .map((machine) => {
+          const groups = [
+            `domain:${(machine.tagging.domainTags || []).length}`,
+            `capability:${(machine.tagging.capabilityTags || []).length}`,
+            `workflow:${(machine.tagging.workflowTags || []).length}`,
+            `integration:${(machine.tagging.integrationTags || []).length}`,
+            `validation:${(machine.tagging.validationTags || []).length}`,
+          ].join(', ');
+          return `| ${esc(machine.code)} | [${esc(machine.name)}](${relMachinePath(machine.file)}) | ${range(machine.input)} | ${range(machine.output)} | ${machine.inputSequenceCount} | ${esc(machine.aiTrigger)} | ${esc(machine.dispatchableAgent)} | ${esc(groups)} | ${esc(machine.tags.join(', '))} |`;
+        })
         .join('\n'));
   }
   return sections.join('\n\n');
+}
+
+function taggingSummary() {
+  const schemaVersions = [...new Set(machines.map((machine) => machine.tagging.schemaVersion || 'missing'))].sort();
+  const managedBy = [...new Set(machines.map((machine) => machine.tagging.managedBy || 'unmanaged'))].sort();
+  const complete = machines.filter((machine) => machine.tagging.schemaVersion && Array.isArray(machine.tagging.allTags)).length;
+  const groupTotals = machines.reduce((totals, machine) => {
+    totals.domain += (machine.tagging.domainTags || []).length;
+    totals.capability += (machine.tagging.capabilityTags || []).length;
+    totals.workflow += (machine.tagging.workflowTags || []).length;
+    totals.integration += (machine.tagging.integrationTags || []).length;
+    totals.validation += (machine.tagging.validationTags || []).length;
+    return totals;
+  }, { domain: 0, capability: 0, workflow: 0, integration: 0, validation: 0 });
+  return [
+    '## Tagging Schema',
+    '',
+    `- Structured machine tags: ${complete}/${machines.length}`,
+    `- Schema versions: ${schemaVersions.join(', ')}`,
+    `- Managed by: ${managedBy.join(', ')}`,
+    `- Tag groups: domain=${groupTotals.domain}, capability=${groupTotals.capability}, workflow=${groupTotals.workflow}, integration=${groupTotals.integration}, validation=${groupTotals.validation}`,
+    '',
+    '`metadata.tags` remains the backwards-compatible flattened search index. `metadata.tagging` carries the managed tag groups.',
+  ].join('\n');
 }
 
 function interconnectionSummaryTable() {
@@ -293,6 +330,7 @@ const summary = `# Example Machine Compendium\n\n` +
   `- Cross-domain interconnections: ${interconnections.filter((edge) => edge.crossDomain).length}\n` +
   `- Cross-domain bridge block: [${bridgeBlock.start}:${bridgeBlock.end}] (${bridgeBlock.length} positions, ${bridgeBlock.components} components)\n\n` +
   `## Active Domains\n\n${domainOverviewTable()}\n\n` +
+  `${taggingSummary()}\n\n` +
   `## Interconnection Summary\n\n${interconnectionSummaryTable()}\n\n` +
   `## Machine Index\n\n${domainSections()}\n\n` +
   `## Full Interconnection Index\n\n${interconnectionTable()}\n`;
@@ -314,6 +352,8 @@ const wikiHome = `# RealityEngine_AI Wiki\n\n` +
   `## Example Machine Corpus\n\n` +
   `- [Example Machine Compendium](Example-Machine-Compendium) — searchable index of all active domains, machines, AI triggers, agents, vector mappings, and interconnections generated from \`examples/machines/*.json\`.\n` +
   `- [Machine Interconnection Index](Machine-Interconnection-Index) — searchable output-to-input overlap index for domain-local and cross-domain machine interconnections.\n\n` +
+  `- [Machine Tagging](Machine-Tagging) — managed machine metadata tag schema and validation workflow.\n` +
+  `- [Life Balance Machines](Life-Balance-Machines) — lifestyle-psychiatry tracking, automation, projection, and e2e validation machines.\n\n` +
   `Current generated corpus:\n\n` +
   `- \`${machines.length}\` machines\n` +
   `- \`${sortedDomains.length}\` active domains\n` +

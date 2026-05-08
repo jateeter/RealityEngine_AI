@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [56:60]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "stocking-density",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-stocking-density",
+        "agriculture-generated",
+        "agx003",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-maintenance-agent",
+        "aquaculture-stocking-density-risk-maintenance-or-optimization",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable",
+        "stocking-density"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -46,7 +60,70 @@
       "downstreamMachines": [
         "Agriculture Aquaculture Animal Welfare Response"
       ],
-      "downstreamPattern": "Output region [56:60] feeds Agriculture Aquaculture Animal Welfare Response for predictive agriculture management."
+      "downstreamPattern": "Output region [56:60] feeds Agriculture Aquaculture Animal Welfare Response for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx003",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-maintenance-agent",
+          "aquaculture-stocking-density-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-stocking-density",
+          "agriculture-generated",
+          "agx003",
+          "ai-trigger",
+          "dispatchable-agent",
+          "operational-management",
+          "stocking-density"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-stocking-density",
+          "agriculture-generated",
+          "agx003",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-maintenance-agent",
+          "aquaculture-stocking-density-risk-maintenance-or-optimization",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable",
+          "stocking-density"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

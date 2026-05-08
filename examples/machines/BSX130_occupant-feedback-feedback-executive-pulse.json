@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx130",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-well-generated",
+        "built-space-well-occupant-feedback",
+        "built-space-well-occupant-feedback-feedback-executive-pulse",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "feedback-executive-pulse",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
         "occupant-feedback",
-        "feedback-executive-pulse"
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-mind-policy-agent",
+        "well-occupant-feedback",
+        "well-operations",
+        "well-predictive-optimization-occupant-feedback-feedback-executive-pulse"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [836:840] feeds Built Space WELL Predictive Operations Health Performance Forecast for WELL operations optimization."
+      "downstreamPattern": "Output region [836:840] feeds Built Space WELL Predictive Operations Health Performance Forecast for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-occupant-feedback"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx130",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-occupant-feedback-feedback-executive-pulse"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx130",
+          "built-space-well-generated",
+          "built-space-well-occupant-feedback",
+          "built-space-well-occupant-feedback-feedback-executive-pulse",
+          "dispatchable-agent",
+          "feedback-executive-pulse",
+          "occupant-feedback",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-mind-policy-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx130",
+          "built-space",
+          "built-space-well-generated",
+          "built-space-well-occupant-feedback",
+          "built-space-well-occupant-feedback-feedback-executive-pulse",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "feedback-executive-pulse",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-feedback",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-mind-policy-agent",
+          "well-occupant-feedback",
+          "well-operations",
+          "well-predictive-optimization-occupant-feedback-feedback-executive-pulse"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

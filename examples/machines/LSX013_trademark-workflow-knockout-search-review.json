@@ -35,17 +35,91 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
+        "copyright-workflow-agent",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "knockout-search-review",
+        "legal-services",
+        "legal-services-generated",
+        "legal-services-trademark-workflow",
+        "legal-services-trademark-workflow-knockout-search-review",
+        "lsx013",
         "productization",
-        "trademark-workflow",
-        "knockout-search-review"
+        "provisional-patent",
+        "startup-loadable",
+        "trademark",
+        "trademark-workflow"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "legal-services",
+          "trademark-workflow"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx013",
+        "capabilityTags": [
+          "copyright-workflow-agent",
+          "legal-services-trademark-workflow",
+          "legal-services-trademark-workflow-knockout-search-review",
+          "trademark-workflow"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "dispatchable-agent",
+          "intellectual-property",
+          "knockout-search-review",
+          "legal-services-generated",
+          "lsx013",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "copyright-workflow-agent",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "knockout-search-review",
+          "legal-services",
+          "legal-services-generated",
+          "legal-services-trademark-workflow",
+          "legal-services-trademark-workflow-knockout-search-review",
+          "lsx013",
+          "productization",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark",
+          "trademark-workflow"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -9,14 +9,21 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2007:2011]: [1,0,0,0]=REFERRAL_NEEDED, [0,1,0,0]=SOCIAL_DEVELOPMENTAL_CONCERN, [0,0,1,0]=LEARNING_CONCERN, [0,0,0,1]=DEVELOPMENT_OK",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-3",
+        "child-development",
+        "child-development-monitor",
+        "developmental-delay",
+        "early-intervention",
         "healthcare",
-        "pediatric",
-        "child development",
-        "home health",
+        "home-health",
+        "home-health-pediatric-child-development",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
         "low-income",
-        "developmental delay",
-        "early intervention",
-        "kleene-plus"
+        "pediatric",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Children ages 0–12; families in early intervention program gaps; low-income households with limited developmental support access",
@@ -26,7 +33,56 @@
         "language_score_norm": "0.0=non-verbal or severely limited expressive/receptive language for age, 0.5=borderline language development, 1.0=age-appropriate or advanced language",
         "learning_engagement_norm": "0.0=disengaged; unable to focus; school-readiness concerns, 0.5=partial engagement with support needs, 1.0=curious and engaged learner"
       },
-      "downstreamMachine": "HomeCaregiverBurdenMonitor (reads [2003:2011])"
+      "downstreamMachine": "HomeCaregiverBurdenMonitor (reads [2003:2011])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "child-development",
+          "healthcare",
+          "home-health",
+          "pediatric"
+        ],
+        "family": "child-development-monitor",
+        "machineCode": "child-development-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "child-development-monitor",
+          "developmental-delay",
+          "early-intervention",
+          "home-health-pediatric-child-development",
+          "kleene-plus",
+          "low-income"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "child-development",
+          "child-development-monitor",
+          "developmental-delay",
+          "early-intervention",
+          "healthcare",
+          "home-health",
+          "home-health-pediatric-child-development",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "low-income",
+          "pediatric",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -20,12 +20,24 @@
       "category": "ai-services",
       "domain": "AI Infrastructure — Hardware Health / Resilience",
       "tags": [
+        "ai-hardware-resilience-monitor",
+        "ai-infrastructure",
+        "ai-infrastructure-hardware-health-resilience",
+        "ai-services",
+        "ai-workload",
+        "aihardware-resilience",
+        "ces-sequences",
+        "ces-sequences-2",
         "data-center",
-        "hardware",
-        "smart",
         "ecc",
+        "hardware",
+        "hardware-health",
+        "input-sequences",
+        "input-sequences-3",
         "network",
-        "ai-workload"
+        "resilience",
+        "smart",
+        "startup-loadable"
       ],
       "rationale": "Disk SMART, ECC errors, and network fabric health are physical data-center hardware concerns.",
       "eventSpace": "4D continuous fault severity vector at [276:280]: [disk_fault_score, memory_error_rate, network_packet_loss, hw_fault_accumulation]",
@@ -77,7 +89,62 @@
           "index": 5,
           "name": "ACT_SCHEDULE_MAINTENANCE"
         }
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "ai-infrastructure",
+          "ai-services",
+          "hardware-health",
+          "resilience"
+        ],
+        "family": "ai-hardware-resilience-monitor",
+        "machineCode": "aihardware-resilience",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-hardware-resilience-monitor",
+          "ai-infrastructure-hardware-health-resilience",
+          "ai-workload",
+          "aihardware-resilience",
+          "data-center",
+          "ecc",
+          "hardware",
+          "network",
+          "smart"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-hardware-resilience-monitor",
+          "ai-infrastructure",
+          "ai-infrastructure-hardware-health-resilience",
+          "ai-services",
+          "ai-workload",
+          "aihardware-resilience",
+          "ces-sequences",
+          "ces-sequences-2",
+          "data-center",
+          "ecc",
+          "hardware",
+          "hardware-health",
+          "input-sequences",
+          "input-sequences-3",
+          "network",
+          "resilience",
+          "smart",
+          "startup-loadable"
+        ]
+      }
     },
     "sequences": [
       {

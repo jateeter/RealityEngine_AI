@@ -198,16 +198,84 @@
       "regex": "EMERGENCY: (CRISIS)+ · TRANSPORT · FAMILY · ADMITTED → HOSPITAL_TRANSFER  |  PLANNED_REHAB: (STABLE)+ · AUTH · BED · DOCS · FAMILY · TRANSPORT → REHAB_TRANSFER  |  PLANNED_ALF: (REHAB_DONE)+ · FAMILY · AUTH · DOCS · BED · TRANSPORT → ALF_TRANSFER  |  BLOCKED: (STABLE)+ · AUTH_ATTEMPT · BARRIER → TRANSFER_BLOCKED  |  ESCALATION: (FACILITY_DECLINE)+ · FAMILY_ALERT · TRANSPORT → EMERGENCY_ESCALATION",
       "sequenceCount": 5,
       "tags": [
-        "elder-care",
-        "care-transition",
-        "hospital",
-        "rehab",
         "assisted-living",
+        "care-level-transition-management",
+        "care-transition",
+        "care-transition-workflow",
+        "ces-sequences",
+        "ces-sequences-5",
         "discharge-planning",
+        "elder-care",
         "emergency",
-        "workflow",
-        "external-communications"
-      ]
+        "external-communications",
+        "healthcare",
+        "healthcare-operations",
+        "healthcare-operations-care-level-transition-management",
+        "hospital",
+        "input-sequences",
+        "input-sequences-8",
+        "rehab",
+        "startup-loadable",
+        "workflow"
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "care-level-transition-management",
+          "healthcare",
+          "healthcare-operations"
+        ],
+        "family": "care-transition-workflow",
+        "machineCode": "care-transition-workflow",
+        "capabilityTags": [
+          "care-transition-workflow",
+          "workflow"
+        ],
+        "workflowTags": [
+          "assisted-living",
+          "care-transition",
+          "discharge-planning",
+          "elder-care",
+          "emergency",
+          "external-communications",
+          "healthcare-operations-care-level-transition-management",
+          "hospital",
+          "rehab"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-8",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "assisted-living",
+          "care-level-transition-management",
+          "care-transition",
+          "care-transition-workflow",
+          "ces-sequences",
+          "ces-sequences-5",
+          "discharge-planning",
+          "elder-care",
+          "emergency",
+          "external-communications",
+          "healthcare",
+          "healthcare-operations",
+          "healthcare-operations-care-level-transition-management",
+          "hospital",
+          "input-sequences",
+          "input-sequences-8",
+          "rehab",
+          "startup-loadable",
+          "workflow"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",

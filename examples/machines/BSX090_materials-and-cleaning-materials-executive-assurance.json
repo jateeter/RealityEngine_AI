@@ -42,18 +42,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx090",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-command-agent",
+        "built-space-well-generated",
+        "built-space-well-materials-and-cleaning",
+        "built-space-well-materials-and-cleaning-materials-executive-assurance",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
         "materials-and-cleaning",
-        "materials-executive-assurance"
+        "materials-executive-assurance",
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-materials-and-cleaning",
+        "well-operations",
+        "well-predictive-optimization-materials-and-cleaning-materials-executive-assurance"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [676:680] is available to WELL operations and predictive optimization workflows."
+      "downstreamPattern": "Output region [676:680] is available to WELL operations and predictive optimization workflows.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-materials-and-cleaning"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx090",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-materials-and-cleaning-materials-executive-assurance"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx090",
+          "built-space-command-agent",
+          "built-space-well-generated",
+          "built-space-well-materials-and-cleaning",
+          "built-space-well-materials-and-cleaning-materials-executive-assurance",
+          "dispatchable-agent",
+          "materials-and-cleaning",
+          "materials-executive-assurance",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx090",
+          "built-space",
+          "built-space-command-agent",
+          "built-space-well-generated",
+          "built-space-well-materials-and-cleaning",
+          "built-space-well-materials-and-cleaning-materials-executive-assurance",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "materials-and-cleaning",
+          "materials-executive-assurance",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-materials-and-cleaning",
+          "well-operations",
+          "well-predictive-optimization-materials-and-cleaning-materials-executive-assurance"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

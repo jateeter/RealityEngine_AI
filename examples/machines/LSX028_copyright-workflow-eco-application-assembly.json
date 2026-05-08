@@ -35,17 +35,97 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
-        "productization",
         "copyright-workflow",
-        "eco-application-assembly"
+        "dispatchable-agent",
+        "e-co-application-assembly",
+        "eco-application-assembly",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-ops-agent",
+        "legal-services",
+        "legal-services-copyright-workflow",
+        "legal-services-copyright-workflow-e-co-application-assembly",
+        "legal-services-copyright-workflow-eco-application-assembly",
+        "legal-services-generated",
+        "lsx028",
+        "productization",
+        "provisional-patent",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "copyright-workflow",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx028",
+        "capabilityTags": [
+          "copyright-workflow",
+          "legal-services-copyright-workflow",
+          "legal-services-copyright-workflow-e-co-application-assembly",
+          "legal-services-copyright-workflow-eco-application-assembly"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "dispatchable-agent",
+          "e-co-application-assembly",
+          "eco-application-assembly",
+          "intellectual-property",
+          "legal-ops-agent",
+          "legal-services-generated",
+          "lsx028",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "copyright-workflow",
+          "dispatchable-agent",
+          "e-co-application-assembly",
+          "eco-application-assembly",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-ops-agent",
+          "legal-services",
+          "legal-services-copyright-workflow",
+          "legal-services-copyright-workflow-e-co-application-assembly",
+          "legal-services-copyright-workflow-eco-application-assembly",
+          "legal-services-generated",
+          "lsx028",
+          "productization",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

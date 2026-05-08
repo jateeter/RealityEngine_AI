@@ -9,12 +9,21 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [988:992]: [1,0,0,0]=WORKFLOW_BLOCKED, [0,1,0,0]=WORKFLOW_STALLED, [0,0,1,0]=WORKFLOW_PARTIAL, [0,0,0,1]=WORKFLOW_COMPLETE",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-3",
         "community-services",
-        "qualification workflow",
-        "document signing",
+        "community-services-workflow-completion-qualification",
+        "document-signing",
         "enrollment",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "qualification",
+        "qualification-workflow",
+        "startup-loadable",
         "workflow",
-        "kleene-plus"
+        "workflow-completion",
+        "workflow-completion-monitor"
       ],
       "sequenceCount": 3,
       "populationFocus": "Community service enrollees requiring both qualification verification and signed agreements before service delivery can begin; organizations with multi-step onboarding workflows",
@@ -27,7 +36,56 @@
       "upstreamMachines": [
         "DocumentSigningWorkflowMonitor (output [960:964])",
         "QualificationVerificationMonitor (output [964:968])"
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "community-services",
+          "qualification",
+          "workflow-completion"
+        ],
+        "family": "workflow-completion-monitor",
+        "machineCode": "workflow-completion-monitor",
+        "capabilityTags": [
+          "community-services-workflow-completion-qualification",
+          "qualification-workflow",
+          "workflow",
+          "workflow-completion",
+          "workflow-completion-monitor"
+        ],
+        "workflowTags": [
+          "document-signing",
+          "enrollment",
+          "kleene-plus"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-services",
+          "community-services-workflow-completion-qualification",
+          "document-signing",
+          "enrollment",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "qualification",
+          "qualification-workflow",
+          "startup-loadable",
+          "workflow",
+          "workflow-completion",
+          "workflow-completion-monitor"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

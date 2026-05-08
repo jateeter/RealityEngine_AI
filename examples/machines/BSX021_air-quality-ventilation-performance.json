@@ -44,18 +44,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
-        "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "ai-trigger",
         "air-quality",
-        "ventilation-performance"
+        "bsx021",
+        "built-space",
+        "built-space-well-air-quality",
+        "built-space-well-air-quality-ventilation-performance",
+        "built-space-well-generated",
+        "ces-sequences",
+        "ces-sequences-5",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "ventilation-performance",
+        "verification",
+        "well-air-quality",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-operations",
+        "well-predictive-optimization-air-quality-ventilation-performance",
+        "well-thermal-agent"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [400:404] feeds Built Space WELL Air Quality Filtration Maintenance for WELL operations optimization."
+      "downstreamPattern": "Output region [400:404] feeds Built Space WELL Air Quality Filtration Maintenance for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-air-quality"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx021",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-air-quality-ventilation-performance"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "air-quality",
+          "bsx021",
+          "built-space-well-air-quality",
+          "built-space-well-air-quality-ventilation-performance",
+          "built-space-well-generated",
+          "dispatchable-agent",
+          "occupant-health",
+          "ventilation-performance",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-operations",
+          "well-thermal-agent"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "air-quality",
+          "bsx021",
+          "built-space",
+          "built-space-well-air-quality",
+          "built-space-well-air-quality-ventilation-performance",
+          "built-space-well-generated",
+          "ces-sequences",
+          "ces-sequences-5",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "ventilation-performance",
+          "verification",
+          "well-air-quality",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-operations",
+          "well-predictive-optimization-air-quality-ventilation-performance",
+          "well-thermal-agent"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -10,10 +10,16 @@
       "eventSpace": "2D binary vectors: [S, R] inputs (00, 01, 10, 11)",
       "outputSpace": "2D binary: {[1,0]=SET/HIGH, [0,1]=RESET/LOW, [0,0]=SPECIAL}",
       "tags": [
-        "flip-flop",
+        "ces-sequences",
+        "ces-sequences-2",
         "digital-logic",
-        "two-step",
-        "stateful"
+        "flip-flop",
+        "input-sequences",
+        "input-sequences-3",
+        "rs2",
+        "startup-loadable",
+        "stateful",
+        "two-step"
       ],
       "sequenceCount": 2,
       "description": "Two 2-step sequences: SET (00→10) and RESET (00→01)",
@@ -40,6 +46,45 @@
             "hammingDistance": 2,
             "behavior": "May inadvertently RESET if rs2-reset-01 was pre-seeded by a prior [0,0] step; otherwise no output"
           }
+        ]
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "digital-logic",
+        "domainTags": [
+          "digital-logic"
+        ],
+        "family": "rs2",
+        "machineCode": "rs2",
+        "capabilityTags": [],
+        "workflowTags": [
+          "flip-flop",
+          "rs2",
+          "stateful",
+          "two-step"
+        ],
+        "integrationTags": [
+          "digital-logic"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "digital-logic",
+          "flip-flop",
+          "input-sequences",
+          "input-sequences-3",
+          "rs2",
+          "startup-loadable",
+          "stateful",
+          "two-step"
         ]
       }
     },

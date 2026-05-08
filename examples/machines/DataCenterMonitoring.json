@@ -11,10 +11,18 @@
       "eventSpace": "8D continuous vectors: [CPU_TEMP, CPU_LOAD, NETWORK_BWTH, POWER_WATTS, STORAGE_USED, MEMORY_USED, DISK_IO, SECURITY_SCORE]",
       "outputSpace": "12D one-hot encoded action vectors",
       "tags": [
-        "monitoring",
+        "ces-sequences",
+        "ces-sequences-1",
+        "continuous",
         "data-center",
+        "data-center-monitoring",
+        "data-center-multi-sensor-monitoring",
+        "input-sequences",
+        "input-sequences-1",
+        "monitoring",
         "multi-dimensional",
-        "continuous"
+        "multi-sensor-monitoring",
+        "startup-loadable"
       ],
       "sequenceCount": 5,
       "description": "Advanced monitoring with thermal-load correlation, network surge detection, power efficiency analysis, storage deduplication, and cascading memory failures",
@@ -34,6 +42,49 @@
         "continuousSpaceAnalog": "Gradual monotonic progression — each step advances metrics by a bounded increment",
         "thresholdTolerance": 0.5,
         "definedSequenceProgression": "Monotonically increasing from 0.25-0.48 range (Normal) to 0.96-0.99 range (Emergency) across 12 steps"
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "data-center",
+          "multi-sensor-monitoring"
+        ],
+        "family": "data-center-monitoring",
+        "machineCode": "data-center-monitoring",
+        "capabilityTags": [
+          "data-center-monitoring",
+          "data-center-multi-sensor-monitoring",
+          "monitoring",
+          "multi-sensor-monitoring"
+        ],
+        "workflowTags": [
+          "continuous",
+          "multi-dimensional"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-1",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-1",
+          "continuous",
+          "data-center",
+          "data-center-monitoring",
+          "data-center-multi-sensor-monitoring",
+          "input-sequences",
+          "input-sequences-1",
+          "monitoring",
+          "multi-dimensional",
+          "multi-sensor-monitoring",
+          "startup-loadable"
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

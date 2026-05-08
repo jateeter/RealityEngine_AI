@@ -35,17 +35,89 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
-        "copyright",
-        "productization",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
         "commercialization-and-enforcement",
-        "joint-development-ip-gate"
+        "copyright",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "ip-portfolio-agent",
+        "joint-development-ip-gate",
+        "legal-services",
+        "legal-services-commercialization-and-enforcement",
+        "legal-services-commercialization-and-enforcement-joint-development-ip-gate",
+        "legal-services-generated",
+        "lsx097",
+        "productization",
+        "provisional-patent",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "commercialization-and-enforcement",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx097",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "dispatchable-agent",
+          "intellectual-property",
+          "ip-portfolio-agent",
+          "joint-development-ip-gate",
+          "legal-services-commercialization-and-enforcement",
+          "legal-services-commercialization-and-enforcement-joint-development-ip-gate",
+          "legal-services-generated",
+          "lsx097",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "commercialization-and-enforcement",
+          "copyright",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "ip-portfolio-agent",
+          "joint-development-ip-gate",
+          "legal-services",
+          "legal-services-commercialization-and-enforcement",
+          "legal-services-commercialization-and-enforcement-joint-development-ip-gate",
+          "legal-services-generated",
+          "lsx097",
+          "productization",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

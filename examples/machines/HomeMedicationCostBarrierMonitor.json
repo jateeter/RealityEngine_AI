@@ -9,14 +9,23 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2011:2015]: [1,0,0,0]=ADHERENCE_CRISIS, [0,1,0,0]=COST_BARRIER_ACTIVE, [0,0,1,0]=PARTIAL_ADHERENCE, [0,0,0,1]=MEDICATION_MANAGED",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-3",
+        "chronic-disease",
+        "cost-barrier",
+        "cost-barriers",
         "healthcare",
-        "home health",
-        "medication adherence",
-        "cost barrier",
+        "home-health",
+        "home-health-medication-access-cost-barriers",
+        "home-medication-cost-barrier-monitor",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
         "low-income",
-        "chronic disease",
-        "pharmacy access",
-        "kleene-plus"
+        "medication-access",
+        "medication-adherence",
+        "pharmacy-access",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Adults on chronic medications; uninsured or underinsured patients; Medicare Part D gap patients; households below 200% FPL",
@@ -26,7 +35,60 @@
         "cost_barrier_norm": "0.0=cost explicitly cited as reason for not filling (unaffordable even with insurance), 0.5=difficulty but managing with assistance, 1.0=no cost barrier reported",
         "generic_access_norm": "0.0=no access to generic or assistance programs; paying full brand price or going without, 0.5=partial program access (copay cards, one drug covered), 1.0=fully enrolled in PAP or full generic coverage"
       },
-      "downstreamMachine": "HomeSocialIsolationMonitor (reads [2011:2019])"
+      "downstreamMachine": "HomeSocialIsolationMonitor (reads [2011:2019])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "cost-barriers",
+          "healthcare",
+          "home-health",
+          "medication-access"
+        ],
+        "family": "home-medication-cost-barrier-monitor",
+        "machineCode": "home-medication-cost-barrier-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "chronic-disease",
+          "cost-barrier",
+          "home-health-medication-access-cost-barriers",
+          "home-medication-cost-barrier-monitor",
+          "kleene-plus",
+          "low-income",
+          "medication-adherence",
+          "pharmacy-access"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "chronic-disease",
+          "cost-barrier",
+          "cost-barriers",
+          "healthcare",
+          "home-health",
+          "home-health-medication-access-cost-barriers",
+          "home-medication-cost-barrier-monitor",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "low-income",
+          "medication-access",
+          "medication-adherence",
+          "pharmacy-access",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

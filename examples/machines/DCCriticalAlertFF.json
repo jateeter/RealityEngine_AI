@@ -11,10 +11,20 @@
       "eventSpace": "2D binary control signal at [1369:1371]: [1,0]=CRITICAL, [0,1]=ALL_CLEAR",
       "outputSpace": "2D binary at [1379:1381]: [1,0]=CRITICAL_ALERT_ACTIVE, [0,1]=CRITICAL_ALERT_OFF",
       "tags": [
-        "flip-flop",
-        "digital-logic",
+        "ces-sequences",
+        "ces-sequences-2",
+        "critical-alert",
         "data-center",
-        "critical-alert"
+        "data-center-critical-alert-latch",
+        "dc-critical-alert-flip-flop",
+        "dccritical-alert-ff",
+        "digital-logic",
+        "flip-flop",
+        "input-sequences",
+        "input-sequences-3",
+        "latch",
+        "machine-interconnect",
+        "startup-loadable"
       ],
       "sequenceCount": 2,
       "role": "Final-stage alert latch; represents the highest-severity combined failure state",
@@ -25,6 +35,52 @@
         "scope": "not applicable — all event vectors are isInitial (combinatorial)",
         "compliant": true,
         "notes": "Both CRITICAL and ALL_CLEAR events are isInitial. Combinatorial RS flip-flop; state persists via perceptual space value retention. The [1379:1381] byte region holds the current critical alert state and drives external alerting systems."
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "critical-alert",
+          "data-center",
+          "latch"
+        ],
+        "family": "dc-critical-alert-flip-flop",
+        "machineCode": "dccritical-alert-ff",
+        "capabilityTags": [],
+        "workflowTags": [
+          "data-center-critical-alert-latch",
+          "dc-critical-alert-flip-flop",
+          "dccritical-alert-ff",
+          "flip-flop"
+        ],
+        "integrationTags": [
+          "digital-logic",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "critical-alert",
+          "data-center",
+          "data-center-critical-alert-latch",
+          "dc-critical-alert-flip-flop",
+          "dccritical-alert-ff",
+          "digital-logic",
+          "flip-flop",
+          "input-sequences",
+          "input-sequences-3",
+          "latch",
+          "machine-interconnect",
+          "startup-loadable"
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

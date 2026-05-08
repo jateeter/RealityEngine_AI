@@ -11,12 +11,21 @@
       "eventSpace": "4D continuous sensor vector at [1344:1348]: [mem_usage_norm, mem_page_fault_rate_norm, mem_cache_miss_norm, swap_usage_norm]",
       "outputSpace": "2D binary at [1367:1369]: [1,0]=MEMORY_ALARM, [0,1]=MEMORY_HEALTHY",
       "tags": [
-        "monitoring",
-        "data-center",
-        "memory",
-        "thrashing",
         "cascading-failure",
-        "continuous"
+        "ces-sequences",
+        "ces-sequences-2",
+        "continuous",
+        "data-center",
+        "data-center-memory-pressure",
+        "dc-memory-pressure-detector",
+        "dcmemory-pressure",
+        "input-sequences",
+        "input-sequences-1",
+        "memory",
+        "monitoring",
+        "pressure",
+        "startup-loadable",
+        "thrashing"
       ],
       "sequenceCount": 2,
       "downstreamMachine": "DCMemoryAlertFF (reads [1367:1369])",
@@ -37,6 +46,54 @@
         "scope": "continuous sensor space — STA not applicable as defined for binary vectors",
         "compliant": true,
         "notes": "Continuous-space STA analog: gradual memory utilization progression through bands. Memory thrashing typically develops gradually as physical memory fills and the OS begins paging. An abrupt jump from NORMAL to FAILURE (without observed PRESSURE+ or THRASHING transitions) would not trigger the alarm, correctly filtering out measurement artifacts or OOM-killer actions that restore memory suddenly. NORMAL is isInitial (A*A = A+): at least one NORMAL reading is required to arm PRESSURE."
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "data-center",
+          "memory",
+          "pressure"
+        ],
+        "family": "dc-memory-pressure-detector",
+        "machineCode": "dcmemory-pressure",
+        "capabilityTags": [
+          "monitoring"
+        ],
+        "workflowTags": [
+          "cascading-failure",
+          "continuous",
+          "data-center-memory-pressure",
+          "dc-memory-pressure-detector",
+          "dcmemory-pressure",
+          "thrashing"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "cascading-failure",
+          "ces-sequences",
+          "ces-sequences-2",
+          "continuous",
+          "data-center",
+          "data-center-memory-pressure",
+          "dc-memory-pressure-detector",
+          "dcmemory-pressure",
+          "input-sequences",
+          "input-sequences-1",
+          "memory",
+          "monitoring",
+          "pressure",
+          "startup-loadable",
+          "thrashing"
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

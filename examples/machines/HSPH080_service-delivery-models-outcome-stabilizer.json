@@ -28,15 +28,28 @@
       ],
       "outputSpace": "4D binary at [1819:1823]: [1,0,0,0]=URGENT_AGENT_DISPATCH, [0,1,0,0]=OPTIMIZE_DELIVERY, [0,0,1,0]=HUMAN_REVIEW, [0,0,0,1]=IDEAL_STATE_STABLE",
       "tags": [
-        "health-services",
-        "community-health-care-delivery",
-        "public-health-system-transformation",
-        "evaluation-plan",
-        "logic-model",
+        "ai-trigger",
         "ai-triggers",
+        "ces-sequences",
+        "ces-sequences-3",
+        "community-health-care-delivery",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "evaluation-plan",
+        "health-services",
+        "health-services-generated",
+        "health-services-service-delivery-models",
+        "health-services-service-delivery-models-outcome-stabilizer",
+        "hsph080",
+        "input-sequences",
+        "input-sequences-4",
+        "logic-model",
+        "outcome-stabilizer",
+        "partner-coordination-agent",
+        "public-health-system-transformation",
         "service-delivery-models",
-        "outcome-stabilizer"
+        "service-delivery-models-outcome-stabilizer-risk-or-optimization-signal",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Community health service recipients, public health agencies, care partners, and cross-sector service networks",
@@ -52,7 +65,73 @@
         "equity signal",
         "measure confidence"
       ],
-      "downstreamPattern": "Output region [1819:1823] feeds peer health-services machines and AI dispatch orchestration."
+      "downstreamPattern": "Output region [1819:1823] feeds peer health-services machines and AI dispatch orchestration.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "health-services",
+        "domainTags": [
+          "health-services",
+          "service-delivery-models"
+        ],
+        "family": "health-services-generated",
+        "machineCode": "hsph080",
+        "capabilityTags": [
+          "ai-triggers",
+          "dispatchable-agents",
+          "health-services-service-delivery-models-outcome-stabilizer",
+          "outcome-stabilizer",
+          "service-delivery-models-outcome-stabilizer-risk-or-optimization-signal"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "community-health-care-delivery",
+          "dispatchable-agent",
+          "evaluation-plan",
+          "health-services-generated",
+          "health-services-service-delivery-models",
+          "hsph080",
+          "logic-model",
+          "partner-coordination-agent",
+          "public-health-system-transformation"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "health-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-4",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ai-triggers",
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-health-care-delivery",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "evaluation-plan",
+          "health-services",
+          "health-services-generated",
+          "health-services-service-delivery-models",
+          "health-services-service-delivery-models-outcome-stabilizer",
+          "hsph080",
+          "input-sequences",
+          "input-sequences-4",
+          "logic-model",
+          "outcome-stabilizer",
+          "partner-coordination-agent",
+          "public-health-system-transformation",
+          "service-delivery-models",
+          "service-delivery-models-outcome-stabilizer-risk-or-optimization-signal",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

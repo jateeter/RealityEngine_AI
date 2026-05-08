@@ -46,18 +46,103 @@
         "occupant impact or wellness risk"
       ],
       "tags": [
+        "ai-trigger",
+        "bsx020",
         "built-space",
-        "well-building-standard",
-        "well-operations",
-        "predictive-optimization",
-        "verification",
-        "occupant-health",
+        "built-space-well-design-and-biophilia",
+        "built-space-well-design-and-biophilia-design-biophilia-executive",
+        "built-space-well-generated",
+        "ces-sequences",
+        "ces-sequences-5",
         "design-and-biophilia",
-        "design-biophilia-executive"
+        "design-biophilia-executive",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "occupant-health",
+        "predictive-optimization",
+        "startup-loadable",
+        "verification",
+        "well-building-standard",
+        "well-building-standard-operations",
+        "well-design-and-biophilia",
+        "well-light-agent",
+        "well-operations",
+        "well-predictive-optimization-design-and-biophilia-design-biophilia-executive"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Map BAS, IAQ, water, food-service, cleaning, HR policy, survey, maintenance, and verification evidence signals into the 4D input lane. Route outputs to verification queues, predictive optimizers, work-order systems, occupant communications, and WELL evidence dashboards.",
-      "downstreamPattern": "Output region [396:400] feeds Built Space WELL Air Quality Ventilation Performance, Built Space WELL Light And Circadian Daylight Access Monitor, Built Space WELL Thermal Comfort ASHRAE 55 Comfort Monitor for WELL operations optimization."
+      "downstreamPattern": "Output region [396:400] feeds Built Space WELL Air Quality Ventilation Performance, Built Space WELL Light And Circadian Daylight Access Monitor, Built Space WELL Thermal Comfort ASHRAE 55 Comfort Monitor for WELL operations optimization.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "built-space",
+        "domainTags": [
+          "built-space",
+          "well-design-and-biophilia"
+        ],
+        "family": "built-space-well-generated",
+        "machineCode": "bsx020",
+        "capabilityTags": [
+          "predictive-optimization",
+          "well-predictive-optimization-design-and-biophilia-design-biophilia-executive"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "bsx020",
+          "built-space-well-design-and-biophilia",
+          "built-space-well-design-and-biophilia-design-biophilia-executive",
+          "built-space-well-generated",
+          "design-and-biophilia",
+          "design-biophilia-executive",
+          "dispatchable-agent",
+          "occupant-health",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-light-agent",
+          "well-operations"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "bsx020",
+          "built-space",
+          "built-space-well-design-and-biophilia",
+          "built-space-well-design-and-biophilia-design-biophilia-executive",
+          "built-space-well-generated",
+          "ces-sequences",
+          "ces-sequences-5",
+          "design-and-biophilia",
+          "design-biophilia-executive",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "occupant-health",
+          "predictive-optimization",
+          "startup-loadable",
+          "verification",
+          "well-building-standard",
+          "well-building-standard-operations",
+          "well-design-and-biophilia",
+          "well-light-agent",
+          "well-operations",
+          "well-predictive-optimization-design-and-biophilia-design-biophilia-executive"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -12,13 +12,19 @@
       "eventSpace": "2D binary: [below_half_target, below_quarter_target]",
       "outputSpace": "2D binary: {[0,0]=ADEQUATE, [1,0]=LOW, [1,1]=CRITICAL}",
       "tags": [
-        "wellness",
+        "ces-sequences",
+        "ces-sequences-3",
+        "elder-care",
         "healthcare",
         "hydration",
-        "elder-care",
+        "hydration-monitor",
         "in-home-monitoring",
+        "input-sequences",
+        "input-sequences-2",
         "nutrition",
-        "trigger"
+        "startup-loadable",
+        "trigger",
+        "wellness"
       ],
       "sequenceCount": 3,
       "triggerConfig": {
@@ -57,6 +63,52 @@
             "processStatus": "error",
             "description": "Severely below target — escalate to caregiver"
           }
+        ]
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "healthcare",
+          "wellness"
+        ],
+        "family": "hydration-monitor",
+        "machineCode": "hydration-monitor",
+        "capabilityTags": [
+          "in-home-monitoring"
+        ],
+        "workflowTags": [
+          "elder-care",
+          "hydration",
+          "hydration-monitor",
+          "nutrition",
+          "trigger"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "elder-care",
+          "healthcare",
+          "hydration",
+          "hydration-monitor",
+          "in-home-monitoring",
+          "input-sequences",
+          "input-sequences-2",
+          "nutrition",
+          "startup-loadable",
+          "trigger",
+          "wellness"
         ]
       }
     },

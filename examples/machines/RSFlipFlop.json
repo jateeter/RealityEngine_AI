@@ -10,9 +10,16 @@
       "eventSpace": "2D binary vectors: [S, R] inputs (00, 01, 10, 11)",
       "outputSpace": "2D binary: {[0,1]=RESET/LOW, [1,0]=SET/HIGH}",
       "tags": [
-        "flip-flop",
+        "ces-sequences",
+        "ces-sequences-2",
         "digital-logic",
-        "immediate-response"
+        "flip-flop",
+        "immediate-response",
+        "input-sequences",
+        "input-sequences-3",
+        "rs-flip-flop",
+        "rsflip-flop",
+        "startup-loadable"
       ],
       "sequenceCount": 2,
       "description": "Two always-active events: SET (10→[1,0]) and RESET (01→[0,1])",
@@ -32,6 +39,45 @@
           "[0,1]→[1,0]": "SET output [1,0] — correct",
           "[0,0]→[1,1]": "No output — forbidden state"
         }
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "digital-logic",
+        "domainTags": [
+          "digital-logic"
+        ],
+        "family": "rs-flip-flop",
+        "machineCode": "rsflip-flop",
+        "capabilityTags": [],
+        "workflowTags": [
+          "flip-flop",
+          "immediate-response",
+          "rs-flip-flop",
+          "rsflip-flop"
+        ],
+        "integrationTags": [
+          "digital-logic"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "digital-logic",
+          "flip-flop",
+          "immediate-response",
+          "input-sequences",
+          "input-sequences-3",
+          "rs-flip-flop",
+          "rsflip-flop",
+          "startup-loadable"
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

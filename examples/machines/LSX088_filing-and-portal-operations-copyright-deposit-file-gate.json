@@ -35,17 +35,89 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
-        "productization",
+        "copyright-deposit-file-gate",
+        "dispatchable-agent",
         "filing-and-portal-operations",
-        "copyright-deposit-file-gate"
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-ops-agent",
+        "legal-services",
+        "legal-services-filing-and-portal-operations",
+        "legal-services-filing-and-portal-operations-copyright-deposit-file-gate",
+        "legal-services-generated",
+        "lsx088",
+        "productization",
+        "provisional-patent",
+        "startup-loadable",
+        "trademark"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "filing-and-portal-operations",
+          "legal-services"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx088",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-trigger",
+          "copyright",
+          "copyright-deposit-file-gate",
+          "dispatchable-agent",
+          "intellectual-property",
+          "legal-ops-agent",
+          "legal-services-filing-and-portal-operations",
+          "legal-services-filing-and-portal-operations-copyright-deposit-file-gate",
+          "legal-services-generated",
+          "lsx088",
+          "productization",
+          "provisional-patent",
+          "trademark"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "copyright-deposit-file-gate",
+          "dispatchable-agent",
+          "filing-and-portal-operations",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-ops-agent",
+          "legal-services",
+          "legal-services-filing-and-portal-operations",
+          "legal-services-filing-and-portal-operations-copyright-deposit-file-gate",
+          "legal-services-generated",
+          "lsx088",
+          "productization",
+          "provisional-patent",
+          "startup-loadable",
+          "trademark"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

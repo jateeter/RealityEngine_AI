@@ -41,16 +41,91 @@
         "operational confidence"
       ],
       "tags": [
-        "data-center",
         "24x7-operations",
-        "maintenance",
-        "upgrade-cycle",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-5",
+        "data-center",
+        "data-center-24x7-operations",
+        "data-center-generated",
+        "data-center-observability-pipeline-monitor",
+        "data-center-observability-pipeline-monitor-ops-maintenance-upgrade",
+        "dc-capacity-planner-agent",
+        "dcx030",
+        "dispatchable-agent",
         "incident-response",
-        "observability-pipeline-monitor"
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "maintenance",
+        "observability-pipeline-monitor",
+        "startup-loadable",
+        "upgrade-cycle"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Use as a 24/7 operational guardrail. Map telemetry, CMDB, change, or AI-dispatch signals into the 4D input lane; map outputs to incident, maintenance, upgrade, or executive-summary machines.",
-      "downstreamPattern": "Output region [1485:1489] feeds Data Center Alert Fatigue Suppressor, Data Center CMDB Accuracy Monitor for prescriptive 24/7 operations."
+      "downstreamPattern": "Output region [1485:1489] feeds Data Center Alert Fatigue Suppressor, Data Center CMDB Accuracy Monitor for prescriptive 24/7 operations.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "24x7-operations",
+          "data-center"
+        ],
+        "family": "data-center-generated",
+        "machineCode": "dcx030",
+        "capabilityTags": [
+          "data-center-observability-pipeline-monitor-ops-maintenance-upgrade",
+          "dc-capacity-planner-agent",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "data-center-24x7-operations",
+          "data-center-generated",
+          "data-center-observability-pipeline-monitor",
+          "dcx030",
+          "dispatchable-agent",
+          "incident-response",
+          "observability-pipeline-monitor",
+          "upgrade-cycle"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "24x7-operations",
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-5",
+          "data-center",
+          "data-center-24x7-operations",
+          "data-center-generated",
+          "data-center-observability-pipeline-monitor",
+          "data-center-observability-pipeline-monitor-ops-maintenance-upgrade",
+          "dc-capacity-planner-agent",
+          "dcx030",
+          "dispatchable-agent",
+          "incident-response",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "maintenance",
+          "observability-pipeline-monitor",
+          "startup-loadable",
+          "upgrade-cycle"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

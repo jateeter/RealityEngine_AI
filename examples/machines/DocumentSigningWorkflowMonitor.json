@@ -9,14 +9,22 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [960:964]: [1,0,0,0]=SIGNING_BLOCKED, [0,1,0,0]=SIGNATURE_PENDING, [0,0,1,0]=PARTIAL_SIGNING, [0,0,0,1]=SIGNING_COMPLETE",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-3",
         "community-services",
-        "document signing",
-        "qualification workflow",
+        "community-services-document-signing-workflow",
         "consent",
-        "release of information",
+        "document-signing",
+        "document-signing-workflow-monitor",
         "e-signature",
         "enrollment",
-        "kleene-plus"
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "qualification-workflow",
+        "release-of-information",
+        "startup-loadable",
+        "workflow"
       ],
       "sequenceCount": 3,
       "populationFocus": "Community service enrollees requiring consent forms, ROI authorizations, program agreements; applicants with limited digital access; participants with cognitive or literacy barriers",
@@ -26,7 +34,58 @@
         "witness_verification_norm": "0.0=witness signature required but not obtained; notarization missing; co-signer absent, 0.5=witness present but verification pending (identity check in progress), 1.0=all witness and notarization requirements satisfied",
         "legal_validity_norm": "0.0=documents legally invalid (expired forms, wrong version, jurisdiction mismatch, capacity concern), 0.5=documents submitted but legal review pending, 1.0=all documents legally valid and accepted by receiving program"
       },
-      "downstreamMachine": "WorkflowCompletionMonitor (reads [960:968])"
+      "downstreamMachine": "WorkflowCompletionMonitor (reads [960:968])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "community-services",
+          "document-signing",
+          "workflow"
+        ],
+        "family": "document-signing-workflow-monitor",
+        "machineCode": "document-signing-workflow-monitor",
+        "capabilityTags": [
+          "community-services-document-signing-workflow",
+          "document-signing-workflow-monitor",
+          "qualification-workflow",
+          "workflow"
+        ],
+        "workflowTags": [
+          "consent",
+          "e-signature",
+          "enrollment",
+          "kleene-plus",
+          "release-of-information"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-services",
+          "community-services-document-signing-workflow",
+          "consent",
+          "document-signing",
+          "document-signing-workflow-monitor",
+          "e-signature",
+          "enrollment",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "qualification-workflow",
+          "release-of-information",
+          "startup-loadable",
+          "workflow"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [92:96]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "water-exchange-planning",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-water-exchange-planning",
+        "agriculture-generated",
+        "agx010",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-water-exchange-planning-risk-maintenance-or-optimization",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "growhouse-crop-steering-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable",
+        "water-exchange-planning"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -46,7 +60,70 @@
       "downstreamMachines": [
         "Agriculture Aquaculture Effluent Compliance"
       ],
-      "downstreamPattern": "Output region [92:96] feeds Agriculture Aquaculture Effluent Compliance for predictive agriculture management."
+      "downstreamPattern": "Output region [92:96] feeds Agriculture Aquaculture Effluent Compliance for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx010",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-water-exchange-planning-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-water-exchange-planning",
+          "agriculture-generated",
+          "agx010",
+          "ai-trigger",
+          "dispatchable-agent",
+          "growhouse-crop-steering-agent",
+          "operational-management",
+          "water-exchange-planning"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-water-exchange-planning",
+          "agriculture-generated",
+          "agx010",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-water-exchange-planning-risk-maintenance-or-optimization",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "growhouse-crop-steering-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable",
+          "water-exchange-planning"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -40,16 +40,91 @@
         "operational confidence"
       ],
       "tags": [
-        "data-center",
         "24x7-operations",
-        "maintenance",
-        "upgrade-cycle",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-5",
+        "data-center",
+        "data-center-24x7-operations",
+        "data-center-generated",
+        "data-center-upgrade-wave-planner",
+        "data-center-upgrade-wave-planner-ops-maintenance-upgrade",
+        "dc-compute-agent",
+        "dcx045",
+        "dispatchable-agent",
         "incident-response",
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "maintenance",
+        "startup-loadable",
+        "upgrade-cycle",
         "upgrade-wave-planner"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Use as a 24/7 operational guardrail. Map telemetry, CMDB, change, or AI-dispatch signals into the 4D input lane; map outputs to incident, maintenance, upgrade, or executive-summary machines.",
-      "downstreamPattern": "Output region [1545:1549] feeds Data Center Firmware Rollback Readiness for prescriptive 24/7 operations."
+      "downstreamPattern": "Output region [1545:1549] feeds Data Center Firmware Rollback Readiness for prescriptive 24/7 operations.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "24x7-operations",
+          "data-center"
+        ],
+        "family": "data-center-generated",
+        "machineCode": "dcx045",
+        "capabilityTags": [
+          "data-center-upgrade-wave-planner-ops-maintenance-upgrade",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "data-center-24x7-operations",
+          "data-center-generated",
+          "data-center-upgrade-wave-planner",
+          "dc-compute-agent",
+          "dcx045",
+          "dispatchable-agent",
+          "incident-response",
+          "upgrade-cycle",
+          "upgrade-wave-planner"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "24x7-operations",
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-5",
+          "data-center",
+          "data-center-24x7-operations",
+          "data-center-generated",
+          "data-center-upgrade-wave-planner",
+          "data-center-upgrade-wave-planner-ops-maintenance-upgrade",
+          "dc-compute-agent",
+          "dcx045",
+          "dispatchable-agent",
+          "incident-response",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "maintenance",
+          "startup-loadable",
+          "upgrade-cycle",
+          "upgrade-wave-planner"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

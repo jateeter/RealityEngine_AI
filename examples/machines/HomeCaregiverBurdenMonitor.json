@@ -9,14 +9,23 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [2031:2035]: [1,0,0,0]=CAREGIVER_BURNOUT, [0,1,0,0]=HIGH_BURDEN, [0,0,1,0]=MODERATE_BURDEN, [0,0,0,1]=CAREGIVER_COPING",
       "tags": [
+        "burden-assessment",
+        "caregiver-burden",
+        "caregiver-burnout",
+        "caregiver-support",
+        "ces-sequences",
+        "ces-sequences-3",
+        "child-health",
         "healthcare",
-        "home health",
-        "caregiver burden",
-        "caregiver burnout",
-        "pediatric",
+        "home-caregiver-burden-monitor",
+        "home-health",
+        "home-health-caregiver-support-burden-assessment",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
         "low-income",
-        "child health",
-        "kleene-plus"
+        "pediatric",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Primary caregivers of children with health or developmental challenges; single parents; low-income households with limited respite support",
@@ -29,7 +38,60 @@
       "upstreamMachines": [
         "PediatricNutritionMonitor (output [2003:2007])",
         "ChildDevelopmentMonitor (output [2007:2011])"
-      ]
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "healthcare",
+        "domainTags": [
+          "burden-assessment",
+          "caregiver-support",
+          "healthcare",
+          "home-health"
+        ],
+        "family": "home-caregiver-burden-monitor",
+        "machineCode": "home-caregiver-burden-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "caregiver-burden",
+          "caregiver-burnout",
+          "child-health",
+          "home-caregiver-burden-monitor",
+          "home-health-caregiver-support-burden-assessment",
+          "kleene-plus",
+          "low-income",
+          "pediatric"
+        ],
+        "integrationTags": [
+          "healthcare"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "burden-assessment",
+          "caregiver-burden",
+          "caregiver-burnout",
+          "caregiver-support",
+          "ces-sequences",
+          "ces-sequences-3",
+          "child-health",
+          "healthcare",
+          "home-caregiver-burden-monitor",
+          "home-health",
+          "home-health-caregiver-support-burden-assessment",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "low-income",
+          "pediatric",
+          "startup-loadable"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -40,16 +40,91 @@
         "operational confidence"
       ],
       "tags": [
-        "data-center",
         "24x7-operations",
-        "maintenance",
-        "upgrade-cycle",
+        "ai-trigger",
+        "ces-sequences",
+        "ces-sequences-5",
+        "compliance-evidence-collector",
+        "data-center",
+        "data-center-24x7-operations",
+        "data-center-compliance-evidence-collector",
+        "data-center-compliance-evidence-collector-ops-maintenance-upgrade",
+        "data-center-generated",
+        "dc-cooling-agent",
+        "dcx033",
+        "dispatchable-agent",
         "incident-response",
-        "compliance-evidence-collector"
+        "input-sequences",
+        "input-sequences-6",
+        "machine-interconnect",
+        "maintenance",
+        "startup-loadable",
+        "upgrade-cycle"
       ],
       "sequenceCount": 5,
       "reuseGuideline": "Use as a 24/7 operational guardrail. Map telemetry, CMDB, change, or AI-dispatch signals into the 4D input lane; map outputs to incident, maintenance, upgrade, or executive-summary machines.",
-      "downstreamPattern": "Output region [1497:1501] feeds Data Center Vulnerability Exposure Manager for prescriptive 24/7 operations."
+      "downstreamPattern": "Output region [1497:1501] feeds Data Center Vulnerability Exposure Manager for prescriptive 24/7 operations.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "24x7-operations",
+          "data-center"
+        ],
+        "family": "data-center-generated",
+        "machineCode": "dcx033",
+        "capabilityTags": [
+          "compliance-evidence-collector",
+          "data-center-compliance-evidence-collector",
+          "data-center-compliance-evidence-collector-ops-maintenance-upgrade",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "ai-trigger",
+          "data-center-24x7-operations",
+          "data-center-generated",
+          "dc-cooling-agent",
+          "dcx033",
+          "dispatchable-agent",
+          "incident-response",
+          "upgrade-cycle"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-5",
+          "input-sequences",
+          "input-sequences-6",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "24x7-operations",
+          "ai-trigger",
+          "ces-sequences",
+          "ces-sequences-5",
+          "compliance-evidence-collector",
+          "data-center",
+          "data-center-24x7-operations",
+          "data-center-compliance-evidence-collector",
+          "data-center-compliance-evidence-collector-ops-maintenance-upgrade",
+          "data-center-generated",
+          "dc-cooling-agent",
+          "dcx033",
+          "dispatchable-agent",
+          "incident-response",
+          "input-sequences",
+          "input-sequences-6",
+          "machine-interconnect",
+          "maintenance",
+          "startup-loadable",
+          "upgrade-cycle"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

@@ -35,17 +35,89 @@
         "commercialization readiness"
       ],
       "tags": [
-        "legal-services",
-        "intellectual-property",
-        "provisional-patent",
-        "trademark",
+        "ai-trigger",
+        "attorney-review-agent",
+        "ces-sequences",
+        "ces-sequences-4",
         "copyright",
+        "dispatchable-agent",
+        "input-sequences",
+        "input-sequences-5",
+        "intellectual-property",
+        "legal-services",
+        "legal-services-generated",
+        "legal-services-provisional-patent-filing",
+        "legal-services-provisional-patent-filing-twelve-month-conversion-docket",
+        "lsx010",
         "productization",
+        "provisional-patent",
         "provisional-patent-filing",
+        "startup-loadable",
+        "trademark",
         "twelve-month-conversion-docket"
       ],
       "sequenceCount": 4,
-      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates."
+      "reuseGuideline": "Map legal intake, docket, evidence, filing-portal, and AI review signals into the 4D input lane. Route outputs to attorney review, workstep optimization, docket updates, or product launch gates.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "legal-services",
+        "domainTags": [
+          "legal-services",
+          "provisional-patent-filing"
+        ],
+        "family": "legal-services-generated",
+        "machineCode": "lsx010",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-trigger",
+          "attorney-review-agent",
+          "copyright",
+          "dispatchable-agent",
+          "intellectual-property",
+          "legal-services-generated",
+          "legal-services-provisional-patent-filing",
+          "legal-services-provisional-patent-filing-twelve-month-conversion-docket",
+          "lsx010",
+          "productization",
+          "provisional-patent",
+          "trademark",
+          "twelve-month-conversion-docket"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-trigger",
+          "attorney-review-agent",
+          "ces-sequences",
+          "ces-sequences-4",
+          "copyright",
+          "dispatchable-agent",
+          "input-sequences",
+          "input-sequences-5",
+          "intellectual-property",
+          "legal-services",
+          "legal-services-generated",
+          "legal-services-provisional-patent-filing",
+          "legal-services-provisional-patent-filing-twelve-month-conversion-docket",
+          "lsx010",
+          "productization",
+          "provisional-patent",
+          "provisional-patent-filing",
+          "startup-loadable",
+          "trademark",
+          "twelve-month-conversion-docket"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

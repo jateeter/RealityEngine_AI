@@ -23,12 +23,26 @@
       "outputSpace": "4D binary at [44:48]: [1,0,0,0]=URGENT_STABILIZE, [0,1,0,0]=OPTIMIZE_OPERATION, [0,0,1,0]=PREVENTIVE_MAINTENANCE, [0,0,0,1]=OPERATING_WINDOW_OK",
       "tags": [
         "agriculture",
-        "aquaculture",
-        "water-quality-stability",
+        "agriculture-aquaculture",
+        "agriculture-aquaculture-water-quality-stability",
+        "agriculture-generated",
+        "agx001",
+        "ai-trigger",
         "ai-triggers",
+        "aquaculture",
+        "aquaculture-water-quality-agent",
+        "aquaculture-water-quality-stability-risk-maintenance-or-optimization",
+        "ces-sequences",
+        "ces-sequences-4",
+        "dispatchable-agent",
         "dispatchable-agents",
+        "input-sequences",
+        "input-sequences-5",
+        "machine-interconnect",
+        "maintenance",
         "operational-management",
-        "maintenance"
+        "startup-loadable",
+        "water-quality-stability"
       ],
       "sequenceCount": 4,
       "sensorNormalization": {
@@ -46,7 +60,70 @@
       "downstreamMachines": [
         "Agriculture Aquaculture Biofilter Health"
       ],
-      "downstreamPattern": "Output region [44:48] feeds Agriculture Aquaculture Biofilter Health for predictive agriculture management."
+      "downstreamPattern": "Output region [44:48] feeds Agriculture Aquaculture Biofilter Health for predictive agriculture management.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "aquaculture"
+        ],
+        "family": "agriculture-generated",
+        "machineCode": "agx001",
+        "capabilityTags": [
+          "ai-triggers",
+          "aquaculture-water-quality-stability-risk-maintenance-or-optimization",
+          "dispatchable-agents",
+          "maintenance"
+        ],
+        "workflowTags": [
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-water-quality-stability",
+          "agriculture-generated",
+          "agx001",
+          "ai-trigger",
+          "aquaculture-water-quality-agent",
+          "dispatchable-agent",
+          "operational-management",
+          "water-quality-stability"
+        ],
+        "integrationTags": [
+          "ai-trigger",
+          "dispatchable-agent",
+          "machine-interconnect"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-4",
+          "input-sequences",
+          "input-sequences-5",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "agriculture",
+          "agriculture-aquaculture",
+          "agriculture-aquaculture-water-quality-stability",
+          "agriculture-generated",
+          "agx001",
+          "ai-trigger",
+          "ai-triggers",
+          "aquaculture",
+          "aquaculture-water-quality-agent",
+          "aquaculture-water-quality-stability-risk-maintenance-or-optimization",
+          "ces-sequences",
+          "ces-sequences-4",
+          "dispatchable-agent",
+          "dispatchable-agents",
+          "input-sequences",
+          "input-sequences-5",
+          "machine-interconnect",
+          "maintenance",
+          "operational-management",
+          "startup-loadable",
+          "water-quality-stability"
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
