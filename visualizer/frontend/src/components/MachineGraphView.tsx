@@ -10,6 +10,8 @@ import * as d3 from 'd3';
 import { useVisualizerStore } from '../store';
 import { classifyMachine, DOMAINS, DOMAIN_ORDER, DomainId } from './machineDomains';
 import { vizTheme } from '../styles/vizTheme';
+import { Graph3DView } from './Graph3DView';
+import { Graph3DToggle } from './Graph3DToggle';
 import './MachineGraphView.css';
 import './VisLegend.css';
 
@@ -421,6 +423,7 @@ export const MachineGraphView: React.FC = () => {
   // D3 objects that must persist across step updates
   const nodeSelRef      = useRef<d3.Selection<SVGGElement, MachineNode, SVGGElement, unknown> | null>(null);
   const linkSelRef      = useRef<d3.Selection<SVGPathElement, any, SVGGElement, unknown> | null>(null);
+  const linkLabelSelRef = useRef<d3.Selection<SVGTextElement, any, SVGGElement, unknown> | null>(null);
   const stepTextRef     = useRef<d3.Selection<SVGTextElement, MachineNode, SVGGElement, unknown> | null>(null);
   const simRef          = useRef<d3.Simulation<MachineNode & d3.SimulationNodeDatum, undefined> | null>(null);
   const zoomTransformRef  = useRef<d3.ZoomTransform | null>(null);
@@ -436,6 +439,7 @@ export const MachineGraphView: React.FC = () => {
   const [error,       setError]       = useState<string | null>(null);
   const [dimensions,  setDimensions]  = useState({ width: 1200, height: 600 });
   const [legendOpen,  setLegendOpen]  = useState(false);
+  const [is3D,        setIs3D]        = useState(false);
   // Incrementing this forces a full layout rebuild (Reset Layout)
   const [layoutEpoch, setLayoutEpoch] = useState(0);
 
@@ -450,6 +454,8 @@ export const MachineGraphView: React.FC = () => {
   const loadMachine      = useVisualizerStore(state => state.loadMachine);
   const setGraphZoomState = useVisualizerStore(state => state.setGraphZoomState);
   const selectedDomains  = useVisualizerStore(state => state.selectedDomains);
+  const selectedDomainsRef = useRef(selectedDomains);
+  useEffect(() => { selectedDomainsRef.current = selectedDomains; }, [selectedDomains]);
   const toggleDomain     = useVisualizerStore(state => state.toggleDomain);
   const setAllDomains    = useVisualizerStore(state => state.setAllDomains);
   const loadMachineRef = useRef(loadMachine);
@@ -560,6 +566,47 @@ export const MachineGraphView: React.FC = () => {
 
   useEffect(() => { showTooltipRef.current = showTooltip; }, [showTooltip]);
 
+  // ── Shared domain-visibility filter ──────────────────────────────────────────
+  // Called after layout rebuild AND whenever selectedDomains changes so that
+  // nodes, edges (including cross-domain arcs), edge labels, hulls, and domain
+  // anchor labels are all toggled consistently.
+  const applyDomainFilter = useCallback(() => {
+    if (!svgRef.current) return;
+    const domains = selectedDomainsRef.current;
+    const selected = new Set(domains);
+    const allSelected = domains.length === DOMAIN_ORDER.length;
+
+    if (nodeSelRef.current) {
+      nodeSelRef.current
+        .style('opacity', (d: MachineNode) =>
+          allSelected || selected.has(d.domain ?? 'general') ? 1 : 0.04)
+        .style('pointer-events', (d: MachineNode) =>
+          allSelected || selected.has(d.domain ?? 'general') ? 'all' : 'none');
+    }
+
+    const isLinkVisible = (d: any): boolean => {
+      if (allSelected) return true;
+      const srcDom = (typeof d.source === 'object' ? d.source.domain : null) ?? 'general';
+      const tgtDom = (typeof d.target === 'object' ? d.target.domain : null) ?? 'general';
+      return selected.has(srcDom) && selected.has(tgtDom);
+    };
+
+    if (linkSelRef.current) {
+      linkSelRef.current
+        .style('display', (d: any) => isLinkVisible(d) ? null : 'none');
+    }
+    if (linkLabelSelRef.current) {
+      linkLabelSelRef.current
+        .style('display', (d: any) => isLinkVisible(d) ? null : 'none');
+    }
+    d3.select(svgRef.current)
+      .selectAll<SVGPathElement, { domainId: DomainId }>('path.domain-hull')
+      .style('opacity', d => allSelected || selected.has(d.domainId) ? 1 : 0);
+    d3.select(svgRef.current)
+      .selectAll<SVGTextElement, DomainId>('.domain-labels text')
+      .style('opacity', (d: DomainId) => allSelected || selected.has(d) ? 1 : 0);
+  }, []);
+
   // ── Layout effect — only runs on structural changes, NOT on each step ──────
   useEffect(() => {
     if (!svgRef.current || !graphData || graphData.nodes.length === 0) return;
@@ -568,6 +615,7 @@ export const MachineGraphView: React.FC = () => {
     svg.selectAll('*').remove();
     nodeSelRef.current  = null;
     linkSelRef.current  = null;
+    linkLabelSelRef.current = null;
     stepTextRef.current = null;
     simRef.current?.stop();
     simRef.current = null;
@@ -819,6 +867,8 @@ export const MachineGraphView: React.FC = () => {
           : '';
       });
 
+    linkLabelSelRef.current = linkLabels as any;
+
     // ── Nodes ──────────────────────────────────────────────────────────────
     const node = g.append('g')
       .selectAll<SVGGElement, MachineNode & d3.SimulationNodeDatum>('g')
@@ -1003,6 +1053,10 @@ export const MachineGraphView: React.FC = () => {
       }
     });
 
+    // Apply current domain visibility to the freshly created elements so arcs
+    // for unchecked domains don't flash visible until the filter effect re-runs.
+    applyDomainFilter();
+
     return () => { simulation.stop(); };
     // layoutEpoch is intentionally included so Reset Layout triggers a rebuild
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1071,32 +1125,8 @@ export const MachineGraphView: React.FC = () => {
 
   // ── Domain visibility filter ────────────────────────────────────────────────
   useEffect(() => {
-    if (!svgRef.current) return;
-    const selected = new Set(selectedDomains);
-    const allSelected = selectedDomains.length === DOMAIN_ORDER.length;
-
-    if (nodeSelRef.current) {
-      nodeSelRef.current
-        .style('opacity', (d: MachineNode) =>
-          allSelected || selected.has(d.domain ?? 'general') ? 1 : 0.04)
-        .style('pointer-events', (d: MachineNode) =>
-          allSelected || selected.has(d.domain ?? 'general') ? 'all' : 'none');
-    }
-    if (linkSelRef.current) {
-      linkSelRef.current.style('opacity', (d: any) => {
-        if (allSelected) return 1;
-        const srcDom = (typeof d.source === 'object' ? d.source.domain : null) ?? 'general';
-        const tgtDom = (typeof d.target === 'object' ? d.target.domain : null) ?? 'general';
-        return selected.has(srcDom) && selected.has(tgtDom) ? 1 : 0.04;
-      });
-    }
-    d3.select(svgRef.current)
-      .selectAll<SVGPathElement, { domainId: DomainId }>('path.domain-hull')
-      .style('opacity', d => allSelected || selected.has(d.domainId) ? 1 : 0);
-    d3.select(svgRef.current)
-      .selectAll<SVGTextElement, DomainId>('.domain-labels text')
-      .style('opacity', (d: DomainId) => allSelected || selected.has(d) ? 1 : 0);
-  }, [selectedDomains]);
+    applyDomainFilter();
+  }, [selectedDomains, applyDomainFilter]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   if (error) {
@@ -1126,8 +1156,14 @@ export const MachineGraphView: React.FC = () => {
     <div className="machine-graph-view" ref={containerRef}>
       <div className="machine-graph-svg-wrapper">
 
+        <Graph3DToggle is3D={is3D} onToggle={() => setIs3D(v => !v)} />
+
+        {is3D && (
+          <Graph3DView mode="machines" />
+        )}
+
         {/* ── Working overlay — shown while simulation settles ── */}
-        {!isReady && (
+        {!is3D && !isReady && (
           <div className="mgv-working-overlay">
             <div className="mgv-working-inner">
               <div className="mgv-working-rings">
@@ -1225,9 +1261,9 @@ export const MachineGraphView: React.FC = () => {
           </div>
         </div>
 
-        <svg ref={svgRef} className="machine-graph-svg" style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.4s ease' }}></svg>
+        <svg ref={svgRef} className="machine-graph-svg" style={{ opacity: isReady && !is3D ? 1 : 0, transition: 'opacity 0.4s ease', display: is3D ? 'none' : undefined }}></svg>
 
-        {tooltip && (
+        {!is3D && tooltip && (
           <SequenceTooltip
             tooltip={tooltip}
             onMouseEnter={() => {

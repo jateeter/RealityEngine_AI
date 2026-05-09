@@ -20,6 +20,8 @@ import {
   DomainId,
 } from './machineDomains';
 import { vizTheme } from '../styles/vizTheme';
+import { Graph3DView } from './Graph3DView';
+import { Graph3DToggle } from './Graph3DToggle';
 
 interface Machine {
   id: string;
@@ -102,6 +104,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
     lastOutput?: number[];
   }>>({});
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const [is3D, setIs3D] = useState(false);
 
   // Domain filter — each entry enables/disables a whole domain cluster.
   const [enabledDomains, setEnabledDomains] = useState<Record<DomainId, boolean>>({
@@ -879,10 +882,16 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
   return (
     <div ref={containerRef} className="machine-interconnection-graph">
-      <svg ref={svgRef} className="graph-svg"></svg>
+      <Graph3DToggle is3D={is3D} onToggle={() => setIs3D(v => !v)} />
+
+      {is3D && (
+        <Graph3DView mode="machines" />
+      )}
+
+      <svg ref={svgRef} className="graph-svg" style={{ display: is3D ? 'none' : undefined }}></svg>
 
       {/* Enhanced tooltip */}
-      <div ref={tooltipRef} className="node-tooltip" style={{ display: 'none' }}></div>
+      {!is3D && <div ref={tooltipRef} className="node-tooltip" style={{ display: 'none' }}></div>}
 
       {/* Perceptual space status indicator */}
       {perceptualSpace.length > 0 && (
