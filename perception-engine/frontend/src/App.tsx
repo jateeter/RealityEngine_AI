@@ -118,6 +118,22 @@ export default function App() {
     await updateSource(id, { active });
   }, []);
 
+  const handleToggleAllSources = useCallback(async (active: boolean) => {
+    const current = state?.sources ?? [];
+    const targets = current.filter(s => s.active !== active);
+    if (targets.length === 0) return;
+    // Optimistic update so the checkbox flips immediately; the WS state-update
+    // broadcast will reconcile with the server's authoritative state when each
+    // PATCH lands.
+    setState(prev => prev ? {
+      ...prev,
+      sources: prev.sources.map(s => s.active === active ? s : { ...s, active }),
+    } : prev);
+    await Promise.all(targets.map(s => updateSource(s.id, { active }).catch(err => {
+      console.error(`Failed to toggle source ${s.id}:`, err);
+    })));
+  }, [state?.sources]);
+
   const handleMatchAlgorithmChange = useCallback(async (algo: MatchAlgorithm) => {
     await setMatchAlgorithm(algo);
     // State will update via WebSocket state-update broadcast
@@ -143,6 +159,7 @@ export default function App() {
           onAdd={() => setShowAddModal(true)}
           onDelete={handleDeleteSource}
           onToggle={handleToggleSource}
+          onToggleAll={handleToggleAllSources}
           onHover={setHoveredSourceId}
           hoveredSourceId={hoveredSourceId}
         />
