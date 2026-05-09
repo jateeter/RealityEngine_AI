@@ -9,6 +9,7 @@
       "author": "Reality Engine",
       "outputSpace": "4D binary at [1995:1999]: [1,0,0,0]=FOOD_CRISIS, [0,1,0,0]=FOOD_INSECURE, [0,0,1,0]=ASSISTANCE_NEEDED, [0,0,0,1]=FOOD_SECURE",
       "tags": [
+        "benefits-eligibility",
         "ces-sequences",
         "ces-sequences-3",
         "food-insecurity",
@@ -21,10 +22,8 @@
         "input-sequences-2",
         "kleene-plus",
         "low-income",
-        "snap",
         "social-determinants",
-        "startup-loadable",
-        "wic"
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Low- and medium-income households; families with children; adults on fixed incomes",
@@ -49,16 +48,14 @@
         "machineCode": "home-food-security-monitor",
         "capabilityTags": [],
         "workflowTags": [
+          "benefits-eligibility",
           "food-insecurity",
           "home-food-security-monitor",
           "home-health-social-determinants-food-security",
           "kleene-plus",
-          "low-income",
-          "benefits-eligibility"
+          "low-income"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-3",
@@ -67,6 +64,7 @@
           "startup-loadable"
         ],
         "allTags": [
+          "benefits-eligibility",
           "ces-sequences",
           "ces-sequences-3",
           "food-insecurity",
@@ -79,10 +77,8 @@
           "input-sequences-2",
           "kleene-plus",
           "low-income",
-          "snap",
           "social-determinants",
-          "startup-loadable",
-          "wic"
+          "startup-loadable"
         ]
       }
     },

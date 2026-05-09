@@ -27,7 +27,7 @@
         "Mark ip metrics optimization ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2835:2839]",
-      "outputSpace": "4D binary at [2839:2843]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2435:2439]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -51,6 +51,7 @@
         "legal-services-commercialization-and-enforcement-ip-metrics-optimization",
         "legal-services-generated",
         "lsx100",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -80,14 +81,14 @@
           "intellectual-property",
           "legal-services-commercialization-and-enforcement",
           "legal-services-generated",
-          "lsx100",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -113,12 +114,54 @@
           "legal-services-commercialization-and-enforcement-ip-metrics-optimization",
           "legal-services-generated",
           "lsx100",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Commercialization And Enforcement Post Launch IP Review"
+      ],
+      "upstreamMachine": "Legal Services Commercialization And Enforcement Post Launch IP Review",
+      "downstreamMachines": [
+        "Legal Services Portfolio Operations Portfolio Executive Summary"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Portfolio Operations Portfolio Executive Summary",
+          "targetInputSpace": "[2435:2439]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "perceptual-output-overlap",
+          "action": "portfolio-summary-and-learning",
+          "targetMachine": "Legal Services Portfolio Operations Portfolio Executive Summary",
+          "targetInputSpace": "[2435:2439]",
+          "description": "Common legal workflow action is backed by an output-to-input perceptual-space overlap."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -127,7 +170,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2839,
+        "offset": 2435,
         "length": 4
       }
     },

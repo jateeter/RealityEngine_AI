@@ -22,8 +22,8 @@
         "input-sequences-1",
         "kleene-plus",
         "low-income",
+        "medication",
         "medication-access",
-        "medication-adherence",
         "pharmacy-access",
         "startup-loadable"
       ],
@@ -59,9 +59,7 @@
           "medication",
           "pharmacy-access"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-3",
@@ -83,8 +81,8 @@
           "input-sequences-1",
           "kleene-plus",
           "low-income",
+          "medication",
           "medication-access",
-          "medication-adherence",
           "pharmacy-access",
           "startup-loadable"
         ]

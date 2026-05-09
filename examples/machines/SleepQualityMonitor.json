@@ -12,6 +12,7 @@
       "eventSpace": "2D binary: [adequate_duration, fragmented]",
       "outputSpace": "2D binary: {[0,0]=RESTFUL, [0,1]=DISTURBED, [1,1]=POOR}",
       "tags": [
+        "anomaly-detection",
         "ces-sequences",
         "ces-sequences-3",
         "elder-care",
@@ -22,7 +23,6 @@
         "sleep",
         "sleep-quality-monitor",
         "startup-loadable",
-        "trend",
         "trigger",
         "wellness"
       ],
@@ -79,14 +79,12 @@
           "in-home-monitoring"
         ],
         "workflowTags": [
+          "anomaly-detection",
           "elder-care",
           "sleep",
-          "anomaly-detection",
           "trigger"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-3",
@@ -95,6 +93,7 @@
           "startup-loadable"
         ],
         "allTags": [
+          "anomaly-detection",
           "ces-sequences",
           "ces-sequences-3",
           "elder-care",
@@ -105,7 +104,6 @@
           "sleep",
           "sleep-quality-monitor",
           "startup-loadable",
-          "trend",
           "trigger",
           "wellness"
         ]

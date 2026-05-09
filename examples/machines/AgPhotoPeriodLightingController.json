@@ -11,6 +11,7 @@
       "tags": [
         "ag-photo-period-lighting-controller",
         "agriculture",
+        "agriculture-indoor-grow-house",
         "agriculture-photoperiod-lighting-control",
         "ces-sequences",
         "ces-sequences-3",
@@ -52,6 +53,7 @@
         "capabilityTags": [],
         "workflowTags": [
           "agriculture-indoor-grow-house",
+          "agriculture-photoperiod-lighting-control",
           "dli",
           "indoor-growing",
           "kleene-plus",
@@ -72,6 +74,7 @@
         "allTags": [
           "ag-photo-period-lighting-controller",
           "agriculture",
+          "agriculture-indoor-grow-house",
           "agriculture-photoperiod-lighting-control",
           "ces-sequences",
           "ces-sequences-3",

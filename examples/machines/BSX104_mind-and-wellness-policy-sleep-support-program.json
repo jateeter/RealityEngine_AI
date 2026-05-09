@@ -59,6 +59,7 @@
         "mind-and-wellness-policy",
         "occupant-health",
         "predictive-optimization",
+        "sleep",
         "sleep-support-program",
         "startup-loadable",
         "verification",
@@ -89,7 +90,6 @@
         ],
         "workflowTags": [
           "ai-trigger",
-          "bsx104",
           "built-space-well-generated",
           "built-space-well-mind-and-wellness-policy",
           "dispatchable-agent",
@@ -129,6 +129,7 @@
           "mind-and-wellness-policy",
           "occupant-health",
           "predictive-optimization",
+          "sleep",
           "sleep-support-program",
           "startup-loadable",
           "verification",

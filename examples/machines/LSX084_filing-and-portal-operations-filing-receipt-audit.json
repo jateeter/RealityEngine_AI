@@ -27,7 +27,7 @@
         "Mark filing receipt audit ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2707:2711]",
-      "outputSpace": "4D binary at [2711:2715]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2715:2719]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-filing-and-portal-operations-filing-receipt-audit",
         "legal-services-generated",
         "lsx084",
+        "machine-interconnect",
         "product-counsel-agent",
         "productization",
         "provisional-patent",
@@ -77,7 +78,6 @@
           "intellectual-property",
           "legal-services-filing-and-portal-operations",
           "legal-services-generated",
-          "lsx084",
           "product-counsel-agent",
           "productization",
           "provisional-patent",
@@ -85,7 +85,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -110,13 +111,55 @@
           "legal-services-filing-and-portal-operations-filing-receipt-audit",
           "legal-services-generated",
           "lsx084",
+          "machine-interconnect",
           "product-counsel-agent",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Filing And Portal Operations Fee Payment Verification"
+      ],
+      "upstreamMachine": "Legal Services Filing And Portal Operations Fee Payment Verification",
+      "downstreamMachines": [
+        "Legal Services Filing And Portal Operations Trademark Account Identity Gate"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Filing And Portal Operations Trademark Account Identity Gate",
+          "targetInputSpace": "[2715:2719]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "docket-integrity",
+          "targetMachine": "Legal Services Portfolio Operations Docket Integrity Monitor",
+          "targetInputSpace": "[2387:2391]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -125,7 +168,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2711,
+        "offset": 2715,
         "length": 4
       }
     },

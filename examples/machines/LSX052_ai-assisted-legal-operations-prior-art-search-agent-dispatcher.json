@@ -27,7 +27,7 @@
         "Mark prior art search agent dispatcher ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2451:2455]",
-      "outputSpace": "4D binary at [2455:2459]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2459:2463]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-ai-assisted-legal-operations-prior-art-search-agent-dispatcher",
         "legal-services-generated",
         "lsx052",
+        "machine-interconnect",
         "prior-art-search-agent-dispatcher",
         "productization",
         "provisional-patent",
@@ -80,14 +81,14 @@
           "intellectual-property",
           "legal-services-ai-assisted-legal-operations",
           "legal-services-generated",
-          "lsx052",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -111,6 +112,7 @@
           "legal-services-ai-assisted-legal-operations-prior-art-search-agent-dispatcher",
           "legal-services-generated",
           "lsx052",
+          "machine-interconnect",
           "prior-art-search-agent-dispatcher",
           "productization",
           "provisional-patent",
@@ -118,7 +120,43 @@
           "trademark",
           "trademark-workflow-agent"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Provisional Patent Filing Prior Art Search Triage",
+        "Legal Services Trademark Workflow Knockout Search Review",
+        "Legal Services AI Assisted Legal Operations Disclosure Completeness Scorer"
+      ],
+      "upstreamMachine": "Legal Services Provisional Patent Filing Prior Art Search Triage",
+      "downstreamMachines": [
+        "Legal Services AI Assisted Legal Operations Drafting Checklist Agent"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services AI Assisted Legal Operations Drafting Checklist Agent",
+          "targetInputSpace": "[2459:2463]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -127,7 +165,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2455,
+        "offset": 2459,
         "length": 4
       }
     },

@@ -27,7 +27,7 @@
         "Mark competitive watch search ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2771:2775]",
-      "outputSpace": "4D binary at [2775:2779]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2779:2783]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-commercialization-and-enforcement-competitive-watch-search",
         "legal-services-generated",
         "lsx092",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -79,14 +80,14 @@
           "intellectual-property",
           "legal-services-commercialization-and-enforcement",
           "legal-services-generated",
-          "lsx092",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -111,13 +112,55 @@
           "legal-services-commercialization-and-enforcement-competitive-watch-search",
           "legal-services-generated",
           "lsx092",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark",
           "trademark-workflow-agent"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Commercialization And Enforcement Freedom To Operate Intake"
+      ],
+      "upstreamMachine": "Legal Services Commercialization And Enforcement Freedom To Operate Intake",
+      "downstreamMachines": [
+        "Legal Services Commercialization And Enforcement Notice Letter Evidence Gate"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Commercialization And Enforcement Notice Letter Evidence Gate",
+          "targetInputSpace": "[2779:2783]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "perceptual-output-overlap",
+          "action": "commercialization-and-enforcement",
+          "targetMachine": "Legal Services Commercialization And Enforcement Notice Letter Evidence Gate",
+          "targetInputSpace": "[2779:2783]",
+          "description": "Common legal workflow action is backed by an output-to-input perceptual-space overlap."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -126,7 +169,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2775,
+        "offset": 2779,
         "length": 4
       }
     },

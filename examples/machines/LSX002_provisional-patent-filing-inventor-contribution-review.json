@@ -27,7 +27,7 @@
         "Mark inventor contribution review ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2051:2055]",
-      "outputSpace": "4D binary at [2055:2059]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2059:2063]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-provisional-patent-filing",
         "legal-services-provisional-patent-filing-inventor-contribution-review",
         "lsx002",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "provisional-patent-filing",
@@ -79,14 +80,14 @@
           "inventor-contribution-review",
           "legal-services-generated",
           "legal-services-provisional-patent-filing",
-          "lsx002",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -110,6 +111,7 @@
           "legal-services-provisional-patent-filing",
           "legal-services-provisional-patent-filing-inventor-contribution-review",
           "lsx002",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "provisional-patent-filing",
@@ -117,7 +119,41 @@
           "trademark",
           "trademark-workflow-agent"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Provisional Patent Filing Invention Intake"
+      ],
+      "upstreamMachine": "Legal Services Provisional Patent Filing Invention Intake",
+      "downstreamMachines": [
+        "Legal Services Provisional Patent Filing Ownership And Assignment Readiness"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Provisional Patent Filing Ownership And Assignment Readiness",
+          "targetInputSpace": "[2059:2063]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -126,7 +162,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2055,
+        "offset": 2059,
         "length": 4
       }
     },

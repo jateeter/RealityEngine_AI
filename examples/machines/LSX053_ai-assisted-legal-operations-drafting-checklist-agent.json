@@ -27,7 +27,7 @@
         "Mark drafting checklist agent ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2459:2463]",
-      "outputSpace": "4D binary at [2463:2467]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2467:2471]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -51,6 +51,7 @@
         "legal-services-ai-assisted-legal-operations-drafting-checklist-agent",
         "legal-services-generated",
         "lsx053",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -79,14 +80,14 @@
           "intellectual-property",
           "legal-services-ai-assisted-legal-operations",
           "legal-services-generated",
-          "lsx053",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -112,12 +113,49 @@
           "legal-services-ai-assisted-legal-operations-drafting-checklist-agent",
           "legal-services-generated",
           "lsx053",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Provisional Patent Filing Specification Support Builder",
+        "Legal Services Provisional Patent Filing Claim Strategy Placeholder",
+        "Legal Services AI Assisted Legal Operations Prior Art Search Agent Dispatcher"
+      ],
+      "upstreamMachine": "Legal Services Provisional Patent Filing Specification Support Builder",
+      "downstreamMachines": [
+        "Legal Services AI Assisted Legal Operations Risk Memo Synthesizer"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services AI Assisted Legal Operations Risk Memo Synthesizer",
+          "targetInputSpace": "[2467:2471]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -126,7 +164,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2463,
+        "offset": 2467,
         "length": 4
       }
     },

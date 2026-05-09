@@ -59,9 +59,7 @@
           "low-income",
           "self-management"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-4",

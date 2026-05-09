@@ -52,14 +52,13 @@
       "tags": [
         "anomaly-detection",
         "assisted-living-daily-care",
-        "binary",
         "ces-sequences",
         "ces-sequences-7",
-        "daily-care",
         "daily-patient-care",
+        "digital-logic-generated",
         "elder-care",
-        "fall-detection",
         "health-personal",
+        "health-personal-operations",
         "healthcare-operations",
         "healthcare-operations-assisted-living-daily-care",
         "input-sequences",
@@ -85,16 +84,14 @@
         ],
         "workflowTags": [
           "anomaly-detection",
+          "daily-patient-care",
           "digital-logic-generated",
           "elder-care",
-          "daily-patient-care",
           "health-personal-operations",
           "medication",
           "routine"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-7",
@@ -105,14 +102,13 @@
         "allTags": [
           "anomaly-detection",
           "assisted-living-daily-care",
-          "binary",
           "ces-sequences",
           "ces-sequences-7",
-          "daily-care",
           "daily-patient-care",
+          "digital-logic-generated",
           "elder-care",
-          "fall-detection",
           "health-personal",
+          "health-personal-operations",
           "healthcare-operations",
           "healthcare-operations-assisted-living-daily-care",
           "input-sequences",

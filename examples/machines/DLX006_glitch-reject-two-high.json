@@ -52,7 +52,6 @@
           "asic-pattern",
           "digital-logic-generated",
           "digital-logic-infrastructure",
-          "dlx006",
           "glitch-reject-two-high",
           "logical-infrastructure",
           "regular-expression"

@@ -145,7 +145,13 @@ ESTABLISHED_SET = set(ESTABLISHED)
 REMOVE_PATTERNS = [
     # ag-* internal function labels
     re.compile(r'^ag-[a-z]'),
-    # agriculture-<domain>-<specific-detail> compound tags with 3+ segments
+    # agx0001-style agriculture machine state codes (no dash, digit suffix)
+    re.compile(r'^agx\d+$'),
+    # Other machine-code state abbreviations: AGX, BSX, CSX, DCX, DLX, HSPH,
+    # LBL, LSX, TFX followed by digits.  These are filename-derived identifiers
+    # not taxonomy.
+    re.compile(r'^(?:agx|bsx|csx|dcx|dlx|hsph|lbl|lsx|tfx)\d+$'),
+    # agriculture-<domain>-<specific-detail> compound tags with 3+ segments.
     # The top-level agriculture-aquaculture and agriculture-indoor-grow-house
     # are KEPT (they're established); only the over-specific variants are removed.
     re.compile(r'^agriculture-(?:aquaculture|indoor-grow-house|atmospheric|nutrient)-\w+-\w+'),

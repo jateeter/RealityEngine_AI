@@ -9,9 +9,9 @@
       "author": "Reality Engine",
       "outputSpace": "2D binary at [1375:1377]: [1,0]=THERMAL_ALARM, [0,1]=THERMAL_SAFE",
       "tags": [
+        "anomaly-detection",
         "ces-sequences",
         "ces-sequences-2",
-        "continuous",
         "data-center",
         "data-center-thermal-escalation",
         "dc-thermal-escalation-detector",
@@ -81,9 +81,9 @@
           "startup-loadable"
         ],
         "allTags": [
+          "anomaly-detection",
           "ces-sequences",
           "ces-sequences-2",
-          "continuous",
           "data-center",
           "data-center-thermal-escalation",
           "dc-thermal-escalation-detector",

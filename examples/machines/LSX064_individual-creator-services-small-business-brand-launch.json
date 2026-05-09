@@ -27,7 +27,7 @@
         "Mark small business brand launch ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2547:2551]",
-      "outputSpace": "4D binary at [2551:2555]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2555:2559]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-individual-creator-services",
         "legal-services-individual-creator-services-small-business-brand-launch",
         "lsx064",
+        "machine-interconnect",
         "product-counsel-agent",
         "productization",
         "provisional-patent",
@@ -76,7 +77,6 @@
           "intellectual-property",
           "legal-services-generated",
           "legal-services-individual-creator-services",
-          "lsx064",
           "product-counsel-agent",
           "productization",
           "provisional-patent",
@@ -85,7 +85,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -109,6 +110,7 @@
           "legal-services-individual-creator-services",
           "legal-services-individual-creator-services-small-business-brand-launch",
           "lsx064",
+          "machine-interconnect",
           "product-counsel-agent",
           "productization",
           "provisional-patent",
@@ -116,7 +118,48 @@
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Individual Creator Services Creator Copyright Bundle"
+      ],
+      "upstreamMachine": "Legal Services Individual Creator Services Creator Copyright Bundle",
+      "downstreamMachines": [
+        "Legal Services Individual Creator Services Independent Contractor Cleanup"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Individual Creator Services Independent Contractor Cleanup",
+          "targetInputSpace": "[2555:2559]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "conflict-and-engagement-control",
+          "targetMachine": "Legal Services Portfolio Operations Conflict Check Gate",
+          "targetInputSpace": "[2371:2375]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -125,7 +168,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2551,
+        "offset": 2555,
         "length": 4
       }
     },

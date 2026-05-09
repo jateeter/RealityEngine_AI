@@ -27,7 +27,7 @@
         "Mark product ip map ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2283:2287]",
-      "outputSpace": "4D binary at [2287:2291]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2291:2295]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -48,6 +48,7 @@
         "legal-services-productization-ip-governance",
         "legal-services-productization-ip-governance-product-ip-map",
         "lsx031",
+        "machine-interconnect",
         "patent-workflow-agent",
         "product-ip-map",
         "productization",
@@ -80,7 +81,6 @@
           "dispatchable-agent",
           "intellectual-property",
           "legal-services-generated",
-          "lsx031",
           "product-ip-map",
           "productization",
           "provisional-patent",
@@ -88,7 +88,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -111,6 +112,7 @@
           "legal-services-productization-ip-governance",
           "legal-services-productization-ip-governance-product-ip-map",
           "lsx031",
+          "machine-interconnect",
           "patent-workflow-agent",
           "product-ip-map",
           "productization",
@@ -119,7 +121,53 @@
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [],
+      "upstreamMachine": "",
+      "downstreamMachines": [
+        "Legal Services Productization IP Governance Launch Clearance Gate"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Productization IP Governance Launch Clearance Gate",
+          "targetInputSpace": "[2291:2295]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "matter-intake",
+          "targetMachine": "Legal Services Portfolio Operations Matter Intake Triage",
+          "targetInputSpace": "[2363:2367]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "ai-agent-assist",
+          "targetMachine": "Legal Services AI Assisted Legal Operations Artifact Classification Agent",
+          "targetInputSpace": "[2491:2495]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -128,7 +176,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2287,
+        "offset": 2291,
         "length": 4
       }
     },

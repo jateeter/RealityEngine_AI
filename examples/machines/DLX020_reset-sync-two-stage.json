@@ -52,7 +52,6 @@
           "asic-pattern",
           "digital-logic-generated",
           "digital-logic-infrastructure",
-          "dlx020",
           "logical-infrastructure",
           "regular-expression",
           "reset-sync-two-stage"

@@ -11,6 +11,7 @@
       "tags": [
         "ag-irrigation-flow-controller",
         "agriculture",
+        "agriculture-generated",
         "agriculture-water-management-irrigation",
         "ces-sequences",
         "ces-sequences-3",
@@ -46,6 +47,7 @@
         "capabilityTags": [],
         "workflowTags": [
           "agriculture-generated",
+          "agriculture-water-management-irrigation",
           "hydroponics",
           "indoor-growing",
           "kleene-plus",
@@ -62,6 +64,7 @@
         "allTags": [
           "ag-irrigation-flow-controller",
           "agriculture",
+          "agriculture-generated",
           "agriculture-water-management-irrigation",
           "ces-sequences",
           "ces-sequences-3",

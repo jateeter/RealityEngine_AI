@@ -27,7 +27,7 @@
         "Mark employee innovation program ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2635:2639]",
-      "outputSpace": "4D binary at [2639:2643]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2643:2647]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -51,6 +51,7 @@
         "legal-services-corporate-legal-services-employee-innovation-program",
         "legal-services-generated",
         "lsx075",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -78,14 +79,14 @@
           "intellectual-property",
           "legal-services-corporate-legal-services",
           "legal-services-generated",
-          "lsx075",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -111,12 +112,47 @@
           "legal-services-corporate-legal-services-employee-innovation-program",
           "legal-services-generated",
           "lsx075",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Corporate Legal Services Vendor IP Risk Review"
+      ],
+      "upstreamMachine": "Legal Services Corporate Legal Services Vendor IP Risk Review",
+      "downstreamMachines": [
+        "Legal Services Corporate Legal Services Product Counsel Launch Review"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Corporate Legal Services Product Counsel Launch Review",
+          "targetInputSpace": "[2643:2647]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -125,7 +161,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2639,
+        "offset": 2643,
         "length": 4
       }
     },

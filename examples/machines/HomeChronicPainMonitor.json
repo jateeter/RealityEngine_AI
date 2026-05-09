@@ -11,7 +11,7 @@
       "tags": [
         "ces-sequences",
         "ces-sequences-4",
-        "chronic-pain",
+        "chronic-disease",
         "chronic-pain-management",
         "functional-impairment",
         "health-personal",
@@ -58,9 +58,7 @@
           "low-income",
           "occupational-injury"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-4",
@@ -71,7 +69,7 @@
         "allTags": [
           "ces-sequences",
           "ces-sequences-4",
-          "chronic-pain",
+          "chronic-disease",
           "chronic-pain-management",
           "functional-impairment",
           "health-personal",

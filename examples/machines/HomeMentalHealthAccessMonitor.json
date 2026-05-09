@@ -13,7 +13,6 @@
         "ces-sequences-3",
         "chronic-disease",
         "chronic-illness-comorbidity",
-        "chronic-pain",
         "comorbidity",
         "depression",
         "health-personal",
@@ -63,9 +62,7 @@
           "low-income",
           "mental-health"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-3",
@@ -78,7 +75,6 @@
           "ces-sequences-3",
           "chronic-disease",
           "chronic-illness-comorbidity",
-          "chronic-pain",
           "comorbidity",
           "depression",
           "health-personal",

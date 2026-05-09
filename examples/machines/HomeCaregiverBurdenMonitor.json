@@ -62,9 +62,7 @@
           "low-income",
           "pediatric"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-3",

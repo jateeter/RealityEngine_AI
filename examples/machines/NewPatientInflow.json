@@ -46,11 +46,12 @@
       "sequenceCount": 4,
       "tags": [
         "assisted-living",
-        "binary",
         "ces-sequences",
         "ces-sequences-4",
+        "digital-logic-generated",
         "elder-care",
         "health-personal",
+        "health-personal-operations",
         "healthcare-intake",
         "healthcare-intake-assisted-living",
         "input-sequences",
@@ -79,12 +80,11 @@
           "digital-logic-generated",
           "elder-care",
           "health-personal-operations",
+          "healthcare-intake-assisted-living",
           "intake",
           "patient-evaluation"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-4",
@@ -94,11 +94,12 @@
         ],
         "allTags": [
           "assisted-living",
-          "binary",
           "ces-sequences",
           "ces-sequences-4",
+          "digital-logic-generated",
           "elder-care",
           "health-personal",
+          "health-personal-operations",
           "healthcare-intake",
           "healthcare-intake-assisted-living",
           "input-sequences",

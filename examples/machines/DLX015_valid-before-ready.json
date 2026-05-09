@@ -52,7 +52,6 @@
           "asic-pattern",
           "digital-logic-generated",
           "digital-logic-infrastructure",
-          "dlx015",
           "logical-infrastructure",
           "regular-expression",
           "valid-before-ready"

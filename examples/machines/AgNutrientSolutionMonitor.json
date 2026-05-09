@@ -21,7 +21,7 @@
         "input-sequences-1",
         "kleene-plus",
         "nutrient-management",
-        "nutrient-solution",
+        "nutrition",
         "ph-monitoring",
         "startup-loadable"
       ],
@@ -74,7 +74,7 @@
           "input-sequences-1",
           "kleene-plus",
           "nutrient-management",
-          "nutrient-solution",
+          "nutrition",
           "ph-monitoring",
           "startup-loadable"
         ]

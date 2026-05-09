@@ -27,7 +27,7 @@
         "Mark evidence preservation vault ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2427:2431]",
-      "outputSpace": "4D binary at [2431:2435]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2435:2439]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-portfolio-operations",
         "legal-services-portfolio-operations-evidence-preservation-vault",
         "lsx049",
+        "machine-interconnect",
         "portfolio-operations",
         "productization",
         "provisional-patent",
@@ -80,14 +81,14 @@
           "intellectual-property",
           "legal-services-generated",
           "legal-services-portfolio-operations",
-          "lsx049",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -112,13 +113,65 @@
           "legal-services-portfolio-operations",
           "legal-services-portfolio-operations-evidence-preservation-vault",
           "lsx049",
+          "machine-interconnect",
           "portfolio-operations",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Provisional Patent Filing Public Disclosure Bar Check",
+        "Legal Services Trademark Workflow Specimen Evidence Readiness",
+        "Legal Services Copyright Workflow Deposit Material Preparation",
+        "Legal Services Copyright Workflow Recordation And Transfer",
+        "Legal Services Portfolio Operations Foreign Rights Coordination",
+        "Legal Services Individual Creator Services Founder Evidence Timeline",
+        "Legal Services Commercialization And Enforcement Notice Letter Evidence Gate",
+        "Legal Services Commercialization And Enforcement DMCA Takedown Workflow",
+        "Legal Services Commercialization And Enforcement Trademark Marketplace Takedown",
+        "Legal Services Commercialization And Enforcement Product Release IP Checklist",
+        "Legal Services Commercialization And Enforcement Post Launch IP Review"
+      ],
+      "upstreamMachine": "Legal Services Provisional Patent Filing Public Disclosure Bar Check",
+      "downstreamMachines": [
+        "Legal Services Portfolio Operations Portfolio Executive Summary"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Portfolio Operations Portfolio Executive Summary",
+          "targetInputSpace": "[2435:2439]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "perceptual-output-overlap",
+          "action": "evidence-preservation",
+          "targetMachine": "Legal Services Portfolio Operations Portfolio Executive Summary",
+          "targetInputSpace": "[2435:2439]",
+          "description": "Common legal workflow action is backed by an output-to-input perceptual-space overlap."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -127,7 +180,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2431,
+        "offset": 2435,
         "length": 4
       }
     },

@@ -27,7 +27,7 @@
         "Mark eco application assembly ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2259:2263]",
-      "outputSpace": "4D binary at [2263:2267]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2267:2271]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -53,6 +53,7 @@
         "legal-services-copyright-workflow-eco-application-assembly",
         "legal-services-generated",
         "lsx028",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -85,14 +86,14 @@
           "intellectual-property",
           "legal-ops-agent",
           "legal-services-generated",
-          "lsx028",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -120,12 +121,61 @@
           "legal-services-copyright-workflow-eco-application-assembly",
           "legal-services-generated",
           "lsx028",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Copyright Workflow Preregistration Eligibility"
+      ],
+      "upstreamMachine": "Legal Services Copyright Workflow Preregistration Eligibility",
+      "downstreamMachines": [
+        "Legal Services Copyright Workflow Certificate And Record Docket"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Copyright Workflow Certificate And Record Docket",
+          "targetInputSpace": "[2267:2271]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "filing-portal-readiness",
+          "targetMachine": "Legal Services Filing And Portal Operations Copyright eCO Account Gate",
+          "targetInputSpace": "[2731:2735]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "filing-portal-readiness",
+          "targetMachine": "Legal Services Filing And Portal Operations Copyright Deposit File Gate",
+          "targetInputSpace": "[2739:2743]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -134,7 +184,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2263,
+        "offset": 2267,
         "length": 4
       }
     },

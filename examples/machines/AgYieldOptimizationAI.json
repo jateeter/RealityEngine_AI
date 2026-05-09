@@ -12,6 +12,7 @@
         "ag-yield-optimization-ai",
         "agriculture",
         "agriculture-ai-yield-optimization",
+        "agriculture-generated",
         "ai-pipeline",
         "ai-services",
         "ai-yield-optimization",
@@ -19,7 +20,6 @@
         "ces-sequences-3",
         "corrective-rag",
         "cross-domain",
-        "harvest",
         "indoor-growing",
         "input-sequences",
         "input-sequences-2",
@@ -72,10 +72,10 @@
           "yield-optimization"
         ],
         "workflowTags": [
+          "agriculture-generated",
           "ai-pipeline",
           "corrective-rag",
           "cross-domain",
-          "agriculture-generated",
           "indoor-growing",
           "kleene-plus"
         ],
@@ -93,6 +93,7 @@
           "ag-yield-optimization-ai",
           "agriculture",
           "agriculture-ai-yield-optimization",
+          "agriculture-generated",
           "ai-pipeline",
           "ai-services",
           "ai-yield-optimization",
@@ -100,7 +101,6 @@
           "ces-sequences-3",
           "corrective-rag",
           "cross-domain",
-          "harvest",
           "indoor-growing",
           "input-sequences",
           "input-sequences-2",

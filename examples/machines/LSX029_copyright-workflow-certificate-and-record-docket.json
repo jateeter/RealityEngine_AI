@@ -27,7 +27,7 @@
         "Mark certificate and record docket ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2267:2271]",
-      "outputSpace": "4D binary at [2271:2275]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2275:2279]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -51,6 +51,7 @@
         "legal-services-copyright-workflow-certificate-and-record-docket",
         "legal-services-generated",
         "lsx029",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -81,14 +82,14 @@
           "dispatchable-agent",
           "intellectual-property",
           "legal-services-generated",
-          "lsx029",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -114,12 +115,54 @@
           "legal-services-copyright-workflow-certificate-and-record-docket",
           "legal-services-generated",
           "lsx029",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Copyright Workflow eCO Application Assembly"
+      ],
+      "upstreamMachine": "Legal Services Copyright Workflow eCO Application Assembly",
+      "downstreamMachines": [
+        "Legal Services Copyright Workflow Recordation And Transfer"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Copyright Workflow Recordation And Transfer",
+          "targetInputSpace": "[2275:2279]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "docket-integrity",
+          "targetMachine": "Legal Services Portfolio Operations Docket Integrity Monitor",
+          "targetInputSpace": "[2387:2391]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -128,7 +171,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2271,
+        "offset": 2275,
         "length": 4
       }
     },

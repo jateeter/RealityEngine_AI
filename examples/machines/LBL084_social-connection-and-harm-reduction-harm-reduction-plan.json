@@ -96,7 +96,7 @@
           "cgm",
           "dispatchable-agent",
           "harm-reduction-plan",
-          "lbl084",
+          "health-personal",
           "life-balance-generated",
           "life-balance-social-connection-and-harm-reduction",
           "lifestyle-psychiatry",
@@ -110,7 +110,6 @@
           "ai-trigger",
           "cross-domain-interconnect",
           "dispatchable-agent",
-          "health-personal",
           "machine-interconnect"
         ],
         "validationTags": [

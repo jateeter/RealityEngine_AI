@@ -27,7 +27,7 @@
         "Mark launch clearance gate ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2291:2295]",
-      "outputSpace": "4D binary at [2295:2299]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2299:2303]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-productization-ip-governance",
         "legal-services-productization-ip-governance-launch-clearance-gate",
         "lsx032",
+        "machine-interconnect",
         "productization",
         "productization-ip-governance",
         "provisional-patent",
@@ -81,14 +82,14 @@
           "intellectual-property",
           "launch-clearance-gate",
           "legal-services-generated",
-          "lsx032",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -112,6 +113,7 @@
           "legal-services-productization-ip-governance",
           "legal-services-productization-ip-governance-launch-clearance-gate",
           "lsx032",
+          "machine-interconnect",
           "productization",
           "productization-ip-governance",
           "provisional-patent",
@@ -119,7 +121,48 @@
           "trademark",
           "trademark-workflow-agent"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Productization IP Governance Product IP Map"
+      ],
+      "upstreamMachine": "Legal Services Productization IP Governance Product IP Map",
+      "downstreamMachines": [
+        "Legal Services Productization IP Governance Contractor Contributor Controls"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Productization IP Governance Contractor Contributor Controls",
+          "targetInputSpace": "[2299:2303]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "commercialization-and-enforcement",
+          "targetMachine": "Legal Services Commercialization And Enforcement Freedom To Operate Intake",
+          "targetInputSpace": "[2763:2767]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -128,7 +171,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2295,
+        "offset": 2299,
         "length": 4
       }
     },

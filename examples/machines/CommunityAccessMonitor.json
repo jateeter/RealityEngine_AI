@@ -16,13 +16,13 @@
         "community-outreach",
         "community-services",
         "community-services-community-access-network-health",
+        "community-services-generated",
         "input-sequences",
         "input-sequences-1",
         "kleene-plus",
         "network-health",
         "referral-network",
         "service-delivery",
-        "social-services",
         "startup-loadable"
       ],
       "sequenceCount": 3,
@@ -55,9 +55,9 @@
           "community-access-monitor",
           "community-outreach",
           "community-services-community-access-network-health",
+          "community-services-generated",
           "kleene-plus",
-          "service-delivery",
-          "community-services-generated"
+          "service-delivery"
         ],
         "integrationTags": [],
         "validationTags": [
@@ -75,13 +75,13 @@
           "community-outreach",
           "community-services",
           "community-services-community-access-network-health",
+          "community-services-generated",
           "input-sequences",
           "input-sequences-1",
           "kleene-plus",
           "network-health",
           "referral-network",
           "service-delivery",
-          "social-services",
           "startup-loadable"
         ]
       }

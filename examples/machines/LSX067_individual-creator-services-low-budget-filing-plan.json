@@ -27,7 +27,7 @@
         "Mark low budget filing plan ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2571:2575]",
-      "outputSpace": "4D binary at [2575:2579]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2579:2583]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -51,6 +51,7 @@
         "legal-services-individual-creator-services-low-budget-filing-plan",
         "low-budget-filing-plan",
         "lsx067",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -78,14 +79,14 @@
           "legal-services-generated",
           "legal-services-individual-creator-services",
           "low-budget-filing-plan",
-          "lsx067",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -111,12 +112,47 @@
           "legal-services-individual-creator-services-low-budget-filing-plan",
           "low-budget-filing-plan",
           "lsx067",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Individual Creator Services Prototype Disclosure Guard"
+      ],
+      "upstreamMachine": "Legal Services Individual Creator Services Prototype Disclosure Guard",
+      "downstreamMachines": [
+        "Legal Services Individual Creator Services Founder Evidence Timeline"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Individual Creator Services Founder Evidence Timeline",
+          "targetInputSpace": "[2579:2583]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -125,7 +161,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2575,
+        "offset": 2579,
         "length": 4
       }
     },

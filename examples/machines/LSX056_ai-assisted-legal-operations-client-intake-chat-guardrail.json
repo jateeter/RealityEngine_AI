@@ -27,7 +27,7 @@
         "Mark client intake chat guardrail ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2483:2487]",
-      "outputSpace": "4D binary at [2487:2491]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2491:2495]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -51,6 +51,7 @@
         "legal-services-ai-assisted-legal-operations-client-intake-chat-guardrail",
         "legal-services-generated",
         "lsx056",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -80,14 +81,14 @@
           "intellectual-property",
           "legal-services-ai-assisted-legal-operations",
           "legal-services-generated",
-          "lsx056",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -113,12 +114,47 @@
           "legal-services-ai-assisted-legal-operations-client-intake-chat-guardrail",
           "legal-services-generated",
           "lsx056",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services AI Assisted Legal Operations Deadline Projection Agent"
+      ],
+      "upstreamMachine": "Legal Services AI Assisted Legal Operations Deadline Projection Agent",
+      "downstreamMachines": [
+        "Legal Services AI Assisted Legal Operations Artifact Classification Agent"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services AI Assisted Legal Operations Artifact Classification Agent",
+          "targetInputSpace": "[2491:2495]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -127,7 +163,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2487,
+        "offset": 2491,
         "length": 4
       }
     },

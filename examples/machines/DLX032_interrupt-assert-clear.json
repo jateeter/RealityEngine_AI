@@ -52,7 +52,6 @@
           "asic-pattern",
           "digital-logic-generated",
           "digital-logic-infrastructure",
-          "dlx032",
           "interrupt-assert-clear",
           "logical-infrastructure",
           "regular-expression"

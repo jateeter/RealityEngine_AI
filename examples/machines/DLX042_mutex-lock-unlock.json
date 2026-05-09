@@ -52,7 +52,6 @@
           "asic-pattern",
           "digital-logic-generated",
           "digital-logic-infrastructure",
-          "dlx042",
           "logical-infrastructure",
           "mutex-lock-unlock",
           "regular-expression"

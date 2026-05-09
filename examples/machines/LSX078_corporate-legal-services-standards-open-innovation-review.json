@@ -27,7 +27,7 @@
         "Mark standards open innovation review ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2659:2663]",
-      "outputSpace": "4D binary at [2663:2667]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2667:2671]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-corporate-legal-services-standards-open-innovation-review",
         "legal-services-generated",
         "lsx078",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "standards-open-innovation-review",
@@ -77,7 +78,6 @@
           "legal-ops-agent",
           "legal-services-corporate-legal-services",
           "legal-services-generated",
-          "lsx078",
           "productization",
           "provisional-patent",
           "standards-open-innovation-review",
@@ -85,7 +85,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -110,13 +111,48 @@
           "legal-services-corporate-legal-services-standards-open-innovation-review",
           "legal-services-generated",
           "lsx078",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "standards-open-innovation-review",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Corporate Legal Services Portfolio Cost Optimization"
+      ],
+      "upstreamMachine": "Legal Services Corporate Legal Services Portfolio Cost Optimization",
+      "downstreamMachines": [
+        "Legal Services Corporate Legal Services Global Brand Governance"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Corporate Legal Services Global Brand Governance",
+          "targetInputSpace": "[2667:2671]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -125,7 +161,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2663,
+        "offset": 2667,
         "length": 4
       }
     },

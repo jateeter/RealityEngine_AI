@@ -27,7 +27,7 @@
         "Mark deposit material preparation ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2227:2231]",
-      "outputSpace": "4D binary at [2231:2235]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2235:2239]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-copyright-workflow-deposit-material-preparation",
         "legal-services-generated",
         "lsx024",
+        "machine-interconnect",
         "product-counsel-agent",
         "productization",
         "provisional-patent",
@@ -80,7 +81,6 @@
           "dispatchable-agent",
           "intellectual-property",
           "legal-services-generated",
-          "lsx024",
           "product-counsel-agent",
           "productization",
           "provisional-patent",
@@ -88,7 +88,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -113,13 +114,55 @@
           "legal-services-copyright-workflow-deposit-material-preparation",
           "legal-services-generated",
           "lsx024",
+          "machine-interconnect",
           "product-counsel-agent",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Copyright Workflow Publication Status Review"
+      ],
+      "upstreamMachine": "Legal Services Copyright Workflow Publication Status Review",
+      "downstreamMachines": [
+        "Legal Services Copyright Workflow Software Source Code Deposit"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Copyright Workflow Software Source Code Deposit",
+          "targetInputSpace": "[2235:2239]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "evidence-preservation",
+          "targetMachine": "Legal Services Portfolio Operations Evidence Preservation Vault",
+          "targetInputSpace": "[2427:2431]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -128,7 +171,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2231,
+        "offset": 2235,
         "length": 4
       }
     },

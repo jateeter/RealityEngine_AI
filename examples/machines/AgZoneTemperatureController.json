@@ -11,11 +11,10 @@
       "tags": [
         "ag-zone-temperature-controller",
         "agriculture",
+        "agriculture-indoor-grow-house",
         "agriculture-zone-climate-temperature",
         "ces-sequences",
         "ces-sequences-3",
-        "climate-control",
-        "cooling",
         "heating",
         "indoor-growing",
         "input-sequences",
@@ -23,6 +22,7 @@
         "kleene-plus",
         "startup-loadable",
         "temperature",
+        "thermal-comfort",
         "zone-climate",
         "zone-temperature"
       ],
@@ -48,10 +48,11 @@
         "capabilityTags": [],
         "workflowTags": [
           "agriculture-indoor-grow-house",
-          "thermal-comfort",
+          "agriculture-zone-climate-temperature",
           "heating",
           "indoor-growing",
           "kleene-plus",
+          "thermal-comfort",
           "zone-temperature"
         ],
         "integrationTags": [],
@@ -65,11 +66,10 @@
         "allTags": [
           "ag-zone-temperature-controller",
           "agriculture",
+          "agriculture-indoor-grow-house",
           "agriculture-zone-climate-temperature",
           "ces-sequences",
           "ces-sequences-3",
-          "climate-control",
-          "cooling",
           "heating",
           "indoor-growing",
           "input-sequences",
@@ -77,6 +77,7 @@
           "kleene-plus",
           "startup-loadable",
           "temperature",
+          "thermal-comfort",
           "zone-climate",
           "zone-temperature"
         ]

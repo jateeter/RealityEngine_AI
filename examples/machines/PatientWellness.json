@@ -66,13 +66,14 @@
       "regex": "OPTIMAL: (MENTAL)+ · ANXIETY · STRESS · SOCIAL · NUTRITION · EXERCISE → OPTIMAL  |  GOOD: (MENTAL)+ · ANXIETY · SOCIAL_NO_STRESS · NUTRITION · EXERCISE → GOOD  |  ALERT: (MENTAL)+ · SOCIAL_NO_ANX · NUTRITION · DECLINE → ALERT  |  CRITICAL: (DECLINING_MENTAL)+ · ACUITY_FAIL → CRITICAL  |  OPTIMAL_ADJ: (MENTAL_ADJ)+ · ANXIETY_ADJ · STRESS_ADJ · SOCIAL_ADJ · NUTRITION_ADJ → GOOD[age-adjusted]",
       "sequenceCount": 5,
       "tags": [
-        "age-cohort",
+        "adolescent-psychiatry",
         "anxiety",
         "ces-sequences",
         "ces-sequences-5",
         "elder-care",
         "exercise",
         "health-personal",
+        "health-personal-operations",
         "healthcare-operations",
         "healthcare-operations-resident-wellness-assessment",
         "input-sequences",
@@ -112,9 +113,7 @@
           "socialization",
           "stress"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-5",
@@ -123,13 +122,14 @@
           "startup-loadable"
         ],
         "allTags": [
-          "age-cohort",
+          "adolescent-psychiatry",
           "anxiety",
           "ces-sequences",
           "ces-sequences-5",
           "elder-care",
           "exercise",
           "health-personal",
+          "health-personal-operations",
           "healthcare-operations",
           "healthcare-operations-resident-wellness-assessment",
           "input-sequences",

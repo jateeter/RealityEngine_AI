@@ -11,9 +11,9 @@
       "eventSpace": "8D continuous vectors: [CPU_TEMP, CPU_LOAD, NETWORK_BWTH, POWER_WATTS, STORAGE_USED, MEMORY_USED, DISK_IO, SECURITY_SCORE]",
       "outputSpace": "12D one-hot encoded action vectors",
       "tags": [
+        "anomaly-detection",
         "ces-sequences",
         "ces-sequences-1",
-        "continuous",
         "data-center",
         "data-center-monitoring",
         "data-center-multi-sensor-monitoring",
@@ -72,9 +72,9 @@
           "startup-loadable"
         ],
         "allTags": [
+          "anomaly-detection",
           "ces-sequences",
           "ces-sequences-1",
-          "continuous",
           "data-center",
           "data-center-monitoring",
           "data-center-multi-sensor-monitoring",

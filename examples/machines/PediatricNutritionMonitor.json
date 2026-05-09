@@ -56,9 +56,7 @@
           "low-income",
           "pediatric-nutrition-monitor"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-3",

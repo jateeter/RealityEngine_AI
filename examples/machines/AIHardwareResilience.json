@@ -34,7 +34,7 @@
         "hardware-health",
         "input-sequences",
         "input-sequences-3",
-        "network",
+        "logical-infrastructure",
         "resilience",
         "smart",
         "startup-loadable"
@@ -139,7 +139,7 @@
           "hardware-health",
           "input-sequences",
           "input-sequences-3",
-          "network",
+          "logical-infrastructure",
           "resilience",
           "smart",
           "startup-loadable"

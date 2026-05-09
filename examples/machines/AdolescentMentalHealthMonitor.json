@@ -22,6 +22,7 @@
         "input-sequences",
         "input-sequences-1",
         "kleene-plus",
+        "life-balance-adolescent-family-and-school",
         "low-income",
         "mental-health",
         "startup-loadable"
@@ -60,9 +61,7 @@
           "low-income",
           "mental-health"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-3",
@@ -84,6 +83,7 @@
           "input-sequences",
           "input-sequences-1",
           "kleene-plus",
+          "life-balance-adolescent-family-and-school",
           "low-income",
           "mental-health",
           "startup-loadable"

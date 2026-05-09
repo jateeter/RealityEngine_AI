@@ -95,7 +95,7 @@
           "ai-trigger",
           "cgm",
           "dispatchable-agent",
-          "lbl056",
+          "health-personal",
           "life-balance-generated",
           "life-balance-medication-and-psychiatric-care",
           "lifestyle-psychiatry",
@@ -110,7 +110,6 @@
           "ai-trigger",
           "cross-domain-interconnect",
           "dispatchable-agent",
-          "health-personal",
           "machine-interconnect"
         ],
         "validationTags": [

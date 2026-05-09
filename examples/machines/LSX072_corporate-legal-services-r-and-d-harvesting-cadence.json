@@ -27,7 +27,7 @@
         "Mark r and d harvesting cadence ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2611:2615]",
-      "outputSpace": "4D binary at [2615:2619]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2619:2623]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-corporate-legal-services-r-and-d-harvesting-cadence",
         "legal-services-generated",
         "lsx072",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "r-and-d-harvesting-cadence",
@@ -78,7 +79,6 @@
           "intellectual-property",
           "legal-services-corporate-legal-services",
           "legal-services-generated",
-          "lsx072",
           "productization",
           "provisional-patent",
           "r-and-d-harvesting-cadence",
@@ -86,7 +86,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -110,6 +111,7 @@
           "legal-services-corporate-legal-services-r-and-d-harvesting-cadence",
           "legal-services-generated",
           "lsx072",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "r-and-d-harvesting-cadence",
@@ -117,7 +119,41 @@
           "trademark",
           "trademark-workflow-agent"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Corporate Legal Services Corporate IP Intake Board"
+      ],
+      "upstreamMachine": "Legal Services Corporate Legal Services Corporate IP Intake Board",
+      "downstreamMachines": [
+        "Legal Services Corporate Legal Services M And A IP Diligence"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Corporate Legal Services M And A IP Diligence",
+          "targetInputSpace": "[2619:2623]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -126,7 +162,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2615,
+        "offset": 2619,
         "length": 4
       }
     },

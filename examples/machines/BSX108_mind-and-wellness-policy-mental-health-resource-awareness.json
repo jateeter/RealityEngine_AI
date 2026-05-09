@@ -56,6 +56,7 @@
         "input-sequences",
         "input-sequences-6",
         "machine-interconnect",
+        "mental-health",
         "mental-health-resource-awareness",
         "mind-and-wellness-policy",
         "occupant-health",
@@ -88,7 +89,6 @@
         ],
         "workflowTags": [
           "ai-trigger",
-          "bsx108",
           "built-space-well-generated",
           "built-space-well-mind-and-wellness-policy",
           "dispatchable-agent",
@@ -126,6 +126,7 @@
           "input-sequences",
           "input-sequences-6",
           "machine-interconnect",
+          "mental-health",
           "mental-health-resource-awareness",
           "mind-and-wellness-policy",
           "occupant-health",

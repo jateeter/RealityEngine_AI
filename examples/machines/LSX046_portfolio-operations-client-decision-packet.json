@@ -27,7 +27,7 @@
         "Mark client decision packet ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2403:2407]",
-      "outputSpace": "4D binary at [2407:2411]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2411:2415]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-portfolio-operations",
         "legal-services-portfolio-operations-client-decision-packet",
         "lsx046",
+        "machine-interconnect",
         "portfolio-operations",
         "productization",
         "provisional-patent",
@@ -78,14 +79,14 @@
           "intellectual-property",
           "legal-services-generated",
           "legal-services-portfolio-operations",
-          "lsx046",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -110,13 +111,48 @@
           "legal-services-portfolio-operations",
           "legal-services-portfolio-operations-client-decision-packet",
           "lsx046",
+          "machine-interconnect",
           "portfolio-operations",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Portfolio Operations Document Version Control"
+      ],
+      "upstreamMachine": "Legal Services Portfolio Operations Document Version Control",
+      "downstreamMachines": [
+        "Legal Services Portfolio Operations Fee Budget Forecast"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Portfolio Operations Fee Budget Forecast",
+          "targetInputSpace": "[2411:2415]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -125,7 +161,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2407,
+        "offset": 2411,
         "length": 4
       }
     },

@@ -11,10 +11,10 @@
       "eventSpace": "4D continuous sensor vector at [1348:1352]: [bandwidth_util_norm, packet_loss_norm, latency_norm, queue_depth_norm]",
       "outputSpace": "2D binary at [1365:1367]: [1,0]=NETWORK_ALARM, [0,1]=NETWORK_NORMAL",
       "tags": [
+        "anomaly-detection",
         "burst-detection",
         "ces-sequences",
         "ces-sequences-2",
-        "continuous",
         "data-center",
         "data-center-network-burst-detection",
         "dc-network-burst-detector",
@@ -74,10 +74,10 @@
           "startup-loadable"
         ],
         "allTags": [
+          "anomaly-detection",
           "burst-detection",
           "ces-sequences",
           "ces-sequences-2",
-          "continuous",
           "data-center",
           "data-center-network-burst-detection",
           "dc-network-burst-detector",

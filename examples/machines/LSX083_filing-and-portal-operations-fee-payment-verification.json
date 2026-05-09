@@ -27,7 +27,7 @@
         "Mark fee payment verification ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2699:2703]",
-      "outputSpace": "4D binary at [2703:2707]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2707:2711]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -51,6 +51,7 @@
         "legal-services-filing-and-portal-operations-fee-payment-verification",
         "legal-services-generated",
         "lsx083",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -79,14 +80,14 @@
           "intellectual-property",
           "legal-services-filing-and-portal-operations",
           "legal-services-generated",
-          "lsx083",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -112,12 +113,47 @@
           "legal-services-filing-and-portal-operations-fee-payment-verification",
           "legal-services-generated",
           "lsx083",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Filing And Portal Operations Provisional Cover Sheet Gate"
+      ],
+      "upstreamMachine": "Legal Services Filing And Portal Operations Provisional Cover Sheet Gate",
+      "downstreamMachines": [
+        "Legal Services Filing And Portal Operations Filing Receipt Audit"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Filing And Portal Operations Filing Receipt Audit",
+          "targetInputSpace": "[2707:2711]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -126,7 +162,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2703,
+        "offset": 2707,
         "length": 4
       }
     },

@@ -102,20 +102,20 @@
       "tags": [
         "anomaly-detection",
         "care-coordination",
-        "care-transition",
         "ces-sequences",
         "ces-sequences-6",
+        "community-services-health-and-human-services-intake",
         "elder-care",
         "health-personal",
+        "health-personal-operations",
         "healthcare-analytics",
         "healthcare-analytics-wellness-monitoring-and-care-routing",
         "input-sequences",
         "input-sequences-8",
         "machine-interconnect",
-        "new-patient-inflow",
-        "patient-wellness",
         "routing",
         "startup-loadable",
+        "wellness",
         "wellness-analytics",
         "wellness-monitoring-and-care-routing"
       ],
@@ -144,7 +144,6 @@
           "wellness"
         ],
         "integrationTags": [
-          "health-personal",
           "machine-interconnect"
         ],
         "validationTags": [
@@ -157,20 +156,20 @@
         "allTags": [
           "anomaly-detection",
           "care-coordination",
-          "care-transition",
           "ces-sequences",
           "ces-sequences-6",
+          "community-services-health-and-human-services-intake",
           "elder-care",
           "health-personal",
+          "health-personal-operations",
           "healthcare-analytics",
           "healthcare-analytics-wellness-monitoring-and-care-routing",
           "input-sequences",
           "input-sequences-8",
           "machine-interconnect",
-          "new-patient-inflow",
-          "patient-wellness",
           "routing",
           "startup-loadable",
+          "wellness",
           "wellness-analytics",
           "wellness-monitoring-and-care-routing"
         ]

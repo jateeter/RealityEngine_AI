@@ -52,7 +52,6 @@
           "asic-pattern",
           "digital-logic-generated",
           "digital-logic-infrastructure",
-          "dlx035",
           "logical-infrastructure",
           "regular-expression",
           "watchdog-timeout"

@@ -52,6 +52,7 @@
         "built-space-well-materials-and-cleaning-cleaning-product-safety",
         "ces-sequences",
         "ces-sequences-5",
+        "cleaning",
         "cleaning-product-safety",
         "dispatchable-agent",
         "input-sequences",
@@ -88,7 +89,6 @@
         ],
         "workflowTags": [
           "ai-trigger",
-          "bsx083",
           "built-space-well-generated",
           "built-space-well-materials-and-cleaning",
           "cleaning",
@@ -122,6 +122,7 @@
           "built-space-well-materials-and-cleaning-cleaning-product-safety",
           "ces-sequences",
           "ces-sequences-5",
+          "cleaning",
           "cleaning-product-safety",
           "dispatchable-agent",
           "input-sequences",

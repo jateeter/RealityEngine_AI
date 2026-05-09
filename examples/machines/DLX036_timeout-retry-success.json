@@ -52,7 +52,6 @@
           "asic-pattern",
           "digital-logic-generated",
           "digital-logic-infrastructure",
-          "dlx036",
           "logical-infrastructure",
           "regular-expression",
           "timeout-retry-success"

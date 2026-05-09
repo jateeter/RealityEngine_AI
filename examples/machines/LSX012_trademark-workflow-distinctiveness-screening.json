@@ -27,7 +27,7 @@
         "Mark distinctiveness screening ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2131:2135]",
-      "outputSpace": "4D binary at [2135:2139]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2139:2143]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-trademark-workflow",
         "legal-services-trademark-workflow-distinctiveness-screening",
         "lsx012",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -81,14 +82,14 @@
           "distinctiveness-screening",
           "intellectual-property",
           "legal-services-generated",
-          "lsx012",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -112,6 +113,7 @@
           "legal-services-trademark-workflow",
           "legal-services-trademark-workflow-distinctiveness-screening",
           "lsx012",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
@@ -119,7 +121,41 @@
           "trademark-workflow",
           "trademark-workflow-agent"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Trademark Workflow Brand Clearance Intake"
+      ],
+      "upstreamMachine": "Legal Services Trademark Workflow Brand Clearance Intake",
+      "downstreamMachines": [
+        "Legal Services Trademark Workflow Knockout Search Review"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Trademark Workflow Knockout Search Review",
+          "targetInputSpace": "[2139:2143]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -128,7 +164,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2135,
+        "offset": 2139,
         "length": 4
       }
     },

@@ -19,7 +19,7 @@
         "enrollment-coordination-monitor",
         "input-sequences",
         "input-sequences-1",
-        "intake-assessment",
+        "intake",
         "kleene-plus",
         "service-delivery",
         "startup-loadable"
@@ -75,7 +75,7 @@
           "enrollment-coordination-monitor",
           "input-sequences",
           "input-sequences-1",
-          "intake-assessment",
+          "intake",
           "kleene-plus",
           "service-delivery",
           "startup-loadable"

@@ -27,7 +27,7 @@
         "Mark brand usage governance ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2331:2335]",
-      "outputSpace": "4D binary at [2335:2339]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2339:2343]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-productization-ip-governance",
         "legal-services-productization-ip-governance-brand-usage-governance",
         "lsx037",
+        "machine-interconnect",
         "productization",
         "productization-ip-governance",
         "provisional-patent",
@@ -81,14 +82,14 @@
           "intellectual-property",
           "ip-portfolio-agent",
           "legal-services-generated",
-          "lsx037",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -113,13 +114,55 @@
           "legal-services-productization-ip-governance",
           "legal-services-productization-ip-governance-brand-usage-governance",
           "lsx037",
+          "machine-interconnect",
           "productization",
           "productization-ip-governance",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Productization IP Governance Patent Marking Readiness"
+      ],
+      "upstreamMachine": "Legal Services Productization IP Governance Patent Marking Readiness",
+      "downstreamMachines": [
+        "Legal Services Productization IP Governance Marketing Claims Review"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Productization IP Governance Marketing Claims Review",
+          "targetInputSpace": "[2339:2343]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "commercialization-and-enforcement",
+          "targetMachine": "Legal Services Commercialization And Enforcement Trademark Marketplace Takedown",
+          "targetInputSpace": "[2795:2799]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -128,7 +171,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2335,
+        "offset": 2339,
         "length": 4
       }
     },

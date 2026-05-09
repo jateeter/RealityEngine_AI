@@ -28,14 +28,14 @@
         "aicooling-regulator",
         "ces-sequences",
         "ces-sequences-2",
-        "cooling",
         "cooling-control",
         "data-center",
         "hvac",
         "input-sequences",
         "input-sequences-3",
         "startup-loadable",
-        "thermal"
+        "thermal",
+        "thermal-comfort"
       ],
       "rationale": "Cooling is a physical data-center concern even when AI workloads drive the heat load.",
       "tagging": {
@@ -56,9 +56,9 @@
           "ai-infrastructure-thermal-cooling-control",
           "ai-workload",
           "aicooling-regulator",
-          "thermal-comfort",
           "data-center",
-          "hvac"
+          "hvac",
+          "thermal-comfort"
         ],
         "integrationTags": [
           "ai-services"
@@ -79,14 +79,14 @@
           "aicooling-regulator",
           "ces-sequences",
           "ces-sequences-2",
-          "cooling",
           "cooling-control",
           "data-center",
           "hvac",
           "input-sequences",
           "input-sequences-3",
           "startup-loadable",
-          "thermal"
+          "thermal",
+          "thermal-comfort"
         ]
       }
     },

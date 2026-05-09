@@ -15,11 +15,11 @@
         "community-outreach-monitor",
         "community-services",
         "community-services-community-outreach-engagement",
+        "community-services-generated",
         "engagement",
         "input-sequences",
         "input-sequences-1",
         "kleene-plus",
-        "social-services",
         "startup-loadable",
         "trust",
         "unreached-populations"
@@ -48,8 +48,8 @@
         "workflowTags": [
           "community-outreach-monitor",
           "community-services-community-outreach-engagement",
-          "kleene-plus",
           "community-services-generated",
+          "kleene-plus",
           "trust",
           "unreached-populations"
         ],
@@ -68,11 +68,11 @@
           "community-outreach-monitor",
           "community-services",
           "community-services-community-outreach-engagement",
+          "community-services-generated",
           "engagement",
           "input-sequences",
           "input-sequences-1",
           "kleene-plus",
-          "social-services",
           "startup-loadable",
           "trust",
           "unreached-populations"

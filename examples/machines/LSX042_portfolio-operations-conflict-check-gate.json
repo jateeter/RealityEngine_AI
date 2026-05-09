@@ -27,7 +27,7 @@
         "Mark conflict check gate ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2371:2375]",
-      "outputSpace": "4D binary at [2375:2379]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2379:2383]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-portfolio-operations",
         "legal-services-portfolio-operations-conflict-check-gate",
         "lsx042",
+        "machine-interconnect",
         "portfolio-operations",
         "productization",
         "provisional-patent",
@@ -79,14 +80,14 @@
           "intellectual-property",
           "legal-services-generated",
           "legal-services-portfolio-operations",
-          "lsx042",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -110,6 +111,7 @@
           "legal-services-portfolio-operations",
           "legal-services-portfolio-operations-conflict-check-gate",
           "lsx042",
+          "machine-interconnect",
           "portfolio-operations",
           "productization",
           "provisional-patent",
@@ -117,7 +119,50 @@
           "trademark",
           "trademark-workflow-agent"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Portfolio Operations Matter Intake Triage",
+        "Legal Services Individual Creator Services Small Business Brand Launch",
+        "Legal Services Corporate Legal Services M And A IP Diligence"
+      ],
+      "upstreamMachine": "Legal Services Portfolio Operations Matter Intake Triage",
+      "downstreamMachines": [
+        "Legal Services Portfolio Operations Engagement Scope Control"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Portfolio Operations Engagement Scope Control",
+          "targetInputSpace": "[2379:2383]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "perceptual-output-overlap",
+          "action": "conflict-and-engagement-control",
+          "targetMachine": "Legal Services Portfolio Operations Engagement Scope Control",
+          "targetInputSpace": "[2379:2383]",
+          "description": "Common legal workflow action is backed by an output-to-input perceptual-space overlap."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -126,7 +171,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2375,
+        "offset": 2379,
         "length": 4
       }
     },

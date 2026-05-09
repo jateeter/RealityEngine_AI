@@ -52,7 +52,6 @@
           "asic-pattern",
           "digital-logic-generated",
           "digital-logic-infrastructure",
-          "dlx037",
           "fifo-empty-to-not-empty",
           "logical-infrastructure",
           "regular-expression"

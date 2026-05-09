@@ -27,7 +27,7 @@
         "Mark filing basis selection ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2163:2167]",
-      "outputSpace": "4D binary at [2167:2171]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2171:2175]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-trademark-workflow",
         "legal-services-trademark-workflow-filing-basis-selection",
         "lsx016",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -81,14 +82,14 @@
           "filing-portal-agent",
           "intellectual-property",
           "legal-services-generated",
-          "lsx016",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -113,13 +114,48 @@
           "legal-services-trademark-workflow",
           "legal-services-trademark-workflow-filing-basis-selection",
           "lsx016",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark",
           "trademark-workflow"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Trademark Workflow Specimen Evidence Readiness"
+      ],
+      "upstreamMachine": "Legal Services Trademark Workflow Specimen Evidence Readiness",
+      "downstreamMachines": [
+        "Legal Services Trademark Workflow Owner Identity Verification"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Trademark Workflow Owner Identity Verification",
+          "targetInputSpace": "[2171:2175]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -128,7 +164,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2167,
+        "offset": 2171,
         "length": 4
       }
     },

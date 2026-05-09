@@ -12,12 +12,12 @@
         "ag-ipm-pest-alert-monitor",
         "ag-ipmpest-alert-monitor",
         "agriculture",
+        "agriculture-generated",
         "agriculture-ipm-pest-management",
         "botrytis",
         "ces-sequences",
         "ces-sequences-3",
         "fungal",
-        "humidity",
         "indoor-growing",
         "input-sequences",
         "input-sequences-1",
@@ -25,7 +25,8 @@
         "kleene-plus",
         "pest",
         "pest-management",
-        "startup-loadable"
+        "startup-loadable",
+        "thermal-comfort"
       ],
       "sequenceCount": 3,
       "inputSignalMap": {
@@ -57,12 +58,13 @@
         "capabilityTags": [],
         "workflowTags": [
           "agriculture-generated",
+          "agriculture-ipm-pest-management",
           "botrytis",
           "fungal",
-          "thermal-comfort",
           "indoor-growing",
           "kleene-plus",
-          "pest"
+          "pest",
+          "thermal-comfort"
         ],
         "integrationTags": [],
         "validationTags": [
@@ -76,12 +78,12 @@
           "ag-ipm-pest-alert-monitor",
           "ag-ipmpest-alert-monitor",
           "agriculture",
+          "agriculture-generated",
           "agriculture-ipm-pest-management",
           "botrytis",
           "ces-sequences",
           "ces-sequences-3",
           "fungal",
-          "humidity",
           "indoor-growing",
           "input-sequences",
           "input-sequences-1",
@@ -89,7 +91,8 @@
           "kleene-plus",
           "pest",
           "pest-management",
-          "startup-loadable"
+          "startup-loadable",
+          "thermal-comfort"
         ]
       }
     },

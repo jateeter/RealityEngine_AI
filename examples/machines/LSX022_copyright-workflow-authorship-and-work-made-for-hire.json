@@ -27,7 +27,7 @@
         "Mark authorship and work made for hire ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2211:2215]",
-      "outputSpace": "4D binary at [2215:2219]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2219:2223]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-copyright-workflow-authorship-and-work-made-for-hire",
         "legal-services-generated",
         "lsx022",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -81,14 +82,14 @@
           "dispatchable-agent",
           "intellectual-property",
           "legal-services-generated",
-          "lsx022",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -113,13 +114,48 @@
           "legal-services-copyright-workflow-authorship-and-work-made-for-hire",
           "legal-services-generated",
           "lsx022",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark",
           "trademark-workflow-agent"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Copyright Workflow Work Type Classification"
+      ],
+      "upstreamMachine": "Legal Services Copyright Workflow Work Type Classification",
+      "downstreamMachines": [
+        "Legal Services Copyright Workflow Publication Status Review"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Copyright Workflow Publication Status Review",
+          "targetInputSpace": "[2219:2223]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -128,7 +164,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2215,
+        "offset": 2219,
         "length": 4
       }
     },

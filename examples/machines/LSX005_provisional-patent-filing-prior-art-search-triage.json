@@ -27,7 +27,7 @@
         "Mark prior art search triage ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2075:2079]",
-      "outputSpace": "4D binary at [2079:2083]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2083:2087]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-provisional-patent-filing",
         "legal-services-provisional-patent-filing-prior-art-search-triage",
         "lsx005",
+        "machine-interconnect",
         "prior-art-search-triage",
         "productization",
         "provisional-patent",
@@ -77,7 +78,6 @@
           "intellectual-property",
           "legal-services-generated",
           "legal-services-provisional-patent-filing",
-          "lsx005",
           "prior-art-search-triage",
           "productization",
           "provisional-patent",
@@ -85,7 +85,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -109,6 +110,7 @@
           "legal-services-provisional-patent-filing",
           "legal-services-provisional-patent-filing-prior-art-search-triage",
           "lsx005",
+          "machine-interconnect",
           "prior-art-search-triage",
           "productization",
           "provisional-patent",
@@ -116,7 +118,55 @@
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Provisional Patent Filing Public Disclosure Bar Check"
+      ],
+      "upstreamMachine": "Legal Services Provisional Patent Filing Public Disclosure Bar Check",
+      "downstreamMachines": [
+        "Legal Services Provisional Patent Filing Specification Support Builder"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Provisional Patent Filing Specification Support Builder",
+          "targetInputSpace": "[2083:2087]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "attorney-review",
+          "targetMachine": "Legal Services AI Assisted Legal Operations Risk Memo Synthesizer",
+          "targetInputSpace": "[2467:2471]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "ai-agent-assist",
+          "targetMachine": "Legal Services AI Assisted Legal Operations Prior Art Search Agent Dispatcher",
+          "targetInputSpace": "[2451:2455]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -125,7 +175,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2079,
+        "offset": 2083,
         "length": 4
       }
     },

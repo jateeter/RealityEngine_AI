@@ -23,7 +23,6 @@
         "low-income",
         "qualification",
         "qualification-workflow",
-        "snap",
         "startup-loadable"
       ],
       "sequenceCount": 3,
@@ -80,7 +79,6 @@
           "low-income",
           "qualification",
           "qualification-workflow",
-          "snap",
           "startup-loadable"
         ]
       }

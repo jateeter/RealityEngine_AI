@@ -52,7 +52,6 @@
           "asic-pattern",
           "digital-logic-generated",
           "digital-logic-infrastructure",
-          "dlx031",
           "jtag-select-capture-shift-update",
           "logical-infrastructure",
           "regular-expression"

@@ -27,7 +27,7 @@
         "Mark portfolio cost optimization ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2651:2655]",
-      "outputSpace": "4D binary at [2655:2659]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2659:2663]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-corporate-legal-services-portfolio-cost-optimization",
         "legal-services-generated",
         "lsx077",
+        "machine-interconnect",
         "portfolio-cost-optimization",
         "productization",
         "provisional-patent",
@@ -80,14 +81,14 @@
           "ip-portfolio-agent",
           "legal-services-corporate-legal-services",
           "legal-services-generated",
-          "lsx077",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -112,13 +113,48 @@
           "legal-services-corporate-legal-services-portfolio-cost-optimization",
           "legal-services-generated",
           "lsx077",
+          "machine-interconnect",
           "portfolio-cost-optimization",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Corporate Legal Services Product Counsel Launch Review"
+      ],
+      "upstreamMachine": "Legal Services Corporate Legal Services Product Counsel Launch Review",
+      "downstreamMachines": [
+        "Legal Services Corporate Legal Services Standards Open Innovation Review"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Corporate Legal Services Standards Open Innovation Review",
+          "targetInputSpace": "[2659:2663]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -127,7 +163,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2655,
+        "offset": 2659,
         "length": 4
       }
     },

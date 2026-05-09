@@ -27,7 +27,7 @@
         "Mark independent contractor cleanup ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2555:2559]",
-      "outputSpace": "4D binary at [2559:2563]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2563:2567]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -51,6 +51,7 @@
         "legal-services-individual-creator-services",
         "legal-services-individual-creator-services-independent-contractor-cleanup",
         "lsx065",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -78,14 +79,14 @@
           "intellectual-property",
           "legal-services-generated",
           "legal-services-individual-creator-services",
-          "lsx065",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -111,12 +112,47 @@
           "legal-services-individual-creator-services",
           "legal-services-individual-creator-services-independent-contractor-cleanup",
           "lsx065",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Individual Creator Services Small Business Brand Launch"
+      ],
+      "upstreamMachine": "Legal Services Individual Creator Services Small Business Brand Launch",
+      "downstreamMachines": [
+        "Legal Services Individual Creator Services Prototype Disclosure Guard"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Individual Creator Services Prototype Disclosure Guard",
+          "targetInputSpace": "[2563:2567]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -125,7 +161,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2559,
+        "offset": 2563,
         "length": 4
       }
     },

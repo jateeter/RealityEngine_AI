@@ -100,7 +100,7 @@
           "ai-trigger",
           "cgm",
           "dispatchable-agent",
-          "lbl098",
+          "health-personal",
           "life-balance-generated",
           "lifestyle-psychiatry",
           "metabolic-health",
@@ -113,7 +113,6 @@
           "ai-trigger",
           "cross-domain-interconnect",
           "dispatchable-agent",
-          "health-personal",
           "machine-interconnect"
         ],
         "validationTags": [

@@ -21,8 +21,8 @@
         "kleene-plus",
         "machine-interconnect",
         "nutrient-management",
-        "nutrient-solution",
         "nutrient-uptake",
+        "nutrition",
         "photoperiod",
         "startup-loadable"
       ],
@@ -63,8 +63,8 @@
         "workflowTags": [
           "indoor-growing",
           "kleene-plus",
-          "nutrition",
           "nutrient-uptake",
+          "nutrition",
           "photoperiod"
         ],
         "integrationTags": [
@@ -90,8 +90,8 @@
           "kleene-plus",
           "machine-interconnect",
           "nutrient-management",
-          "nutrient-solution",
           "nutrient-uptake",
+          "nutrition",
           "photoperiod",
           "startup-loadable"
         ]

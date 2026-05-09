@@ -27,7 +27,7 @@
         "Mark specification support builder ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2083:2087]",
-      "outputSpace": "4D binary at [2087:2091]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2091:2095]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-provisional-patent-filing",
         "legal-services-provisional-patent-filing-specification-support-builder",
         "lsx006",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "provisional-patent-filing",
@@ -77,7 +78,6 @@
           "intellectual-property",
           "legal-services-generated",
           "legal-services-provisional-patent-filing",
-          "lsx006",
           "productization",
           "provisional-patent",
           "specification-support-builder",
@@ -85,7 +85,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -109,6 +110,7 @@
           "legal-services-provisional-patent-filing",
           "legal-services-provisional-patent-filing-specification-support-builder",
           "lsx006",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "provisional-patent-filing",
@@ -116,7 +118,48 @@
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Provisional Patent Filing Prior Art Search Triage"
+      ],
+      "upstreamMachine": "Legal Services Provisional Patent Filing Prior Art Search Triage",
+      "downstreamMachines": [
+        "Legal Services Provisional Patent Filing Drawing And Figure Readiness"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Provisional Patent Filing Drawing And Figure Readiness",
+          "targetInputSpace": "[2091:2095]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "ai-agent-assist",
+          "targetMachine": "Legal Services AI Assisted Legal Operations Drafting Checklist Agent",
+          "targetInputSpace": "[2459:2463]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -125,7 +168,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2087,
+        "offset": 2091,
         "length": 4
       }
     },

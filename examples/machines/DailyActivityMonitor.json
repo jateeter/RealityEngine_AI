@@ -12,7 +12,7 @@
       "eventSpace": "2D binary: [below_baseline_today, sedentary_streak_active]",
       "outputSpace": "2D binary: {[0,0]=ACTIVE, [1,0]=SEDENTARY, [1,1]=PROLONGED_INACTIVITY}",
       "tags": [
-        "activity",
+        "anomaly-detection",
         "ces-sequences",
         "ces-sequences-3",
         "daily-activity-monitor",
@@ -22,7 +22,6 @@
         "input-sequences",
         "input-sequences-2",
         "startup-loadable",
-        "trend",
         "trigger",
         "wellness"
       ],
@@ -79,14 +78,12 @@
           "in-home-monitoring"
         ],
         "workflowTags": [
+          "anomaly-detection",
           "daily-activity-monitor",
           "elder-care",
-          "anomaly-detection",
           "trigger"
         ],
-        "integrationTags": [
-          "health-personal"
-        ],
+        "integrationTags": [],
         "validationTags": [
           "ces-sequences",
           "ces-sequences-3",
@@ -95,7 +92,7 @@
           "startup-loadable"
         ],
         "allTags": [
-          "activity",
+          "anomaly-detection",
           "ces-sequences",
           "ces-sequences-3",
           "daily-activity-monitor",
@@ -105,7 +102,6 @@
           "input-sequences",
           "input-sequences-2",
           "startup-loadable",
-          "trend",
           "trigger",
           "wellness"
         ]

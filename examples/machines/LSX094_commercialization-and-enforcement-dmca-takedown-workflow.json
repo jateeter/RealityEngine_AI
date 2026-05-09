@@ -27,7 +27,7 @@
         "Mark dmca takedown workflow ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2787:2791]",
-      "outputSpace": "4D binary at [2791:2795]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2795:2799]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-commercialization-and-enforcement-dmca-takedown-workflow",
         "legal-services-generated",
         "lsx094",
+        "machine-interconnect",
         "product-counsel-agent",
         "productization",
         "provisional-patent",
@@ -79,7 +80,6 @@
           "intellectual-property",
           "legal-services-commercialization-and-enforcement",
           "legal-services-generated",
-          "lsx094",
           "product-counsel-agent",
           "productization",
           "provisional-patent",
@@ -87,7 +87,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -112,13 +113,55 @@
           "legal-services-commercialization-and-enforcement-dmca-takedown-workflow",
           "legal-services-generated",
           "lsx094",
+          "machine-interconnect",
           "product-counsel-agent",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Commercialization And Enforcement Notice Letter Evidence Gate"
+      ],
+      "upstreamMachine": "Legal Services Commercialization And Enforcement Notice Letter Evidence Gate",
+      "downstreamMachines": [
+        "Legal Services Commercialization And Enforcement Trademark Marketplace Takedown"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Commercialization And Enforcement Trademark Marketplace Takedown",
+          "targetInputSpace": "[2795:2799]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "evidence-preservation",
+          "targetMachine": "Legal Services Portfolio Operations Evidence Preservation Vault",
+          "targetInputSpace": "[2427:2431]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -127,7 +170,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2791,
+        "offset": 2795,
         "length": 4
       }
     },

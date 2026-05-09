@@ -27,7 +27,7 @@
         "Mark fee budget forecast ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2411:2415]",
-      "outputSpace": "4D binary at [2415:2419]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2419:2423]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-portfolio-operations",
         "legal-services-portfolio-operations-fee-budget-forecast",
         "lsx047",
+        "machine-interconnect",
         "portfolio-operations",
         "productization",
         "provisional-patent",
@@ -80,14 +81,14 @@
           "ip-portfolio-agent",
           "legal-services-generated",
           "legal-services-portfolio-operations",
-          "lsx047",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -112,13 +113,48 @@
           "legal-services-portfolio-operations",
           "legal-services-portfolio-operations-fee-budget-forecast",
           "lsx047",
+          "machine-interconnect",
           "portfolio-operations",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Portfolio Operations Client Decision Packet"
+      ],
+      "upstreamMachine": "Legal Services Portfolio Operations Client Decision Packet",
+      "downstreamMachines": [
+        "Legal Services Portfolio Operations Foreign Rights Coordination"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Portfolio Operations Foreign Rights Coordination",
+          "targetInputSpace": "[2419:2423]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -127,7 +163,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2415,
+        "offset": 2419,
         "length": 4
       }
     },

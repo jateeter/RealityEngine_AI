@@ -27,7 +27,7 @@
         "Mark portal outage contingency ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2747:2751]",
-      "outputSpace": "4D binary at [2751:2755]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2755:2759]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-filing-and-portal-operations-portal-outage-contingency",
         "legal-services-generated",
         "lsx089",
+        "machine-interconnect",
         "portal-outage-contingency",
         "productization",
         "provisional-patent",
@@ -78,7 +79,6 @@
           "intellectual-property",
           "legal-services-filing-and-portal-operations",
           "legal-services-generated",
-          "lsx089",
           "portal-outage-contingency",
           "productization",
           "provisional-patent",
@@ -86,7 +86,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -111,13 +112,55 @@
           "legal-services-filing-and-portal-operations-portal-outage-contingency",
           "legal-services-generated",
           "lsx089",
+          "machine-interconnect",
           "portal-outage-contingency",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Filing And Portal Operations Copyright Deposit File Gate"
+      ],
+      "upstreamMachine": "Legal Services Filing And Portal Operations Copyright Deposit File Gate",
+      "downstreamMachines": [
+        "Legal Services Filing And Portal Operations Receipt And Certificate Archive"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Filing And Portal Operations Receipt And Certificate Archive",
+          "targetInputSpace": "[2755:2759]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "perceptual-output-overlap",
+          "action": "filing-portal-readiness",
+          "targetMachine": "Legal Services Filing And Portal Operations Receipt And Certificate Archive",
+          "targetInputSpace": "[2755:2759]",
+          "description": "Common legal workflow action is backed by an output-to-input perceptual-space overlap."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -126,7 +169,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2751,
+        "offset": 2755,
         "length": 4
       }
     },

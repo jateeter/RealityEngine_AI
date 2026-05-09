@@ -40,6 +40,7 @@
         "maintenance",
         "operational-management",
         "startup-loadable",
+        "water-quality",
         "water-quality-stability"
       ],
       "sequenceCount": 4,
@@ -117,6 +118,7 @@
           "maintenance",
           "operational-management",
           "startup-loadable",
+          "water-quality",
           "water-quality-stability"
         ]
       }

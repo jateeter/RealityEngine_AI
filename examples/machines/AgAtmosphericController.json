@@ -15,15 +15,14 @@
         "atmospheric-co2",
         "ces-sequences",
         "ces-sequences-3",
-        "climate-control",
         "co2-enrichment",
-        "humidity",
         "humidity-control",
         "indoor-growing",
         "input-sequences",
         "input-sequences-1",
         "kleene-plus",
         "startup-loadable",
+        "thermal-comfort",
         "vpd"
       ],
       "sequenceCount": 3,
@@ -47,10 +46,10 @@
         "machineCode": "ag-atmospheric-controller",
         "capabilityTags": [],
         "workflowTags": [
-          "thermal-comfort",
           "co2-enrichment",
           "indoor-growing",
           "kleene-plus",
+          "thermal-comfort",
           "vpd"
         ],
         "integrationTags": [],
@@ -68,15 +67,14 @@
           "atmospheric-co2",
           "ces-sequences",
           "ces-sequences-3",
-          "climate-control",
           "co2-enrichment",
-          "humidity",
           "humidity-control",
           "indoor-growing",
           "input-sequences",
           "input-sequences-1",
           "kleene-plus",
           "startup-loadable",
+          "thermal-comfort",
           "vpd"
         ]
       }

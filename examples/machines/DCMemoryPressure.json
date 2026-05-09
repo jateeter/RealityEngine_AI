@@ -11,10 +11,10 @@
       "eventSpace": "4D continuous sensor vector at [1344:1348]: [mem_usage_norm, mem_page_fault_rate_norm, mem_cache_miss_norm, swap_usage_norm]",
       "outputSpace": "2D binary at [1367:1369]: [1,0]=MEMORY_ALARM, [0,1]=MEMORY_HEALTHY",
       "tags": [
+        "anomaly-detection",
         "cascading-failure",
         "ces-sequences",
         "ces-sequences-2",
-        "continuous",
         "data-center",
         "data-center-memory-pressure",
         "dc-memory-pressure-detector",
@@ -62,8 +62,8 @@
           "monitoring"
         ],
         "workflowTags": [
-          "cascading-failure",
           "anomaly-detection",
+          "cascading-failure",
           "data-center",
           "dc-memory-pressure-detector",
           "dcmemory-pressure",
@@ -78,10 +78,10 @@
           "startup-loadable"
         ],
         "allTags": [
+          "anomaly-detection",
           "cascading-failure",
           "ces-sequences",
           "ces-sequences-2",
-          "continuous",
           "data-center",
           "data-center-memory-pressure",
           "dc-memory-pressure-detector",

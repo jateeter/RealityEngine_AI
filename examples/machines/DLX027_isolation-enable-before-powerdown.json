@@ -52,7 +52,6 @@
           "asic-pattern",
           "digital-logic-generated",
           "digital-logic-infrastructure",
-          "dlx027",
           "isolation-enable-before-powerdown",
           "logical-infrastructure",
           "regular-expression"

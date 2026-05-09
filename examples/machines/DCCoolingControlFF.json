@@ -13,7 +13,6 @@
       "tags": [
         "ces-sequences",
         "ces-sequences-2",
-        "cooling",
         "cooling-control",
         "data-center",
         "data-center-thermal-cooling-control",
@@ -25,7 +24,8 @@
         "input-sequences-3",
         "machine-interconnect",
         "startup-loadable",
-        "thermal"
+        "thermal",
+        "thermal-comfort"
       ],
       "sequenceCount": 2,
       "role": "Latches thermal escalation alarm; downstream input to DCCriticalSynthesizer",
@@ -50,11 +50,11 @@
         "machineCode": "dccooling-control-ff",
         "capabilityTags": [],
         "workflowTags": [
-          "thermal-comfort",
           "data-center",
           "dc-cooling-control-flip-flop",
           "dccooling-control-ff",
-          "flip-flop"
+          "flip-flop",
+          "thermal-comfort"
         ],
         "integrationTags": [
           "digital-logic",
@@ -70,7 +70,6 @@
         "allTags": [
           "ces-sequences",
           "ces-sequences-2",
-          "cooling",
           "cooling-control",
           "data-center",
           "data-center-thermal-cooling-control",
@@ -82,7 +81,8 @@
           "input-sequences-3",
           "machine-interconnect",
           "startup-loadable",
-          "thermal"
+          "thermal",
+          "thermal-comfort"
         ]
       }
     },

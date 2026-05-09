@@ -27,7 +27,7 @@
         "Mark office action response docket ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2187:2191]",
-      "outputSpace": "4D binary at [2191:2195]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2195:2199]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-trademark-workflow",
         "legal-services-trademark-workflow-office-action-response-docket",
         "lsx019",
+        "machine-interconnect",
         "office-action-response-docket",
         "productization",
         "provisional-patent",
@@ -80,7 +81,6 @@
           "dispatchable-agent",
           "intellectual-property",
           "legal-services-generated",
-          "lsx019",
           "office-action-response-docket",
           "productization",
           "provisional-patent",
@@ -88,7 +88,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -112,6 +113,7 @@
           "legal-services-trademark-workflow",
           "legal-services-trademark-workflow-office-action-response-docket",
           "lsx019",
+          "machine-interconnect",
           "office-action-response-docket",
           "productization",
           "provisional-patent",
@@ -119,7 +121,48 @@
           "trademark",
           "trademark-workflow"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Trademark Workflow Trademark Center Filing Packet"
+      ],
+      "upstreamMachine": "Legal Services Trademark Workflow Trademark Center Filing Packet",
+      "downstreamMachines": [
+        "Legal Services Trademark Workflow Post Registration Maintenance"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Trademark Workflow Post Registration Maintenance",
+          "targetInputSpace": "[2195:2199]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "metadata-dispatch-route",
+          "action": "docket-integrity",
+          "targetMachine": "Legal Services Portfolio Operations Docket Integrity Monitor",
+          "targetInputSpace": "[2387:2391]",
+          "description": "Common legal workflow action documents a dispatch/coordination route while preserving the primary vector lane."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -128,7 +171,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2191,
+        "offset": 2195,
         "length": 4
       }
     },

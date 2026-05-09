@@ -66,6 +66,7 @@
         "nutrition",
         "nutrition-metabolic-agent",
         "projection",
+        "psychiatric-care-agent",
         "sleep",
         "startup-loadable",
         "temperament-testing"
@@ -94,7 +95,6 @@
           "ai-trigger",
           "cgm",
           "dispatchable-agent",
-          "lbl052",
           "life-balance-generated",
           "life-balance-medication-and-psychiatric-care",
           "lifestyle-psychiatry",
@@ -140,6 +140,7 @@
           "nutrition",
           "nutrition-metabolic-agent",
           "projection",
+          "psychiatric-care-agent",
           "sleep",
           "startup-loadable",
           "temperament-testing"

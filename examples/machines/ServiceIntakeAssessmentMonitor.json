@@ -17,7 +17,6 @@
         "input-sequences",
         "input-sequences-1",
         "intake",
-        "intake-assessment",
         "kleene-plus",
         "needs-assessment",
         "service-delivery",
@@ -49,7 +48,6 @@
         "workflowTags": [
           "case-management",
           "community-services-intake-needs-assessment",
-          "intake",
           "kleene-plus",
           "service-delivery",
           "service-intake-assessment-monitor",
@@ -72,7 +70,6 @@
           "input-sequences",
           "input-sequences-1",
           "intake",
-          "intake-assessment",
           "kleene-plus",
           "needs-assessment",
           "service-delivery",

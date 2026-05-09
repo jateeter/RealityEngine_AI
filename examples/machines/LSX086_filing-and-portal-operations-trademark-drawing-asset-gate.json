@@ -27,7 +27,7 @@
         "Mark trademark drawing asset gate ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2723:2727]",
-      "outputSpace": "4D binary at [2727:2731]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2731:2735]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -50,6 +50,7 @@
         "legal-services-filing-and-portal-operations-trademark-drawing-asset-gate",
         "legal-services-generated",
         "lsx086",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -77,14 +78,14 @@
           "intellectual-property",
           "legal-services-filing-and-portal-operations",
           "legal-services-generated",
-          "lsx086",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -109,13 +110,48 @@
           "legal-services-filing-and-portal-operations-trademark-drawing-asset-gate",
           "legal-services-generated",
           "lsx086",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark",
           "trademark-drawing-asset-gate"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Filing And Portal Operations Trademark Account Identity Gate"
+      ],
+      "upstreamMachine": "Legal Services Filing And Portal Operations Trademark Account Identity Gate",
+      "downstreamMachines": [
+        "Legal Services Filing And Portal Operations Copyright eCO Account Gate"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Filing And Portal Operations Copyright eCO Account Gate",
+          "targetInputSpace": "[2731:2735]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -124,7 +160,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2727,
+        "offset": 2731,
         "length": 4
       }
     },

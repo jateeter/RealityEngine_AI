@@ -27,7 +27,7 @@
         "Mark copyright eco account gate ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2731:2735]",
-      "outputSpace": "4D binary at [2735:2739]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2739:2743]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -40,7 +40,6 @@
         "ces-sequences-4",
         "copyright",
         "copyright-e-co-account-gate",
-        "copyright-eco-account-gate",
         "dispatchable-agent",
         "filing-and-portal-operations",
         "input-sequences",
@@ -53,6 +52,7 @@
         "legal-services-filing-and-portal-operations-copyright-eco-account-gate",
         "legal-services-generated",
         "lsx087",
+        "machine-interconnect",
         "productization",
         "provisional-patent",
         "startup-loadable",
@@ -79,14 +79,14 @@
           "ip-portfolio-agent",
           "legal-services-filing-and-portal-operations",
           "legal-services-generated",
-          "lsx087",
           "productization",
           "provisional-patent",
           "trademark"
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -101,7 +101,6 @@
           "ces-sequences-4",
           "copyright",
           "copyright-e-co-account-gate",
-          "copyright-eco-account-gate",
           "dispatchable-agent",
           "filing-and-portal-operations",
           "input-sequences",
@@ -114,12 +113,55 @@
           "legal-services-filing-and-portal-operations-copyright-eco-account-gate",
           "legal-services-generated",
           "lsx087",
+          "machine-interconnect",
           "productization",
           "provisional-patent",
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Copyright Workflow eCO Application Assembly",
+        "Legal Services Filing And Portal Operations Trademark Drawing Asset Gate"
+      ],
+      "upstreamMachine": "Legal Services Copyright Workflow eCO Application Assembly",
+      "downstreamMachines": [
+        "Legal Services Filing And Portal Operations Copyright Deposit File Gate"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services Filing And Portal Operations Copyright Deposit File Gate",
+          "targetInputSpace": "[2739:2743]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        },
+        {
+          "type": "perceptual-output-overlap",
+          "action": "filing-portal-readiness",
+          "targetMachine": "Legal Services Filing And Portal Operations Copyright Deposit File Gate",
+          "targetInputSpace": "[2739:2743]",
+          "description": "Common legal workflow action is backed by an output-to-input perceptual-space overlap."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -128,7 +170,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2735,
+        "offset": 2739,
         "length": 4
       }
     },

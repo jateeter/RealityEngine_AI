@@ -27,7 +27,7 @@
         "Mark risk memo synthesizer ready for the next controlled workflow step."
       ],
       "inputSpace": "4D binary at [2467:2471]",
-      "outputSpace": "4D binary at [2471:2475]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
+      "outputSpace": "4D binary at [2475:2479]: [1,0,0,0]=ATTORNEY_REVIEW, [0,1,0,0]=OPTIMIZE_WORKSTEP, [0,0,1,0]=DOCKET_ACTION, [0,0,0,1]=READY_FOR_NEXT_STEP",
       "inputSemantics": [
         "facts complete",
         "rights/ownership clear",
@@ -49,6 +49,7 @@
         "legal-services-ai-assisted-legal-operations-risk-memo-synthesizer",
         "legal-services-generated",
         "lsx054",
+        "machine-interconnect",
         "product-counsel-agent",
         "productization",
         "provisional-patent",
@@ -79,7 +80,6 @@
           "intellectual-property",
           "legal-services-ai-assisted-legal-operations",
           "legal-services-generated",
-          "lsx054",
           "product-counsel-agent",
           "productization",
           "provisional-patent",
@@ -87,7 +87,8 @@
         ],
         "integrationTags": [
           "ai-trigger",
-          "dispatchable-agent"
+          "dispatchable-agent",
+          "machine-interconnect"
         ],
         "validationTags": [
           "ces-sequences",
@@ -111,6 +112,7 @@
           "legal-services-ai-assisted-legal-operations-risk-memo-synthesizer",
           "legal-services-generated",
           "lsx054",
+          "machine-interconnect",
           "product-counsel-agent",
           "productization",
           "provisional-patent",
@@ -118,7 +120,48 @@
           "startup-loadable",
           "trademark"
         ]
-      }
+      },
+      "upstreamMachines": [
+        "Legal Services Provisional Patent Filing Public Disclosure Bar Check",
+        "Legal Services Provisional Patent Filing Prior Art Search Triage",
+        "Legal Services Trademark Workflow Knockout Search Review",
+        "Legal Services Copyright Workflow Publication Status Review",
+        "Legal Services Productization IP Governance Trade Secret Boundary",
+        "Legal Services AI Assisted Legal Operations Drafting Checklist Agent",
+        "Legal Services Commercialization And Enforcement Freedom To Operate Intake",
+        "Legal Services Commercialization And Enforcement Notice Letter Evidence Gate"
+      ],
+      "upstreamMachine": "Legal Services Provisional Patent Filing Public Disclosure Bar Check",
+      "downstreamMachines": [
+        "Legal Services AI Assisted Legal Operations Deadline Projection Agent"
+      ],
+      "workflowConnectionPolicy": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "legal-services-workflow-interconnect-update",
+        "primaryConnectionMode": "perceptual-output-overlap",
+        "commonActionMode": "metadata-dispatch-route when a machine participates in more than one common workflow action",
+        "commonActions": [
+          "ai-agent-assist",
+          "attorney-review",
+          "commercialization-and-enforcement",
+          "conflict-and-engagement-control",
+          "docket-integrity",
+          "evidence-preservation",
+          "filing-portal-readiness",
+          "matter-intake",
+          "portfolio-summary-and-learning"
+        ]
+      },
+      "workflowConnections": [
+        {
+          "type": "perceptual-output-overlap",
+          "action": "primary-controlled-workflow-step",
+          "targetMachine": "Legal Services AI Assisted Legal Operations Deadline Projection Agent",
+          "targetInputSpace": "[2475:2479]",
+          "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
+        }
+      ],
+      "perceptualInterconnect": true
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -127,7 +170,7 @@
         "length": 4
       },
       "output": {
-        "offset": 2471,
+        "offset": 2475,
         "length": 4
       }
     },
