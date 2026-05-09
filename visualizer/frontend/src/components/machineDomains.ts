@@ -38,9 +38,11 @@ export interface DomainDef {
   description: string;
 }
 
-// 3×4 grid layout:
-//   x = 0.20 | 0.50 | 0.80
-//   y = 0.17 | 0.38 | 0.60 | 0.82
+// 4×3 grid layout (4 cols × 3 rows):
+//   x = 0.125 | 0.375 | 0.625 | 0.875
+//   y = 0.20  | 0.50  | 0.80
+// Each domain occupies one cell; the MachineInterconnectionGraph clamps
+// node positions to per-cell bounding boxes so domain hulls are disjoint.
 export const DOMAINS: Record<DomainId, DomainDef> = {
   healthservices: {
     id: 'healthservices',
@@ -48,7 +50,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'HS',
     color: '#22c55e',
     fill: 'rgba(34, 197, 94, 0.18)',
-    anchor: { x: 0.20, y: 0.17 },
+    anchor: { x: 0.125, y: 0.20 },
     description: 'Public health systems, community care delivery, health program evaluation',
   },
   lifebalance: {
@@ -57,7 +59,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'LB',
     color: '#ec4899',
     fill: 'rgba(236, 72, 153, 0.18)',
-    anchor: { x: 0.50, y: 0.17 },
+    anchor: { x: 0.375, y: 0.20 },
     description: 'Lifestyle medicine, psychiatric care, nutrition, sleep, CGM, metabolic health',
   },
   healthpersonal: {
@@ -66,7 +68,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'PH',
     color: '#14b8a6',
     fill: 'rgba(20, 184, 166, 0.18)',
-    anchor: { x: 0.80, y: 0.17 },
+    anchor: { x: 0.625, y: 0.20 },
     description: 'Home health, assisted living, elder care, care transitions',
   },
   builtspace: {
@@ -75,7 +77,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'BS',
     color: '#6366f1',
     fill: 'rgba(99, 102, 241, 0.18)',
-    anchor: { x: 0.20, y: 0.38 },
+    anchor: { x: 0.875, y: 0.20 },
     description: 'WELL Building Standard operations — air, water, light, thermal, acoustics, occupant health',
   },
   transportation: {
@@ -84,7 +86,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'TR',
     color: '#f97316',
     fill: 'rgba(249, 115, 22, 0.18)',
-    anchor: { x: 0.50, y: 0.38 },
+    anchor: { x: 0.125, y: 0.50 },
     description: 'Transit fleet operations — dispatch, charging, depot, rider experience, workforce',
   },
   legalservices: {
@@ -93,7 +95,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'LS',
     color: '#eab308',
     fill: 'rgba(234, 179, 8, 0.16)',
-    anchor: { x: 0.80, y: 0.38 },
+    anchor: { x: 0.375, y: 0.50 },
     description: 'IP portfolio, patent filing, trademark, copyright, legal operations',
   },
   communityservices: {
@@ -102,7 +104,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'CS',
     color: '#0ea5e9',
     fill: 'rgba(14, 165, 233, 0.18)',
-    anchor: { x: 0.20, y: 0.60 },
+    anchor: { x: 0.625, y: 0.50 },
     description: 'Benefits eligibility, case management, service delivery, community outreach',
   },
   agriculture: {
@@ -111,7 +113,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'Ag',
     color: '#84cc16',
     fill: 'rgba(132, 204, 22, 0.18)',
-    anchor: { x: 0.50, y: 0.60 },
+    anchor: { x: 0.875, y: 0.50 },
     description: 'Indoor growing, aquaculture, irrigation, crop steering, IPM, harvest',
   },
   datacenter: {
@@ -120,7 +122,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'DC',
     color: '#f59e0b',
     fill: 'rgba(245, 158, 11, 0.18)',
-    anchor: { x: 0.80, y: 0.60 },
+    anchor: { x: 0.125, y: 0.80 },
     description: 'DC monitoring, cooling, power, network, storage, SRE, change management',
   },
   digitallogic: {
@@ -129,7 +131,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'DL',
     color: '#06b6d4',
     fill: 'rgba(6, 182, 212, 0.18)',
-    anchor: { x: 0.20, y: 0.82 },
+    anchor: { x: 0.375, y: 0.80 },
     description: 'Digital logic primitives — flip-flops, Kleene patterns, regular expressions, ASIC patterns',
   },
   ai: {
@@ -138,7 +140,7 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'AI',
     color: '#a855f7',
     fill: 'rgba(168, 85, 247, 0.20)',
-    anchor: { x: 0.50, y: 0.82 },
+    anchor: { x: 0.625, y: 0.80 },
     description: 'AI model serving, capacity throttling, cooling, power, RAG routing, inference infra',
   },
   general: {
@@ -147,16 +149,21 @@ export const DOMAINS: Record<DomainId, DomainDef> = {
     short: 'Gen',
     color: '#94a3b8',
     fill: 'rgba(148, 163, 184, 0.15)',
-    anchor: { x: 0.80, y: 0.82 },
+    anchor: { x: 0.875, y: 0.80 },
     description: 'Unclassified or multi-domain machines',
   },
 };
 
+// Per-cell half-extents (as fractions of canvas) — sized so each domain's
+// bounding box fits inside its grid cell with a small inter-cell gap.
+// 4×3 grid: x-spacing = 0.25, y-spacing = 0.30.
+// Half-extents leave ~0.04 horiz and ~0.04 vert as gap between adjacent cells.
+export const DOMAIN_BOX_HALF = { x: 0.105, y: 0.130 };
+
 export const DOMAIN_ORDER: DomainId[] = [
-  'healthservices', 'lifebalance', 'healthpersonal',
-  'builtspace', 'transportation', 'legalservices',
-  'communityservices', 'agriculture', 'datacenter',
-  'digitallogic', 'ai', 'general',
+  'healthservices', 'lifebalance', 'healthpersonal', 'builtspace',
+  'transportation', 'legalservices', 'communityservices', 'agriculture',
+  'datacenter', 'digitallogic', 'ai', 'general',
 ];
 
 // ── Keyword tables (all lowercase; matched against lowercased input) ──────────

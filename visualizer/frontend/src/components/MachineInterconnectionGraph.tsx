@@ -15,6 +15,7 @@ import { useVisualizerStore } from '../store';
 import {
   classifyMachine,
   DOMAINS,
+  DOMAIN_BOX_HALF,
   DOMAIN_ORDER,
   DomainId,
 } from './machineDomains';
@@ -243,15 +244,33 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       });
     }
 
+    // Per-domain disjoint bounding box.  Each domain occupies one cell in
+    // a 4×3 grid; node positions are clamped to this box on every tick so
+    // hulls from different domains never overlap.
+    const domainBox = (domain: DomainId) => {
+      const a = DOMAINS[domain].anchor;
+      return {
+        xMin: a.x * width - DOMAIN_BOX_HALF.x * width,
+        xMax: a.x * width + DOMAIN_BOX_HALF.x * width,
+        yMin: a.y * height - DOMAIN_BOX_HALF.y * height,
+        yMax: a.y * height + DOMAIN_BOX_HALF.y * height,
+      };
+    };
+    const clampX = (x: number, box: { xMin: number; xMax: number }) =>
+      Math.max(box.xMin, Math.min(box.xMax, x));
+    const clampY = (y: number, box: { yMin: number; yMax: number }) =>
+      Math.max(box.yMin, Math.min(box.yMax, y));
+
     // Convert machines to nodes — status starts idle; the separate update
     // effect applies live per-step status without rebuilding the simulation.
     const nodes: MachineNode[] = validMachines.map(m => {
       const saved = nodePositionsRef.current.get(m.id);
       const cls = classifications.get(m.id) ?? { domain: 'general' as DomainId, isExternal: false, reason: 'missing' };
-      const anchor = DOMAINS[cls.domain].anchor;
-      // Seed unclassified-but-new nodes near their domain anchor instead of center
-      const seedX = anchor.x * width + (Math.random() - 0.5) * 180;
-      const seedY = anchor.y * height + (Math.random() - 0.5) * 180;
+      const box = domainBox(cls.domain);
+      // Seed positions inside the domain's box, distributed so the force
+      // simulation has a starting point that already respects disjointness.
+      const seedX = box.xMin + Math.random() * (box.xMax - box.xMin);
+      const seedY = box.yMin + Math.random() * (box.yMax - box.yMin);
       return {
         id: m.id,
         name: m.name,
@@ -265,9 +284,10 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         domain: cls.domain,
         isExternal: cls.isExternal,
         status: 'idle' as const,
-        // Restore saved position so layout is preserved when topology changes
-        x: saved?.x ?? seedX,
-        y: saved?.y ?? seedY,
+        // Restore saved position when valid, but clamp to the current box so
+        // a domain rename or grid resize re-anchors the node correctly.
+        x: saved ? clampX(saved.x, box) : seedX,
+        y: saved ? clampY(saved.y, box) : seedY,
       };
     });
 
@@ -571,54 +591,41 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
     for (const d of DOMAIN_ORDER) nodesByDomain.set(d, []);
     for (const n of nodes) nodesByDomain.get(n.domain)!.push(n);
 
-    // Expand each node into corner points so the hull wraps card extents.
-    const HULL_PAD = 22;
+    // Tight hull halo — a small offset around the node *center* (not around
+    // the full card extent).  The inter-cell gap in the 4×3 grid is at least
+    // 28 px vertically and 48 px horizontally, so a 12 px halo guarantees
+    // hulls from adjacent domains never share a pixel.
+    const HULL_HALO = 12;
     const cornerPoints = (n: MachineNode): [number, number][] => {
       const x = n.x ?? 0, y = n.y ?? 0;
-      const w = 100 + HULL_PAD, h = 70 + HULL_PAD;
-      return [[x - w, y - h], [x + w, y - h], [x + w, y + h], [x - w, y + h]];
+      return [
+        [x - HULL_HALO, y - HULL_HALO],
+        [x + HULL_HALO, y - HULL_HALO],
+        [x + HULL_HALO, y + HULL_HALO],
+        [x - HULL_HALO, y + HULL_HALO],
+      ];
     };
 
-    // ── Domain hull drag — move all machines in the domain as one group ─────
-    let hullDragStarts: Map<string, { x: number; y: number }> = new Map();
-    let hullDragOrigin = { x: 0, y: 0 };
-    const hullDrag = d3.drag<SVGPathElement, { domainId: DomainId; hull: [number, number][] | null }>()
-      .on('start', (event, d) => {
-        if (!event.active) simulation.alphaTarget(0.05).restart();
-        hullDragStarts = new Map();
-        hullDragOrigin = { x: event.x, y: event.y };
-        for (const n of nodes) {
-          if (n.domain === d.domainId) {
-            hullDragStarts.set(n.id, { x: n.x ?? 0, y: n.y ?? 0 });
-            n.fx = n.x ?? 0;
-            n.fy = n.y ?? 0;
-          }
-        }
-        (event.sourceEvent as Event)?.stopPropagation?.();
-      })
-      .on('drag', (event, d) => {
-        const dx = event.x - hullDragOrigin.x;
-        const dy = event.y - hullDragOrigin.y;
-        for (const n of nodes) {
-          if (n.domain === d.domainId) {
-            const start = hullDragStarts.get(n.id);
-            if (!start) continue;
-            n.fx = start.x + dx;
-            n.fy = start.y + dy;
-          }
-        }
-      })
-      .on('end', (event) => {
-        if (!event.active) simulation.alphaTarget(0);
-        // Keep the domain pinned at its new position so the moved bubble "sticks"
-      });
+    // Domain hull drag is intentionally disabled: each domain is bound to a
+    // fixed grid cell so its hull can't be moved without breaking
+    // disjointness.  Hull elements are pointer-events:none so they don't
+    // intercept clicks meant for nodes underneath.
 
     const drawHulls = () => {
       const hullData = DOMAIN_ORDER
         .map(domainId => {
           const group = nodesByDomain.get(domainId)!;
           if (group.length === 0) return null;
-          const pts: [number, number][] = [];
+          // Anchor the hull at its domain's box corners as a fallback so
+          // domains with a single node (or fewer than 3 unique points) still
+          // render a bubble that sits inside the cell.
+          const box = domainBox(domainId);
+          const pts: [number, number][] = [
+            [box.xMin + 4, box.yMin + 4],
+            [box.xMax - 4, box.yMin + 4],
+            [box.xMax - 4, box.yMax - 4],
+            [box.xMin + 4, box.yMax - 4],
+          ];
           for (const n of group) pts.push(...cornerPoints(n));
           const hull = pts.length >= 3 ? d3.polygonHull(pts) : pts;
           return { domainId, hull };
@@ -637,9 +644,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         .attr('stroke-opacity', 0.75)
         .attr('stroke-width', 2.5)
         .attr('stroke-dasharray', '8,6')
-        .attr('pointer-events', 'all')
-        .style('cursor', 'grab')
-        .call(hullDrag as any);
+        .attr('pointer-events', 'none');
 
       hullEnter.merge(hullSel as any).attr('d', d => {
         if (!d.hull || d.hull.length === 0) return null;
@@ -666,7 +671,17 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
     // Update simulation — also persist positions so rebuilds preserve layout
     simulation.on('tick', () => {
+      // Clamp every node to its domain's box.  This runs after the force
+      // step, so cross-domain link forces and charge repulsion can shove
+      // nodes around but they always snap back inside their cell.  Both
+      // the live position (x/y) and any pinned position (fx/fy from drag)
+      // are clamped so dragging a node out of its cell is rejected.
       for (const n of nodes) {
+        const box = domainBox(n.domain);
+        if (n.fx != null) n.fx = clampX(n.fx, box);
+        else if (n.x != null) n.x = clampX(n.x, box);
+        if (n.fy != null) n.fy = clampY(n.fy, box);
+        else if (n.y != null) n.y = clampY(n.y, box);
         if (n.x != null && n.y != null) nodePositionsRef.current.set(n.id, { x: n.x, y: n.y });
       }
 
