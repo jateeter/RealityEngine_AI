@@ -86,10 +86,13 @@ class PerceptionRoutes(
           .flatMap(b => io.circe.parser.parse(b).toOption)
           .getOrElse(Json.Null)
 
-        // RE returns SimulationStep directly (perceptualSpace at top level)
+        // RE returns SimulationStep directly (perceptualSpace at top level).
+        // Length need not equal vectorDimension: updateFromPerceptualSpace
+        // auto-grows the engine's persistent vector when RE's space has been
+        // expanded by machines whose mapping extends past our initial size.
         parsed.hcursor.get[Vector[Double]]("perceptualSpace") match {
-          case Right(ps) if ps.length == engine.vectorDimension => engine.updateFromPerceptualSpace(ps)
-          case _                                                =>
+          case Right(ps) if ps.nonEmpty => engine.updateFromPerceptualSpace(ps)
+          case _                        =>
         }
 
         val stepJson = Some(parsed)

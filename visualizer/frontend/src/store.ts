@@ -9,7 +9,6 @@ import {
   PETestSource,
 } from './types';
 import { api, perceptionEngineApi } from './api';
-import { PERCEPTUAL_DIM } from './constants';
 import type { DomainId } from './components/machineDomains';
 import { DOMAIN_ORDER } from './components/machineDomains';
 
@@ -137,12 +136,12 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         }
       }
 
-      // Create PE TestSources from the machine's inputSequences.
-      // Only machines whose entire input region fits within the configured
-      // perceptual space dimension can be driven by the PE.
+      // Create PE TestSources from the machine's inputSequences.  The PE
+      // auto-grows its persistent vector to fit any source it receives, so
+      // we no longer gate this on PERCEPTUAL_DIM — every machine with a
+      // mapping and inputSequences gets sources created.
       const mapping = machine.perceptualMapping?.input;
-      const inRange = mapping && (mapping.offset + mapping.length <= PERCEPTUAL_DIM);
-      if (inRange && machine.metadata?.inputSequences?.length) {
+      if (mapping && machine.metadata?.inputSequences?.length) {
         try {
           const region = mapping!;
           const inputSeqs: Array<{ name: string; vectors: number[][] }> =
