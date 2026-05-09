@@ -5,7 +5,7 @@
 # Startup order (dependency-safe):
 #   1  Pre-flight     — docker compose v2, certs, orphaned container cleanup
 #   2  Ollama         — native LLM runtime
-#   3  Infrastructure — localAIStack Qdrant + Redis + Loki + Grafana
+#   3  Infrastructure — RE Loki + localAIStack Qdrant + Redis
 #   4  RealityEngine  — Scala/Akka stack (consumes Qdrant at :4333)
 #   5  localAIStack API — FastAPI lifespan hooks register sensors + machines in RE
 #   6  Integration    — verify machines, sensors, and Qdrant collections (with retry)
@@ -195,7 +195,7 @@ print(ms[0] if ms else '')" 2>/dev/null || echo "")
 done
 
 # =============================================================================
-hdr "3 · Infrastructure  (Qdrant + Redis + Loki + Grafana)"
+hdr "3 · Infrastructure  (RE Loki + Qdrant + Redis)"
 # =============================================================================
 
 # --fresh: clear RE perception volume before containers start
@@ -211,24 +211,27 @@ if [ "$FRESH_START" = true ]; then
     fi
 fi
 
-info "Starting Loki + Grafana + Qdrant + Redis..."
-# Start infrastructure + logging services; API starts later so its lifespan hooks
-# fire against a live RealityEngine instance (see Phase 5).
-# Loki must come up before qdrant/redis/api because their log drivers push to it.
-# stderr is captured to a temp file so a die() can surface the first failure lines.
-(cd "$LAS_DIR" && docker compose up -d loki grafana qdrant redis \
+info "Starting Loki (RE) + Qdrant + Redis..."
+# Loki lives in RE's compose and must start before RE containers because their
+# Docker logging driver pushes to https://localhost:3100/loki/api/v1/push.
+# Grafana depends on Loki and will start with the rest of RE in Phase 4.
+# stderr captured so die() can surface the first failure lines.
+(cd "$RE_DIR"  && docker compose up -d loki \
     2>/tmp/infra_start_err.log) > /dev/null || \
-    die "docker compose up failed for infra services\n$(tail -5 /tmp/infra_start_err.log 2>/dev/null)\n  Run manually:  cd $LAS_DIR && docker compose up loki grafana qdrant redis"
+    die "docker compose up failed for Loki\n$(tail -5 /tmp/infra_start_err.log 2>/dev/null)\n  Run manually:  cd $RE_DIR && docker compose up loki"
+(cd "$LAS_DIR" && docker compose up -d qdrant redis \
+    2>>/tmp/infra_start_err.log) > /dev/null || \
+    die "docker compose up failed for Qdrant/Redis\n$(tail -5 /tmp/infra_start_err.log 2>/dev/null)\n  Run manually:  cd $LAS_DIR && docker compose up qdrant redis"
 
-# Loki: wait for /ready
+# Loki: wait for /ready  (HTTPS on port 3100; -k skips self-signed cert check)
 info "Waiting for Loki..."
-poll_http "http://localhost:4100/ready" "Loki ready" 30 "-sf" || \
-    die "Loki failed to start\n  Check:  docker logs localai_loki"
+poll_http "https://localhost:3100/ready" "Loki ready" 30 "-skf" || \
+    die "Loki failed to start\n  Check:  docker logs reality-engine-loki"
 
-# Grafana: wait for /api/health
-info "Waiting for Grafana..."
-poll_http "http://localhost:4002/api/health" "Grafana ready" 30 "-sf" || \
-    die "Grafana failed to start\n  Check:  docker logs localai_grafana"
+# Grafana (reality-engine-grafana) has no direct host port — it is only reachable
+# through the TLS proxy at https://localhost:3002 after Phase 4 completes.
+# Startup is verified by the compose healthcheck in Phase 4 --wait.
+info "Grafana will be verified via TLS proxy in Phase 4 (no direct host port)"
 
 # Qdrant: wait for REST API to accept connections
 info "Waiting for Qdrant..."
@@ -326,13 +329,15 @@ hdr "5 · localAIStack API"
 #   import_session_machines() → session_rag_context / session_agent_context in RE
 #   bind_graph_topology()     → per-node topology sensors + machines
 
-info "Starting localAIStack API (lifespan hooks will register integration)..."
+info "Building localAIStack API image..."
 # --build ensures image rebuilds when services/api/requirements.txt or the
 # Dockerfile change (e.g. when strawberry-graphql is added); cache hits keep
 # this near-instant when nothing moved.
+(cd "$LAS_DIR" && docker compose build api 2>&1) | tail -5
+info "Starting localAIStack API (lifespan hooks will register integration)..."
 # --wait on 'api' only: open-webui has no healthcheck and --wait would block.
-(cd "$LAS_DIR" && docker compose up -d --build --force-recreate --wait \
-    --wait-timeout 120 api) > /dev/null 2>&1 || \
+(cd "$LAS_DIR" && docker compose up -d --force-recreate --wait \
+    --wait-timeout 120 api 2>&1) || \
     die "localAIStack API failed to reach healthy state\n  Check:  docker logs localai_api"
 
 # Start open-webui detached without waiting (no healthcheck defined)
@@ -563,8 +568,6 @@ printf "    %-30s %s\n" "API Docs (Swagger UI)"     "http://localhost:4000/docs"
 printf "    %-30s %s\n" "Open WebUI (Chat)"         "http://localhost:4080"
 printf "    %-30s %s\n" "Qdrant Dashboard"          "http://localhost:4333/dashboard"
 printf "    %-30s %s\n" "Ollama"                    "http://localhost:11434"
-printf "    %-30s %s\n" "Grafana (localAIStack)"    "http://localhost:4002"
-printf "    %-30s %s\n" "Loki API (localAIStack)"   "http://localhost:4100"
 echo ""
 echo "  RealityEngine"
 printf "    %-30s %s\n" "API"                       "https://localhost:3000"
