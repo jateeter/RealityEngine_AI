@@ -262,15 +262,22 @@ function connectToREStream(): void {
   const reUrl = new URL(`${REALITY_ENGINE_URL}/api/engine/stream`);
   const transport = reUrl.protocol === 'https:' ? https : http;
 
+  // Load the internal CA so the self-signed Reality Engine cert is trusted.
+  const caPath = process.env.NODE_EXTRA_CA_CERTS;
+  const reqOpts: http.RequestOptions = {
+    hostname: reUrl.hostname,
+    port: reUrl.port ? parseInt(reUrl.port, 10) : (reUrl.protocol === 'https:' ? 443 : 80),
+    path: reUrl.pathname,
+    headers: { Accept: 'text/event-stream', 'Cache-Control': 'no-cache' },
+    // Long-lived stream — disable any default request timeouts.
+    timeout: 0,
+    ...(reUrl.protocol === 'https:' && caPath && existsSync(caPath)
+      ? { ca: readFileSync(caPath) }
+      : {}),
+  };
+
   const req = transport.get(
-    {
-      hostname: reUrl.hostname,
-      port: reUrl.port ? parseInt(reUrl.port, 10) : (reUrl.protocol === 'https:' ? 443 : 80),
-      path: reUrl.pathname,
-      headers: { Accept: 'text/event-stream', 'Cache-Control': 'no-cache' },
-      // Long-lived stream — disable any default request timeouts.
-      timeout: 0,
-    },
+    reqOpts,
     (res) => {
       if (res.statusCode !== 200) {
         res.resume();
