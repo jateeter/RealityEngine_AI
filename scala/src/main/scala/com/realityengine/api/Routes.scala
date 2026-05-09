@@ -590,8 +590,12 @@ class Routes(
         // SSE step-stream — Visualizer Backend subscribes here as a passive observer.
         // Each subscriber gets a live-only feed; the dropHead queue ensures the VB
         // always sees the latest step and never blocks the PE.x.RE.x.PE cycle.
+        // keepAlive injects a heartbeat comment every 15 s so the connection
+        // survives Akka HTTP's default 60 s idle-timeout when no steps flow.
         path("engine" / "stream") { get {
-          complete(sseBroadcast.map(step => ServerSentEvent(step.asJson.noSpaces)))
+          complete(sseBroadcast
+            .map(step => ServerSentEvent(step.asJson.noSpaces))
+            .keepAlive(15.seconds, () => ServerSentEvent.heartbeat))
         } },
 
         // Root

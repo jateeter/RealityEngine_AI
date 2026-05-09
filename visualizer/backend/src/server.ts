@@ -242,6 +242,21 @@ app.get('/health', (_req: Request, res: Response) => {
 // fans out each step to connected frontend WebSocket clients.  This makes the
 // VB a fully passive observer: it never sits in the PE→RE critical path and
 // automatically skips ahead when it falls behind (RE uses dropHead buffering).
+//
+// Reconnect handling: a single in-flight reconnect timer is tracked so that
+// overlapping error/close/end callbacks don't schedule multiple reconnects in
+// parallel (which would otherwise cascade into an unbounded retry storm).
+
+let reconnectTimer: NodeJS.Timeout | null = null;
+
+function scheduleReconnect(reason: string, delayMs: number): void {
+  if (reconnectTimer) return;
+  console.warn(`[SSE] ${reason}, reconnecting in ${Math.round(delayMs / 1000)} s`);
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connectToREStream();
+  }, delayMs);
+}
 
 function connectToREStream(): void {
   const reUrl = new URL(`${REALITY_ENGINE_URL}/api/engine/stream`);
@@ -253,23 +268,35 @@ function connectToREStream(): void {
       port: reUrl.port ? parseInt(reUrl.port, 10) : (reUrl.protocol === 'https:' ? 443 : 80),
       path: reUrl.pathname,
       headers: { Accept: 'text/event-stream', 'Cache-Control': 'no-cache' },
+      // Long-lived stream — disable any default request timeouts.
+      timeout: 0,
     },
     (res) => {
       if (res.statusCode !== 200) {
-        console.warn(`[SSE] RE stream returned ${res.statusCode}, retrying in 3 s`);
         res.resume();
-        setTimeout(connectToREStream, 3000);
+        scheduleReconnect(`RE stream returned ${res.statusCode}`, 3000);
         return;
       }
       console.log('[SSE] Connected to Reality Engine step stream');
+      // Heartbeat tracking — RE sends a comment line every 15 s; if we go
+      // 45 s without any bytes, treat the connection as stale and reconnect.
+      let lastByteAt = Date.now();
+      const stallCheck = setInterval(() => {
+        if (Date.now() - lastByteAt > 45_000) {
+          clearInterval(stallCheck);
+          req.destroy(new Error('stalled — no heartbeat for 45 s'));
+        }
+      }, 15_000);
+
       let buf = '';
       res.setEncoding('utf8');
       res.on('data', (chunk: string) => {
+        lastByteAt = Date.now();
         buf += chunk;
         const lines = buf.split('\n');
         buf = lines.pop() ?? '';
         for (const line of lines) {
-          if (!line.startsWith('data:')) continue;
+          if (!line.startsWith('data:')) continue;       // skip heartbeats and other comment lines
           const payload = line.slice(5).trimStart();
           if (!payload) continue;
           try {
@@ -284,19 +311,21 @@ function connectToREStream(): void {
         }
       });
       res.on('end', () => {
-        console.log('[SSE] RE stream closed, reconnecting in 2 s');
-        setTimeout(connectToREStream, 2000);
+        clearInterval(stallCheck);
+        scheduleReconnect('RE stream closed', 2000);
       });
       res.on('error', (e: Error) => {
-        console.warn(`[SSE] RE stream error: ${e.message}, reconnecting in 2 s`);
-        setTimeout(connectToREStream, 2000);
+        clearInterval(stallCheck);
+        scheduleReconnect(`RE stream error: ${e.message}`, 2000);
       });
     }
   );
 
+  // Disable socket-level idle timeout (long-lived stream).
+  req.setTimeout(0);
+
   req.on('error', (e: Error) => {
-    console.warn(`[SSE] RE connection failed: ${e.message}, retrying in 3 s`);
-    setTimeout(connectToREStream, 3000);
+    scheduleReconnect(`RE connection failed: ${e.message}`, 3000);
   });
 
   req.end();
