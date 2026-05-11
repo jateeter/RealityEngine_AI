@@ -35,6 +35,9 @@ async function waitForServices() {
         healthy = true;
         break;
       } catch {
+        if (retries === 0 || (retries + 1) % 10 === 0) {
+          console.log(`  ⏳ Waiting for ${service.name} (${retries + 1}/${maxRetries})`);
+        }
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
     }

@@ -12,6 +12,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const reuseServices = process.env.REUSE_SERVICES === 'true';
 const isCI = !!process.env.CI;
+const dockerStartCommand = "bash -c '[ -f certs/server.crt ] && [ -f certs/server.key ] && [ -f certs/keystore.p12 ] || bash certs/generate-dev-certs.sh; docker compose up -d loki grafana reality-engine visualizer-backend visualizer-frontend tls-proxy && sleep 10'";
 
 export default defineConfig({
   testDir: './e2e',
@@ -89,7 +90,7 @@ export default defineConfig({
   webServer: reuseServices
     ? undefined
     : {
-        command: "bash -c '[ -f certs/server.crt ] && [ -f certs/server.key ] && [ -f certs/keystore.p12 ] || bash certs/generate-dev-certs.sh; docker compose up -d loki grafana reality-engine visualizer-backend visualizer-frontend tls-proxy && sleep 10'",
+        command: dockerStartCommand,
         url: 'https://localhost:5173',
         ignoreHTTPSErrors: true,
         timeout: 120 * 1000,
