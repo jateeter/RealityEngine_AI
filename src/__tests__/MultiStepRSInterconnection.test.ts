@@ -6,15 +6,17 @@
  *  2. RSFlipFlop machine individual behaviors (SET, RESET, comprehensive)
  *  3. RS2 machine individual behaviors (SET, RESET, full sequence)
  *  4. Interconnected behavior through shared perceptual space:
- *       MultiStep output [3:5] → RSFlipFlop input [3:5] → RSFlipFlop output [6:8]
- *       MultiStep output [3:5] → RS2 input [3:5]       → RS2 output [8:10]
+ *       MultiStep output → RSFlipFlop input → RSFlipFlop output
+ *       MultiStep output → RS2 input        → RS2 output
  *  5. Perceptual space write-back: outputs appear in the correct byte regions
  *
- * Perceptual Space Layout (256 bytes):
- *   [0:3]   MultiStep input
- *   [3:5]   MultiStep output / RSFlipFlop input / RS2 input
- *   [6:8]   RSFlipFlop output
- *   [8:10]  RS2 output
+ * Perceptual Space Layout (conceptual — byte indices are derived dynamically
+ * from each machine's perceptualMapping so the test survives any future
+ * reshuffle of the corpus allocation):
+ *   MS_IN     MultiStep input
+ *   MS_OUT    MultiStep output / RSFlipFlop input / RS2 input  (= RS_IN)
+ *   RSFF_OUT  RSFlipFlop output
+ *   RS2_OUT   RS2 output
  */
 
 import { readFileSync } from 'fs';
@@ -38,7 +40,9 @@ function load(name: string, id: string): Machine {
 }
 
 function makeSim(...machines: Machine[]): PerceptualSpaceSimulator {
-  const sim = new PerceptualSpaceSimulator(256);
+  // Start at 0 so addMachine grows the space to exactly fit the registered
+  // mappings — keeps the assertions about "untouched bytes" meaningful.
+  const sim = new PerceptualSpaceSimulator(0);
   for (const m of machines) sim.addMachine(m);
   return sim;
 }
@@ -55,15 +59,30 @@ function run(
   return sim.getPerceptualSpace().getPerceptualVector();
 }
 
-const MS_IN  = { offset: 0, length: 3 }; // MultiStep input region
-const RS_IN  = { offset: 3, length: 2 }; // RSFlipFlop / RS2 shared input region
+/** Slice a region out of the perceptual vector by its mapping. */
+function regionSlice(ps: number[], r: { offset: number; length: number }): number[] {
+  return ps.slice(r.offset, r.offset + r.length);
+}
+
+// Discover the actual perceptualMapping of each fixture machine.
+// All assertions below derive offsets from these so the test is decoupled
+// from the corpus allocator's absolute byte addresses.
+const MS_FIXTURE   = load('MultiStep',  '__fixture-ms');
+const RSFF_FIXTURE = load('RSFlipFlop', '__fixture-rsff');
+const RS2_FIXTURE  = load('RS2',        '__fixture-rs2');
+
+const MS_IN    = MS_FIXTURE.perceptualMapping!.input;
+const MS_OUT   = MS_FIXTURE.perceptualMapping!.output;
+const RS_IN    = RSFF_FIXTURE.perceptualMapping!.input;  // shared with RS2
+const RSFF_OUT = RSFF_FIXTURE.perceptualMapping!.output;
+const RS2_OUT  = RS2_FIXTURE.perceptualMapping!.output;
 
 // ══════════════════════════════════════════════════════════════════════════════
 // 1. MULTI-STEP MACHINE (isolated)
 // ══════════════════════════════════════════════════════════════════════════════
 
 describe('MultiStep machine (isolated)', () => {
-  // Sequence 1: [0,0,0] → [0,0,1] → [0,1,1] → output [0,1] at bytes [3:5]
+  // Sequence 1: [0,0,0] → [0,0,1] → [0,1,1] → output [0,1] at MS_OUT
   describe('Sequence 1: 000 → 001 → 011 → [0,1]', () => {
     let sim: PerceptualSpaceSimulator;
     beforeEach(() => { sim = makeSim(load('MultiStep', 'ms-test')); });
@@ -72,54 +91,54 @@ describe('MultiStep machine (isolated)', () => {
       // Without any input, the initial vectors should already be active.
       // We verify by checking that [0,0,0] produces a transition (activates ms-seq1-001).
       run(sim, MS_IN, [[0, 0, 0]]);
-      // After one step the perceptual space input region [0:3] should hold [0,0,0]
+      // After one step the perceptual space MS_IN region should hold [0,0,0]
       const ps = sim.getPerceptualSpace().getPerceptualVector();
-      expect(ps.slice(0, 3)).toEqual([0, 0, 0]);
+      expect(regionSlice(ps, MS_IN)).toEqual([0, 0, 0]);
     });
 
     test('step 1 [0,0,0]: initial match, no output asserted yet', () => {
       const ps = run(sim, MS_IN, [[0, 0, 0]]);
       // No output from step 1 — the initial vector fires but ms-seq1-001 has no output
-      expect(ps.slice(3, 5)).toEqual([0, 0]);
+      expect(regionSlice(ps, MS_OUT)).toEqual([0, 0]);
     });
 
     test('step 2 [0,0,1]: transitional match, no output yet', () => {
       const ps = run(sim, MS_IN, [[0, 0, 0], [0, 0, 1]]);
-      expect(ps.slice(3, 5)).toEqual([0, 0]);
+      expect(regionSlice(ps, MS_OUT)).toEqual([0, 0]);
     });
 
-    test('step 3 [0,1,1]: final match — output [0,1] written to perceptual bytes [3:5]', () => {
+    test('step 3 [0,1,1]: final match — output [0,1] written to MS_OUT', () => {
       const ps = run(sim, MS_IN, [[0, 0, 0], [0, 0, 1], [0, 1, 1]]);
-      expect(ps.slice(3, 5)).toEqual([0, 1]);
+      expect(regionSlice(ps, MS_OUT)).toEqual([0, 1]);
     });
 
-    test('input bytes [0:3] hold the last applied vector', () => {
+    test('MS_IN holds the last applied vector', () => {
       const ps = run(sim, MS_IN, [[0, 0, 0], [0, 0, 1], [0, 1, 1]]);
-      expect(ps.slice(0, 3)).toEqual([0, 1, 1]);
+      expect(regionSlice(ps, MS_IN)).toEqual([0, 1, 1]);
     });
 
     test('wrong final step [0,1,0] does NOT produce output', () => {
       const ps = run(sim, MS_IN, [[0, 0, 0], [0, 0, 1], [0, 1, 0]]);
       // [0,1,0] ≠ [0,1,1] — no match at final vector, no output
-      expect(ps.slice(3, 5)).toEqual([0, 0]);
+      expect(regionSlice(ps, MS_OUT)).toEqual([0, 0]);
     });
   });
 
-  // Sequence 2: [1,0,0] → [1,0,1] → [1,1,1] → output [1,0] at bytes [3:5]
+  // Sequence 2: [1,0,0] → [1,0,1] → [1,1,1] → output [1,0] at MS_OUT
   describe('Sequence 2: 100 → 101 → 111 → [1,0]', () => {
     let sim: PerceptualSpaceSimulator;
     beforeEach(() => { sim = makeSim(load('MultiStep', 'ms-test')); });
 
-    test('step 3 [1,1,1]: final match — output [1,0] written to perceptual bytes [3:5]', () => {
+    test('step 3 [1,1,1]: final match — output [1,0] written to MS_OUT', () => {
       const ps = run(sim, MS_IN, [[1, 0, 0], [1, 0, 1], [1, 1, 1]]);
-      expect(ps.slice(3, 5)).toEqual([1, 0]);
+      expect(regionSlice(ps, MS_OUT)).toEqual([1, 0]);
     });
 
     test('both sequences are independent — both initial vectors always active', () => {
       // Seq2 initial (ms-seq2-100) stays active even after Seq1 runs.
       const ps = run(sim, MS_IN, [[0, 0, 0], [0, 0, 1], [0, 1, 1], [1, 0, 0], [1, 0, 1], [1, 1, 1]]);
-      // Both sequences fire: last write wins — [1,0] from Seq2 is at [3:5]
-      expect(ps.slice(3, 5)).toEqual([1, 0]);
+      // Both sequences fire: last write wins — [1,0] from Seq2 is at MS_OUT
+      expect(regionSlice(ps, MS_OUT)).toEqual([1, 0]);
     });
 
     test('interrupting with unrelated vector resets Seq2 progression', () => {
@@ -131,7 +150,7 @@ describe('MultiStep machine (isolated)', () => {
       // After 101: ms-seq2-101 now matches, activates ms-seq2-111
       // (no output yet — need 111)
       const ps = run(sim, MS_IN, [[1, 0, 0], [1, 0, 0], [1, 0, 1]]);
-      expect(ps.slice(3, 5)).toEqual([0, 0]); // no output, 111 not reached
+      expect(regionSlice(ps, MS_OUT)).toEqual([0, 0]); // no output, 111 not reached
     });
   });
 });
@@ -141,37 +160,43 @@ describe('MultiStep machine (isolated)', () => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 describe('RSFlipFlop machine (isolated)', () => {
-  // RSFlipFlop reads from [3:5], writes to [6:8].
+  // RSFlipFlop reads from RS_IN, writes to RSFF_OUT.
   // Both vectors are isInitial with outputs — they respond immediately every cycle.
 
   let sim: PerceptualSpaceSimulator;
   beforeEach(() => { sim = makeSim(load('RSFlipFlop', 'rsff-test')); });
 
-  test('SET: input [1,0] → output [1,0] written to perceptual bytes [6:8]', () => {
+  test('SET: input [1,0] → output [1,0] written to RSFF_OUT', () => {
     const ps = run(sim, RS_IN, [[1, 0]]);
-    expect(ps.slice(6, 8)).toEqual([1, 0]);
+    expect(regionSlice(ps, RSFF_OUT)).toEqual([1, 0]);
   });
 
-  test('RESET: input [0,1] → output [0,1] written to perceptual bytes [6:8]', () => {
+  test('RESET: input [0,1] → output [0,1] written to RSFF_OUT', () => {
     const ps = run(sim, RS_IN, [[0, 1]]);
-    expect(ps.slice(6, 8)).toEqual([0, 1]);
+    expect(regionSlice(ps, RSFF_OUT)).toEqual([0, 1]);
   });
 
   test('HOLD: input [0,0] produces no output (neither event matches)', () => {
     const ps = run(sim, RS_IN, [[0, 0]]);
-    expect(ps.slice(6, 8)).toEqual([0, 0]);
+    expect(regionSlice(ps, RSFF_OUT)).toEqual([0, 0]);
   });
 
   test('SET responds on every matching cycle (initial vector never deactivates)', () => {
     const ps = run(sim, RS_IN, [[1, 0], [0, 0], [1, 0]]);
     // After step 3: last step [1,0] → output [1,0] still in space
-    expect(ps.slice(6, 8)).toEqual([1, 0]);
+    expect(regionSlice(ps, RSFF_OUT)).toEqual([1, 0]);
   });
 
-  test('output region [6:8] is correctly bounded (bytes before and after untouched)', () => {
+  test('RSFF_OUT is correctly bounded (bytes before and after untouched)', () => {
     const ps = run(sim, RS_IN, [[1, 0]]);
-    expect(ps.slice(3, 6)).toEqual([1, 0, 0]); // [3:5]=input, byte 5=0
-    expect(ps[8]).toBe(0);                       // byte 8 (RS2 region) untouched
+    // RS_IN holds the input [1,0]; the byte immediately past RS_IN is in the
+    // allocator gap between RS_IN and RSFF_OUT — should remain zero.
+    expect(regionSlice(ps, RS_IN)).toEqual([1, 0]);
+    expect(ps[RS_IN.offset + RS_IN.length]).toBe(0);
+    // The byte immediately after RSFF_OUT should also be untouched.  When the
+    // simulator's dimension stops exactly at RSFF_OUT.offset + RSFF_OUT.length
+    // (no machines registered past it), ps[end] is undefined — treat that as 0.
+    expect(ps[RSFF_OUT.offset + RSFF_OUT.length] ?? 0).toBe(0);
   });
 
   describe('comprehensive 13-step validation sequence', () => {
@@ -179,7 +204,7 @@ describe('RSFlipFlop machine (isolated)', () => {
     // Expected outputs: [1,0], [1,0], [0,1], [0,1], [1,0], [0,1]
     //
     // IMPORTANT: The perceptual space RETAINS the last-written output value
-    // during hold-state steps (no write → no change). Checking [6:8] != [0,0]
+    // during hold-state steps (no write → no change). Checking RSFF_OUT != [0,0]
     // would incorrectly count hold steps as outputs. Instead we read the
     // machine's outputVector from the step result — null means no output fired.
     const MACHINE_ID = 'rsff-test';
@@ -225,20 +250,20 @@ describe('RSFlipFlop machine (isolated)', () => {
       expect(outputSteps).toEqual([1, 3, 5, 7, 9, 11]);
     });
 
-    test('perceptual space [6:8] is written on output steps and retained on hold steps', () => {
-      // After step 1 (SET), [6:8]=[1,0].
-      // After step 2 (HOLD), RSFlipFlop does not write → [6:8] stays [1,0].
-      // After step 5 (RESET), [6:8]=[0,1]. Etc.
+    test('RSFF_OUT is written on output steps and retained on hold steps', () => {
+      // After step 1 (SET), RSFF_OUT=[1,0].
+      // After step 2 (HOLD), RSFlipFlop does not write → RSFF_OUT stays [1,0].
+      // After step 5 (RESET), RSFF_OUT=[0,1]. Etc.
       sim.configure({ inputSequence: VECTORS, inputRegion: RS_IN, stepDelayMs: 0 });
 
       for (let i = 0; i < 2; i++) sim.step(); // steps 0,1
-      expect(sim.getPerceptualSpace().getPerceptualVector().slice(6, 8)).toEqual([1, 0]);
+      expect(regionSlice(sim.getPerceptualSpace().getPerceptualVector(), RSFF_OUT)).toEqual([1, 0]);
 
       sim.step(); // step 2: hold
-      expect(sim.getPerceptualSpace().getPerceptualVector().slice(6, 8)).toEqual([1, 0]); // retained
+      expect(regionSlice(sim.getPerceptualSpace().getPerceptualVector(), RSFF_OUT)).toEqual([1, 0]); // retained
 
       for (let i = 0; i < 3; i++) sim.step(); // steps 3,4,5
-      expect(sim.getPerceptualSpace().getPerceptualVector().slice(6, 8)).toEqual([0, 1]); // RESET
+      expect(regionSlice(sim.getPerceptualSpace().getPerceptualVector(), RSFF_OUT)).toEqual([0, 1]); // RESET
     });
   });
 });
@@ -248,7 +273,7 @@ describe('RSFlipFlop machine (isolated)', () => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 describe('RS2 machine (isolated)', () => {
-  // RS2 reads from [3:5], writes to [8:10].
+  // RS2 reads from RS_IN, writes to RS2_OUT.
   // Two 2-step sequences: (0,0)→(1,0)→[1,0] and (0,0)→(0,1)→[0,1].
   // The initial vectors both match [0,0], so both successors become active
   // after every hold-state step.
@@ -256,14 +281,14 @@ describe('RS2 machine (isolated)', () => {
   let sim: PerceptualSpaceSimulator;
   beforeEach(() => { sim = makeSim(load('RS2', 'rs2-test')); });
 
-  test('SET: [0,0]→[1,0] → output [1,0] written to perceptual bytes [8:10]', () => {
+  test('SET: [0,0]→[1,0] → output [1,0] written to RS2_OUT', () => {
     const ps = run(sim, RS_IN, [[0, 0], [1, 0]]);
-    expect(ps.slice(8, 10)).toEqual([1, 0]);
+    expect(regionSlice(ps, RS2_OUT)).toEqual([1, 0]);
   });
 
-  test('RESET: [0,0]→[0,1] → output [0,1] written to perceptual bytes [8:10]', () => {
+  test('RESET: [0,0]→[0,1] → output [0,1] written to RS2_OUT', () => {
     const ps = run(sim, RS_IN, [[0, 0], [0, 1]]);
-    expect(ps.slice(8, 10)).toEqual([0, 1]);
+    expect(regionSlice(ps, RS2_OUT)).toEqual([0, 1]);
   });
 
   test('[1,0] without prior [0,0] produces NO output (successors not yet active)', () => {
@@ -271,12 +296,13 @@ describe('RS2 machine (isolated)', () => {
     // On first step [1,0]: initial vectors don't match [1,0] (they want [0,0]),
     // so no successors are queued → rs2-set-10 never gets activated → no output.
     const ps = run(sim, RS_IN, [[1, 0]]);
-    expect(ps.slice(8, 10)).toEqual([0, 0]);
+    expect(regionSlice(ps, RS2_OUT)).toEqual([0, 0]);
   });
 
-  test('output region [8:10] is correctly bounded (bytes 6-7 untouched)', () => {
+  test('RS2_OUT is correctly bounded (RSFF_OUT untouched)', () => {
     const ps = run(sim, RS_IN, [[0, 0], [1, 0]]);
-    expect(ps.slice(6, 8)).toEqual([0, 0]); // RSFlipFlop region untouched
+    // RSFlipFlop is not registered in this sim, so RSFF_OUT must remain zero.
+    expect(regionSlice(ps, RSFF_OUT)).toEqual([0, 0]);
   });
 
   describe('complete 8-step test sequence from machine definition', () => {
@@ -296,7 +322,7 @@ describe('RS2 machine (isolated)', () => {
       for (let i = 0; i < VECTORS.length; i++) {
         sim.step();
         const ps = sim.getPerceptualSpace().getPerceptualVector();
-        const out = ps.slice(8, 10);
+        const out = regionSlice(ps, RS2_OUT);
         // Count new output appearances (when it changes from previous)
         if ((out[0] !== prevOut[0] || out[1] !== prevOut[1]) &&
             (out[0] !== 0 || out[1] !== 0)) {
@@ -316,7 +342,7 @@ describe('RS2 machine (isolated)', () => {
       for (let i = 0; i < VECTORS.length; i++) {
         sim.step();
         const ps = sim.getPerceptualSpace().getPerceptualVector();
-        const out = ps.slice(8, 10);
+        const out = regionSlice(ps, RS2_OUT);
         if ((out[0] !== prevOut[0] || out[1] !== prevOut[1]) &&
             (out[0] !== 0 || out[1] !== 0)) {
           outputs.push([...out]);
@@ -341,7 +367,7 @@ describe('RS2 machine (isolated)', () => {
 
       // After step 7 ([1,1]): both final successors deactivated, no new activation
       // After step 8 ([0,1]): no successors are active → no output
-      expect(psAfter8.slice(8, 10)).toEqual(psAfter7.slice(8, 10));
+      expect(regionSlice(psAfter8, RS2_OUT)).toEqual(regionSlice(psAfter7, RS2_OUT));
     });
   });
 });
@@ -351,9 +377,9 @@ describe('RS2 machine (isolated)', () => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 describe('Interconnected: MultiStep → RSFlipFlop + RS2 via perceptual space', () => {
-  // All three machines share a 256-byte perceptual space.
+  // All three machines share a perceptual space sized to fit every mapping.
   // Input-atomicity: each step snapshots inputs BEFORE processing, then merges
-  // all outputs AFTER processing. MultiStep's output at [3:5] therefore becomes
+  // all outputs AFTER processing. MultiStep's output at MS_OUT therefore becomes
   // visible to RSFlipFlop and RS2 one step AFTER MultiStep fires.
 
   describe('Seq2 (100→101→111→[1,0]) drives RSFlipFlop SET and RS2 SET', () => {
@@ -367,55 +393,56 @@ describe('Interconnected: MultiStep → RSFlipFlop + RS2 via perceptual space', 
       sim   = makeSim(msM, rsffM, rs2M);
     });
 
-    test('after 3 steps MultiStep has written [1,0] to perceptual bytes [3:5]', () => {
+    test('after 3 steps MultiStep has written [1,0] to MS_OUT', () => {
       const ps = run(sim, MS_IN, [[1, 0, 0], [1, 0, 1], [1, 1, 1]]);
-      expect(ps.slice(3, 5)).toEqual([1, 0]);
+      expect(regionSlice(ps, MS_OUT)).toEqual([1, 0]);
     });
 
-    test('RSFlipFlop output [6:8] = [0,0] during MultiStep steps (no input at [3:5] yet)', () => {
-      // Before MultiStep fires, [3:5]=[0,0] → RSFlipFlop sees HOLD → no output
+    test('RSFF_OUT = [0,0] during MultiStep steps (no input at RS_IN yet)', () => {
+      // Before MultiStep fires, RS_IN=[0,0] → RSFlipFlop sees HOLD → no output
       sim.configure({
         inputSequence: [[1, 0, 0], [1, 0, 1], [1, 1, 1]],
         inputRegion: MS_IN,
         stepDelayMs: 0
       });
       for (let i = 0; i < 3; i++) sim.step();
-      expect(sim.getPerceptualSpace().getPerceptualVector().slice(6, 8)).toEqual([0, 0]);
+      expect(regionSlice(sim.getPerceptualSpace().getPerceptualVector(), RSFF_OUT)).toEqual([0, 0]);
     });
 
-    test('RS2 output [8:10] = [0,0] during MultiStep steps (no input at [3:5] yet)', () => {
+    test('RS2_OUT = [0,0] during MultiStep steps (no input at RS_IN yet)', () => {
       sim.configure({
         inputSequence: [[1, 0, 0], [1, 0, 1], [1, 1, 1]],
         inputRegion: MS_IN,
         stepDelayMs: 0
       });
       for (let i = 0; i < 3; i++) sim.step();
-      expect(sim.getPerceptualSpace().getPerceptualVector().slice(8, 10)).toEqual([0, 0]);
+      expect(regionSlice(sim.getPerceptualSpace().getPerceptualVector(), RS2_OUT)).toEqual([0, 0]);
     });
 
-    test('one step after MultiStep fires: RSFlipFlop SET — [6:8] = [1,0]', () => {
-      // The 4th input is neutral for MultiStep but lets RSFlipFlop/RS2 see [3:5]=[1,0]
+    test('one step after MultiStep fires: RSFlipFlop SET — RSFF_OUT = [1,0]', () => {
+      // The 4th input is neutral for MultiStep but lets RSFlipFlop/RS2 see RS_IN=[1,0]
       const ps = run(sim, MS_IN, [[1, 0, 0], [1, 0, 1], [1, 1, 1], [0, 0, 0]]);
-      expect(ps.slice(6, 8)).toEqual([1, 0]);
+      expect(regionSlice(ps, RSFF_OUT)).toEqual([1, 0]);
     });
 
-    test('one step after MultiStep fires: RS2 SET — [8:10] = [1,0]', () => {
+    test('one step after MultiStep fires: RS2 SET — RS2_OUT = [1,0]', () => {
       const ps = run(sim, MS_IN, [[1, 0, 0], [1, 0, 1], [1, 1, 1], [0, 0, 0]]);
-      expect(ps.slice(8, 10)).toEqual([1, 0]);
+      expect(regionSlice(ps, RS2_OUT)).toEqual([1, 0]);
     });
 
-    test('perceptual space is self-consistent: input and output bytes are all correct', () => {
+    test('perceptual space is self-consistent: every region holds its expected value', () => {
       const ps = run(sim, MS_IN, [[1, 0, 0], [1, 0, 1], [1, 1, 1], [0, 0, 0]]);
-      // MultiStep input bytes [0:3] = last applied input = [0,0,0]
-      expect(ps.slice(0, 3)).toEqual([0, 0, 0]);
-      // MultiStep output (persisted from step 3) [3:5] = [1,0]
-      expect(ps.slice(3, 5)).toEqual([1, 0]);
-      // RSFlipFlop output [6:8] = [1,0]
-      expect(ps.slice(6, 8)).toEqual([1, 0]);
-      // RS2 output [8:10] = [1,0]
-      expect(ps.slice(8, 10)).toEqual([1, 0]);
-      // Bytes beyond RS2 region are untouched
-      expect(ps.slice(10, 20).every(v => v === 0)).toBe(true);
+      // MultiStep input = last applied input = [0,0,0]
+      expect(regionSlice(ps, MS_IN)).toEqual([0, 0, 0]);
+      // MultiStep output (persisted from step 3) = [1,0]
+      expect(regionSlice(ps, MS_OUT)).toEqual([1, 0]);
+      // RSFlipFlop output = [1,0]
+      expect(regionSlice(ps, RSFF_OUT)).toEqual([1, 0]);
+      // RS2 output = [1,0]
+      expect(regionSlice(ps, RS2_OUT)).toEqual([1, 0]);
+      // Bytes beyond RS2_OUT are untouched
+      const tailStart = RS2_OUT.offset + RS2_OUT.length;
+      expect(ps.slice(tailStart).every(v => v === 0)).toBe(true);
     });
   });
 
@@ -430,31 +457,31 @@ describe('Interconnected: MultiStep → RSFlipFlop + RS2 via perceptual space', 
       );
     });
 
-    test('after 3 steps MultiStep has written [0,1] to perceptual bytes [3:5]', () => {
+    test('after 3 steps MultiStep has written [0,1] to MS_OUT', () => {
       const ps = run(sim, MS_IN, [[0, 0, 0], [0, 0, 1], [0, 1, 1]]);
-      expect(ps.slice(3, 5)).toEqual([0, 1]);
+      expect(regionSlice(ps, MS_OUT)).toEqual([0, 1]);
     });
 
-    test('one step after MultiStep fires: RSFlipFlop RESET — [6:8] = [0,1]', () => {
+    test('one step after MultiStep fires: RSFlipFlop RESET — RSFF_OUT = [0,1]', () => {
       const ps = run(sim, MS_IN, [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 0, 0]]);
-      expect(ps.slice(6, 8)).toEqual([0, 1]);
+      expect(regionSlice(ps, RSFF_OUT)).toEqual([0, 1]);
     });
 
-    test('one step after MultiStep fires: RS2 RESET — [8:10] = [0,1]', () => {
+    test('one step after MultiStep fires: RS2 RESET — RS2_OUT = [0,1]', () => {
       const ps = run(sim, MS_IN, [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 0, 0]]);
-      expect(ps.slice(8, 10)).toEqual([0, 1]);
+      expect(regionSlice(ps, RS2_OUT)).toEqual([0, 1]);
     });
 
     test('full perceptual state after Seq1 + reaction step is correct', () => {
       const ps = run(sim, MS_IN, [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 0, 0]]);
-      expect(ps.slice(0, 3)).toEqual([0, 0, 0]);  // last input applied
-      expect(ps.slice(3, 5)).toEqual([0, 1]);      // MultiStep Seq1 output
-      expect(ps.slice(6, 8)).toEqual([0, 1]);      // RSFlipFlop RESET output
-      expect(ps.slice(8, 10)).toEqual([0, 1]);     // RS2 RESET output
+      expect(regionSlice(ps, MS_IN)).toEqual([0, 0, 0]);  // last input applied
+      expect(regionSlice(ps, MS_OUT)).toEqual([0, 1]);     // MultiStep Seq1 output
+      expect(regionSlice(ps, RSFF_OUT)).toEqual([0, 1]);   // RSFlipFlop RESET output
+      expect(regionSlice(ps, RS2_OUT)).toEqual([0, 1]);    // RS2 RESET output
     });
   });
 
-  describe('Seq1 then Seq2: output overwrites [3:5] and downstream machines track it', () => {
+  describe('Seq1 then Seq2: output overwrites MS_OUT and downstream machines track it', () => {
     let sim: PerceptualSpaceSimulator;
 
     beforeEach(() => {
@@ -467,12 +494,12 @@ describe('Interconnected: MultiStep → RSFlipFlop + RS2 via perceptual space', 
 
     test('Seq1 fires then Seq2 fires — RSFlipFlop tracks both; RS2 reflects RESET semantics', () => {
       // RSFlipFlop uses isInitial vectors — it responds combinatorially every cycle.
-      // RS2 uses a 2-step sequence: it needs [0,0] at [3:5] BEFORE seeing [1,0] to SET.
+      // RS2 uses a 2-step sequence: it needs [0,0] at RS_IN BEFORE seeing [1,0] to SET.
       //
-      // After Seq1 writes [0,1] to [3:5], RS2 sees [0,1] continuously (steps 3-5).
+      // After Seq1 writes [0,1] to MS_OUT, RS2 sees [0,1] continuously (steps 3-5).
       // rs2-set-10 deactivates on [0,1] mismatch in step 3 and is never re-seeded
-      // because [3:5] never returns to [0,0] before Seq2 fires.  Therefore RS2 cannot
-      // SET even after [3:5]=[1,0] — it has no active SET successor.
+      // because RS_IN never returns to [0,0] before Seq2 fires.  Therefore RS2 cannot
+      // SET even after RS_IN=[1,0] — it has no active SET successor.
       const SEQ = [
         // Seq1 path:
         [0, 0, 0], [0, 0, 1], [0, 1, 1],
@@ -488,38 +515,38 @@ describe('Interconnected: MultiStep → RSFlipFlop + RS2 via perceptual space', 
 
       // After Seq1 fires (index 2):
       for (let i = 0; i < 3; i++) sim.step();
-      expect(sim.getPerceptualSpace().getPerceptualVector().slice(3, 5)).toEqual([0, 1]);
+      expect(regionSlice(sim.getPerceptualSpace().getPerceptualVector(), MS_OUT)).toEqual([0, 1]);
 
       // After Seq1 reaction step (index 3, also Seq2 first step [1,0,0]):
       sim.step();
       const psAfterReact1 = sim.getPerceptualSpace().getPerceptualVector();
-      expect(psAfterReact1.slice(6, 8)).toEqual([0, 1]);  // RSFlipFlop RESET ✓
-      expect(psAfterReact1.slice(8, 10)).toEqual([0, 1]); // RS2 RESET ✓
+      expect(regionSlice(psAfterReact1, RSFF_OUT)).toEqual([0, 1]);  // RSFlipFlop RESET ✓
+      expect(regionSlice(psAfterReact1, RS2_OUT)).toEqual([0, 1]);   // RS2 RESET ✓
 
       // After Seq2 fires (index 4+5):
       sim.step(); sim.step();
-      expect(sim.getPerceptualSpace().getPerceptualVector().slice(3, 5)).toEqual([1, 0]);
+      expect(regionSlice(sim.getPerceptualSpace().getPerceptualVector(), MS_OUT)).toEqual([1, 0]);
 
-      // After second reaction step (index 6 — RS2/RSFlipFlop see [3:5]=[1,0]):
+      // After second reaction step (index 6 — RS2/RSFlipFlop see RS_IN=[1,0]):
       sim.step();
       const psFinal = sim.getPerceptualSpace().getPerceptualVector();
       // RSFlipFlop: isInitial, sees [1,0] → immediate SET output ✓
-      expect(psFinal.slice(6, 8)).toEqual([1, 0]);
+      expect(regionSlice(psFinal, RSFF_OUT)).toEqual([1, 0]);
       // RS2: rs2-set-10 was deactivated in step 3 (saw [0,1], not [0,0]);
-      //       [3:5] never returned to [0,0], so no re-seeding occurred.
+      //       RS_IN never returned to [0,0], so no re-seeding occurred.
       //       RS2 has no active SET successor when [1,0] arrives → retains last write [0,1].
-      expect(psFinal.slice(8, 10)).toEqual([0, 1]);
+      expect(regionSlice(psFinal, RS2_OUT)).toEqual([0, 1]);
     });
 
-    test('RS2 CAN SET after Seq2 if a [0,0] hold step intervenes at [3:5]', () => {
+    test('RS2 CAN SET after Seq2 if a [0,0] hold step intervenes at RS_IN', () => {
       // Demonstrates that RS2's 2-step requirement is the architectural constraint,
-      // not a bug. If a neutral input cycle writes [0,0] to [3:5] (which MultiStep
+      // not a bug. If a neutral input cycle writes [0,0] to RS_IN (which MultiStep
       // never does on its own — this uses an isolated RS2 sub-test), RS2 responds.
       //
       // Here we run RS2 in isolation to confirm it does SET when given [0,0]→[1,0].
       const rs2Only = makeSim(load('RS2', 'rs2-ic3-only'));
       const ps = run(rs2Only, RS_IN, [[0, 0], [1, 0]]);
-      expect(ps.slice(8, 10)).toEqual([1, 0]); // RS2 SET ✓ (when hold state precedes)
+      expect(regionSlice(ps, RS2_OUT)).toEqual([1, 0]); // RS2 SET ✓ (when hold state precedes)
     });
   });
 
@@ -535,8 +562,8 @@ describe('Interconnected: MultiStep → RSFlipFlop + RS2 via perceptual space', 
       // Verify 3 nodes registered
       expect(nodes.length).toBe(3);
 
-      // Verify 2 edges: MultiStep output [3:5] overlaps RSFlipFlop input [3:5]
-      //                 MultiStep output [3:5] overlaps RS2 input [3:5]
+      // Verify 2 edges: MultiStep output overlaps RSFlipFlop input
+      //                 MultiStep output overlaps RS2 input
       expect(edges.length).toBe(2);
 
       const sources = edges.map(e => {

@@ -206,8 +206,25 @@ export class RealityEngineAPI {
     this.router.get('/perceptual-space/dimension', this.getPerceptualSpaceDimension.bind(this));
     this.router.get('/perceptual-space/regions', this.getPerceptualSpaceRegions.bind(this));
 
+    // Cross-runtime vector-space descriptor — identical shape in AI and C++.
+    this.router.get('/runtime/vector-space', this.getRuntimeVectorSpace.bind(this));
+
     // Perception Engine push endpoint — accepts a pre-assembled reality vector
     this.router.post('/perceive', this.perceive.bind(this));
+  }
+
+  /**
+   * GET /api/runtime/vector-space
+   * Cross-runtime descriptor reporting the current PE shape. Identical in
+   * AI and C++ so a client can probe either engine the same way.
+   */
+  private getRuntimeVectorSpace(_req: Request, res: Response): void {
+    res.json({
+      dimension: this.perceptualSimulator.getDimension(),
+      requiredDimension: this.perceptualSimulator.getRequiredDimension(),
+      encoding: 'dense-float64-clamped-0-1',
+      mappingVersion: this.perceptualSimulator.getMappingVersion(),
+    });
   }
 
   // Health check
@@ -1754,20 +1771,57 @@ export class RealityEngineAPI {
    * Accept a pre-assembled N-dimensional reality vector from the external Perception Engine.
    * POST /api/perceive
    *
-   * Body: { "vector": number[] }  — N-dimensional perceptual space vector in [0, 1]
+   * Body (exactly one of):
+   *   { "vector":        number[] }                          — dense, may be shorter or longer than PE dim
+   *   { "sparseVector":  { index, value }[] }                — per-index writes; everything else stays 0
+   *   { "domainVectors": { offset, values: number[] }[] }    — per-region writes; gaps stay 0
    *
-   * Installs the vector directly into the perceptual space simulator and runs
-   * one processing cycle through all registered machines. The result is identical
-   * in shape to /api/perceptual-simulation/step.
+   * Runs one processing cycle through all registered machines. Result shape
+   * matches /api/perceptual-simulation/step.
    */
   private perceive(req: Request, res: Response): void {
     try {
-      const { vector, matchAlgorithm } = req.body;
+      const { vector, sparseVector, domainVectors, matchAlgorithm } = req.body;
 
-      if (!Array.isArray(vector)) {
-        res.status(400).json({ success: false, error: 'vector must be an array' });
+      let assembled: number[] | null = null;
+
+      if (Array.isArray(vector)) {
+        assembled = vector;
+      } else if (Array.isArray(sparseVector)) {
+        let maxIdx = -1;
+        for (const e of sparseVector) {
+          if (typeof e?.index !== 'number' || typeof e?.value !== 'number') {
+            res.status(400).json({ success: false, error: 'sparseVector entries must be { index: number, value: number }' });
+            return;
+          }
+          if (e.index > maxIdx) maxIdx = e.index;
+        }
+        const length = Math.max(maxIdx + 1, this.perceptualSimulator.getDimension());
+        assembled = new Array<number>(length).fill(0);
+        for (const e of sparseVector) assembled[e.index] = e.value;
+      } else if (Array.isArray(domainVectors)) {
+        let maxEnd = 0;
+        for (const r of domainVectors) {
+          if (typeof r?.offset !== 'number' || !Array.isArray(r?.values)) {
+            res.status(400).json({ success: false, error: 'domainVectors entries must be { offset: number, values: number[] }' });
+            return;
+          }
+          maxEnd = Math.max(maxEnd, r.offset + r.values.length);
+        }
+        const length = Math.max(maxEnd, this.perceptualSimulator.getDimension());
+        assembled = new Array<number>(length).fill(0);
+        for (const r of domainVectors) {
+          for (let i = 0; i < r.values.length; i++) assembled[r.offset + i] = r.values[i];
+        }
+      }
+
+      if (!assembled) {
+        res.status(400).json({ success: false, error: 'Provide exactly one of: vector, sparseVector, domainVectors' });
         return;
       }
+      // Continue with the assembled dense vector. The simulator's
+      // setPerceptualVector tolerates over/under-sized input.
+      const vectorForStep = assembled;
 
       // Resolve optional match algorithm override — only 'gte' and 'equals' accepted
       let matchAlgorithmOverride: ComparatorType | undefined;
@@ -1785,7 +1839,7 @@ export class RealityEngineAPI {
         }
       }
 
-      const step = this.perceptualSimulator.processImmediate(vector, matchAlgorithmOverride);
+      const step = this.perceptualSimulator.processImmediate(vectorForStep, matchAlgorithmOverride);
 
       // Serialize machineResults Map → plain object for JSON transport
       const machineResults: Record<string, any> = {};
@@ -1793,11 +1847,15 @@ export class RealityEngineAPI {
         machineResults[key] = value;
       }
 
+      // perceptualSpace is a debug projection of the post-merge state.
+      // mergeBatch is the authoritative synchronization result — clients
+      // should apply mergeBatch[] writes to stay in sync with the engine.
       res.json({
         success: true,
         step: {
           ...step,
-          machineResults
+          machineResults,
+          perceptualSpaceIsDebugProjection: true,
         },
         timestamp: Date.now()
       });

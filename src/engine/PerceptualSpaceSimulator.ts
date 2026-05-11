@@ -11,6 +11,27 @@ import { PerceptualRegionAllocator } from '../services/PerceptualRegionAllocator
 import { ComparatorType } from '../models/types.js';
 import type { MachineTransitionResult } from '../models/types.js';
 
+/**
+ * A single region write that occurred during the merge phase of a step.
+ *
+ * `mergeBatch` (the array of these on SimulationStep) is the authoritative
+ * synchronization result — clients should apply these region writes to stay
+ * in sync with the engine. The dense `perceptualSpace` field is a debug
+ * projection of the post-merge state and is gated via `includePerceptualSpace`
+ * when serialized to API consumers.
+ *
+ * Ordering: entries are sorted by (machineId, sequenceId, outputIndex) so
+ * that AI and C++ runtimes produce byte-identical mergeBatch sequences for
+ * the same input.
+ */
+export interface MergeOperation {
+  region: { offset: number; length: number };
+  machineId: string;
+  sequenceId: string;
+  outputIndex: number;
+  values: number[];
+}
+
 export interface SimulationStep {
   stepNumber: number;
   timestamp: number;
@@ -30,6 +51,7 @@ export interface SimulationStep {
     machineId: string;
     type: 'input' | 'output';
   }>;
+  mergeBatch: MergeOperation[];
 }
 
 export interface SimulationConfig {
@@ -50,6 +72,10 @@ export class PerceptualSpaceSimulator {
   private onStepCompleteCallback?: (step: SimulationStep, perceptualSpaceVector: number[]) => void;
   private immediateStepCount = 0;
   private allocator: PerceptualRegionAllocator;
+  // Bumped on every addMachine / removeMachine. Returned by
+  // /api/runtime/vector-space so the C++ runtime, the visualizer, and any
+  // external client can cache shape assumptions keyed by this number.
+  private mappingVersionCounter = 0;
 
   /**
    * @param initialDimension  Starting PE space size (0 = fully dynamic; grows
@@ -142,13 +168,37 @@ export class PerceptualSpaceSimulator {
     }
 
     this.machines.set(machine.id, machine);
+    this.mappingVersionCounter++;
   }
 
   /**
    * Remove a machine from the simulation
    */
   public removeMachine(machineId: string): void {
-    this.machines.delete(machineId);
+    if (this.machines.delete(machineId)) this.mappingVersionCounter++;
+  }
+
+  /**
+   * Max(offset + length) across every input and output mapping currently
+   * registered. Returned by /api/runtime/vector-space so external clients
+   * can detect a stale PE space.
+   */
+  public getRequiredDimension(): number {
+    let required = 0;
+    for (const machine of this.machines.values()) {
+      const m = machine.perceptualMapping;
+      if (!m) continue;
+      required = Math.max(required, m.input.offset + m.input.length, m.output.offset + m.output.length);
+    }
+    return required;
+  }
+
+  /**
+   * Monotonic counter bumped every time the registered machine set changes.
+   * Mirrors PerceptualSpaceSimulator::mapping_version() in the C++ runtime.
+   */
+  public getMappingVersion(): number {
+    return this.mappingVersionCounter;
   }
 
   /**
@@ -241,7 +291,7 @@ export class PerceptualSpaceSimulator {
     // Run each machine with its snapshot input.  Collect transition results
     // and pending assertedOutputs without touching the perceptual space yet.
     const machineResults = new Map<string, any>();
-    const pendingOutputs: Array<{ machine: Machine; vector: number[] }> = [];
+    const pendingOutputs: Array<{ machine: Machine; sequenceId: string; outputIndex: number; vector: number[] }> = [];
 
     for (const machine of mappedMachines) {
       const snapshotInput = inputSnapshots.get(machine.id)!;
@@ -253,9 +303,9 @@ export class PerceptualSpaceSimulator {
       // Collect each sequence's individual assertedOutputs for Phase 3.
       // The arbiter's shouldOutput flag gates all writes for this machine.
       if (transitionResult.arbiterMetadata.shouldOutput) {
-        for (const seqResult of transitionResult.sequenceResults.values()) {
-          for (const assertedOutput of seqResult.assertedOutputs) {
-            pendingOutputs.push({ machine, vector: assertedOutput.vector });
+        for (const [sequenceId, seqResult] of transitionResult.sequenceResults) {
+          for (let i = 0; i < seqResult.assertedOutputs.length; i++) {
+            pendingOutputs.push({ machine, sequenceId, outputIndex: i, vector: seqResult.assertedOutputs[i]!.vector });
           }
         }
       }
@@ -280,12 +330,27 @@ export class PerceptualSpaceSimulator {
     }
 
     // ── Phase 3: Merge ───────────────────────────────────────────────────────
-    // Write all pending assertedOutputs into the perceptual space after every
-    // machine has finished processing.  Each write is constrained by the
-    // machine's output mapping, making overflow architecturally impossible.
-    // The merged outputs become visible only on the NEXT step (input-atomicity).
-    for (const { machine, vector } of pendingOutputs) {
-      this.perceptualSpace.mergeMachineOutput(vector, machine.perceptualMapping!);
+    // Build the canonical mergeBatch — sorted by (machineId, sequenceId,
+    // outputIndex) so AI and C++ runtimes apply writes in identical order.
+    // mergeBatch is the authoritative synchronization result; the dense
+    // perceptualSpace field below is a debug projection of the post-merge state.
+    const mergeBatch: MergeOperation[] = pendingOutputs.map(({ machine, sequenceId, outputIndex, vector }) => ({
+      region: { offset: machine.perceptualMapping!.output.offset, length: machine.perceptualMapping!.output.length },
+      machineId: machine.id,
+      sequenceId,
+      outputIndex,
+      values: vector,
+    }));
+    // Canonical merge ordering: (machineId, sequenceId, outputIndex) ascending,
+    // using byte-wise lex comparison (NOT localeCompare) so the result matches
+    // C++ std::string::operator< exactly on ASCII identifiers.
+    mergeBatch.sort((a, b) => {
+      if (a.machineId !== b.machineId) return a.machineId < b.machineId ? -1 : 1;
+      if (a.sequenceId !== b.sequenceId) return a.sequenceId < b.sequenceId ? -1 : 1;
+      return a.outputIndex - b.outputIndex;
+    });
+    for (const op of mergeBatch) {
+      this.perceptualSpace.updateRegion(op.region.offset, op.values.slice(0, op.region.length));
     }
 
     // Build active region list from the final machineResults
@@ -319,7 +384,8 @@ export class PerceptualSpaceSimulator {
       timestamp: Date.now(),
       perceptualSpace: this.perceptualSpace.getPerceptualVector(),
       machineResults,
-      activeRegions
+      activeRegions,
+      mergeBatch
     };
 
     this.history.unshift(step); // Add to front (newest first)
@@ -365,7 +431,7 @@ export class PerceptualSpaceSimulator {
 
     // ── Phase 2: Process ─────────────────────────────────────────────────────
     const machineResults = new Map<string, any>();
-    const pendingOutputs: Array<{ machine: Machine; vector: number[] }> = [];
+    const pendingOutputs: Array<{ machine: Machine; sequenceId: string; outputIndex: number; vector: number[] }> = [];
 
     for (const machine of mappedMachines) {
       const snapshotInput = inputSnapshots.get(machine.id)!;
@@ -374,9 +440,9 @@ export class PerceptualSpaceSimulator {
       const outputVector = transitionResult.machineOutput?.vector ?? null;
 
       if (transitionResult.arbiterMetadata.shouldOutput) {
-        for (const seqResult of transitionResult.sequenceResults.values()) {
-          for (const assertedOutput of seqResult.assertedOutputs) {
-            pendingOutputs.push({ machine, vector: assertedOutput.vector });
+        for (const [sequenceId, seqResult] of transitionResult.sequenceResults) {
+          for (let i = 0; i < seqResult.assertedOutputs.length; i++) {
+            pendingOutputs.push({ machine, sequenceId, outputIndex: i, vector: seqResult.assertedOutputs[i]!.vector });
           }
         }
       }
@@ -401,8 +467,25 @@ export class PerceptualSpaceSimulator {
     }
 
     // ── Phase 3: Merge ───────────────────────────────────────────────────────
-    for (const { machine, vector: outputVec } of pendingOutputs) {
-      this.perceptualSpace.mergeMachineOutput(outputVec, machine.perceptualMapping!);
+    // Canonical mergeBatch — same ordering rule as step(): sort by
+    // (machineId, sequenceId, outputIndex). C++ applies the identical sort.
+    const mergeBatch: MergeOperation[] = pendingOutputs.map(({ machine, sequenceId, outputIndex, vector }) => ({
+      region: { offset: machine.perceptualMapping!.output.offset, length: machine.perceptualMapping!.output.length },
+      machineId: machine.id,
+      sequenceId,
+      outputIndex,
+      values: vector,
+    }));
+    // Canonical merge ordering: (machineId, sequenceId, outputIndex) ascending,
+    // using byte-wise lex comparison (NOT localeCompare) so the result matches
+    // C++ std::string::operator< exactly on ASCII identifiers.
+    mergeBatch.sort((a, b) => {
+      if (a.machineId !== b.machineId) return a.machineId < b.machineId ? -1 : 1;
+      if (a.sequenceId !== b.sequenceId) return a.sequenceId < b.sequenceId ? -1 : 1;
+      return a.outputIndex - b.outputIndex;
+    });
+    for (const op of mergeBatch) {
+      this.perceptualSpace.updateRegion(op.region.offset, op.values.slice(0, op.region.length));
     }
 
     const activeRegions: Array<{
@@ -434,7 +517,8 @@ export class PerceptualSpaceSimulator {
       timestamp: Date.now(),
       perceptualSpace: this.perceptualSpace.getPerceptualVector(),
       machineResults,
-      activeRegions
+      activeRegions,
+      mergeBatch
     };
 
     this.history.unshift(step);
