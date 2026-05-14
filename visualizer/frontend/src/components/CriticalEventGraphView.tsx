@@ -533,7 +533,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
     };
 
     // Helper function to format output vectors
-    const formatOutputVectors = (outputs: Array<{ id: string; vector: number[]; timestamp: number; metadata?: string | Record<string, any> }> | undefined) => {
+    const formatOutputVectors = (outputs: Array<{ id: string; vector: number[]; timestamp: number; metadata?: string | Record<string, any>; provenance?: string[] }> | undefined) => {
       if (!outputs || outputs.length === 0) return '';
 
       const outputItems = outputs
@@ -545,12 +545,18 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
                 : JSON.stringify(output.metadata))
             : '';
           const timestamp = new Date(output.timestamp).toLocaleTimeString();
+          // Provenance chain: comma-separated vector ids that led to this fire.
+          // Helps an operator audit *why* a RED-tier output was asserted.
+          const provStr = Array.isArray(output.provenance) && output.provenance.length > 0
+            ? output.provenance.join(' → ')
+            : '';
 
           return `
             <div style="margin: 6px 0; padding: 6px; background: rgba(245, 158, 11, 0.1); border-left: 2px solid #f59e0b; border-radius: 4px;">
               <div style="font-weight: 600; color: #fbbf24; margin-bottom: 3px;">#${idx + 1}: ${output.id}</div>
               <div style="font-family: monospace; font-size: 10px; color: #cbd5e1; margin: 2px 0;">[${vectorStr}]</div>
               ${metaStr ? `<div style="font-size: 10px; color: #94a3b8; margin-top: 3px;">${metaStr}</div>` : ''}
+              ${provStr ? `<div style="font-size: 10px; color: #a78bfa; margin-top: 3px; font-family: monospace; word-break: break-all;">↳ ${provStr}</div>` : ''}
               <div style="font-size: 9px; color: #64748b; margin-top: 3px;">⏱ ${timestamp}</div>
             </div>
           `;

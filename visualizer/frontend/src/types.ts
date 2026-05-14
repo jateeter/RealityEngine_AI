@@ -22,6 +22,10 @@ export interface OutputVector {
   vector: number[];
   timestamp: number;
   metadata?: string | Record<string, any>;
+  // Ordered chain of vector ids whose matches led to this output firing —
+  // populated by the engine.  Surface in the CES tooltip so an operator
+  // sees not just "RED fall" but the evidence chain that justified it.
+  provenance?: string[];
 }
 
 export interface Edge {
@@ -59,7 +63,11 @@ export interface Machine {
   perceptualMapping?: {
     input: { offset: number; length: number };
     output: { offset: number; length: number };
+    bitsPerElement?: number;
   };
+  // Top-level life-safety / severity tag (life-safety machines drive STA-strict
+  // loading + a tooltip badge in the visualizer).
+  severity?: 'life-safety' | string;
   isExample: boolean;
   createdAt: number;
   updatedAt: number;
