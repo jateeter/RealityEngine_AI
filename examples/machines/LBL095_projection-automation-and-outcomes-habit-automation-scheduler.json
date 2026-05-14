@@ -145,6 +145,77 @@
           "stress-resilience-agent",
           "temperament-testing"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "wellness-coaching-team",
+        "runbook": "https://runbooks.example.org/life-balance/lbl095_projection-automation-and-outcomes-habit-automation-scheduler",
+        "escalationPolicy": "slack:#wellness-coaching",
+        "contact": {
+          "primary": "wellness-coaching-team-primary@example.org",
+          "secondary": "wellness-coaching-team-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"life-balance\".  Review and tune the routing as the team owning LBL095_projection-automation-and-outcomes-habit-automation-scheduler matures."
+      },
+      "triggerConfig": {
+        "processId": "LBL095_PROJECTION_AUTOMATION_AND_OUTCOMES_HABIT_AUTOMATION_SCHEDULER",
+        "processName": "Life Balance Projection Automation And Outcomes Habit Automation Scheduler",
+        "rules": [
+          {
+            "sequenceId": "lbl-095-care-team-review",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Habit Automation Scheduler: WATCH -> CARE_TEAM_REVIEW"
+          },
+          {
+            "sequenceId": "lbl-095-plan-adjust",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Habit Automation Scheduler: BARRIER -> LIFESTYLE_PLAN_ADJUST"
+          },
+          {
+            "sequenceId": "lbl-095-monitoring-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Habit Automation Scheduler: DATA_GAP -> MONITORING_TASK"
+          },
+          {
+            "sequenceId": "lbl-095-stable-balance",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Habit Automation Scheduler: STABLE -> STABLE_BALANCE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

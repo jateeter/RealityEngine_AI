@@ -154,7 +154,78 @@
           "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
         }
       ],
-      "perceptualInterconnect": true
+      "perceptualInterconnect": true,
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "legal-operations",
+        "runbook": "https://runbooks.example.org/legal-services/lsx047_portfolio-operations-fee-budget-forecast",
+        "escalationPolicy": "pagerduty:legal-ops",
+        "contact": {
+          "primary": "legal-operations-primary@example.org",
+          "secondary": "legal-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"legal-services\".  Review and tune the routing as the team owning LSX047_portfolio-operations-fee-budget-forecast matures."
+      },
+      "triggerConfig": {
+        "processId": "LSX047_PORTFOLIO_OPERATIONS_FEE_BUDGET_FORECAST",
+        "processName": "Legal Services Portfolio Operations Fee Budget Forecast",
+        "rules": [
+          {
+            "sequenceId": "lsx-047-attorney-review",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Fee Budget Forecast: INCOMPLETE_OR_RISK -> ATTORNEY_REVIEW"
+          },
+          {
+            "sequenceId": "lsx-047-optimize",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Fee Budget Forecast: OPTIMIZATION_WINDOW -> OPTIMIZE_WORKSTEP"
+          },
+          {
+            "sequenceId": "lsx-047-docket",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Fee Budget Forecast: DOCKET_PRESSURE -> DOCKET_ACTION"
+          },
+          {
+            "sequenceId": "lsx-047-ready",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Fee Budget Forecast: READY -> READY_FOR_NEXT_STEP"
+          }
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

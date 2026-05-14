@@ -150,6 +150,77 @@
           "startup-loadable",
           "temperament-testing"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "wellness-coaching-team",
+        "runbook": "https://runbooks.example.org/life-balance/lbl024_sleep-and-circadian-rhythm-sleep-apnea-risk-screen",
+        "escalationPolicy": "slack:#wellness-coaching",
+        "contact": {
+          "primary": "wellness-coaching-team-primary@example.org",
+          "secondary": "wellness-coaching-team-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"life-balance\".  Review and tune the routing as the team owning LBL024_sleep-and-circadian-rhythm-sleep-apnea-risk-screen matures."
+      },
+      "triggerConfig": {
+        "processId": "LBL024_SLEEP_AND_CIRCADIAN_RHYTHM_SLEEP_APNEA_RISK_SCREEN",
+        "processName": "Life Balance Sleep And Circadian Rhythm Sleep Apnea Risk Screen",
+        "rules": [
+          {
+            "sequenceId": "lbl-024-care-team-review",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Sleep Apnea Risk Screen: WATCH -> CARE_TEAM_REVIEW"
+          },
+          {
+            "sequenceId": "lbl-024-plan-adjust",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sleep Apnea Risk Screen: BARRIER -> LIFESTYLE_PLAN_ADJUST"
+          },
+          {
+            "sequenceId": "lbl-024-monitoring-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sleep Apnea Risk Screen: DATA_GAP -> MONITORING_TASK"
+          },
+          {
+            "sequenceId": "lbl-024-stable-balance",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sleep Apnea Risk Screen: STABLE -> STABLE_BALANCE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

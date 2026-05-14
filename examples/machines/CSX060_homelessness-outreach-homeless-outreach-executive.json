@@ -133,6 +133,77 @@
           "public-safety",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/csx060_homelessness-outreach-homeless-outreach-executive",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning CSX060_homelessness-outreach-homeless-outreach-executive matures."
+      },
+      "triggerConfig": {
+        "processId": "CSX060_HOMELESSNESS_OUTREACH_HOMELESS_OUTREACH_EXECUTIVE",
+        "processName": "Community Services Homelessness Outreach Homeless Outreach Executive",
+        "rules": [
+          {
+            "sequenceId": "csx-060-urgent-response",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Homeless Outreach Executive: WATCH -> URGENT_RESPONSE"
+          },
+          {
+            "sequenceId": "csx-060-coordinate-services",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Homeless Outreach Executive: COORDINATION_NEEDED -> COORDINATE_SERVICES"
+          },
+          {
+            "sequenceId": "csx-060-field-work-order",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Homeless Outreach Executive: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER"
+          },
+          {
+            "sequenceId": "csx-060-stable-service-path",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Homeless Outreach Executive: STABLE_PATH -> STABLE_SERVICE_PATH"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

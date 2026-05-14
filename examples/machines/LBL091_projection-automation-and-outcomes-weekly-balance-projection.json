@@ -151,6 +151,77 @@
           "temperament-testing",
           "weekly-balance-projection"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "wellness-coaching-team",
+        "runbook": "https://runbooks.example.org/life-balance/lbl091_projection-automation-and-outcomes-weekly-balance-projection",
+        "escalationPolicy": "slack:#wellness-coaching",
+        "contact": {
+          "primary": "wellness-coaching-team-primary@example.org",
+          "secondary": "wellness-coaching-team-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"life-balance\".  Review and tune the routing as the team owning LBL091_projection-automation-and-outcomes-weekly-balance-projection matures."
+      },
+      "triggerConfig": {
+        "processId": "LBL091_PROJECTION_AUTOMATION_AND_OUTCOMES_WEEKLY_BALANCE_PROJECTION",
+        "processName": "Life Balance Projection Automation And Outcomes Weekly Balance Projection",
+        "rules": [
+          {
+            "sequenceId": "lbl-091-care-team-review",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Weekly Balance Projection: WATCH -> CARE_TEAM_REVIEW"
+          },
+          {
+            "sequenceId": "lbl-091-plan-adjust",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Weekly Balance Projection: BARRIER -> LIFESTYLE_PLAN_ADJUST"
+          },
+          {
+            "sequenceId": "lbl-091-monitoring-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Weekly Balance Projection: DATA_GAP -> MONITORING_TASK"
+          },
+          {
+            "sequenceId": "lbl-091-stable-balance",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Weekly Balance Projection: STABLE -> STABLE_BALANCE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

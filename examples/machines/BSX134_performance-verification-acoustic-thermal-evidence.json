@@ -139,6 +139,89 @@
           "well-predictive-ops-agent",
           "well-predictive-optimization-performance-verification-acoustic-thermal-evidence"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "facilities-operations",
+        "runbook": "https://runbooks.example.org/built-space/bsx134_performance-verification-acoustic-thermal-evidence",
+        "escalationPolicy": "pagerduty:facilities",
+        "contact": {
+          "primary": "facilities-operations-primary@example.org",
+          "secondary": "facilities-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"built-space\".  Review and tune the routing as the team owning BSX134_performance-verification-acoustic-thermal-evidence matures."
+      },
+      "triggerConfig": {
+        "processId": "BSX134_PERFORMANCE_VERIFICATION_ACOUSTIC_THERMAL_EVIDENCE",
+        "processName": "Built Space WELL Performance Verification Acoustic Thermal Evidence",
+        "rules": [
+          {
+            "sequenceId": "bsx-134-verify",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Acoustic Thermal Evidence: WATCH -> EVIDENCE_GAP -> VERIFY_WELL_CONFORMANCE"
+          },
+          {
+            "sequenceId": "bsx-134-optimize",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Acoustic Thermal Evidence: FORECAST_DRIFT -> PREDICTIVE_OPTIMIZE"
+          },
+          {
+            "sequenceId": "bsx-134-work-order",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Acoustic Thermal Evidence: ACTION_NEEDED -> OPS_WORK_ORDER"
+          },
+          {
+            "sequenceId": "bsx-134-compliant",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Acoustic Thermal Evidence: CURRENT -> COMPLIANT_WINDOW"
+          },
+          {
+            "sequenceId": "bsx-134-predictive-24h",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Acoustic Thermal Evidence: 0-6H -> 6-12H -> 12-18H -> 18-24H -> PREDICTIVE_OPTIMIZE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

@@ -155,7 +155,78 @@
           "description": "Machine output vector is written into the target machine input lane to advance the legal workflow."
         }
       ],
-      "perceptualInterconnect": true
+      "perceptualInterconnect": true,
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "legal-operations",
+        "runbook": "https://runbooks.example.org/legal-services/lsx012_trademark-workflow-distinctiveness-screening",
+        "escalationPolicy": "pagerduty:legal-ops",
+        "contact": {
+          "primary": "legal-operations-primary@example.org",
+          "secondary": "legal-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"legal-services\".  Review and tune the routing as the team owning LSX012_trademark-workflow-distinctiveness-screening matures."
+      },
+      "triggerConfig": {
+        "processId": "LSX012_TRADEMARK_WORKFLOW_DISTINCTIVENESS_SCREENING",
+        "processName": "Legal Services Trademark Workflow Distinctiveness Screening",
+        "rules": [
+          {
+            "sequenceId": "lsx-012-attorney-review",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Distinctiveness Screening: INCOMPLETE_OR_RISK -> ATTORNEY_REVIEW"
+          },
+          {
+            "sequenceId": "lsx-012-optimize",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Distinctiveness Screening: OPTIMIZATION_WINDOW -> OPTIMIZE_WORKSTEP"
+          },
+          {
+            "sequenceId": "lsx-012-docket",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Distinctiveness Screening: DOCKET_PRESSURE -> DOCKET_ACTION"
+          },
+          {
+            "sequenceId": "lsx-012-ready",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Distinctiveness Screening: READY -> READY_FOR_NEXT_STEP"
+          }
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {

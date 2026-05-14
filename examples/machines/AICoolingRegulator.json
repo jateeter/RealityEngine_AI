@@ -88,6 +88,155 @@
           "thermal",
           "thermal-comfort"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "ml-platform-on-call",
+        "runbook": "https://runbooks.example.org/ai-services/aicoolingregulator",
+        "escalationPolicy": "pagerduty:ml-platform",
+        "contact": {
+          "primary": "ml-platform-on-call-primary@example.org",
+          "secondary": "ml-platform-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 300
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"ai-services\".  Review and tune the routing as the team owning AICoolingRegulator matures."
+      },
+      "triggerConfig": {
+        "processId": "AICOOLINGREGULATOR",
+        "processName": "AI Cooling Regulator",
+        "rules": [
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Cooling OPTIMAL — coolant temp nominal, chiller efficient, flow unrestricted"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Cooling WARM — temperature rising, monitor for continued escalation"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Cooling HOT — thermal margins shrinking, boost cooling flow now"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Increase coolant pump speed and open supplemental cooling valves"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Cooling CRITICAL — thermal emergency, hardware damage risk imminent"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Activate all backup cooling units and increase flow to maximum"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Action: Shed compute load — suspend non-critical inference and training"
+          },
+          {
+            "sequenceId": "aicr-flow-restriction",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Flow restriction detected — chiller efficiency dropping and coolant flow impeded"
+          },
+          {
+            "sequenceId": "aicr-flow-restriction",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Inspect and clear coolant flow path; increase pump pressure"
+          }
+        ]
       }
     },
     "sequences": [

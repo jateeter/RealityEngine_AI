@@ -86,6 +86,65 @@
           "pharmacy-access",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/homemedicationcostbarriermonitor",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning HomeMedicationCostBarrierMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "HOMEMEDICATIONCOSTBARRIERMONITOR",
+        "processName": "Home Medication Cost Barrier Monitor",
+        "rules": [
+          {
+            "sequenceId": "med-cost-adherence-crisis",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "ADHERENCE_CRISIS: complete medication non-adherence due to cost barrier at [2011:2015]"
+          },
+          {
+            "sequenceId": "med-cost-barrier-active",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "COST_BARRIER_ACTIVE: ongoing cost barrier to prescribed medications at [2011:2015]"
+          },
+          {
+            "sequenceId": "med-managed",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "MEDICATION_MANAGED: prescription access and adherence adequate at [2011:2015]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

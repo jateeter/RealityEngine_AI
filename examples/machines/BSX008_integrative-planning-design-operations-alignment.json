@@ -138,6 +138,89 @@
           "well-operations",
           "well-predictive-optimization-integrative-planning-design-operations-alignment"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "facilities-operations",
+        "runbook": "https://runbooks.example.org/built-space/bsx008_integrative-planning-design-operations-alignment",
+        "escalationPolicy": "pagerduty:facilities",
+        "contact": {
+          "primary": "facilities-operations-primary@example.org",
+          "secondary": "facilities-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"built-space\".  Review and tune the routing as the team owning BSX008_integrative-planning-design-operations-alignment matures."
+      },
+      "triggerConfig": {
+        "processId": "BSX008_INTEGRATIVE_PLANNING_DESIGN_OPERATIONS_ALIGNMENT",
+        "processName": "Built Space WELL Integrative Planning Design Operations Alignment",
+        "rules": [
+          {
+            "sequenceId": "bsx-008-verify",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Design Operations Alignment: WATCH -> EVIDENCE_GAP -> VERIFY_WELL_CONFORMANCE"
+          },
+          {
+            "sequenceId": "bsx-008-optimize",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Design Operations Alignment: FORECAST_DRIFT -> PREDICTIVE_OPTIMIZE"
+          },
+          {
+            "sequenceId": "bsx-008-work-order",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Design Operations Alignment: ACTION_NEEDED -> OPS_WORK_ORDER"
+          },
+          {
+            "sequenceId": "bsx-008-compliant",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Design Operations Alignment: CURRENT -> COMPLIANT_WINDOW"
+          },
+          {
+            "sequenceId": "bsx-008-predictive-24h",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Design Operations Alignment: 0-6H -> 6-12H -> 12-18H -> 18-24H -> PREDICTIVE_OPTIMIZE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

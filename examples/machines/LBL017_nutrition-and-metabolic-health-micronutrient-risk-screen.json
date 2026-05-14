@@ -144,6 +144,77 @@
           "startup-loadable",
           "temperament-testing"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "wellness-coaching-team",
+        "runbook": "https://runbooks.example.org/life-balance/lbl017_nutrition-and-metabolic-health-micronutrient-risk-screen",
+        "escalationPolicy": "slack:#wellness-coaching",
+        "contact": {
+          "primary": "wellness-coaching-team-primary@example.org",
+          "secondary": "wellness-coaching-team-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"life-balance\".  Review and tune the routing as the team owning LBL017_nutrition-and-metabolic-health-micronutrient-risk-screen matures."
+      },
+      "triggerConfig": {
+        "processId": "LBL017_NUTRITION_AND_METABOLIC_HEALTH_MICRONUTRIENT_RISK_SCREEN",
+        "processName": "Life Balance Nutrition And Metabolic Health Micronutrient Risk Screen",
+        "rules": [
+          {
+            "sequenceId": "lbl-017-care-team-review",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Micronutrient Risk Screen: WATCH -> CARE_TEAM_REVIEW"
+          },
+          {
+            "sequenceId": "lbl-017-plan-adjust",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Micronutrient Risk Screen: BARRIER -> LIFESTYLE_PLAN_ADJUST"
+          },
+          {
+            "sequenceId": "lbl-017-monitoring-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Micronutrient Risk Screen: DATA_GAP -> MONITORING_TASK"
+          },
+          {
+            "sequenceId": "lbl-017-stable-balance",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Micronutrient Risk Screen: STABLE -> STABLE_BALANCE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

@@ -138,6 +138,77 @@
           "vehicle-monitoring",
           "workforce-operations"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "transit-operations",
+        "runbook": "https://runbooks.example.org/transportation/tfx085_workforce-operations-cleaning-crew-coverage",
+        "escalationPolicy": "pagerduty:transit-ops",
+        "contact": {
+          "primary": "transit-operations-primary@example.org",
+          "secondary": "transit-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"transportation\".  Review and tune the routing as the team owning TFX085_workforce-operations-cleaning-crew-coverage matures."
+      },
+      "triggerConfig": {
+        "processId": "TFX085_WORKFORCE_OPERATIONS_CLEANING_CREW_COVERAGE",
+        "processName": "Transportation Fleet Workforce Operations Cleaning Crew Coverage",
+        "rules": [
+          {
+            "sequenceId": "tfx-085-critical-event",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Cleaning Crew Coverage: OBSERVE -> WATCH -> DEGRADED -> ESCALATING -> CRITICAL_EVENT"
+          },
+          {
+            "sequenceId": "tfx-085-predictive-flow",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Cleaning Crew Coverage: FLOW_RISK -> PREDICTIVE_FLOW_ADJUST"
+          },
+          {
+            "sequenceId": "tfx-085-ops-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Cleaning Crew Coverage: TASK_NEEDED -> OPS_TASK"
+          },
+          {
+            "sequenceId": "tfx-085-nominal",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Cleaning Crew Coverage: NOMINAL -> SERVICE_NOMINAL"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

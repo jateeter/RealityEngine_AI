@@ -83,6 +83,39 @@
           "regular-expression",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx041_one-hot-grant",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX041_one-hot-grant matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX041_ONE_HOT_GRANT",
+        "processName": "Logical Infrastructure One Hot Grant",
+        "rules": [
+          {
+            "sequenceId": "dlx-041-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "One Hot Grant matched regular expression REQ GRANT_ONEHOT."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

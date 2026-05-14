@@ -78,6 +78,49 @@
           "rsflip-flop",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/rsflipflop",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning RSFlipFlop matures."
+      },
+      "triggerConfig": {
+        "processId": "RSFLIPFLOP",
+        "processName": "RS Flip Flop",
+        "rules": [
+          {
+            "sequenceId": "rs-set-sequence",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Flip flop SET to HIGH (1)"
+          },
+          {
+            "sequenceId": "rs-reset-sequence",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Flip flop RESET to LOW (0)"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

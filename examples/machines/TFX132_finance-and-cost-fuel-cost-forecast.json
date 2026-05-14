@@ -140,6 +140,77 @@
           "transportation-generated",
           "vehicle-monitoring"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "transit-operations",
+        "runbook": "https://runbooks.example.org/transportation/tfx132_finance-and-cost-fuel-cost-forecast",
+        "escalationPolicy": "pagerduty:transit-ops",
+        "contact": {
+          "primary": "transit-operations-primary@example.org",
+          "secondary": "transit-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"transportation\".  Review and tune the routing as the team owning TFX132_finance-and-cost-fuel-cost-forecast matures."
+      },
+      "triggerConfig": {
+        "processId": "TFX132_FINANCE_AND_COST_FUEL_COST_FORECAST",
+        "processName": "Transportation Fleet Finance And Cost Fuel Cost Forecast",
+        "rules": [
+          {
+            "sequenceId": "tfx-132-critical-event",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Fuel Cost Forecast: OBSERVE -> WATCH -> DEGRADED -> ESCALATING -> CRITICAL_EVENT"
+          },
+          {
+            "sequenceId": "tfx-132-predictive-flow",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Fuel Cost Forecast: FLOW_RISK -> PREDICTIVE_FLOW_ADJUST"
+          },
+          {
+            "sequenceId": "tfx-132-ops-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Fuel Cost Forecast: TASK_NEEDED -> OPS_TASK"
+          },
+          {
+            "sequenceId": "tfx-132-nominal",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Fuel Cost Forecast: NOMINAL -> SERVICE_NOMINAL"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

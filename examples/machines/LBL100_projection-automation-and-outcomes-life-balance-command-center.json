@@ -152,6 +152,77 @@
           "startup-loadable",
           "temperament-testing"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "wellness-coaching-team",
+        "runbook": "https://runbooks.example.org/life-balance/lbl100_projection-automation-and-outcomes-life-balance-command-center",
+        "escalationPolicy": "slack:#wellness-coaching",
+        "contact": {
+          "primary": "wellness-coaching-team-primary@example.org",
+          "secondary": "wellness-coaching-team-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"life-balance\".  Review and tune the routing as the team owning LBL100_projection-automation-and-outcomes-life-balance-command-center matures."
+      },
+      "triggerConfig": {
+        "processId": "LBL100_PROJECTION_AUTOMATION_AND_OUTCOMES_LIFE_BALANCE_COMMAND_CENTER",
+        "processName": "Life Balance Projection Automation And Outcomes Life Balance Command Center",
+        "rules": [
+          {
+            "sequenceId": "lbl-100-care-team-review",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Life Balance Command Center: WATCH -> CARE_TEAM_REVIEW"
+          },
+          {
+            "sequenceId": "lbl-100-plan-adjust",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Life Balance Command Center: BARRIER -> LIFESTYLE_PLAN_ADJUST"
+          },
+          {
+            "sequenceId": "lbl-100-monitoring-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Life Balance Command Center: DATA_GAP -> MONITORING_TASK"
+          },
+          {
+            "sequenceId": "lbl-100-stable-balance",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Life Balance Command Center: STABLE -> STABLE_BALANCE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

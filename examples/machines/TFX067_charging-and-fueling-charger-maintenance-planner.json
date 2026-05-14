@@ -140,6 +140,77 @@
           "transportation-generated",
           "vehicle-monitoring"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "transit-operations",
+        "runbook": "https://runbooks.example.org/transportation/tfx067_charging-and-fueling-charger-maintenance-planner",
+        "escalationPolicy": "pagerduty:transit-ops",
+        "contact": {
+          "primary": "transit-operations-primary@example.org",
+          "secondary": "transit-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"transportation\".  Review and tune the routing as the team owning TFX067_charging-and-fueling-charger-maintenance-planner matures."
+      },
+      "triggerConfig": {
+        "processId": "TFX067_CHARGING_AND_FUELING_CHARGER_MAINTENANCE_PLANNER",
+        "processName": "Transportation Fleet Charging And Fueling Charger Maintenance Planner",
+        "rules": [
+          {
+            "sequenceId": "tfx-067-critical-event",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Charger Maintenance Planner: OBSERVE -> WATCH -> DEGRADED -> ESCALATING -> CRITICAL_EVENT"
+          },
+          {
+            "sequenceId": "tfx-067-predictive-flow",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Charger Maintenance Planner: FLOW_RISK -> PREDICTIVE_FLOW_ADJUST"
+          },
+          {
+            "sequenceId": "tfx-067-ops-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Charger Maintenance Planner: TASK_NEEDED -> OPS_TASK"
+          },
+          {
+            "sequenceId": "tfx-067-nominal",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Charger Maintenance Planner: NOMINAL -> SERVICE_NOMINAL"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

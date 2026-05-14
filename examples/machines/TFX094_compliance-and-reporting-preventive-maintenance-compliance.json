@@ -141,6 +141,77 @@
           "transportation-generated",
           "vehicle-monitoring"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "transit-operations",
+        "runbook": "https://runbooks.example.org/transportation/tfx094_compliance-and-reporting-preventive-maintenance-compliance",
+        "escalationPolicy": "pagerduty:transit-ops",
+        "contact": {
+          "primary": "transit-operations-primary@example.org",
+          "secondary": "transit-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"transportation\".  Review and tune the routing as the team owning TFX094_compliance-and-reporting-preventive-maintenance-compliance matures."
+      },
+      "triggerConfig": {
+        "processId": "TFX094_COMPLIANCE_AND_REPORTING_PREVENTIVE_MAINTENANCE_COMPLIANCE",
+        "processName": "Transportation Fleet Compliance And Reporting Preventive Maintenance Compliance",
+        "rules": [
+          {
+            "sequenceId": "tfx-094-critical-event",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Preventive Maintenance Compliance: OBSERVE -> WATCH -> DEGRADED -> ESCALATING -> CRITICAL_EVENT"
+          },
+          {
+            "sequenceId": "tfx-094-predictive-flow",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Preventive Maintenance Compliance: FLOW_RISK -> PREDICTIVE_FLOW_ADJUST"
+          },
+          {
+            "sequenceId": "tfx-094-ops-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Preventive Maintenance Compliance: TASK_NEEDED -> OPS_TASK"
+          },
+          {
+            "sequenceId": "tfx-094-nominal",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Preventive Maintenance Compliance: NOMINAL -> SERVICE_NOMINAL"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

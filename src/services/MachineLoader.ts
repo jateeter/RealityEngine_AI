@@ -5,6 +5,7 @@ import { RealityVector } from '../models/RealityVector.js';
 import { ArbiterRule } from '../models/OutputArbiter.js';
 import { ComparatorType } from '../models/types.js';
 import type { OutputVector, VectorElement } from '../models/types.js';
+import { assertStaForLifeSafety } from './StaChecker.js';
 
 /**
  * Machine JSON Format Version
@@ -75,10 +76,26 @@ export interface InputSequenceJSON {
  */
 export class MachineLoader {
   /**
-   * Load a machine from JSON string
+   * Load a machine from JSON string.
+   *
+   * `options.strictSta = true` runs the Single Transition Assumption
+   * analyzer before constructing the Machine and throws
+   * StaViolationError if the machine is tagged `severity: "life-safety"`
+   * and any intra-sequence transition has Hamming distance > 1.  Use
+   * this on hot paths that handle patient-safety machines so a malformed
+   * fixture cannot be silently swapped in.  Non-life-safety machines are
+   * unaffected by the flag.
    */
-  public static loadFromJSON(jsonString: string, id?: string): Machine {
+  public static loadFromJSON(jsonString: string, id?: string, options?: { strictSta?: boolean }): Machine {
     const machineJSON: MachineJSON = JSON.parse(jsonString);
+
+    // STA gate — runs on raw JSON before any object construction so a
+    // refused machine never reaches the engine.  StaChecker has no
+    // dependency on MachineLoader so this is import-cycle free.
+    // assertStaForLifeSafety is a no-op for non-life-safety machines.
+    if (options?.strictSta) {
+      assertStaForLifeSafety(machineJSON);
+    }
 
     // Validate version
     if (!machineJSON.version) {
@@ -160,6 +177,14 @@ export class MachineLoader {
     if (seqJSON.metadata) {
       sequence.metadata = seqJSON.metadata;
     }
+
+    // Lifecycle: schemaVersion / deprecatedAt / replacedBy.  Read from the
+    // top level of the sequence JSON so authoring teams don't have to nest
+    // them under metadata.  Values fall through unchanged when absent.
+    const anySeq = seqJSON as unknown as { schemaVersion?: string; deprecatedAt?: string; replacedBy?: string };
+    if (anySeq.schemaVersion) sequence.schemaVersion = anySeq.schemaVersion;
+    if (anySeq.deprecatedAt) sequence.deprecatedAt = anySeq.deprecatedAt;
+    if (anySeq.replacedBy)   sequence.replacedBy   = anySeq.replacedBy;
 
     // Create vectors (first pass - create all vectors)
     const vectorMap = new Map<string, RealityVector>();

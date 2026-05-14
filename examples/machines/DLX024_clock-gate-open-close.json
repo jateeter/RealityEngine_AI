@@ -83,6 +83,39 @@
           "regular-expression",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx024_clock-gate-open-close",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX024_clock-gate-open-close matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX024_CLOCK_GATE_OPEN_CLOSE",
+        "processName": "Logical Infrastructure Clock Gate Open Close",
+        "rules": [
+          {
+            "sequenceId": "dlx-024-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Clock Gate Open Close matched regular expression OPEN+ CLOSE."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

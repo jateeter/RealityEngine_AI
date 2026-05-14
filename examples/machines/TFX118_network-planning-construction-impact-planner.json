@@ -139,6 +139,77 @@
           "transportation-generated",
           "vehicle-monitoring"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "transit-operations",
+        "runbook": "https://runbooks.example.org/transportation/tfx118_network-planning-construction-impact-planner",
+        "escalationPolicy": "pagerduty:transit-ops",
+        "contact": {
+          "primary": "transit-operations-primary@example.org",
+          "secondary": "transit-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"transportation\".  Review and tune the routing as the team owning TFX118_network-planning-construction-impact-planner matures."
+      },
+      "triggerConfig": {
+        "processId": "TFX118_NETWORK_PLANNING_CONSTRUCTION_IMPACT_PLANNER",
+        "processName": "Transportation Fleet Network Planning Construction Impact Planner",
+        "rules": [
+          {
+            "sequenceId": "tfx-118-critical-event",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Construction Impact Planner: OBSERVE -> WATCH -> DEGRADED -> ESCALATING -> CRITICAL_EVENT"
+          },
+          {
+            "sequenceId": "tfx-118-predictive-flow",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Construction Impact Planner: FLOW_RISK -> PREDICTIVE_FLOW_ADJUST"
+          },
+          {
+            "sequenceId": "tfx-118-ops-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Construction Impact Planner: TASK_NEEDED -> OPS_TASK"
+          },
+          {
+            "sequenceId": "tfx-118-nominal",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Construction Impact Planner: NOMINAL -> SERVICE_NOMINAL"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

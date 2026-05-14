@@ -138,6 +138,89 @@
           "well-predictive-optimization-sound-and-acoustics-quiet-zone-operations",
           "well-sound-and-acoustics"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "facilities-operations",
+        "runbook": "https://runbooks.example.org/built-space/bsx079_sound-and-acoustics-quiet-zone-operations",
+        "escalationPolicy": "pagerduty:facilities",
+        "contact": {
+          "primary": "facilities-operations-primary@example.org",
+          "secondary": "facilities-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"built-space\".  Review and tune the routing as the team owning BSX079_sound-and-acoustics-quiet-zone-operations matures."
+      },
+      "triggerConfig": {
+        "processId": "BSX079_SOUND_AND_ACOUSTICS_QUIET_ZONE_OPERATIONS",
+        "processName": "Built Space WELL Sound And Acoustics Quiet Zone Operations",
+        "rules": [
+          {
+            "sequenceId": "bsx-079-verify",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Quiet Zone Operations: WATCH -> EVIDENCE_GAP -> VERIFY_WELL_CONFORMANCE"
+          },
+          {
+            "sequenceId": "bsx-079-optimize",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Quiet Zone Operations: FORECAST_DRIFT -> PREDICTIVE_OPTIMIZE"
+          },
+          {
+            "sequenceId": "bsx-079-work-order",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Quiet Zone Operations: ACTION_NEEDED -> OPS_WORK_ORDER"
+          },
+          {
+            "sequenceId": "bsx-079-compliant",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Quiet Zone Operations: CURRENT -> COMPLIANT_WINDOW"
+          },
+          {
+            "sequenceId": "bsx-079-predictive-24h",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Quiet Zone Operations: 0-6H -> 6-12H -> 12-18H -> 18-24H -> PREDICTIVE_OPTIMIZE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

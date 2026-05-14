@@ -89,6 +89,65 @@
           "pediatric",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/homecaregiverburdenmonitor",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning HomeCaregiverBurdenMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "HOMECAREGIVERBURDENMONITOR",
+        "processName": "Home Caregiver Burden Monitor",
+        "rules": [
+          {
+            "sequenceId": "caregiver-burnout-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "CAREGIVER_BURNOUT: dual child health crises causing caregiver decompensation at [2031:2035]"
+          },
+          {
+            "sequenceId": "caregiver-high-burden",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "HIGH_BURDEN: significant caregiver stress from multiple active child health concerns at [2031:2035]"
+          },
+          {
+            "sequenceId": "caregiver-coping-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "CAREGIVER_COPING: child health and development supported; caregiver managing adequately at [2031:2035]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

@@ -88,6 +88,65 @@
           "mental-health",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/adolescentmentalhealthmonitor",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning AdolescentMentalHealthMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "ADOLESCENTMENTALHEALTHMONITOR",
+        "processName": "Adolescent Mental Health Monitor",
+        "rules": [
+          {
+            "sequenceId": "adolescent-mh-crisis",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "CRISIS_RISK: dual adversity household driving acute adolescent mental health crisis risk at [2027:2031]"
+          },
+          {
+            "sequenceId": "adolescent-mh-behavioral-concern",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "BEHAVIORAL_CONCERN: adolescent behavioral changes driven by household adversity at [2027:2031]"
+          },
+          {
+            "sequenceId": "adolescent-mh-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "MENTAL_HEALTH_OK: adolescent mental health supported by stable food and housing environment at [2027:2031]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

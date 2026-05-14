@@ -173,6 +173,125 @@
           "wellness-analytics",
           "wellness-monitoring-and-care-routing"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/wellnessanalytics",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning WellnessAnalytics matures."
+      },
+      "triggerConfig": {
+        "processId": "WELLNESSANALYTICS",
+        "processName": "WellnessAnalytics",
+        "rules": [
+          {
+            "sequenceId": "wa-sustained-alert-community",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "INFLOW_EVALUATION — sustained ALERT in community-dwelling patient; initiate NewPatientInflow standard evaluation sequence"
+          },
+          {
+            "sequenceId": "wa-critical-community",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "INFLOW_URGENT — CRITICAL wellness in community-dwelling patient; initiate urgent NewPatientInflow evaluation with accelerated timeline"
+          },
+          {
+            "sequenceId": "wa-sustained-alert-facility",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "TRANSITION_REVIEW — sustained ALERT in facility resident; activate CareTransitionWorkflow for care level review"
+          },
+          {
+            "sequenceId": "wa-critical-facility",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "TRANSITION_ESCALATION — CRITICAL wellness in facility resident; activate CareTransitionWorkflow emergency escalation to hospital"
+          },
+          {
+            "sequenceId": "wa-rapid-decline",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "TRANSITION_URGENT — rapid 2-level wellness decline in facility resident; initiate priority care level review without waiting for two-cycle confirmation"
+          },
+          {
+            "sequenceId": "wa-wellness-improving",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "WELLNESS_IMPROVING — facility resident returning to GOOD level after ALERT; no care escalation required; care team notified of recovery"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

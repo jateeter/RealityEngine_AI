@@ -137,6 +137,89 @@
           "well-predictive-optimization-thermal-comfort-thermal-executive-optimization",
           "well-thermal-comfort"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "facilities-operations",
+        "runbook": "https://runbooks.example.org/built-space/bsx070_thermal-comfort-thermal-executive-optimization",
+        "escalationPolicy": "pagerduty:facilities",
+        "contact": {
+          "primary": "facilities-operations-primary@example.org",
+          "secondary": "facilities-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"built-space\".  Review and tune the routing as the team owning BSX070_thermal-comfort-thermal-executive-optimization matures."
+      },
+      "triggerConfig": {
+        "processId": "BSX070_THERMAL_COMFORT_THERMAL_EXECUTIVE_OPTIMIZATION",
+        "processName": "Built Space WELL Thermal Comfort Thermal Executive Optimization",
+        "rules": [
+          {
+            "sequenceId": "bsx-070-verify",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Thermal Executive Optimization: WATCH -> EVIDENCE_GAP -> VERIFY_WELL_CONFORMANCE"
+          },
+          {
+            "sequenceId": "bsx-070-optimize",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Thermal Executive Optimization: FORECAST_DRIFT -> PREDICTIVE_OPTIMIZE"
+          },
+          {
+            "sequenceId": "bsx-070-work-order",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Thermal Executive Optimization: ACTION_NEEDED -> OPS_WORK_ORDER"
+          },
+          {
+            "sequenceId": "bsx-070-compliant",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Thermal Executive Optimization: CURRENT -> COMPLIANT_WINDOW"
+          },
+          {
+            "sequenceId": "bsx-070-predictive-24h",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Thermal Executive Optimization: 0-6H -> 6-12H -> 12-18H -> 18-24H -> PREDICTIVE_OPTIMIZE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

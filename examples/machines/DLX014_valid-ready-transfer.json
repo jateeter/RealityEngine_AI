@@ -83,6 +83,39 @@
           "startup-loadable",
           "valid-ready-transfer"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx014_valid-ready-transfer",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX014_valid-ready-transfer matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX014_VALID_READY_TRANSFER",
+        "processName": "Logical Infrastructure Valid Ready Transfer",
+        "rules": [
+          {
+            "sequenceId": "dlx-014-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Valid Ready Transfer matched regular expression VALID READY."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

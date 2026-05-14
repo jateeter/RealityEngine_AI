@@ -81,6 +81,65 @@
           "zone-climate",
           "zone-temperature"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "agriculture-operations",
+        "runbook": "https://runbooks.example.org/agriculture/agzonetemperaturecontroller",
+        "escalationPolicy": "pagerduty:ag-ops",
+        "contact": {
+          "primary": "agriculture-operations-primary@example.org",
+          "secondary": "agriculture-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"agriculture\".  Review and tune the routing as the team owning AgZoneTemperatureController matures."
+      },
+      "triggerConfig": {
+        "processId": "AGZONETEMPERATURECONTROLLER",
+        "processName": "Ag Zone Temperature Controller",
+        "rules": [
+          {
+            "sequenceId": "ag-zone-temp-overtemp",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "COOLING_ON: activate zone cooling system at [20:24]"
+          },
+          {
+            "sequenceId": "ag-zone-temp-undertemp",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "HEATING_ON: activate zone heating at [20:24]"
+          },
+          {
+            "sequenceId": "ag-zone-temp-optimal",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "TEMP_OK: zone temperature within optimal growth range at [20:24]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

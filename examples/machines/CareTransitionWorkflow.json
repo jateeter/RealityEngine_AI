@@ -276,7 +276,111 @@
           "startup-loadable",
           "workflow"
         ]
-      }
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/caretransitionworkflow",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning CareTransitionWorkflow matures."
+      },
+      "triggerConfig": {
+        "processId": "CARETRANSITIONWORKFLOW",
+        "processName": "CareTransitionWorkflow",
+        "rules": [
+          {
+            "sequenceId": "transition-acute-emergency",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "HOSPITAL_TRANSFER_COMPLETE — patient successfully transferred to acute hospital. Emergency intake protocol active."
+          },
+          {
+            "sequenceId": "transition-hospital-to-rehab",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "REHAB_TRANSFER_COMPLETE — all readiness criteria met; patient cleared for transfer to rehabilitation facility"
+          },
+          {
+            "sequenceId": "transition-rehab-to-alf",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "ALF_TRANSFER_COMPLETE — all readiness criteria met; patient cleared for transition to assisted living"
+          },
+          {
+            "sequenceId": "transition-blocked",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "TRANSFER_BLOCKED — barrier detected during planned transfer authorization; resolution pathway initiated; transfer suspended pending clearance"
+          },
+          {
+            "sequenceId": "transition-emergency-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "EMERGENCY_ESCALATION — acute deterioration in post-acute/assisted living facility; patient transferred emergently to hospital for higher level of care"
+          }
+        ]
+      },
+      "severity": "life-safety"
     },
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
@@ -299,7 +403,8 @@
           "regex": "(CRISIS_OBSERVED)+ · EMERGENCY_DISPATCH · FAMILY_NOTIFIED · HOSPITAL_ADMITTED → HOSPITAL_TRANSFER_COMPLETE",
           "path": "CRISIS_OBSERVED → EMERGENCY_DISPATCH → FAMILY_NOTIFIED → HOSPITAL_ADMITTED",
           "output": "HOSPITAL_TRANSFER_COMPLETE=[1,0,0,0,0,0,0,0]",
-          "externalCommunications": "Step 1: 911 or emergency dispatch called (D5↑). Step 2: Family notified by staff or responders (D3↑). Step 3: Hospital ED confirms bed and accepts patient; EMS gives patient report on arrival (D2↑). Retrospective: Insurance notified within 24 hours per payer contract. EMR transfer documentation completed within 24 hours of admission."
+          "externalCommunications": "Step 1: 911 or emergency dispatch called (D5↑). Step 2: Family notified by staff or responders (D3↑). Step 3: Hospital ED confirms bed and accepts patient; EMS gives patient report on arrival (D2↑). Retrospective: Insurance notified within 24 hours per payer contract. EMR transfer documentation completed within 24 hours of admission.",
+          "severity": "life-safety"
         },
         "vectors": [
           {
@@ -1345,7 +1450,8 @@
           "path": "FACILITY_DECLINE → EMERGENCY_FAMILY_ALERT → FACILITY_TRANSPORT",
           "output": "EMERGENCY_ESCALATION=[0,0,0,0,1,0,0,0]",
           "distinctionFromSequence1": "Sequence 1 initial [H,L,L,L,L,L,L,H] (D0+D7) represents a crisis with no prior post-acute care context (home or community). Sequence 5 initial [H,L,L,L,L,L,H,H] (D0+D6+D7) uses D6=H to signal that the patient was already in a post-acute care setting (SNF/rehab/ALF) when the crisis occurred — the prior care trajectory (D6 represents 'existing care relationship that is now disrupted') is part of the clinical context and affects the receiving hospital's intake and discharge planning.",
-          "externalCommunications": "Step 1 (D3↑): Facility charge nurse calls family/proxy FIRST, before transport if time permits — post-acute facilities have established family relationships requiring direct notification. Step 2 (D5↑): 911 called; transport dispatched; facility nurse gives full clinical report to EMS including medications, advance directives, and current care plan. Concurrent: facility social worker initiates hospital notification; sends care plan and medication list with patient or via fax to receiving ED."
+          "externalCommunications": "Step 1 (D3↑): Facility charge nurse calls family/proxy FIRST, before transport if time permits — post-acute facilities have established family relationships requiring direct notification. Step 2 (D5↑): 911 called; transport dispatched; facility nurse gives full clinical report to EMS including medications, advance directives, and current care plan. Concurrent: facility social worker initiates hospital notification; sends care plan and medication list with patient or via fax to receiving ED.",
+          "severity": "life-safety"
         },
         "vectors": [
           {

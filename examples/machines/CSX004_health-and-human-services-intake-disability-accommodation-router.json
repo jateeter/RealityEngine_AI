@@ -133,6 +133,77 @@
           "public-safety-agent",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/csx004_health-and-human-services-intake-disability-accommodation-router",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning CSX004_health-and-human-services-intake-disability-accommodation-router matures."
+      },
+      "triggerConfig": {
+        "processId": "CSX004_HEALTH_AND_HUMAN_SERVICES_INTAKE_DISABILITY_ACCOMMODATION_ROUTER",
+        "processName": "Community Services Health And Human Services Intake Disability Accommodation Router",
+        "rules": [
+          {
+            "sequenceId": "csx-004-urgent-response",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Disability Accommodation Router: WATCH -> URGENT_RESPONSE"
+          },
+          {
+            "sequenceId": "csx-004-coordinate-services",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Disability Accommodation Router: COORDINATION_NEEDED -> COORDINATE_SERVICES"
+          },
+          {
+            "sequenceId": "csx-004-field-work-order",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Disability Accommodation Router: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER"
+          },
+          {
+            "sequenceId": "csx-004-stable-service-path",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Disability Accommodation Router: STABLE_PATH -> STABLE_SERVICE_PATH"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

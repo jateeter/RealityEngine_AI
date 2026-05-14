@@ -83,6 +83,39 @@
           "regular-expression",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx006_glitch-reject-two-high",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX006_glitch-reject-two-high matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX006_GLITCH_REJECT_TWO_HIGH",
+        "processName": "Logical Infrastructure Glitch Reject Two High",
+        "rules": [
+          {
+            "sequenceId": "dlx-006-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Glitch Reject Two High matched regular expression 0*11."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

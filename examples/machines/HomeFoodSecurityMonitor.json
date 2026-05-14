@@ -80,6 +80,65 @@
           "social-determinants",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/homefoodsecuritymonitor",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning HomeFoodSecurityMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "HOMEFOODSECURITYMONITOR",
+        "processName": "Home Food Security Monitor",
+        "rules": [
+          {
+            "sequenceId": "home-food-crisis-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "FOOD_CRISIS: immediate food assistance referral required at [1995:1999]"
+          },
+          {
+            "sequenceId": "home-food-assistance-needed",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "ASSISTANCE_NEEDED: household qualifies for food assistance but not enrolled at [1995:1999]"
+          },
+          {
+            "sequenceId": "home-food-secure",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "FOOD_SECURE: household food access adequate at [1995:1999]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

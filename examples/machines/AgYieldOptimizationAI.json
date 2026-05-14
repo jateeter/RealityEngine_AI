@@ -108,6 +108,85 @@
           "startup-loadable",
           "yield-optimization"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "ml-platform-on-call",
+        "runbook": "https://runbooks.example.org/ai-services/agyieldoptimizationai",
+        "escalationPolicy": "pagerduty:ml-platform",
+        "contact": {
+          "primary": "ml-platform-on-call-primary@example.org",
+          "secondary": "ml-platform-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 300
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"ai-services\".  Review and tune the routing as the team owning AgYieldOptimizationAI matures."
+      },
+      "triggerConfig": {
+        "processId": "AGYIELDOPTIMIZATIONAI",
+        "processName": "Ag Yield Optimization AI",
+        "rules": [
+          {
+            "sequenceId": "ag-yield-ai-emergency",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "EMERGENCY_INTERVENTION: multi-threat crop crisis at [310:316]"
+          },
+          {
+            "sequenceId": "ag-yield-ai-harvest-optimize",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "OPTIMIZE_HARVEST: AI entering final yield optimization mode at [310:316]"
+          },
+          {
+            "sequenceId": "ag-yield-ai-harvest-optimize",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "PEAK_YIELD_CONFIRMED: execute harvest at peak quality/quantity at [310:316]"
+          },
+          {
+            "sequenceId": "ag-yield-ai-nominal",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "NOMINAL_MONITORING: system operating within parameters; no AI intervention required at [310:316]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

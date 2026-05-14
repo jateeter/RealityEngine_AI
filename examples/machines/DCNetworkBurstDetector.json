@@ -88,6 +88,49 @@
           "network",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "datacenter-noc",
+        "runbook": "https://runbooks.example.org/data-center/dcnetworkburstdetector",
+        "escalationPolicy": "pagerduty:datacenter-noc",
+        "contact": {
+          "primary": "datacenter-noc-primary@example.org",
+          "secondary": "datacenter-noc-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"data-center\".  Review and tune the routing as the team owning DCNetworkBurstDetector matures."
+      },
+      "triggerConfig": {
+        "processId": "DCNETWORKBURSTDETECTOR",
+        "processName": "DC Network Burst Detector",
+        "rules": [
+          {
+            "sequenceId": "dc-network-escalation",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "NETWORK OVERFLOW: Alarm signal [1,0] to DCNetworkThrottleFF at [1365:1367]"
+          },
+          {
+            "sequenceId": "dc-network-normal-flow",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "NETWORK NORMAL: Reset signal [0,1] to DCNetworkThrottleFF at [1365:1367]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

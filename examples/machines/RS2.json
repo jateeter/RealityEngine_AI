@@ -86,6 +86,49 @@
           "stateful",
           "two-step"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/rs2",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning RS2 matures."
+      },
+      "triggerConfig": {
+        "processId": "RS2",
+        "processName": "RS2",
+        "rules": [
+          {
+            "sequenceId": "rs2-set-sequence",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "RS2 SET to HIGH (1,0)"
+          },
+          {
+            "sequenceId": "rs2-reset-sequence",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "RS2 RESET to LOW (0,1)"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

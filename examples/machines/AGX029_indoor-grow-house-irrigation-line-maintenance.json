@@ -121,6 +121,77 @@
           "operational-management",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "agriculture-operations",
+        "runbook": "https://runbooks.example.org/agriculture/agx029_indoor-grow-house-irrigation-line-maintenance",
+        "escalationPolicy": "pagerduty:ag-ops",
+        "contact": {
+          "primary": "agriculture-operations-primary@example.org",
+          "secondary": "agriculture-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"agriculture\".  Review and tune the routing as the team owning AGX029_indoor-grow-house-irrigation-line-maintenance matures."
+      },
+      "triggerConfig": {
+        "processId": "AGX029_INDOOR_GROW_HOUSE_IRRIGATION_LINE_MAINTENANCE",
+        "processName": "Agriculture Indoor Grow House Irrigation Line Maintenance",
+        "rules": [
+          {
+            "sequenceId": "agx-029-urgent-stabilize",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Urgent stabilization required."
+          },
+          {
+            "sequenceId": "agx-029-optimize-operation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Optimization workflow should run."
+          },
+          {
+            "sequenceId": "agx-029-preventive-maintenance",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Preventive maintenance required."
+          },
+          {
+            "sequenceId": "agx-029-operating-window-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Operating window is stable."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

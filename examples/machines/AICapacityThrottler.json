@@ -90,6 +90,155 @@
           "startup-loadable",
           "throttling"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "ml-platform-on-call",
+        "runbook": "https://runbooks.example.org/ai-services/aicapacitythrottler",
+        "escalationPolicy": "pagerduty:ml-platform",
+        "contact": {
+          "primary": "ml-platform-on-call-primary@example.org",
+          "secondary": "ml-platform-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 300
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"ai-services\".  Review and tune the routing as the team owning AICapacityThrottler matures."
+      },
+      "triggerConfig": {
+        "processId": "AICAPACITYTHROTTLER",
+        "processName": "AI Capacity Throttler",
+        "rules": [
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Compute capacity AVAILABLE — accepting new inference and training jobs"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Compute capacity BUSY — high utilization, monitor queue depth"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Compute capacity SATURATED — queue growing, inference latency increasing"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Rate-limit new inference requests to prevent queue overflow"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Compute capacity OVERLOADED — OOM risk, SLO violations imminent"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Hard throttle all inference, reject new requests"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Immediately preempt and shed low-priority batch training jobs"
+          },
+          {
+            "sequenceId": "aict-memory-pressure",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Memory pressure CRITICAL — GPU memory nearing exhaustion despite moderate compute load"
+          },
+          {
+            "sequenceId": "aict-memory-pressure",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Shed batch jobs to reclaim GPU memory before OOM kills active inference"
+          }
+        ]
       }
     },
     "sequences": [

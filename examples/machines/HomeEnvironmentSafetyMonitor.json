@@ -83,6 +83,65 @@
           "startup-loadable",
           "utility"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/homeenvironmentsafetymonitor",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning HomeEnvironmentSafetyMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "HOMEENVIRONMENTSAFETYMONITOR",
+        "processName": "Home Environment Safety Monitor",
+        "rules": [
+          {
+            "sequenceId": "home-env-hazard-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "UNSAFE_HOUSING: habitability crisis requiring housing authority intervention at [1999:2003]"
+          },
+          {
+            "sequenceId": "home-env-utility-failure",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "UTILITY_FAILURE: utility shutoff imminent or active at [1999:2003]"
+          },
+          {
+            "sequenceId": "home-env-safe",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "ENVIRONMENT_SAFE: home environment supports healthy resident outcomes at [1999:2003]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

@@ -83,6 +83,39 @@
           "single-cycle-pulse",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx003_single-cycle-pulse",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX003_single-cycle-pulse matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX003_SINGLE_CYCLE_PULSE",
+        "processName": "Logical Infrastructure Single Cycle Pulse",
+        "rules": [
+          {
+            "sequenceId": "dlx-003-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Single Cycle Pulse matched regular expression 0*10."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

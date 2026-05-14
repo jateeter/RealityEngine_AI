@@ -12,6 +12,7 @@ import { PreceptionOfReality } from '../engine/PreceptionOfReality.js';
 import { RealitySampler, SamplingStrategy } from '../engine/RealitySampler.js';
 import { PerceptualSpaceSimulator } from '../engine/PerceptualSpaceSimulator.js';
 import { MachineLoader } from '../services/MachineLoader.js';
+import { resolveForOutput } from '../services/GovernanceResolver.js';
 import config from '../config/config.js';
 
 /**
@@ -209,6 +210,15 @@ export class RealityEngineAPI {
     // Cross-runtime vector-space descriptor — identical shape in AI and C++.
     this.router.get('/runtime/vector-space', this.getRuntimeVectorSpace.bind(this));
 
+    // CES coverage telemetry in Prometheus text format — scraped by the
+    // ops Prometheus / Grafana stack to surface unfired sequences.
+    this.router.get('/metrics', this.getMetrics.bind(this));
+
+    // Governance / paging contract — single source of truth for on-call
+    // routing.  Lookup endpoint exposes the resolved decision for a given
+    // (machineId, sequenceId, values).  See GovernanceResolver.ts.
+    this.router.get('/governance/route', this.getGovernanceRoute.bind(this));
+
     // Perception Engine push endpoint — accepts a pre-assembled reality vector
     this.router.post('/perceive', this.perceive.bind(this));
   }
@@ -225,6 +235,65 @@ export class RealityEngineAPI {
       encoding: 'dense-float64-clamped-0-1',
       mappingVersion: this.perceptualSimulator.getMappingVersion(),
     });
+  }
+
+  /**
+   * GET /api/metrics
+   * Prometheus text-format exposition of CES coverage telemetry plus a
+   * few runtime gauges (dimension, required dimension, mapping version,
+   * uptime).  The metric names and labels match the C++ runtime so a
+   * single Prometheus scrape config covers both targets.
+   */
+  private getMetrics(_req: Request, res: Response): void {
+    const coverage = this.perceptualSimulator.getCesCoverage();
+    const machines = this.engine.getAllMachines();
+    const base = coverage.toPrometheusText(machines);
+
+    const extras = [
+      '# HELP re_runtime_dimension Current dimension of the shared perceptual space.',
+      '# TYPE re_runtime_dimension gauge',
+      `re_runtime_dimension{runtime="ai"} ${this.perceptualSimulator.getDimension()}`,
+      '# HELP re_runtime_required_dimension Max(offset+length) across all registered machine mappings.',
+      '# TYPE re_runtime_required_dimension gauge',
+      `re_runtime_required_dimension{runtime="ai"} ${this.perceptualSimulator.getRequiredDimension()}`,
+      '# HELP re_runtime_mapping_version Monotonic version bumped on every addMachine/removeMachine.',
+      '# TYPE re_runtime_mapping_version gauge',
+      `re_runtime_mapping_version{runtime="ai"} ${this.perceptualSimulator.getMappingVersion()}`,
+      '',
+    ].join('\n');
+
+    res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    res.send(base + extras);
+  }
+
+  /**
+   * GET /api/governance/route?machineId=...&sequenceId=...&values=4,3
+   *
+   * Resolves the paging contract for the (machineId, sequenceId, values) tuple
+   * — owner team, SLA, runbook URL, escalation policy, contact roster.  The
+   * decision is derived solely from the machine's CES JSON metadata, so
+   * runbook URLs, on-call teams, and SLAs can be evolved in one place.
+   */
+  private getGovernanceRoute(req: Request, res: Response): void {
+    const machineId  = (req.query['machineId']  as string | undefined) ?? '';
+    const sequenceId = (req.query['sequenceId'] as string | undefined) ?? '';
+    const valuesQ    =  req.query['values'] as string | undefined;
+    if (!machineId || !sequenceId || !valuesQ) {
+      res.status(400).json({ success: false, error: 'machineId, sequenceId, and values query parameters are required' });
+      return;
+    }
+    const values = valuesQ.split(',').map(s => Number(s.trim())).filter(n => !Number.isNaN(n));
+    const machine = this.engine.getMachine(machineId);
+    if (!machine) {
+      res.status(404).json({ success: false, error: `Machine not found: ${machineId}` });
+      return;
+    }
+    const decision = resolveForOutput(machine, sequenceId, values);
+    if (!decision) {
+      res.status(404).json({ success: false, error: `No triggerConfig rule matches (sequenceId=${sequenceId}, values=${JSON.stringify(values)})` });
+      return;
+    }
+    res.json({ success: true, decision });
   }
 
   // Health check

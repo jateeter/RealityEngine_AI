@@ -83,6 +83,39 @@
           "reset-assert-release",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx019_reset-assert-release",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX019_reset-assert-release matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX019_RESET_ASSERT_RELEASE",
+        "processName": "Logical Infrastructure Reset Assert Release",
+        "rules": [
+          {
+            "sequenceId": "dlx-019-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Reset Assert Release matched regular expression RST+ !RST."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

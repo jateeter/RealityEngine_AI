@@ -133,6 +133,77 @@
           "sidewalk-accessibility-work-order",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/csx074_city-service-operations-sidewalk-accessibility-work-order",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning CSX074_city-service-operations-sidewalk-accessibility-work-order matures."
+      },
+      "triggerConfig": {
+        "processId": "CSX074_CITY_SERVICE_OPERATIONS_SIDEWALK_ACCESSIBILITY_WORK_ORDER",
+        "processName": "Community Services City Service Operations Sidewalk Accessibility Work Order",
+        "rules": [
+          {
+            "sequenceId": "csx-074-urgent-response",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Sidewalk Accessibility Work Order: WATCH -> URGENT_RESPONSE"
+          },
+          {
+            "sequenceId": "csx-074-coordinate-services",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sidewalk Accessibility Work Order: COORDINATION_NEEDED -> COORDINATE_SERVICES"
+          },
+          {
+            "sequenceId": "csx-074-field-work-order",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sidewalk Accessibility Work Order: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER"
+          },
+          {
+            "sequenceId": "csx-074-stable-service-path",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sidewalk Accessibility Work Order: STABLE_PATH -> STABLE_SERVICE_PATH"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

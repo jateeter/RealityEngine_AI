@@ -128,6 +128,65 @@
           "public-health-system-transformation",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "public-health-on-call",
+        "runbook": "https://runbooks.example.org/health-services/hsph104_community-health-outcomes-capacity-balancer",
+        "escalationPolicy": "pagerduty:public-health",
+        "contact": {
+          "primary": "public-health-on-call-primary@example.org",
+          "secondary": "public-health-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-services\".  Review and tune the routing as the team owning HSPH104_community-health-outcomes-capacity-balancer matures."
+      },
+      "triggerConfig": {
+        "processId": "HSPH104_COMMUNITY_HEALTH_OUTCOMES_CAPACITY_BALANCER",
+        "processName": "Health Services Community Health Outcomes Capacity Balancer",
+        "rules": [
+          {
+            "sequenceId": "hsph-104-urgent-dispatch",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Urgent AI dispatch required."
+          },
+          {
+            "sequenceId": "hsph-104-optimize-delivery",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Optimization agent workflow should run."
+          },
+          {
+            "sequenceId": "hsph-104-stable-ideal-state",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Ideal-state progress is stable."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

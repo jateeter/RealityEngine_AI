@@ -119,6 +119,77 @@
           "startup-loadable",
           "water-exchange-planning"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "agriculture-operations",
+        "runbook": "https://runbooks.example.org/agriculture/agx010_aquaculture-water-exchange-planning",
+        "escalationPolicy": "pagerduty:ag-ops",
+        "contact": {
+          "primary": "agriculture-operations-primary@example.org",
+          "secondary": "agriculture-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"agriculture\".  Review and tune the routing as the team owning AGX010_aquaculture-water-exchange-planning matures."
+      },
+      "triggerConfig": {
+        "processId": "AGX010_AQUACULTURE_WATER_EXCHANGE_PLANNING",
+        "processName": "Agriculture Aquaculture Water Exchange Planning",
+        "rules": [
+          {
+            "sequenceId": "agx-010-urgent-stabilize",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Urgent stabilization required."
+          },
+          {
+            "sequenceId": "agx-010-optimize-operation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Optimization workflow should run."
+          },
+          {
+            "sequenceId": "agx-010-preventive-maintenance",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Preventive maintenance required."
+          },
+          {
+            "sequenceId": "agx-010-operating-window-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Operating window is stable."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

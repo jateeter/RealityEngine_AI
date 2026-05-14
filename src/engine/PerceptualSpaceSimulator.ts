@@ -8,8 +8,11 @@
 import { PerceptualSpace } from '../models/PerceptualSpace.js';
 import { Machine } from '../models/Machine.js';
 import { PerceptualRegionAllocator } from '../services/PerceptualRegionAllocator.js';
+import { CesCoverageRegistry } from '../services/CesCoverageRegistry.js';
+import { resolveForOutput } from '../services/GovernanceResolver.js';
+import type { PagingDecision } from '../services/GovernanceResolver.js';
 import { ComparatorType } from '../models/types.js';
-import type { MachineTransitionResult } from '../models/types.js';
+import type { MachineTransitionResult, DeprecationMark } from '../models/types.js';
 
 /**
  * A single region write that occurred during the merge phase of a step.
@@ -30,6 +33,47 @@ export interface MergeOperation {
   sequenceId: string;
   outputIndex: number;
   values: number[];
+  // Ordered vector IDs whose matches led to this output.  Lets listeners
+  // expose the evidence trail that justified the assertion — e.g. a
+  // clinician sees not just "RED fall" but the six-tick chain
+  // ["fall-conf-v1", …, "fall-conf-v6"] behind it.
+  provenance: string[];
+  // Paging contract resolved from the machine's governance metadata —
+  // owner team, SLA, runbook, escalation policy.  Present only when a
+  // triggerConfig rule matches this output.  The CES JSON is the sole
+  // source of truth — operators do NOT override this in alerting code.
+  governance?: PagingDecision;
+  // Stamped when the firing sequence carries metadata.deprecatedAt.  Lets
+  // listeners and the visualizer surface stale CESs without re-deriving
+  // from the machine JSON.  ageDays is computed at firing time.
+  deprecation?: DeprecationMark;
+}
+
+/**
+ * One latched bit on the event bus.  Emitted by the simulator after the
+ * primary merge phase when a (producerMachineId, producerSequenceId) pair
+ * fires while at least one machine has declared
+ * `metadata.compose.subscriptions[*].producerSequenceId == that sequence`.
+ *
+ * The simulator writes `1.0` at `bitOffset` so the next step's snapshot
+ * carries the producer's "fired" signal as an input bit to the subscribing
+ * meta-machine — letting domain workflows be expressed as ordinary CESs
+ * over the event bus.
+ *
+ * `provenance` is the producer's own provenance chain — i.e. how the
+ * underlying leaf machine reached this output.  Subscribers (meta-machines)
+ * see the bit; when *they* later assert their own output, the engine
+ * extends provenance through their own sequence.  Cross-machine provenance
+ * threading (linking meta output back to the producer chain) is a future
+ * step — for now the per-machine chain is preserved at every layer.
+ */
+export interface EventBusWrite {
+  producerMachineId: string;
+  producerSequenceId: string;
+  subscriberMachineId: string;
+  bitOffset: number;
+  value: number;
+  provenance: string[];
 }
 
 export interface SimulationStep {
@@ -52,6 +96,11 @@ export interface SimulationStep {
     type: 'input' | 'output';
   }>;
   mergeBatch: MergeOperation[];
+  // Secondary writes triggered by the primary merge — one entry per
+  // (subscriber, producer) where the producer fired this step.  Applied
+  // to the perceptual space after mergeBatch so the next step's snapshot
+  // sees the latched bit.  Empty when no subscriptions are active.
+  eventBus: EventBusWrite[];
 }
 
 export interface SimulationConfig {
@@ -76,6 +125,27 @@ export class PerceptualSpaceSimulator {
   // /api/runtime/vector-space so the C++ runtime, the visualizer, and any
   // external client can cache shape assumptions keyed by this number.
   private mappingVersionCounter = 0;
+  // Operational-state coverage counters exposed at /metrics in Prometheus
+  // text format.  Every per-machine transition feeds this registry so an
+  // operator can see at a glance which sequences are never reached in prod.
+  private cesCoverage = new CesCoverageRegistry();
+  // Event-bus subscriptions — keyed by `producerMachineId|producerSequenceId`.
+  // Populated when addMachine() sees a `metadata.compose.subscriptions` array;
+  // consulted in run_phases() after the primary merge.  Lets meta-CES
+  // machines listen for "this leaf sequence fired" without coupling at JSON
+  // load time — producers don't know they're being subscribed to.
+  private eventBusSubscriptions: Map<string, Array<{
+    subscriberMachineId: string;
+    bitOffset: number;
+    producerMachineId: string;
+    producerSequenceId: string;
+  }>> = new Map();
+  // Event-bus bits stay latched at 1.0 from the moment they fire until the
+  // simulator is reset.  This captures the "benefits-eligible.fired" /
+  // "intake-complete.fired" semantics — workflow milestones don't decay.
+  // Re-applied at the top of every step so processImmediate's tolerant
+  // setPerceptualVector (which zero-fills tail bits) doesn't clobber them.
+  private latchedEventBits: Set<number> = new Set();
 
   /**
    * @param initialDimension  Starting PE space size (0 = fully dynamic; grows
@@ -169,6 +239,32 @@ export class PerceptualSpaceSimulator {
 
     this.machines.set(machine.id, machine);
     this.mappingVersionCounter++;
+
+    // Compose / meta-CES subscriptions — a machine that declares
+    // metadata.compose.subscriptions[i] = { producerMachineId,
+    // producerSequenceId, bitOffset } is asking the simulator to latch a
+    // 1.0 at bitOffset whenever that producer's sequence fires.  Lets a
+    // domain workflow be expressed as a normal CES whose "events" come
+    // from other machines' assertions.
+    const compose = (machine.metadata as Record<string, unknown> | undefined)?.['compose'] as
+      | { subscriptions?: Array<{ producerMachineId: string; producerSequenceId: string; bitOffset: number }> }
+      | undefined;
+    for (const sub of compose?.subscriptions ?? []) {
+      if (typeof sub.bitOffset !== 'number' || sub.bitOffset < 0) continue;
+      const key = `${sub.producerMachineId}|${sub.producerSequenceId}`;
+      const list = this.eventBusSubscriptions.get(key) ?? [];
+      list.push({
+        subscriberMachineId: machine.id,
+        bitOffset: sub.bitOffset,
+        producerMachineId: sub.producerMachineId,
+        producerSequenceId: sub.producerSequenceId,
+      });
+      this.eventBusSubscriptions.set(key, list);
+      // Grow the PE space if the subscription bit lives past the current edge.
+      if (sub.bitOffset + 1 > this.perceptualSpace.getDimension()) {
+        this.perceptualSpace.growTo(sub.bitOffset + 1);
+      }
+    }
   }
 
   /**
@@ -176,6 +272,13 @@ export class PerceptualSpaceSimulator {
    */
   public removeMachine(machineId: string): void {
     if (this.machines.delete(machineId)) this.mappingVersionCounter++;
+    // Drop any subscriptions this machine owned so a future producer firing
+    // doesn't try to write to a stale subscriber's bit offset.
+    for (const [key, subs] of this.eventBusSubscriptions) {
+      const kept = subs.filter(s => s.subscriberMachineId !== machineId);
+      if (kept.length === 0) this.eventBusSubscriptions.delete(key);
+      else this.eventBusSubscriptions.set(key, kept);
+    }
   }
 
   /**
@@ -202,6 +305,66 @@ export class PerceptualSpaceSimulator {
   }
 
   /**
+   * The CES coverage registry — accumulates per-(machine, sequence, vector)
+   * match / activation / output counts.  Used by the /metrics endpoint.
+   */
+  public getCesCoverage(): CesCoverageRegistry {
+    return this.cesCoverage;
+  }
+
+  /**
+   * Number of registered event-bus subscriptions — used by tests + the
+   * future /api/runtime/compose endpoint to introspect meta-CES wiring.
+   */
+  public getEventBusSubscriptionCount(): number {
+    let n = 0;
+    for (const list of this.eventBusSubscriptions.values()) n += list.length;
+    return n;
+  }
+
+  /**
+   * Apply event-bus subscriptions: for each mergeBatch entry, look up its
+   * (producerMachineId, producerSequenceId) in the subscription map and
+   * latch 1.0 at every subscriber's bitOffset.  Returns the canonical
+   * sorted list of writes so the step result and downstream consumers see
+   * deterministic ordering — same sort key shape as mergeBatch.
+   */
+  private applyEventBus(mergeBatch: MergeOperation[]): EventBusWrite[] {
+    if (this.eventBusSubscriptions.size === 0) return [];
+    const writes: EventBusWrite[] = [];
+    // Dedup so a sequence that emits N outputs in one step doesn't write
+    // the same bit N times — the bit is binary.
+    const seen = new Set<string>();
+    for (const op of mergeBatch) {
+      const key = `${op.machineId}|${op.sequenceId}`;
+      const subs = this.eventBusSubscriptions.get(key);
+      if (!subs) continue;
+      for (const sub of subs) {
+        const dedupKey = `${sub.subscriberMachineId}|${sub.bitOffset}|${key}`;
+        if (seen.has(dedupKey)) continue;
+        seen.add(dedupKey);
+        writes.push({
+          producerMachineId: op.machineId,
+          producerSequenceId: op.sequenceId,
+          subscriberMachineId: sub.subscriberMachineId,
+          bitOffset: sub.bitOffset,
+          value: 1,
+          provenance: op.provenance,
+        });
+        this.latchedEventBits.add(sub.bitOffset);
+      }
+    }
+    writes.sort((a, b) => {
+      if (a.subscriberMachineId !== b.subscriberMachineId) return a.subscriberMachineId < b.subscriberMachineId ? -1 : 1;
+      if (a.bitOffset !== b.bitOffset) return a.bitOffset - b.bitOffset;
+      if (a.producerMachineId !== b.producerMachineId) return a.producerMachineId < b.producerMachineId ? -1 : 1;
+      return a.producerSequenceId < b.producerSequenceId ? -1 : a.producerSequenceId > b.producerSequenceId ? 1 : 0;
+    });
+    for (const w of writes) this.perceptualSpace.updateRegion(w.bitOffset, [w.value]);
+    return writes;
+  }
+
+  /**
    * Get all machines in the simulation
    */
   public getMachines(): Machine[] {
@@ -223,6 +386,9 @@ export class PerceptualSpaceSimulator {
     this.perceptualSpace.reset();
     this.history = [];
     this.currentStep = 0;
+    // Drop every latched event-bus bit — a fresh simulation starts with
+    // no producer milestones reached.
+    this.latchedEventBits.clear();
 
     // Reset all machines
     for (const machine of this.machines.values()) {
@@ -291,11 +457,12 @@ export class PerceptualSpaceSimulator {
     // Run each machine with its snapshot input.  Collect transition results
     // and pending assertedOutputs without touching the perceptual space yet.
     const machineResults = new Map<string, any>();
-    const pendingOutputs: Array<{ machine: Machine; sequenceId: string; outputIndex: number; vector: number[] }> = [];
+    const pendingOutputs: Array<{ machine: Machine; sequenceId: string; outputIndex: number; vector: number[]; provenance: string[] }> = [];
 
     for (const machine of mappedMachines) {
       const snapshotInput = inputSnapshots.get(machine.id)!;
       const transitionResult = machine.processInput(snapshotInput);
+      this.cesCoverage.recordTransition(machine, transitionResult);
 
       // Representative output for display purposes only.
       const outputVector = transitionResult.machineOutput?.vector ?? null;
@@ -305,7 +472,13 @@ export class PerceptualSpaceSimulator {
       if (transitionResult.arbiterMetadata.shouldOutput) {
         for (const [sequenceId, seqResult] of transitionResult.sequenceResults) {
           for (let i = 0; i < seqResult.assertedOutputs.length; i++) {
-            pendingOutputs.push({ machine, sequenceId, outputIndex: i, vector: seqResult.assertedOutputs[i]!.vector });
+            pendingOutputs.push({
+              machine,
+              sequenceId,
+              outputIndex: i,
+              vector: seqResult.assertedOutputs[i]!.vector,
+              provenance: seqResult.assertedOutputs[i]!.provenance ?? [],
+            });
           }
         }
       }
@@ -334,13 +507,37 @@ export class PerceptualSpaceSimulator {
     // outputIndex) so AI and C++ runtimes apply writes in identical order.
     // mergeBatch is the authoritative synchronization result; the dense
     // perceptualSpace field below is a debug projection of the post-merge state.
-    const mergeBatch: MergeOperation[] = pendingOutputs.map(({ machine, sequenceId, outputIndex, vector }) => ({
-      region: { offset: machine.perceptualMapping!.output.offset, length: machine.perceptualMapping!.output.length },
-      machineId: machine.id,
-      sequenceId,
-      outputIndex,
-      values: vector,
-    }));
+    const mergeBatch: MergeOperation[] = pendingOutputs.map(({ machine, sequenceId, outputIndex, vector, provenance }) => {
+      // Resolve the paging contract from the machine's governance metadata.
+      // Returns null when no triggerConfig rule matches this output — that's
+      // fine, paging is only relevant for outputs the machine explicitly
+      // classified.  The decision is stamped onto the mergeBatch entry so
+      // listeners read it from the same record as the asserted values.
+      const governance = resolveForOutput(machine, sequenceId, vector);
+      const op: MergeOperation = {
+        region: { offset: machine.perceptualMapping!.output.offset, length: machine.perceptualMapping!.output.length },
+        machineId: machine.id,
+        sequenceId,
+        outputIndex,
+        values: vector,
+        provenance,
+      };
+      if (governance) op.governance = governance;
+      // Deprecation stamp — when the firing sequence carries deprecatedAt,
+      // attach a small block so listeners can surface "this RED came from
+      // a stale CES, scheduled for removal".  We pull the sequence
+      // directly from the machine so the engine sees the authoritative
+      // lifecycle fields (not metadata copies).
+      const seq = machine.getSequence(sequenceId);
+      if (seq?.isDeprecated()) {
+        op.deprecation = {
+          since:      seq.deprecatedAt!,
+          ...(seq.replacedBy ? { replacedBy: seq.replacedBy } : {}),
+          ageDays:    seq.daysSinceDeprecation(),
+        };
+      }
+      return op;
+    });
     // Canonical merge ordering: (machineId, sequenceId, outputIndex) ascending,
     // using byte-wise lex comparison (NOT localeCompare) so the result matches
     // C++ std::string::operator< exactly on ASCII identifiers.
@@ -351,7 +548,37 @@ export class PerceptualSpaceSimulator {
     });
     for (const op of mergeBatch) {
       this.perceptualSpace.updateRegion(op.region.offset, op.values.slice(0, op.region.length));
+      if (op.governance) {
+        // Count paging decisions so the /metrics endpoint exposes a
+        // per-team / per-severity rate.  Lets the ops dashboard tell
+        // "patient-safety-on-call paged 12 times this hour" at a glance.
+        this.cesCoverage.recordPagingDecision({
+          ownerTeam:     op.governance.ownerTeam,
+          processStatus: op.governance.processStatus ?? 'unknown',
+          ragStatusCode: op.governance.ragStatusCode ?? 'unknown',
+          machineId:     op.machineId,
+        });
+      }
+      if (op.deprecation) {
+        // Bump the stale-CES counter and log one warning per fire — the
+        // counter is the canonical signal; the log is a developer-friendly
+        // breadcrumb during the deprecation window.
+        const machine = this.machines.get(op.machineId);
+        this.cesCoverage.recordDeprecatedFire({
+          machineId:   op.machineId,
+          machineName: machine?.name ?? op.machineId,
+          sequenceId:  op.sequenceId,
+          replacedBy:  op.deprecation.replacedBy,
+        });
+        console.warn(`[CES] deprecated sequence "${op.sequenceId}" on machine "${machine?.name ?? op.machineId}" fired (deprecatedAt=${op.deprecation.since}${op.deprecation.replacedBy ? `, replacedBy=${op.deprecation.replacedBy}` : ''}).`);
+      }
     }
+
+    // Phase 4: Event bus — for every (machineId, sequenceId) that just
+    // fired, latch a 1.0 at the offsets that subscribers asked for.  The
+    // next step's snapshot will carry these bits into the subscribers'
+    // input regions, letting meta-CES machines run as ordinary CESs.
+    const eventBus = this.applyEventBus(mergeBatch);
 
     // Build active region list from the final machineResults
     const activeRegions: Array<{
@@ -385,7 +612,8 @@ export class PerceptualSpaceSimulator {
       perceptualSpace: this.perceptualSpace.getPerceptualVector(),
       machineResults,
       activeRegions,
-      mergeBatch
+      mergeBatch,
+      eventBus,
     };
 
     this.history.unshift(step); // Add to front (newest first)
@@ -415,6 +643,14 @@ export class PerceptualSpaceSimulator {
    */
   public processImmediate(vector: number[], matchAlgorithmOverride?: ComparatorType): SimulationStep {
     this.perceptualSpace.setPerceptualVector(vector);
+    // Re-apply any event-bus bits that have already fired in prior steps.
+    // setPerceptualVector zero-fills bits past the caller's vector length,
+    // and the caller usually doesn't know which bits the simulator latched.
+    for (const bit of this.latchedEventBits) {
+      if (bit < this.perceptualSpace.getDimension()) {
+        this.perceptualSpace.updateRegion(bit, [1]);
+      }
+    }
 
     const mappedMachines = Array.from(this.machines.values()).filter(
       (m) => m.perceptualMapping !== undefined
@@ -431,18 +667,25 @@ export class PerceptualSpaceSimulator {
 
     // ── Phase 2: Process ─────────────────────────────────────────────────────
     const machineResults = new Map<string, any>();
-    const pendingOutputs: Array<{ machine: Machine; sequenceId: string; outputIndex: number; vector: number[] }> = [];
+    const pendingOutputs: Array<{ machine: Machine; sequenceId: string; outputIndex: number; vector: number[]; provenance: string[] }> = [];
 
     for (const machine of mappedMachines) {
       const snapshotInput = inputSnapshots.get(machine.id)!;
       const transitionResult = machine.processInput(snapshotInput, matchAlgorithmOverride);
+      this.cesCoverage.recordTransition(machine, transitionResult);
 
       const outputVector = transitionResult.machineOutput?.vector ?? null;
 
       if (transitionResult.arbiterMetadata.shouldOutput) {
         for (const [sequenceId, seqResult] of transitionResult.sequenceResults) {
           for (let i = 0; i < seqResult.assertedOutputs.length; i++) {
-            pendingOutputs.push({ machine, sequenceId, outputIndex: i, vector: seqResult.assertedOutputs[i]!.vector });
+            pendingOutputs.push({
+              machine,
+              sequenceId,
+              outputIndex: i,
+              vector: seqResult.assertedOutputs[i]!.vector,
+              provenance: seqResult.assertedOutputs[i]!.provenance ?? [],
+            });
           }
         }
       }
@@ -469,13 +712,37 @@ export class PerceptualSpaceSimulator {
     // ── Phase 3: Merge ───────────────────────────────────────────────────────
     // Canonical mergeBatch — same ordering rule as step(): sort by
     // (machineId, sequenceId, outputIndex). C++ applies the identical sort.
-    const mergeBatch: MergeOperation[] = pendingOutputs.map(({ machine, sequenceId, outputIndex, vector }) => ({
-      region: { offset: machine.perceptualMapping!.output.offset, length: machine.perceptualMapping!.output.length },
-      machineId: machine.id,
-      sequenceId,
-      outputIndex,
-      values: vector,
-    }));
+    const mergeBatch: MergeOperation[] = pendingOutputs.map(({ machine, sequenceId, outputIndex, vector, provenance }) => {
+      // Resolve the paging contract from the machine's governance metadata.
+      // Returns null when no triggerConfig rule matches this output — that's
+      // fine, paging is only relevant for outputs the machine explicitly
+      // classified.  The decision is stamped onto the mergeBatch entry so
+      // listeners read it from the same record as the asserted values.
+      const governance = resolveForOutput(machine, sequenceId, vector);
+      const op: MergeOperation = {
+        region: { offset: machine.perceptualMapping!.output.offset, length: machine.perceptualMapping!.output.length },
+        machineId: machine.id,
+        sequenceId,
+        outputIndex,
+        values: vector,
+        provenance,
+      };
+      if (governance) op.governance = governance;
+      // Deprecation stamp — when the firing sequence carries deprecatedAt,
+      // attach a small block so listeners can surface "this RED came from
+      // a stale CES, scheduled for removal".  We pull the sequence
+      // directly from the machine so the engine sees the authoritative
+      // lifecycle fields (not metadata copies).
+      const seq = machine.getSequence(sequenceId);
+      if (seq?.isDeprecated()) {
+        op.deprecation = {
+          since:      seq.deprecatedAt!,
+          ...(seq.replacedBy ? { replacedBy: seq.replacedBy } : {}),
+          ageDays:    seq.daysSinceDeprecation(),
+        };
+      }
+      return op;
+    });
     // Canonical merge ordering: (machineId, sequenceId, outputIndex) ascending,
     // using byte-wise lex comparison (NOT localeCompare) so the result matches
     // C++ std::string::operator< exactly on ASCII identifiers.
@@ -486,7 +753,29 @@ export class PerceptualSpaceSimulator {
     });
     for (const op of mergeBatch) {
       this.perceptualSpace.updateRegion(op.region.offset, op.values.slice(0, op.region.length));
+      if (op.governance) {
+        this.cesCoverage.recordPagingDecision({
+          ownerTeam:     op.governance.ownerTeam,
+          processStatus: op.governance.processStatus ?? 'unknown',
+          ragStatusCode: op.governance.ragStatusCode ?? 'unknown',
+          machineId:     op.machineId,
+        });
+      }
+      if (op.deprecation) {
+        const machine = this.machines.get(op.machineId);
+        this.cesCoverage.recordDeprecatedFire({
+          machineId:   op.machineId,
+          machineName: machine?.name ?? op.machineId,
+          sequenceId:  op.sequenceId,
+          replacedBy:  op.deprecation.replacedBy,
+        });
+        console.warn(`[CES] deprecated sequence "${op.sequenceId}" on machine "${machine?.name ?? op.machineId}" fired (deprecatedAt=${op.deprecation.since}${op.deprecation.replacedBy ? `, replacedBy=${op.deprecation.replacedBy}` : ''}).`);
+      }
     }
+
+    // Phase 4 — see step() for the rationale.  Same event-bus latching
+    // logic applies on the immediate-input code path.
+    const eventBus = this.applyEventBus(mergeBatch);
 
     const activeRegions: Array<{
       offset: number;
@@ -518,7 +807,8 @@ export class PerceptualSpaceSimulator {
       perceptualSpace: this.perceptualSpace.getPerceptualVector(),
       machineResults,
       activeRegions,
-      mergeBatch
+      mergeBatch,
+      eventBus,
     };
 
     this.history.unshift(step);

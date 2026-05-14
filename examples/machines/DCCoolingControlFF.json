@@ -84,6 +84,49 @@
           "thermal",
           "thermal-comfort"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "datacenter-noc",
+        "runbook": "https://runbooks.example.org/data-center/dccoolingcontrolff",
+        "escalationPolicy": "pagerduty:datacenter-noc",
+        "contact": {
+          "primary": "datacenter-noc-primary@example.org",
+          "secondary": "datacenter-noc-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"data-center\".  Review and tune the routing as the team owning DCCoolingControlFF matures."
+      },
+      "triggerConfig": {
+        "processId": "DCCOOLINGCONTROLFF",
+        "processName": "DC Cooling Control Flip-Flop",
+        "rules": [
+          {
+            "sequenceId": "dc-cooling-set-sequence",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "COOLING CONTROL ACTIVE: Emergency cooling engaged"
+          },
+          {
+            "sequenceId": "dc-cooling-reset-sequence",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "COOLING CONTROL INACTIVE: Normal cooling sufficient"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

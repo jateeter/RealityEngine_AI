@@ -31,6 +31,23 @@
       ],
       "sequenceCount": 7,
       "severity": "life-safety",
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/patient-safety/fall-detection",
+        "escalationPolicy": "pagerduty:patient-safety-tier-1",
+        "contact": {
+          "primary": "patient-safety-team@example.org",
+          "secondary": "clinical-engineering-oncall@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 60
+        },
+        "notes": "RED outputs page primary on-call within 60s. AMBER warnings page within 30min to caregiver-facing channel. Sole source of truth — DO NOT override paging policy elsewhere."
+      },
       "triggerConfig": {
         "endpoint": "http://localhost:4000/graphql",
         "template": "examples/triggers/graphql_trigger_template.py",
@@ -85,7 +102,12 @@
             ],
             "ragStatusCode": "RED",
             "processStatus": "error",
-            "description": "Confirmed fall: motion onset → sustained → severe → impact stillness over six ticks. Dispatch caregiver / emergency contact."
+            "description": "Confirmed fall: motion onset → sustained → severe → impact stillness over six ticks. Dispatch caregiver / emergency contact.",
+            "governance": {
+              "slaSeconds": 30,
+              "runbook": "https://runbooks.example.org/patient-safety/fall-detection#confirmed-red",
+              "ownerTeam": "patient-safety-on-call-tier-1"
+            }
           },
           {
             "sequenceId": "fall-slow-collapse",
@@ -95,7 +117,11 @@
             ],
             "ragStatusCode": "RED",
             "processStatus": "error",
-            "description": "Sudden onset of stillness escalating over three ticks without preceding motion — possible syncope / silent collapse"
+            "description": "Sudden onset of stillness escalating over three ticks without preceding motion — possible syncope / silent collapse",
+            "governance": {
+              "slaSeconds": 45,
+              "runbook": "https://runbooks.example.org/patient-safety/fall-detection#slow-collapse"
+            }
           },
           {
             "sequenceId": "fall-intentional-lying",
@@ -467,7 +493,8 @@
         "id": "fall-confirmed",
         "name": "Confirmed fall (motion → severe → sustained stillness) → RED",
         "metadata": {
-          "description": "The only path that escalates to emergency dispatch. Six ticks of monotonic evidence are required: motion onset → sustained motion → severe motion → post-event stillness onset → sustained stillness → very-sustained stillness. Each transition is Hamming-distance 1, so a single anomalous tick (recovery, sensor noise) aborts the sequence and prevents an unwarranted RED dispatch."
+          "description": "The only path that escalates to emergency dispatch. Six ticks of monotonic evidence are required: motion onset → sustained motion → severe motion → post-event stillness onset → sustained stillness → very-sustained stillness. Each transition is Hamming-distance 1, so a single anomalous tick (recovery, sensor noise) aborts the sequence and prevents an unwarranted RED dispatch.",
+          "severity": "life-safety"
         },
         "vectors": [
           {
@@ -617,7 +644,8 @@
         "id": "fall-slow-collapse",
         "name": "Slow collapse / silent fall (no motion, escalating stillness) → RED",
         "metadata": {
-          "description": "Catches the case where a resident slumps without struggle (syncope, stroke, cardiac event). Three ticks of monotonically increasing stillness with zero motion-progression. Lower confidence than the motion-validated path because silent stillness can also indicate intentional rest — the sequence requires the stillness signal to climb from 1→2→3, which is unusual for normal sleep transitions."
+          "description": "Catches the case where a resident slumps without struggle (syncope, stroke, cardiac event). Three ticks of monotonically increasing stillness with zero motion-progression. Lower confidence than the motion-validated path because silent stillness can also indicate intentional rest — the sequence requires the stillness signal to climb from 1→2→3, which is unusual for normal sleep transitions.",
+          "severity": "life-safety"
         },
         "vectors": [
           {

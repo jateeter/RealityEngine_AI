@@ -141,6 +141,155 @@
           "soc",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "ml-platform-on-call",
+        "runbook": "https://runbooks.example.org/ai-services/aisecuritymonitor",
+        "escalationPolicy": "pagerduty:ml-platform",
+        "contact": {
+          "primary": "ml-platform-on-call-primary@example.org",
+          "secondary": "ml-platform-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 300
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"ai-services\".  Review and tune the routing as the team owning AISecurityMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "AISECURITYMONITOR",
+        "processName": "AI Security Monitor",
+        "rules": [
+          {
+            "sequenceId": "aism-threat-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Security posture SECURE — all anomaly indicators within baseline"
+          },
+          {
+            "sequenceId": "aism-threat-escalation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Security SUSPICIOUS — anomalous patterns detected, investigation warranted"
+          },
+          {
+            "sequenceId": "aism-threat-escalation",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Security ELEVATED THREAT — correlated anomalies suggest active intrusion attempt"
+          },
+          {
+            "sequenceId": "aism-threat-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Alert Security Operations Center, begin incident investigation"
+          },
+          {
+            "sequenceId": "aism-threat-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Security CRITICAL — confirmed intrusion with privilege escalation, immediate response required"
+          },
+          {
+            "sequenceId": "aism-threat-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Page on-call security team, escalate to CISO"
+          },
+          {
+            "sequenceId": "aism-threat-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Isolate affected network segment, revoke compromised credentials"
+          },
+          {
+            "sequenceId": "aism-rapid-privilege-escalation",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Rapid escalation: Privilege escalation confirmed with high threat confidence"
+          },
+          {
+            "sequenceId": "aism-rapid-privilege-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Immediate isolation — privilege escalation confirmed, contain before lateral movement"
+          }
+        ]
       }
     },
     "sequences": [

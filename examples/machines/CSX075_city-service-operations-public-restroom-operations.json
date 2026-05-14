@@ -142,6 +142,77 @@
           "startup-loadable",
           "transportation"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/csx075_city-service-operations-public-restroom-operations",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning CSX075_city-service-operations-public-restroom-operations matures."
+      },
+      "triggerConfig": {
+        "processId": "CSX075_CITY_SERVICE_OPERATIONS_PUBLIC_RESTROOM_OPERATIONS",
+        "processName": "Community Services City Service Operations Public Restroom Operations",
+        "rules": [
+          {
+            "sequenceId": "csx-075-urgent-response",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Public Restroom Operations: WATCH -> URGENT_RESPONSE"
+          },
+          {
+            "sequenceId": "csx-075-coordinate-services",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Public Restroom Operations: COORDINATION_NEEDED -> COORDINATE_SERVICES"
+          },
+          {
+            "sequenceId": "csx-075-field-work-order",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Public Restroom Operations: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER"
+          },
+          {
+            "sequenceId": "csx-075-stable-service-path",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Public Restroom Operations: STABLE_PATH -> STABLE_SERVICE_PATH"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

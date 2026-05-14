@@ -133,6 +133,77 @@
           "public-safety",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/csx042_courts-diversion-and-victim-services-citation-court-reminder",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning CSX042_courts-diversion-and-victim-services-citation-court-reminder matures."
+      },
+      "triggerConfig": {
+        "processId": "CSX042_COURTS_DIVERSION_AND_VICTIM_SERVICES_CITATION_COURT_REMINDER",
+        "processName": "Community Services Courts Diversion And Victim Services Citation Court Reminder",
+        "rules": [
+          {
+            "sequenceId": "csx-042-urgent-response",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Citation Court Reminder: WATCH -> URGENT_RESPONSE"
+          },
+          {
+            "sequenceId": "csx-042-coordinate-services",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Citation Court Reminder: COORDINATION_NEEDED -> COORDINATE_SERVICES"
+          },
+          {
+            "sequenceId": "csx-042-field-work-order",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Citation Court Reminder: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER"
+          },
+          {
+            "sequenceId": "csx-042-stable-service-path",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Citation Court Reminder: STABLE_PATH -> STABLE_SERVICE_PATH"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

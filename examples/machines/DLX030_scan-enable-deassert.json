@@ -83,6 +83,39 @@
           "scan-enable-deassert",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx030_scan-enable-deassert",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX030_scan-enable-deassert matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX030_SCAN_ENABLE_DEASSERT",
+        "processName": "Logical Infrastructure Scan Enable Deassert",
+        "rules": [
+          {
+            "sequenceId": "dlx-030-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Scan Enable Deassert matched regular expression SCAN_EN+ !SCAN_EN."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

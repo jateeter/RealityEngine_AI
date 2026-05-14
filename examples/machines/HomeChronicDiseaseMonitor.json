@@ -86,6 +86,77 @@
           "self-management",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/homechronicdiseasemonitor",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning HomeChronicDiseaseMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "HOMECHRONICDISEASEMONITOR",
+        "processName": "Home Chronic Disease Monitor",
+        "rules": [
+          {
+            "sequenceId": "chronic-disease-exacerbation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "DISEASE_EXACERBATION: acute disease exacerbation requiring urgent clinical intervention at [2019:2023]"
+          },
+          {
+            "sequenceId": "chronic-disease-poor-control",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "POOR_CONTROL: chronic disease consistently out of target range; complication risk elevated at [2019:2023]"
+          },
+          {
+            "sequenceId": "chronic-disease-borderline",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "BORDERLINE_CONTROL: chronic disease near but outside target range; preventive intensification warranted at [2019:2023]"
+          },
+          {
+            "sequenceId": "chronic-disease-controlled-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "DISEASE_CONTROLLED: chronic disease biomarkers in target range; complication risk managed at [2019:2023]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

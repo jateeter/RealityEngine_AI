@@ -135,6 +135,155 @@
           "slo",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "ml-platform-on-call",
+        "runbook": "https://runbooks.example.org/ai-services/aimodelwellness",
+        "escalationPolicy": "pagerduty:ml-platform",
+        "contact": {
+          "primary": "ml-platform-on-call-primary@example.org",
+          "secondary": "ml-platform-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 300
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"ai-services\".  Review and tune the routing as the team owning AIModelWellness matures."
+      },
+      "triggerConfig": {
+        "processId": "AIMODELWELLNESS",
+        "processName": "AI Model Wellness Monitor",
+        "rules": [
+          {
+            "sequenceId": "aimw-model-degradation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Model wellness HEALTHY — error rate nominal, SLOs met, no drift detected"
+          },
+          {
+            "sequenceId": "aimw-model-degradation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Model wellness DEGRADED — error rate rising, SLO p99 latency exceeding target"
+          },
+          {
+            "sequenceId": "aimw-model-degradation",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Model wellness CRITICAL — significant SLO violations, accuracy drift confirmed"
+          },
+          {
+            "sequenceId": "aimw-model-degradation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Action: Trigger model weight refresh and hot-reload from latest checkpoint"
+          },
+          {
+            "sequenceId": "aimw-model-degradation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Model wellness FAILED — serving effectively down, user impact severe"
+          },
+          {
+            "sequenceId": "aimw-model-degradation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Action: Emergency model reload from last known-good checkpoint"
+          },
+          {
+            "sequenceId": "aimw-model-degradation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Action: Failover to backup model replica, page on-call ML engineer"
+          },
+          {
+            "sequenceId": "aimw-latency-breach",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Latency SLO BREACH — p99 inference latency exceeding SLO despite normal error rate"
+          },
+          {
+            "sequenceId": "aimw-latency-breach",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Action: Refresh model instance to clear potential memory fragmentation or KV cache bloat"
+          }
+        ]
       }
     },
     "sequences": [

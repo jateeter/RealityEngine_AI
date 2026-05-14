@@ -84,6 +84,77 @@
           "opioid-risk",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/homechronicpainmonitor",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning HomeChronicPainMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "HOMECHRONICPAINMONITOR",
+        "processName": "Home Chronic Pain Monitor",
+        "rules": [
+          {
+            "sequenceId": "chronic-pain-crisis",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "PAIN_CRISIS: uncontrolled acute pain episode requiring urgent pain management intervention at [2023:2027]"
+          },
+          {
+            "sequenceId": "chronic-pain-opioid-risk",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "OPIOID_RISK_ELEVATED: opioid misuse or overuse pattern detected at [2023:2027]"
+          },
+          {
+            "sequenceId": "chronic-pain-functional-impairment",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "FUNCTIONAL_IMPAIRMENT: chronic pain causing sustained ADL and activity limitation at [2023:2027]"
+          },
+          {
+            "sequenceId": "chronic-pain-managed-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "PAIN_MANAGED: chronic pain adequately controlled with maintained function at [2023:2027]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

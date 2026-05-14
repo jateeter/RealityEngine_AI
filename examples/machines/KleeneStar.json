@@ -81,6 +81,49 @@
           "self-loop",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/kleenestar",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning KleeneStar matures."
+      },
+      "triggerConfig": {
+        "processId": "KLEENESTAR",
+        "processName": "Kleene Star Operator",
+        "rules": [
+          {
+            "sequenceId": "kleene-seq1",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sequence 1 complete: (001)+(000)*(010) matched"
+          },
+          {
+            "sequenceId": "kleene-seq2",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sequence 2 complete: (010)+(000|001)*(001) matched"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

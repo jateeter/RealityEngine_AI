@@ -83,6 +83,39 @@
           "stable-low-window",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx009_stable-low-window",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX009_stable-low-window matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX009_STABLE_LOW_WINDOW",
+        "processName": "Logical Infrastructure Stable Low Window",
+        "rules": [
+          {
+            "sequenceId": "dlx-009-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Stable Low Window matched regular expression 0{3}."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

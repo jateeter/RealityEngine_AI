@@ -144,6 +144,109 @@
           "stress",
           "wellness"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/patientwellness",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning PatientWellness matures."
+      },
+      "triggerConfig": {
+        "processId": "PATIENTWELLNESS",
+        "processName": "PatientWellness",
+        "rules": [
+          {
+            "sequenceId": "wellness-level4-optimal",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Level 4 — OPTIMAL: All six wellness dimensions within age-adjusted norms. Resident is thriving. Maintain current care plan."
+          },
+          {
+            "sequenceId": "wellness-level3-good",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Level 3 — GOOD: Five wellness dimensions in norm; stress elevated but not clinically impairing. Monitor and offer stress-reduction activities."
+          },
+          {
+            "sequenceId": "wellness-level2-alert",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Level 2 — ALERT: Multiple wellness deficits (anxiety, stress, exercise) with active decline trend. Care plan review and targeted interventions required."
+          },
+          {
+            "sequenceId": "wellness-level1-critical",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Level 1 — CRITICAL: Mental acuity below age-cohort norm with established decline trend. Immediate clinical evaluation and care plan revision required."
+          },
+          {
+            "sequenceId": "wellness-level3-good-age-adjusted",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Level 3 — GOOD (Age-Adjusted): Five wellness dimensions in norm; exercise below standard guideline but within age-adjusted functional capacity. Not penalized against an inapplicable standard."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

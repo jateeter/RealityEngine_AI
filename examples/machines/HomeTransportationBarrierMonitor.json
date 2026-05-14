@@ -83,6 +83,65 @@
           "transportation",
           "transportation-access"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/hometransportationbarriermonitor",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning HomeTransportationBarrierMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "HOMETRANSPORTATIONBARRIERMONITOR",
+        "processName": "Home Transportation Barrier Monitor",
+        "rules": [
+          {
+            "sequenceId": "transport-critical-failure",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "CRITICAL_ACCESS_FAILURE: patient missing critical care due to transportation barrier at [2015:2019]"
+          },
+          {
+            "sequenceId": "transport-transit-dependent-risk",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "TRANSIT_DEPENDENT_RISK: care access contingent on fragile transit arrangement at [2015:2019]"
+          },
+          {
+            "sequenceId": "transport-adequate",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "TRANSPORTATION_ADEQUATE: care access not transport-limited at [2015:2019]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

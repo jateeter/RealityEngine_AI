@@ -128,6 +128,65 @@
           "public-health-system-transformation",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "public-health-on-call",
+        "runbook": "https://runbooks.example.org/health-services/hsph158_maternal-child-family-health-governance-escalator",
+        "escalationPolicy": "pagerduty:public-health",
+        "contact": {
+          "primary": "public-health-on-call-primary@example.org",
+          "secondary": "public-health-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-services\".  Review and tune the routing as the team owning HSPH158_maternal-child-family-health-governance-escalator matures."
+      },
+      "triggerConfig": {
+        "processId": "HSPH158_MATERNAL_CHILD_FAMILY_HEALTH_GOVERNANCE_ESCALATOR",
+        "processName": "Health Services Maternal Child Family Health Governance Escalator",
+        "rules": [
+          {
+            "sequenceId": "hsph-158-urgent-dispatch",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Urgent AI dispatch required."
+          },
+          {
+            "sequenceId": "hsph-158-optimize-delivery",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Optimization agent workflow should run."
+          },
+          {
+            "sequenceId": "hsph-158-stable-ideal-state",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Ideal-state progress is stable."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

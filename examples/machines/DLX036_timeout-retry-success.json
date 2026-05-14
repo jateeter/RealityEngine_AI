@@ -83,6 +83,39 @@
           "startup-loadable",
           "timeout-retry-success"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx036_timeout-retry-success",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX036_timeout-retry-success matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX036_TIMEOUT_RETRY_SUCCESS",
+        "processName": "Logical Infrastructure Timeout Retry Success",
+        "rules": [
+          {
+            "sequenceId": "dlx-036-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Timeout Retry Success matched regular expression TIMEOUT RETRY ACK."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

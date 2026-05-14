@@ -27,6 +27,31 @@ export enum ComparatorType {
 /**
  * Match result for comparator operations
  */
+/**
+ * Lifecycle metadata for a Critical Event Sequence (or a Machine as a whole).
+ * Authoring teams add `deprecatedAt` (ISO date) + `replacedBy` (sequence id
+ * within the same machine, or `machineId::sequenceId` across machines)
+ * when a sequence is being retired.  The engine emits a Prom counter and
+ * stamps each fired output with the deprecation block so listeners and the
+ * visualizer can render strikethrough / banner / metric alerts.
+ */
+export interface CesLifecycle {
+  schemaVersion?: string;       // e.g. "1.0.0" — semver for the sequence body
+  deprecatedAt?: string;        // ISO-8601 date the sequence was marked deprecated
+  replacedBy?:   string;        // forward-pointer to the successor sequence
+}
+
+/**
+ * Deprecation block stamped onto a mergeBatch entry when a deprecated
+ * sequence fires.  `ageDays` is computed at runtime and lets a Grafana
+ * panel surface "this stale CES has been firing for 117 days post-deprecation".
+ */
+export interface DeprecationMark {
+  since:      string;
+  replacedBy?: string;
+  ageDays:    number;
+}
+
 export interface MatchResult {
   matched: boolean;
   score?: number;
@@ -75,12 +100,23 @@ export enum VectorState {
 
 /**
  * Output vector that can be asserted to affect reality
+ *
+ * `provenance` is the ordered list of vector IDs whose matches led to this
+ * output firing — populated by the engine, not the source JSON.  For an
+ * isInitial vector that emits on its first match, provenance is just
+ * `[v.id]`.  For a chained vector, it's the full path from the original
+ * activator through every intermediate vector to this emitter, e.g.
+ * `["fall-conf-v1", "fall-conf-v2", "fall-conf-v3", "fall-conf-v4",
+ *  "fall-conf-v5", "fall-conf-v6"]` for a six-step fall confirmation.
+ * Listeners can include this in alert payloads so an operator sees not
+ * just "RED fall" but the evidence chain that justified it.
  */
 export interface OutputVector {
   id: string;
   vector: number[];
   metadata?: Record<string, any>;
   timestamp: number;
+  provenance?: string[];
 }
 
 /**

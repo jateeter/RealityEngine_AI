@@ -83,6 +83,39 @@
           "req-ack-handshake",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx011_req-ack-handshake",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX011_req-ack-handshake matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX011_REQ_ACK_HANDSHAKE",
+        "processName": "Logical Infrastructure Req Ack Handshake",
+        "rules": [
+          {
+            "sequenceId": "dlx-011-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Req Ack Handshake matched regular expression REQ ACK."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

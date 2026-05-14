@@ -89,6 +89,65 @@
           "mental-health-access",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/homementalhealthaccessmonitor",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning HomeMentalHealthAccessMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "HOMEMENTALHEALTHACCESSMONITOR",
+        "processName": "Home Mental Health Access Monitor",
+        "rules": [
+          {
+            "sequenceId": "mh-access-crisis",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "MENTAL_HEALTH_CRISIS: dual chronic illness crisis driving acute mental health decompensation at [2039:2043]"
+          },
+          {
+            "sequenceId": "mh-referral-needed",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "MH_REFERRAL_NEEDED: chronic illness burden driving mental health comorbidity requiring behavioral health integration at [2039:2043]"
+          },
+          {
+            "sequenceId": "mh-access-adequate",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "MH_ACCESS_ADEQUATE: chronic illness managed; mental health comorbidity risk low; no access gap at [2039:2043]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

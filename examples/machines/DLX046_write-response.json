@@ -83,6 +83,39 @@
           "startup-loadable",
           "write-response"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx046_write-response",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX046_write-response matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX046_WRITE_RESPONSE",
+        "processName": "Logical Infrastructure Write Response",
+        "rules": [
+          {
+            "sequenceId": "dlx-046-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Write Response matched regular expression WVALID BVALID."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

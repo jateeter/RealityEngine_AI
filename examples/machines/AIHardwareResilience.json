@@ -144,6 +144,155 @@
           "smart",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "ml-platform-on-call",
+        "runbook": "https://runbooks.example.org/ai-services/aihardwareresilience",
+        "escalationPolicy": "pagerduty:ml-platform",
+        "contact": {
+          "primary": "ml-platform-on-call-primary@example.org",
+          "secondary": "ml-platform-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 300
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"ai-services\".  Review and tune the routing as the team owning AIHardwareResilience matures."
+      },
+      "triggerConfig": {
+        "processId": "AIHARDWARERESILIENCE",
+        "processName": "AI Hardware Resilience Monitor",
+        "rules": [
+          {
+            "sequenceId": "aihr-hw-degradation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Hardware HEALTHY — all SMART indicators nominal, no ECC errors, network clean"
+          },
+          {
+            "sequenceId": "aihr-hw-degradation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Hardware WARNING — early SMART deterioration and elevated ECC error rate"
+          },
+          {
+            "sequenceId": "aihr-hw-degradation",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Hardware DEGRADED — multiple components showing failure indicators, reliability compromised"
+          },
+          {
+            "sequenceId": "aihr-hw-degradation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Action: Schedule immediate maintenance window for affected hardware replacement"
+          },
+          {
+            "sequenceId": "aihr-hw-degradation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Hardware CRITICAL — imminent hardware failure, data loss and downtime risk"
+          },
+          {
+            "sequenceId": "aihr-hw-degradation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Action: Immediately evacuate all workloads from affected nodes to healthy hardware"
+          },
+          {
+            "sequenceId": "aihr-hw-degradation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Action: Emergency hardware replacement — pull from production immediately"
+          },
+          {
+            "sequenceId": "aihr-sudden-network-failure",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Network fabric FAULT — sudden packet loss spike, likely NIC or switch failure"
+          },
+          {
+            "sequenceId": "aihr-sudden-network-failure",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Action: Reroute traffic away from affected network segment, migrate dependent workloads"
+          }
+        ]
       }
     },
     "sequences": [

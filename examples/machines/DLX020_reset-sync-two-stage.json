@@ -83,6 +83,39 @@
           "reset-sync-two-stage",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx020_reset-sync-two-stage",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX020_reset-sync-two-stage matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX020_RESET_SYNC_TWO_STAGE",
+        "processName": "Logical Infrastructure Reset Sync Two Stage",
+        "rules": [
+          {
+            "sequenceId": "dlx-020-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Reset Sync Two Stage matched regular expression RST 10 11."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

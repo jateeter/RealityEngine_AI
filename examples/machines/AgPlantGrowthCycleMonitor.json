@@ -85,6 +85,65 @@
           "startup-loadable",
           "stress-detection"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "agriculture-operations",
+        "runbook": "https://runbooks.example.org/agriculture/agplantgrowthcyclemonitor",
+        "escalationPolicy": "pagerduty:ag-ops",
+        "contact": {
+          "primary": "agriculture-operations-primary@example.org",
+          "secondary": "agriculture-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"agriculture\".  Review and tune the routing as the team owning AgPlantGrowthCycleMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "AGPLANTGROWTHCYCLEMONITOR",
+        "processName": "Ag Plant Growth Cycle Monitor",
+        "rules": [
+          {
+            "sequenceId": "ag-growth-optimal",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "GROWTH_OK: plant growth conditions optimal at [3955:3959]"
+          },
+          {
+            "sequenceId": "ag-growth-temp-stress",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "TEMP_STRESS: temperature-induced growth suppression detected at [3955:3959]"
+          },
+          {
+            "sequenceId": "ag-growth-water-stress",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "WATER_STRESS: water-deficit growth suppression detected at [3955:3959]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

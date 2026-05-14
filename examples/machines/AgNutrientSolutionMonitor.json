@@ -78,6 +78,65 @@
           "ph-monitoring",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "agriculture-operations",
+        "runbook": "https://runbooks.example.org/agriculture/agnutrientsolutionmonitor",
+        "escalationPolicy": "pagerduty:ag-ops",
+        "contact": {
+          "primary": "agriculture-operations-primary@example.org",
+          "secondary": "agriculture-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"agriculture\".  Review and tune the routing as the team owning AgNutrientSolutionMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "AGNUTRIENTSOLUTIONMONITOR",
+        "processName": "Ag Nutrient Solution Monitor",
+        "rules": [
+          {
+            "sequenceId": "ag-nutrient-ph-drift",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "PH_ALERT: pH adjustment required immediately at [28:32]"
+          },
+          {
+            "sequenceId": "ag-nutrient-ec-escalation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "EC_ALERT: reservoir dilution required at [28:32]"
+          },
+          {
+            "sequenceId": "ag-nutrient-deficiency",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "DEFICIENCY_ALERT: replenish nutrient stock solution at [28:32]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

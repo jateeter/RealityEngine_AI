@@ -85,6 +85,65 @@
           "workflow-completion",
           "workflow-completion-monitor"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/workflowcompletionmonitor",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning WorkflowCompletionMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "WORKFLOWCOMPLETIONMONITOR",
+        "processName": "Workflow Completion Monitor",
+        "rules": [
+          {
+            "sequenceId": "workflow-blocked-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "WORKFLOW_BLOCKED: both signing and qualification workflows in failure; service delivery fully blocked at [988:992]"
+          },
+          {
+            "sequenceId": "workflow-partial-open",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "WORKFLOW_PARTIAL: primary workflow complete; supplementary item outstanding at [988:992]"
+          },
+          {
+            "sequenceId": "workflow-complete-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "WORKFLOW_COMPLETE: all signing and qualification requirements met; unrestricted service delivery authorized at [988:992]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

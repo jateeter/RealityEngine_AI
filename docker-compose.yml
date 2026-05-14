@@ -23,6 +23,31 @@ services:
       timeout: 5s
       retries: 5
 
+  # Prometheus — scrapes /api/metrics from each runtime for CES coverage gauges.
+  # Reaches host-side `npm run start` (TS) on host.docker.internal:3000 and
+  # `bin/reality_engine_server` (C++) on host.docker.internal:3299.  Both
+  # runtimes emit identical metric names so a single dashboard covers either.
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: reality-engine-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --web.listen-address=:9090
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    restart: unless-stopped
+    networks:
+      - reality-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
   # Grafana - accessed via TLS proxy at https://localhost:3002
   grafana:
     image: grafana/grafana:10.2.3
@@ -41,6 +66,8 @@ services:
       - ./config/dashboards:/var/lib/grafana/dashboards
     depends_on:
       loki:
+        condition: service_healthy
+      prometheus:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -284,6 +311,8 @@ volumes:
   loki_data:
     driver: local
   grafana_data:
+    driver: local
+  prometheus_data:
     driver: local
   perception_sources_data:
     driver: local

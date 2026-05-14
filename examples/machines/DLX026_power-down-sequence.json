@@ -83,6 +83,39 @@
           "regular-expression",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx026_power-down-sequence",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX026_power-down-sequence matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX026_POWER_DOWN_SEQUENCE",
+        "processName": "Logical Infrastructure Power Down Sequence",
+        "rules": [
+          {
+            "sequenceId": "dlx-026-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Power Down Sequence matched regular expression CLKOFF RET ISO PWRDN."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

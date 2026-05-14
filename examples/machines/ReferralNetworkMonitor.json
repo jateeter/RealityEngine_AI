@@ -79,6 +79,65 @@
           "startup-loadable",
           "warm-handoff"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/referralnetworkmonitor",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning ReferralNetworkMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "REFERRALNETWORKMONITOR",
+        "processName": "Referral Network Monitor",
+        "rules": [
+          {
+            "sequenceId": "referral-breakdown-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "REFERRAL_BREAKDOWN: community referral network non-functional; clients not connecting with referred services at [976:980]"
+          },
+          {
+            "sequenceId": "referral-delays",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "REFERRAL_DELAYS: referral network functional but wait times preventing timely service access at [976:980]"
+          },
+          {
+            "sequenceId": "referral-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "REFERRAL_FUNCTIONAL: referral network supporting effective client routing at [976:980]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

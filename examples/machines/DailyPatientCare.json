@@ -118,7 +118,143 @@
           "routine",
           "startup-loadable"
         ]
-      }
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/dailypatientcare",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning DailyPatientCare matures."
+      },
+      "triggerConfig": {
+        "processId": "DAILYPATIENTCARE",
+        "processName": "DailyPatientCare",
+        "rules": [
+          {
+            "sequenceId": "daily-morning-routine",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Event: MORNING_COMPLETE — patient successfully completed all morning care milestones"
+          },
+          {
+            "sequenceId": "daily-evening-routine",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Event: EVENING_COMPLETE — patient successfully completed all evening care milestones and settled for the night"
+          },
+          {
+            "sequenceId": "daily-fall-response",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Alert: FALL_CONFIRMED — patient fell and activated call system; staff response required immediately"
+          },
+          {
+            "sequenceId": "daily-fall-unresponsive",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "CRITICAL ALERT: UNRESPONSIVE_FALL — patient fell and is not moving; no call system activated; immediate staff wellness check required"
+          },
+          {
+            "sequenceId": "daily-bathroom-nonuse",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Alert: BATHROOM_ALERT — patient has not used bathroom within care-plan-specified interval; assess for urinary retention, mobility difficulty, or fall risk"
+          },
+          {
+            "sequenceId": "daily-medication-miss",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Alert: MEDICATION_MISSED — morning medications not administered within window; assess for refusal, availability issue, or documentation gap"
+          },
+          {
+            "sequenceId": "daily-night-wandering",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Alert: WANDERING_ALERT — patient has exited room three times during nocturnal monitoring; assess for dementia-related wandering, pain, anxiety, or environmental cause"
+          }
+        ]
+      },
+      "severity": "life-safety"
     },
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
@@ -734,7 +870,8 @@
           "description": "Patient falls during daytime ambulatory activity and does not activate any call system. Sensor detects the fall and subsequent stillness — patient may be unconscious or incapacitated.",
           "regex": "(RISE)+ · FALL_EVENT · POST_FALL_STILL → UNRESPONSIVE_FALL",
           "path": "RISE → FALL_EVENT → POST_FALL_STILL",
-          "output": "UNRESPONSIVE_FALL=[0,0,0,1,0,0,0,0]"
+          "output": "UNRESPONSIVE_FALL=[0,0,0,1,0,0,0,0]",
+          "severity": "life-safety"
         },
         "vectors": [
           {

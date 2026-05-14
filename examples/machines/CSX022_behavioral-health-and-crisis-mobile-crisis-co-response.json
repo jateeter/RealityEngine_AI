@@ -133,7 +133,79 @@
           "public-safety-agent",
           "startup-loadable"
         ]
-      }
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/csx022_behavioral-health-and-crisis-mobile-crisis-co-response",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning CSX022_behavioral-health-and-crisis-mobile-crisis-co-response matures."
+      },
+      "triggerConfig": {
+        "processId": "CSX022_BEHAVIORAL_HEALTH_AND_CRISIS_MOBILE_CRISIS_CO_RESPONSE",
+        "processName": "Community Services Behavioral Health And Crisis Mobile Crisis Co Response",
+        "rules": [
+          {
+            "sequenceId": "csx-022-urgent-response",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Mobile Crisis Co Response: WATCH -> URGENT_RESPONSE"
+          },
+          {
+            "sequenceId": "csx-022-coordinate-services",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Mobile Crisis Co Response: COORDINATION_NEEDED -> COORDINATE_SERVICES"
+          },
+          {
+            "sequenceId": "csx-022-field-work-order",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Mobile Crisis Co Response: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER"
+          },
+          {
+            "sequenceId": "csx-022-stable-service-path",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Mobile Crisis Co Response: STABLE_PATH -> STABLE_SERVICE_PATH"
+          }
+        ]
+      },
+      "severity": "life-safety"
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
@@ -152,7 +224,8 @@
         "name": "Mobile Crisis Co Response: WATCH -> URGENT_RESPONSE",
         "metadata": {
           "description": "Escalates resident or field risk into urgent response.",
-          "output": "[1,0,0,0]"
+          "output": "[1,0,0,0]",
+          "severity": "life-safety"
         },
         "vectors": [
           {
@@ -215,7 +288,8 @@
         "name": "Mobile Crisis Co Response: COORDINATION_NEEDED -> COORDINATE_SERVICES",
         "metadata": {
           "description": "Triggers cross-agency coordination.",
-          "output": "[0,1,0,0]"
+          "output": "[0,1,0,0]",
+          "severity": "life-safety"
         },
         "vectors": [
           {
@@ -257,7 +331,8 @@
         "name": "Mobile Crisis Co Response: FIELD_TASK_NEEDED -> FIELD_WORK_ORDER",
         "metadata": {
           "description": "Creates a field crew, outreach, or mobile response task.",
-          "output": "[0,0,1,0]"
+          "output": "[0,0,1,0]",
+          "severity": "life-safety"
         },
         "vectors": [
           {
@@ -299,7 +374,8 @@
         "name": "Mobile Crisis Co Response: STABLE_PATH -> STABLE_SERVICE_PATH",
         "metadata": {
           "description": "Confirms resident service path is stable and monitored.",
-          "output": "[0,0,0,1]"
+          "output": "[0,0,0,1]",
+          "severity": "life-safety"
         },
         "vectors": [
           {

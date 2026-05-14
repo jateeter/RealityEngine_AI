@@ -83,6 +83,39 @@
           "regular-expression",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx005_pulse-stretch-end",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX005_pulse-stretch-end matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX005_PULSE_STRETCH_END",
+        "processName": "Logical Infrastructure Pulse Stretch End",
+        "rules": [
+          {
+            "sequenceId": "dlx-005-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Pulse Stretch End matched regular expression 1+0."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

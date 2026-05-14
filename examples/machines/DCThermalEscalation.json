@@ -96,6 +96,49 @@
           "startup-loadable",
           "thermal"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "datacenter-noc",
+        "runbook": "https://runbooks.example.org/data-center/dcthermalescalation",
+        "escalationPolicy": "pagerduty:datacenter-noc",
+        "contact": {
+          "primary": "datacenter-noc-primary@example.org",
+          "secondary": "datacenter-noc-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"data-center\".  Review and tune the routing as the team owning DCThermalEscalation matures."
+      },
+      "triggerConfig": {
+        "processId": "DCTHERMALESCALATION",
+        "processName": "DC Thermal Escalation Detector",
+        "rules": [
+          {
+            "sequenceId": "dc-thermal-escalation",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "THERMAL EMERGENCY: Alarm signal [1,0] to DCCoolingControlFF at [1375:1377]"
+          },
+          {
+            "sequenceId": "dc-thermal-safe-recovery",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "THERMAL SAFE: Reset signal [0,1] to DCCoolingControlFF at [1375:1377]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

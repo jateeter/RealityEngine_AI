@@ -78,6 +78,65 @@
           "startup-loadable",
           "water-management"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "agriculture-operations",
+        "runbook": "https://runbooks.example.org/agriculture/agirrigationflowcontroller",
+        "escalationPolicy": "pagerduty:ag-ops",
+        "contact": {
+          "primary": "agriculture-operations-primary@example.org",
+          "secondary": "agriculture-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"agriculture\".  Review and tune the routing as the team owning AgIrrigationFlowController matures."
+      },
+      "triggerConfig": {
+        "processId": "AGIRRIGATIONFLOWCONTROLLER",
+        "processName": "Ag Irrigation Flow Controller",
+        "rules": [
+          {
+            "sequenceId": "ag-irrig-drydown",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "IRRIGATE_ON: open irrigation valve and run pump at [24:28]"
+          },
+          {
+            "sequenceId": "ag-irrig-waterlog",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "DRAIN_ALERT: open drain valve; halt irrigation pump at [24:28]"
+          },
+          {
+            "sequenceId": "ag-irrig-balanced",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "FLOW_OK: optimal irrigation cycle active at [24:28]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

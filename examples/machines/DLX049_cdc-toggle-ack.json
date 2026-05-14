@@ -83,6 +83,39 @@
           "regular-expression",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx049_cdc-toggle-ack",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX049_cdc-toggle-ack matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX049_CDC_TOGGLE_ACK",
+        "processName": "Logical Infrastructure Cdc Toggle Ack",
+        "rules": [
+          {
+            "sequenceId": "dlx-049-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Cdc Toggle Ack matched regular expression TOGGLE ACK_TOGGLE."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

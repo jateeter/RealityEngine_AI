@@ -81,6 +81,65 @@
           "qualification-workflow",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/benefitseligibilityscreener",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning BenefitsEligibilityScreener matures."
+      },
+      "triggerConfig": {
+        "processId": "BENEFITSELIGIBILITYSCREENER",
+        "processName": "Benefits Eligibility Screener",
+        "rules": [
+          {
+            "sequenceId": "benefits-eligibility-denial",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "ELIGIBILITY_DENIED: applicant does not meet program criteria at [952:956]"
+          },
+          {
+            "sequenceId": "benefits-documentation-needed",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "DOCUMENTATION_NEEDED: applicant is income-eligible but missing required documentation at [952:956]"
+          },
+          {
+            "sequenceId": "benefits-confirmed",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "ELIGIBILITY_CONFIRMED: all criteria met; proceed to enrollment at [952:956]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

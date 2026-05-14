@@ -94,6 +94,65 @@
           "startup-loadable",
           "thermal-comfort"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "agriculture-operations",
+        "runbook": "https://runbooks.example.org/agriculture/agipmpestalertmonitor",
+        "escalationPolicy": "pagerduty:ag-ops",
+        "contact": {
+          "primary": "agriculture-operations-primary@example.org",
+          "secondary": "agriculture-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"agriculture\".  Review and tune the routing as the team owning AgIPMPestAlertMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "AGIPMPESTALERTMONITOR",
+        "processName": "Ag IPM Pest Alert Monitor",
+        "rules": [
+          {
+            "sequenceId": "ag-ipm-fungal-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "FUNGAL_ALERT: botrytis/mildew risk critical at [3963:3967]"
+          },
+          {
+            "sequenceId": "ag-ipm-insect-pressure",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "INSECT_ALERT: stagnant-air insect habitat conditions detected at [3963:3967]"
+          },
+          {
+            "sequenceId": "ag-ipm-clear",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "IPM_OK: low pest pressure; optimal environmental controls active at [3963:3967]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

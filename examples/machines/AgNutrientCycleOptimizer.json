@@ -95,6 +95,65 @@
           "photoperiod",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "agriculture-operations",
+        "runbook": "https://runbooks.example.org/agriculture/agnutrientcycleoptimizer",
+        "escalationPolicy": "pagerduty:ag-ops",
+        "contact": {
+          "primary": "agriculture-operations-primary@example.org",
+          "secondary": "agriculture-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"agriculture\".  Review and tune the routing as the team owning AgNutrientCycleOptimizer matures."
+      },
+      "triggerConfig": {
+        "processId": "AGNUTRIENTCYCLEOPTIMIZER",
+        "processName": "Ag Nutrient Cycle Optimizer",
+        "rules": [
+          {
+            "sequenceId": "ag-nutrient-optimal-uptake",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "NUTRIENT_OK: optimal nutrient uptake conditions active at [3959:3963]"
+          },
+          {
+            "sequenceId": "ag-nutrient-lockout",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "NUTRIENT_LOCKOUT: pH-induced nutrient unavailability during active photosynthesis at [3959:3963]"
+          },
+          {
+            "sequenceId": "ag-nutrient-night-rest",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "NIGHT_REST: dark period with optimal solution ready at [3959:3963]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

@@ -145,6 +145,77 @@
           "temperament-testing",
           "testing-personalization-and-monitoring"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "wellness-coaching-team",
+        "runbook": "https://runbooks.example.org/life-balance/lbl077_testing-personalization-and-monitoring-patient-reported-outcome-scores",
+        "escalationPolicy": "slack:#wellness-coaching",
+        "contact": {
+          "primary": "wellness-coaching-team-primary@example.org",
+          "secondary": "wellness-coaching-team-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"life-balance\".  Review and tune the routing as the team owning LBL077_testing-personalization-and-monitoring-patient-reported-outcome-scores matures."
+      },
+      "triggerConfig": {
+        "processId": "LBL077_TESTING_PERSONALIZATION_AND_MONITORING_PATIENT_REPORTED_OUTCOME_SCORES",
+        "processName": "Life Balance Testing Personalization And Monitoring Patient Reported Outcome Scores",
+        "rules": [
+          {
+            "sequenceId": "lbl-077-care-team-review",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Patient Reported Outcome Scores: WATCH -> CARE_TEAM_REVIEW"
+          },
+          {
+            "sequenceId": "lbl-077-plan-adjust",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Patient Reported Outcome Scores: BARRIER -> LIFESTYLE_PLAN_ADJUST"
+          },
+          {
+            "sequenceId": "lbl-077-monitoring-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Patient Reported Outcome Scores: DATA_GAP -> MONITORING_TASK"
+          },
+          {
+            "sequenceId": "lbl-077-stable-balance",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Patient Reported Outcome Scores: STABLE -> STABLE_BALANCE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

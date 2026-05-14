@@ -86,6 +86,65 @@
           "service-integrity",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/servicedeliveryintegritymonitor",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning ServiceDeliveryIntegrityMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "SERVICEDELIVERYINTEGRITYMONITOR",
+        "processName": "Service Delivery Integrity Monitor",
+        "rules": [
+          {
+            "sequenceId": "integrity-failure-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "INTEGRITY_FAILURE: compliance violations driven by capacity crisis; service delivery integrity system failure at [992:996]"
+          },
+          {
+            "sequenceId": "integrity-at-risk",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "INTEGRITY_AT_RISK: capacity crisis imminent compliance threat; intervention window open at [992:996]"
+          },
+          {
+            "sequenceId": "integrity-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "SERVICE_INTEGRITY_OK: worker capacity and compliance both maintained; sustainable operations confirmed at [992:996]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

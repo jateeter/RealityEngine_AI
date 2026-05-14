@@ -77,6 +77,65 @@
           "trust",
           "unreached-populations"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/communityoutreachmonitor",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning CommunityOutreachMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "COMMUNITYOUTREACHMONITOR",
+        "processName": "Community Outreach Monitor",
+        "rules": [
+          {
+            "sequenceId": "outreach-failure-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "OUTREACH_FAILURE: community outreach program not achieving meaningful service connections at [980:984]"
+          },
+          {
+            "sequenceId": "outreach-building",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "ENGAGEMENT_BUILDING: outreach on positive trajectory but not yet at effective levels at [980:984]"
+          },
+          {
+            "sequenceId": "outreach-effective-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "OUTREACH_EFFECTIVE: outreach program successfully connecting target population to community services at [980:984]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

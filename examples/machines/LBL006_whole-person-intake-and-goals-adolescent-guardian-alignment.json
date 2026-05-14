@@ -145,6 +145,77 @@
           "temperament-testing",
           "whole-person-intake-and-goals"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "wellness-coaching-team",
+        "runbook": "https://runbooks.example.org/life-balance/lbl006_whole-person-intake-and-goals-adolescent-guardian-alignment",
+        "escalationPolicy": "slack:#wellness-coaching",
+        "contact": {
+          "primary": "wellness-coaching-team-primary@example.org",
+          "secondary": "wellness-coaching-team-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"life-balance\".  Review and tune the routing as the team owning LBL006_whole-person-intake-and-goals-adolescent-guardian-alignment matures."
+      },
+      "triggerConfig": {
+        "processId": "LBL006_WHOLE_PERSON_INTAKE_AND_GOALS_ADOLESCENT_GUARDIAN_ALIGNMENT",
+        "processName": "Life Balance Whole Person Intake And Goals Adolescent Guardian Alignment",
+        "rules": [
+          {
+            "sequenceId": "lbl-006-care-team-review",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Adolescent Guardian Alignment: WATCH -> CARE_TEAM_REVIEW"
+          },
+          {
+            "sequenceId": "lbl-006-plan-adjust",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Adolescent Guardian Alignment: BARRIER -> LIFESTYLE_PLAN_ADJUST"
+          },
+          {
+            "sequenceId": "lbl-006-monitoring-task",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Adolescent Guardian Alignment: DATA_GAP -> MONITORING_TASK"
+          },
+          {
+            "sequenceId": "lbl-006-stable-balance",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Adolescent Guardian Alignment: STABLE -> STABLE_BALANCE"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

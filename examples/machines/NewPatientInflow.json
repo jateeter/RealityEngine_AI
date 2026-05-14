@@ -110,6 +110,93 @@
           "startup-loadable",
           "workflow"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/newpatientinflow",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning NewPatientInflow matures."
+      },
+      "triggerConfig": {
+        "processId": "NEWPATIENTINFLOW",
+        "processName": "NewPatientInflow",
+        "rules": [
+          {
+            "sequenceId": "npi-acceptance",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Decision: ACCEPTED — patient admitted to assisted living facility"
+          },
+          {
+            "sequenceId": "npi-medical-rejection",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Decision: PROVISIONAL REJECT — medical acuity exceeds assisted living care scope"
+          },
+          {
+            "sequenceId": "npi-financial-rejection",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Decision: PROVISIONAL REJECT — financial qualification failed"
+          },
+          {
+            "sequenceId": "npi-vacancy-rejection",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Decision: PROVISIONAL REJECT — no appropriate vacancy at this time"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

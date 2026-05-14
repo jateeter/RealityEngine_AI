@@ -83,6 +83,39 @@
           "retention-save-restore",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx028_retention-save-restore",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX028_retention-save-restore matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX028_RETENTION_SAVE_RESTORE",
+        "processName": "Logical Infrastructure Retention Save Restore",
+        "rules": [
+          {
+            "sequenceId": "dlx-028-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Retention Save Restore matched regular expression SAVE RESTORE."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

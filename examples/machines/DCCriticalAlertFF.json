@@ -81,6 +81,49 @@
           "machine-interconnect",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "datacenter-noc",
+        "runbook": "https://runbooks.example.org/data-center/dccriticalalertff",
+        "escalationPolicy": "pagerduty:datacenter-noc",
+        "contact": {
+          "primary": "datacenter-noc-primary@example.org",
+          "secondary": "datacenter-noc-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"data-center\".  Review and tune the routing as the team owning DCCriticalAlertFF matures."
+      },
+      "triggerConfig": {
+        "processId": "DCCRITICALALERTFF",
+        "processName": "DC Critical Alert Flip-Flop",
+        "rules": [
+          {
+            "sequenceId": "dc-critical-alert-set-sequence",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "CRITICAL ALERT ACTIVE: Multi-system failure — immediate intervention required"
+          },
+          {
+            "sequenceId": "dc-critical-alert-reset-sequence",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "CRITICAL ALERT CLEARED: All monitored subsystems nominal"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

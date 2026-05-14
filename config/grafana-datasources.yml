@@ -16,3 +16,13 @@ datasources:
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: "$${__value.raw}"
+
+  # Prometheus — scrapes /api/metrics from the AI and C++ Reality Engines.
+  # Provided by the `prometheus` service in docker-compose.yml.
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: false
+    editable: true

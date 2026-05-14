@@ -83,6 +83,39 @@
           "regular-expression",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx044_bus-address-data-valid",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX044_bus-address-data-valid matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX044_BUS_ADDRESS_DATA_VALID",
+        "processName": "Logical Infrastructure Bus Address Data Valid",
+        "rules": [
+          {
+            "sequenceId": "dlx-044-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Bus Address Data Valid matched regular expression ADDR DATA VALID."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

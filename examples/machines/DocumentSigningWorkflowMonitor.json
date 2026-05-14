@@ -85,6 +85,65 @@
           "startup-loadable",
           "workflow"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/documentsigningworkflowmonitor",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning DocumentSigningWorkflowMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "DOCUMENTSIGNINGWORKFLOWMONITOR",
+        "processName": "Document Signing Workflow Monitor",
+        "rules": [
+          {
+            "sequenceId": "signing-blocked-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "SIGNING_BLOCKED: document signing failure halting service enrollment at [960:964]"
+          },
+          {
+            "sequenceId": "signing-partial",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "PARTIAL_SIGNING: primary documents signed; supplementary forms outstanding at [960:964]"
+          },
+          {
+            "sequenceId": "signing-complete",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "SIGNING_COMPLETE: all required documents executed and legally valid at [960:964]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

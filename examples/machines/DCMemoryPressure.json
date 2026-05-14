@@ -94,6 +94,49 @@
           "startup-loadable",
           "thrashing"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "datacenter-noc",
+        "runbook": "https://runbooks.example.org/data-center/dcmemorypressure",
+        "escalationPolicy": "pagerduty:datacenter-noc",
+        "contact": {
+          "primary": "datacenter-noc-primary@example.org",
+          "secondary": "datacenter-noc-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"data-center\".  Review and tune the routing as the team owning DCMemoryPressure matures."
+      },
+      "triggerConfig": {
+        "processId": "DCMEMORYPRESSURE",
+        "processName": "DC Memory Pressure Detector",
+        "rules": [
+          {
+            "sequenceId": "dc-memory-escalation",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "MEMORY FAILURE: Alarm signal [1,0] to DCMemoryAlertFF at [1367:1369]"
+          },
+          {
+            "sequenceId": "dc-memory-healthy",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "MEMORY HEALTHY: Reset signal [0,1] to DCMemoryAlertFF at [1367:1369]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

@@ -83,6 +83,39 @@
           "regular-expression",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx037_fifo-empty-to-not-empty",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX037_fifo-empty-to-not-empty matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX037_FIFO_EMPTY_TO_NOT_EMPTY",
+        "processName": "Logical Infrastructure Fifo Empty To Not Empty",
+        "rules": [
+          {
+            "sequenceId": "dlx-037-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Fifo Empty To Not Empty matched regular expression EMPTY WRITE."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",

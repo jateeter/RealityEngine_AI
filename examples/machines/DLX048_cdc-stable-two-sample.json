@@ -83,6 +83,39 @@
           "regular-expression",
           "startup-loadable"
         ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/dlx048_cdc-stable-two-sample",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning DLX048_cdc-stable-two-sample matures."
+      },
+      "triggerConfig": {
+        "processId": "DLX048_CDC_STABLE_TWO_SAMPLE",
+        "processName": "Logical Infrastructure Cdc Stable Two Sample",
+        "rules": [
+          {
+            "sequenceId": "dlx-048-match",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Cdc Stable Two Sample matched regular expression A A."
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",
