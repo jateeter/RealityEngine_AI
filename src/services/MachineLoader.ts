@@ -26,6 +26,9 @@ export interface MachineJSON {
     perceptualMapping?: {
       input: { offset: number; length: number };
       output: { offset: number; length: number };
+      // Option A1 cell-width declaration.  Inert on the engine path —
+      // the API layer reads it for compact-mode wire encoding.
+      bitsPerElement?: number;
     };
     sequences: SequenceJSON[];
     inputSequences?: InputSequenceJSON[];
@@ -128,7 +131,12 @@ export class MachineLoader {
           output: {
             offset: machineData.perceptualMapping.output.offset,
             length: machineData.perceptualMapping.output.length
-          }
+          },
+          // Carry forward bitsPerElement so the API layer can pack values
+          // at the declared width.  Engine matching stays unchanged.
+          ...(typeof machineData.perceptualMapping.bitsPerElement === 'number'
+              ? { bitsPerElement: machineData.perceptualMapping.bitsPerElement }
+              : {}),
         }
       : undefined;
 

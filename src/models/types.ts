@@ -132,6 +132,14 @@ export interface PerceptualMapping {
     offset: number;  // Starting index in perceptual space for output
     length: number;  // Number of dimensions for output
   };
+  /**
+   * Option A1 narrow-cell declaration (1, 2, 4, or 8).  Sets the
+   * declared per-cell width the machine emits / consumes.  Inert on
+   * the engine matching path — engine cells stay Float64 internally
+   * for now — but the API layer reads it to pack mergeBatch.values
+   * for wire transmission and to range-check incoming writes.
+   */
+  bitsPerElement?: number;
 }
 
 /**

@@ -14,7 +14,8 @@
       "output": {
         "offset": 280,
         "length": 6
-      }
+      },
+      "bitsPerElement": 8
     },
     "metadata": {
       "category": "ai-services",

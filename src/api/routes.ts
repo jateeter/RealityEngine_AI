@@ -13,6 +13,8 @@ import { RealitySampler, SamplingStrategy } from '../engine/RealitySampler.js';
 import { PerceptualSpaceSimulator } from '../engine/PerceptualSpaceSimulator.js';
 import { MachineLoader } from '../services/MachineLoader.js';
 import { resolveForOutput } from '../services/GovernanceResolver.js';
+import { encodePackedBase64, storageFootprint, isAllowedBits } from '../services/CellPacking.js';
+import type { BitsPerElement } from '../services/CellPacking.js';
 import config from '../config/config.js';
 
 /**
@@ -221,6 +223,11 @@ export class RealityEngineAPI {
 
     // Perception Engine push endpoint — accepts a pre-assembled reality vector
     this.router.post('/perceive', this.perceive.bind(this));
+
+    // Storage-footprint introspection for Option A1 (narrow-cell cells).
+    // Reports total cells, total float64 bytes, and the equivalent packed
+    // size if every machine carried its declared bitsPerElement.
+    this.router.get('/runtime/storage-footprint', this.getStorageFootprint.bind(this));
   }
 
   /**
@@ -294,6 +301,58 @@ export class RealityEngineAPI {
       return;
     }
     res.json({ success: true, decision });
+  }
+
+  /**
+   * GET /api/runtime/storage-footprint
+   *
+   * Reports the current per-machine storage footprint under Option A1
+   * (narrow-cell cells).  Each registered machine declares
+   * `perceptualMapping.bitsPerElement`; this endpoint sums the cells
+   * the machine owns (input + output regions) and reports both the
+   * Float64 baseline and the equivalent packed bytes.
+   *
+   * Used by the visualizer + ops dashboards to surface the wire-format
+   * shrinkage Option A1 enables, and to flag any machine whose
+   * declared cell width disagrees with what the API would emit.
+   */
+  private getStorageFootprint(_req: Request, res: Response): void {
+    const machines = this.engine.getAllMachines();
+    let totalCells = 0;
+    let totalFloat64 = 0;
+    let totalPacked = 0;
+    const histogram: Record<number, number> = { 1: 0, 2: 0, 4: 0, 8: 0 };
+    const perMachine = [] as Array<{
+      machineId: string; machineName: string; bitsPerElement: number;
+      inputCells: number; outputCells: number;
+      float64Bytes: number; packedBytes: number; shrinkFactor: number;
+    }>;
+    for (const m of machines) {
+      const pm: any = m.perceptualMapping;
+      if (!pm) continue;
+      const bpe = (typeof pm.bitsPerElement === 'number' && isAllowedBits(pm.bitsPerElement)) ? pm.bitsPerElement : 8;
+      histogram[bpe] = (histogram[bpe] ?? 0) + 1;
+      const inputCells  = pm.input?.length  ?? 0;
+      const outputCells = pm.output?.length ?? 0;
+      const cells = inputCells + outputCells;
+      const fp = storageFootprint(cells, bpe as BitsPerElement);
+      totalCells   += cells;
+      totalFloat64 += fp.float64Bytes;
+      totalPacked  += fp.packedBytes;
+      perMachine.push({
+        machineId: m.id, machineName: m.name, bitsPerElement: bpe,
+        inputCells, outputCells,
+        float64Bytes: fp.float64Bytes, packedBytes: fp.packedBytes,
+        shrinkFactor: fp.shrinkFactor,
+      });
+    }
+    res.json({
+      machinesRegistered: machines.length,
+      totalCells, totalFloat64Bytes: totalFloat64, totalPackedBytes: totalPacked,
+      cumulativeShrinkFactor: totalPacked === 0 ? 0 : totalFloat64 / totalPacked,
+      widthHistogram: histogram,
+      perMachine,
+    });
   }
 
   // Health check
@@ -1916,6 +1975,36 @@ export class RealityEngineAPI {
         machineResults[key] = value;
       }
 
+      // Compact mode: pack every mergeBatch entry's `values` array as
+      // base64 at its machine's declared bitsPerElement.  Falls back to
+      // 8-bit when the machine hasn't been migrated yet.  Listeners
+      // that pass ?compact=true get the wire-format shrinkage Option
+      // A1 enables; the original `values` field is preserved for
+      // backward compatibility next to a new `valuesPacked` block.
+      const compact = req.query['compact'] === 'true' || req.query['compact'] === '1';
+      const mergeBatch = step.mergeBatch.map(op => {
+        if (!compact) return op;
+        const m = this.engine.getMachine(op.machineId);
+        const pm: any = m?.perceptualMapping;
+        const rawBpe = typeof pm?.bitsPerElement === 'number' ? pm.bitsPerElement : 8;
+        const bpe: BitsPerElement = isAllowedBits(rawBpe) ? rawBpe : 8;
+        try {
+          return {
+            ...op,
+            valuesPacked: {
+              base64: encodePackedBase64(op.values, bpe),
+              bitsPerElement: bpe,
+              length: op.values.length,
+            },
+          };
+        } catch (e: any) {
+          // Range error → fall back to keeping the unpacked values.
+          // Surfaces as a `valuesPacked.error` so consumers know to
+          // diagnose the machine's declared width.
+          return { ...op, valuesPacked: { error: e.message, bitsPerElement: bpe, length: op.values.length } };
+        }
+      });
+
       // perceptualSpace is a debug projection of the post-merge state.
       // mergeBatch is the authoritative synchronization result — clients
       // should apply mergeBatch[] writes to stay in sync with the engine.
@@ -1923,6 +2012,7 @@ export class RealityEngineAPI {
         success: true,
         step: {
           ...step,
+          mergeBatch,
           machineResults,
           perceptualSpaceIsDebugProjection: true,
         },

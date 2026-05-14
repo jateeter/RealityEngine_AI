@@ -166,7 +166,8 @@
       "output": {
         "offset": 2023,
         "length": 4
-      }
+      },
+      "bitsPerElement": 8
     },
     "sequences": [
       {

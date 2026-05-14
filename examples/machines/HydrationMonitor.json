@@ -136,7 +136,8 @@
       "output": {
         "offset": 1949,
         "length": 2
-      }
+      },
+      "bitsPerElement": 1
     },
     "sequences": [
       {
