@@ -1,13 +1,14 @@
 # Prometheus scrape config for the Reality Engine CES coverage telemetry.
 #
-# Both runtimes (AI / TypeScript and C++) expose /api/metrics in identical
-# Prometheus text format, so a single job can target whichever one is up — or
-# both, distinguished by the `runtime="ai"|"cpp"` label that each emits on its
-# re_runtime_* gauges.
+# All three runtimes (AI / TypeScript, C++, Common Lisp) expose /api/metrics
+# in identical Prometheus text format.  Every metric line carries a
+# `runtime="ai"|"cpp"|"lsp"` label so a single Grafana dashboard can pivot by
+# source runtime without scrape-time relabels.
 #
 # Default targets assume the host-side dev workflow:
-#   • TS  Reality Engine — `npm run start` listens on host port 3000
-#   • C++ Reality Engine — `bin/reality_engine_server 3299` listens on 3299
+#   • TS   Reality Engine — `npm run start` listens on host port 3000
+#   • C++  Reality Engine — `bin/reality_engine_server 3299` listens on 3299
+#   • LSP  Reality Engine — `./start.sh` (sbcl) listens on host port 3199
 #
 # Running inside the docker-compose network Prometheus reaches host services
 # via host.docker.internal:<port> (which is mapped to host-gateway in compose).
@@ -37,6 +38,15 @@ scrape_configs:
           - host.docker.internal:3299
         labels:
           runtime: cpp
+
+  # Common Lisp Reality Engine — /api/metrics on host:3199
+  - job_name: reality-engine-lsp
+    metrics_path: /api/metrics
+    static_configs:
+      - targets:
+          - host.docker.internal:3199
+        labels:
+          runtime: lsp
 
   # Prometheus itself — handy for confirming the scrape stack is healthy.
   - job_name: prometheus

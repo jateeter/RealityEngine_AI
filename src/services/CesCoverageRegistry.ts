@@ -201,51 +201,54 @@ export class CesCoverageRegistry {
 
   /**
    * Render the current state as Prometheus text-format metrics suitable
-   * for serving from /metrics.  Additional gauges (dimension, mapping
-   * version, etc.) can be appended by the caller.
+   * for serving from /metrics.  When `opts.baseLabels` is provided, every
+   * metric line — including the unlabelled gauges — is stamped with that
+   * label set.  This is how the runtime stamps `runtime="ai"` so a single
+   * Prometheus scrape config can drive a cross-runtime Grafana dashboard.
    */
-  toPrometheusText(machines: Iterable<Machine>): string {
+  toPrometheusText(machines: Iterable<Machine>, opts?: { baseLabels?: Record<string, string> }): string {
+    const base = opts?.baseLabels ?? {};
     const snap = this.snapshot(machines);
     const lines: string[] = [];
 
     lines.push('# HELP ces_machines_total Number of machines registered with the simulator.');
     lines.push('# TYPE ces_machines_total gauge');
-    lines.push(`ces_machines_total ${snap.totals.machines}`);
+    lines.push(`ces_machines_total${labels(base)} ${snap.totals.machines}`);
 
     lines.push('# HELP ces_sequences_total Number of sequences across all registered machines.');
     lines.push('# TYPE ces_sequences_total gauge');
-    lines.push(`ces_sequences_total ${snap.totals.sequences}`);
+    lines.push(`ces_sequences_total${labels(base)} ${snap.totals.sequences}`);
 
     lines.push('# HELP ces_vectors_total Number of event vectors across all registered machines.');
     lines.push('# TYPE ces_vectors_total gauge');
-    lines.push(`ces_vectors_total ${snap.totals.vectors}`);
+    lines.push(`ces_vectors_total${labels(base)} ${snap.totals.vectors}`);
 
     lines.push('# HELP ces_vector_matched_total Number of times a vector matched its input during a transition phase.');
     lines.push('# TYPE ces_vector_matched_total counter');
     for (const e of this.matched.entries()) {
       const [machineId, machineName, sequenceId, vectorId] = e.parts;
-      lines.push(`ces_vector_matched_total${labels({ machine: machineName!, machine_id: machineId!, sequence: sequenceId!, vector: vectorId! })} ${e.count}`);
+      lines.push(`ces_vector_matched_total${labels({ ...base, machine: machineName!, machine_id: machineId!, sequence: sequenceId!, vector: vectorId! })} ${e.count}`);
     }
 
     lines.push('# HELP ces_vector_activated_total Number of times a vector was activated as a successor in a transition.');
     lines.push('# TYPE ces_vector_activated_total counter');
     for (const e of this.activated.entries()) {
       const [machineId, machineName, sequenceId, vectorId] = e.parts;
-      lines.push(`ces_vector_activated_total${labels({ machine: machineName!, machine_id: machineId!, sequence: sequenceId!, vector: vectorId! })} ${e.count}`);
+      lines.push(`ces_vector_activated_total${labels({ ...base, machine: machineName!, machine_id: machineId!, sequence: sequenceId!, vector: vectorId! })} ${e.count}`);
     }
 
     lines.push('# HELP ces_sequence_outputs_total Number of asserted outputs emitted by a sequence.');
     lines.push('# TYPE ces_sequence_outputs_total counter');
     for (const e of this.outputs.entries()) {
       const [machineId, machineName, sequenceId] = e.parts;
-      lines.push(`ces_sequence_outputs_total${labels({ machine: machineName!, machine_id: machineId!, sequence: sequenceId! })} ${e.count}`);
+      lines.push(`ces_sequence_outputs_total${labels({ ...base, machine: machineName!, machine_id: machineId!, sequence: sequenceId! })} ${e.count}`);
     }
 
     lines.push('# HELP ces_machine_steps_total Number of process_input calls observed for this machine.');
     lines.push('# TYPE ces_machine_steps_total counter');
     for (const e of this.steps.entries()) {
       const [machineId, machineName] = e.parts;
-      lines.push(`ces_machine_steps_total${labels({ machine: machineName!, machine_id: machineId! })} ${e.count}`);
+      lines.push(`ces_machine_steps_total${labels({ ...base, machine: machineName!, machine_id: machineId! })} ${e.count}`);
     }
 
     // Paging decisions resolved by the governance contract.  Labelled by the
@@ -256,6 +259,7 @@ export class CesCoverageRegistry {
     for (const e of this.pagingDecisions.entries()) {
       const [ownerTeam, processStatus, ragStatusCode, machineId] = e.parts;
       lines.push(`ces_paging_decisions_total${labels({
+        ...base,
         owner_team: ownerTeam!,
         process_status: processStatus!,
         rag_status_code: ragStatusCode!,
@@ -271,6 +275,7 @@ export class CesCoverageRegistry {
     for (const e of this.deprecatedFires.entries()) {
       const [machineId, machineName, sequenceId, replacedBy] = e.parts;
       lines.push(`ces_deprecated_fires_total${labels({
+        ...base,
         machine: machineName!,
         machine_id: machineId!,
         sequence: sequenceId!,
@@ -282,31 +287,31 @@ export class CesCoverageRegistry {
     lines.push('# HELP ces_unfired_sequences Number of sequences in this machine that have never emitted output.');
     lines.push('# TYPE ces_unfired_sequences gauge');
     for (const pm of snap.perMachine) {
-      lines.push(`ces_unfired_sequences${labels({ machine: pm.machineName, machine_id: pm.machineId })} ${pm.unfiredSequences}`);
+      lines.push(`ces_unfired_sequences${labels({ ...base, machine: pm.machineName, machine_id: pm.machineId })} ${pm.unfiredSequences}`);
     }
 
     lines.push('# HELP ces_unfired_vectors Number of vectors in this machine that have never matched or activated.');
     lines.push('# TYPE ces_unfired_vectors gauge');
     for (const pm of snap.perMachine) {
-      lines.push(`ces_unfired_vectors${labels({ machine: pm.machineName, machine_id: pm.machineId })} ${pm.unfiredVectors}`);
+      lines.push(`ces_unfired_vectors${labels({ ...base, machine: pm.machineName, machine_id: pm.machineId })} ${pm.unfiredVectors}`);
     }
 
     lines.push('# HELP ces_machine_sequence_count Total sequences declared by this machine.');
     lines.push('# TYPE ces_machine_sequence_count gauge');
     for (const pm of snap.perMachine) {
-      lines.push(`ces_machine_sequence_count${labels({ machine: pm.machineName, machine_id: pm.machineId })} ${pm.sequenceCount}`);
+      lines.push(`ces_machine_sequence_count${labels({ ...base, machine: pm.machineName, machine_id: pm.machineId })} ${pm.sequenceCount}`);
     }
 
     lines.push('# HELP ces_machine_vector_count Total vectors declared by this machine.');
     lines.push('# TYPE ces_machine_vector_count gauge');
     for (const pm of snap.perMachine) {
-      lines.push(`ces_machine_vector_count${labels({ machine: pm.machineName, machine_id: pm.machineId })} ${pm.vectorCount}`);
+      lines.push(`ces_machine_vector_count${labels({ ...base, machine: pm.machineName, machine_id: pm.machineId })} ${pm.vectorCount}`);
     }
 
     const uptimeMs = Date.now() - this.startedAtMs;
     lines.push('# HELP ces_registry_uptime_seconds Seconds since the coverage registry was instantiated.');
     lines.push('# TYPE ces_registry_uptime_seconds gauge');
-    lines.push(`ces_registry_uptime_seconds ${(uptimeMs / 1000).toFixed(3)}`);
+    lines.push(`ces_registry_uptime_seconds${labels(base)} ${(uptimeMs / 1000).toFixed(3)}`);
 
     return lines.join('\n') + '\n';
   }

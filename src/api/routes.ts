@@ -254,7 +254,11 @@ export class RealityEngineAPI {
   private getMetrics(_req: Request, res: Response): void {
     const coverage = this.perceptualSimulator.getCesCoverage();
     const machines = this.engine.getAllMachines();
-    const base = coverage.toPrometheusText(machines);
+    // Stamp every CES coverage line with runtime="ai" so a single Grafana
+    // dashboard can filter by source runtime without re-deriving from
+    // scrape-time relabels.  CPP + LSP emit the same shape with their own
+    // runtime tag.
+    const base = coverage.toPrometheusText(machines, { baseLabels: { runtime: 'ai' } });
 
     const extras = [
       '# HELP re_runtime_dimension Current dimension of the shared perceptual space.',
