@@ -43,3 +43,6 @@ __pycache__/
 # Runtime files
 .api.pid
 wiki/
+
+# Engine selection stamp written by startUniverse.sh — runtime state, not config
+.universe-engine-selection
