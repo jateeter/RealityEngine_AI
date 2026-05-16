@@ -14,7 +14,7 @@
 import type { Region } from './types.js';
 
 export type ExtractType  = 'raw' | 'csv-float' | 'json' | 'single-float';
-export type NormalizeMode = 'passthrough' | 'minmax' | 'linear';
+export type NormalizeMode = 'passthrough' | 'minmax' | 'linear' | 'band';
 export type PushMode     = 'debounced' | 'manual' | 'immediate';
 
 export interface ExtractRule {
@@ -86,7 +86,7 @@ function parseExtractType(s: string): ExtractType {
 
 function parseNormalizeMode(s: string): NormalizeMode {
   if (!s) return 'passthrough';
-  if (s === 'passthrough' || s === 'minmax' || s === 'linear') return s;
+  if (s === 'passthrough' || s === 'minmax' || s === 'linear' || s === 'band') return s;
   throw new Error(`unknown normalize.mode: ${s}`);
 }
 
@@ -342,6 +342,12 @@ export class MappingRegistry {
         }
         case 'linear':
           n = v * rule.normalize.scale + rule.normalize.offset;
+          break;
+        case 'band':
+          // Status-bit semantics — 1.0 when v ∈ [min,max], 0.0 otherwise.
+          // Lets a continuous MQTT sensor feed one bit of a machine's
+          // 4-bit status input without a conditioner CES in between.
+          n = (v >= rule.normalize.min && v <= rule.normalize.max) ? 1 : 0;
           break;
       }
       if (rule.normalize.clamp) n = clampUnit(n);
