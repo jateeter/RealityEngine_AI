@@ -73,6 +73,15 @@ export const perceptionEngineApi = {
     const response = await http.get(`${PE_BASE_URL}/mqtt/mappings`);
     return response.data;
   },
+
+  /** Replace the in-memory MQTT mapping registry on the PE and restart
+   *  the bridge with the new rules.  Body shape: `{ defaults?, mappings }`.
+   *  Returns warnings (e.g. overlapping regions) on success; throws with
+   *  an error body on schema / validation / broker failure. */
+  async putMqttMappings(body: object): Promise<{ success: boolean; enabled: boolean; mappings: number; warnings: string[] }> {
+    const response = await http.put(`${PE_BASE_URL}/mqtt/mappings`, body);
+    return response.data;
+  },
 };
 
 export const api = {

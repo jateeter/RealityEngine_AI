@@ -95,6 +95,9 @@ export class MqttBridge {
     // when only HTTP signal ingest is in use.
     let mqttPkg: any;
     try {
+      // @ts-ignore — "mqtt" is declared as an optionalDependency.  TypeScript
+      // can't resolve its declarations when it isn't installed; the runtime
+      // path catches that case and throws a friendly error below.
       mqttPkg = await import('mqtt');
     } catch (e: any) {
       throw new Error(`MQTT bridge requires the "mqtt" npm package; install it under perception-engine/backend.  Underlying error: ${e.message}`);

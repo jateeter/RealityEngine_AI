@@ -55,45 +55,90 @@ let lastPush: number | null = null;
 
 function ingestMqttSignal(payload: IngestPayload): void {
   // Try update path first: matches the sensorId of an existing source.
+  let acted = false;
   if (engine.updateSensorValue(payload.sensorId, payload.values)) {
-    scheduleSensorBroadcast();
-    return;
+    acted = true;
+  } else {
+    // No matching sensor source yet — auto-create one using the mapping's
+    // declared region + TTL.  This keeps MQTT-driven workflows running
+    // without requiring operators to pre-declare every sensor via POST
+    // /api/sources first.
+    const newSource: Omit<SensorSourceConfig, 'id'> = {
+      type: 'sensor',
+      name: `mqtt:${payload.topic}`,
+      region: { offset: payload.offset, length: payload.length },
+      active: true,
+      sensorId: payload.sensorId,
+      lastValue: payload.values.slice(),
+      lastUpdated: Date.now(),
+      ttlMs: payload.ttlMs > 0 ? payload.ttlMs : 30000,
+    };
+    engine.addSource(newSource);
+    acted = true;
   }
-  // No matching sensor source yet — auto-create one using the mapping's
-  // declared region + TTL.  This keeps MQTT-driven workflows running
-  // without requiring operators to pre-declare every sensor via POST
-  // /api/sources first.
-  const newSource: Omit<SensorSourceConfig, 'id'> = {
-    type: 'sensor',
-    name: `mqtt:${payload.topic}`,
-    region: { offset: payload.offset, length: payload.length },
-    active: true,
-    sensorId: payload.sensorId,
-    lastValue: payload.values.slice(),
-    lastUpdated: Date.now(),
-    ttlMs: payload.ttlMs > 0 ? payload.ttlMs : 30000,
-  };
-  engine.addSource(newSource);
-  scheduleSensorBroadcast();
+  if (acted) {
+    // Per-message MQTT ingest event — broadcast directly (not via the 50ms
+    // sensor-coalesce timer) so the universe-monitor's recent-ingests
+    // stream renders one row per accepted PUBLISH.  scheduleSensorBroadcast
+    // is still called for the consolidated state update.
+    broadcast({
+      type: 'mqtt-ingest',
+      payload: { ...payload, timestamp: Date.now() },
+    });
+    scheduleSensorBroadcast();
+  }
 }
 
 let mqttBridge: MqttBridge | null = null;
+// Last broker config we bootstrapped with — preserved across reloads so a
+// PUT /api/mqtt/mappings can swap the registry without re-reading env vars.
+let mqttBrokerConfig: import('./MqttBridge.js').BridgeConfig | null = null;
+
+import { MappingRegistry } from './MqttMapping.js';
+
+/**
+ * Start (or restart) the MQTT bridge with the given config + registry.
+ * Idempotent — stops any existing bridge before starting the new one.
+ * Returns the resulting bridge or null when broker config is missing.
+ */
+async function bootMqttBridge(
+  config: import('./MqttBridge.js').BridgeConfig | null,
+  registry: MappingRegistry,
+): Promise<MqttBridge | null> {
+  // Tear down the old bridge — drops in-flight reconnect timers and joins
+  // the I/O thread.  Brief gap (≤ a few hundred ms) is acceptable for the
+  // admin-driven reload path.
+  if (mqttBridge) {
+    try { await mqttBridge.stop(); } catch { /* ignore */ }
+    mqttBridge = null;
+  }
+  if (!config) return null;
+  const bridge = new MqttBridge(config, registry, ingestMqttSignal, () => { void doPush(); });
+  try {
+    await bridge.start();
+  } catch (e: any) {
+    console.error(`MQTT bridge failed to start: ${e?.message ?? e}`);
+    return null;
+  }
+  mqttBridge = bridge;
+  mqttBrokerConfig = config;
+  // Notify visualizer clients that the registry has changed so they can
+  // refresh their mapping table without polling.
+  broadcast({
+    type: 'mqtt-mappings-reloaded',
+    mappingsCount: registry.size,
+    brokerUrl: config.brokerUrl,
+    timestamp: Date.now(),
+  });
+  console.log(`[MQTT] bridge enabled — broker=${config.brokerUrl} mappings=${registry.size}`);
+  return bridge;
+}
+
 {
   const envBridge = mqttFromEnvironment();
   if (envBridge) {
-    mqttBridge = new MqttBridge(
-      envBridge.config,
-      envBridge.registry,
-      ingestMqttSignal,
-      () => { void doPush(); },
-    );
-    // start() is async but we don't need to await — broker connection is
-    // best-effort with mqtt.js's built-in reconnect handling the failure path.
-    mqttBridge.start().catch(err => {
-      console.error(`MQTT bridge failed to start: ${err.message}`);
-      mqttBridge = null;
-    });
-    console.log(`[MQTT] bridge enabled — broker=${envBridge.config.brokerUrl} mappings=${envBridge.registry.size}`);
+    // First boot from env; mqttBrokerConfig is captured for later reloads.
+    void bootMqttBridge(envBridge.config, envBridge.registry);
   }
 }
 
@@ -445,6 +490,48 @@ app.get('/api/mqtt/mappings', (_req: Request, res: Response) => {
   if (!mqttBridge) { res.json({ enabled: false, mappings: [] }); return; }
   const body = mqttBridge.getRegistry().toJson() as { mappings: object[] };
   res.json({ enabled: true, ...body });
+});
+
+// PUT /api/mqtt/mappings — replace the in-memory mapping registry and
+// restart the bridge with the new rules.  Body shape:
+//   { defaults?: {...}, mappings: [ {...rules...} ] }
+// Returns 200 + the new registry on success; 400 + error on schema /
+// validation failure; 409 if no broker config exists (set MQTT_BROKER_URL
+// at process startup before reloading).  Overlap warnings are non-fatal
+// and returned in the response body — same gate as the env loader.
+app.put('/api/mqtt/mappings', async (req: Request, res: Response) => {
+  if (!mqttBrokerConfig) {
+    res.status(409).json({
+      error: 'no broker config — set MQTT_BROKER_URL at PE startup before reloading mappings',
+    });
+    return;
+  }
+  let registry: MappingRegistry;
+  try {
+    registry = MappingRegistry.fromJson(req.body);
+  } catch (e: any) {
+    res.status(400).json({ error: `schema: ${e?.message ?? e}` });
+    return;
+  }
+  if (registry.size === 0) {
+    res.status(400).json({ error: 'mappings array is empty — at least one rule is required' });
+    return;
+  }
+  const allowOverlap = (process.env.MQTT_ALLOW_REGION_OVERLAP === '1' ||
+                        process.env.MQTT_ALLOW_REGION_OVERLAP === 'true');
+  const warnings = registry.validateOverlaps(allowOverlap);
+  try {
+    await bootMqttBridge(mqttBrokerConfig, registry);
+  } catch (e: any) {
+    res.status(500).json({ error: `bridge restart failed: ${e?.message ?? e}` });
+    return;
+  }
+  res.json({
+    success: true,
+    enabled: !!mqttBridge,
+    mappings: registry.size,
+    warnings,
+  });
 });
 
 // Machine listing — proxy from Reality Engine for use in the add-source form

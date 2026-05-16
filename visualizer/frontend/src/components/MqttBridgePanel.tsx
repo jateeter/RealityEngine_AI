@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { perceptionEngineApi } from '../api';
+import { MqttMappingsEditor } from './MqttMappingsEditor';
 import type {
   MqttBridgeStatus,
   MqttMappingRule,
@@ -81,6 +82,8 @@ export const MqttBridgePanel: React.FC = () => {
   const [status, setStatus] = useState<MqttBridgeStatus | null>(null);
   const [mappings, setMappings] = useState<MqttMappingsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,7 +103,16 @@ export const MqttBridgePanel: React.FC = () => {
     refresh();
     const id = setInterval(refresh, 2000);
     return () => { cancelled = true; clearInterval(id); };
-  }, []);
+  }, [refreshNonce]);
+
+  if (editing) {
+    return (
+      <MqttMappingsEditor
+        onClose={() => setEditing(false)}
+        onSaved={() => { setRefreshNonce(n => n + 1); setEditing(false); }}
+      />
+    );
+  }
 
   if (error) {
     return (
@@ -115,13 +127,25 @@ export const MqttBridgePanel: React.FC = () => {
 
   return (
     <div style={{ background: C_PANEL_BG, border: `1px solid ${C_BORDER}`, borderRadius: 6, padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <h3 style={{ margin: 0, color: C_TEXT, fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
-          MQTT Bridge
-        </h3>
-        <StatusBadge status={status} />
-        {status.enabled && status.brokerUrl && (
-          <span style={{ fontSize: 11, color: C_TEXT_DIM, fontFamily: 'monospace' }}>{status.brokerUrl}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <h3 style={{ margin: 0, color: C_TEXT, fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+            MQTT Bridge
+          </h3>
+          <StatusBadge status={status} />
+          {status.enabled && status.brokerUrl && (
+            <span style={{ fontSize: 11, color: C_TEXT_DIM, fontFamily: 'monospace' }}>{status.brokerUrl}</span>
+          )}
+        </div>
+        {status.enabled && (
+          <button
+            onClick={() => setEditing(true)}
+            style={{
+              background: '#1e293b', color: C_TEXT, border: `1px solid ${C_BORDER}`,
+              borderRadius: 4, padding: '4px 10px', fontSize: 10, fontWeight: 700,
+              letterSpacing: 0.5, cursor: 'pointer', textTransform: 'uppercase',
+            }}
+          >Edit Mappings</button>
         )}
       </div>
 

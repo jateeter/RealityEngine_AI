@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { perceptionEngineApi } from '../api';
 import { MqttBridgePanel } from './MqttBridgePanel';
+import { MqttIngestStream } from './MqttIngestStream';
 import { SensorSourcesPanel } from './SensorSourcesPanel';
 import { PagingDecisionsTicker } from './PagingDecisionsTicker';
 
@@ -91,6 +92,7 @@ export const UniverseMonitor: React.FC = () => {
       </div>
 
       <MqttBridgePanel />
+      <MqttIngestStream />
       <SensorSourcesPanel />
       <PagingDecisionsTicker />
     </div>

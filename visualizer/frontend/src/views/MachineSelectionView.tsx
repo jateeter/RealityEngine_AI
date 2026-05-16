@@ -100,6 +100,11 @@ const MachineSelectionView: React.FC = () => {
             Tobias
           </button>
 
+          <button className="msv-nav-btn msv-nav-btn-universe" onClick={() => setCurrentView('universe')}>
+            <span className="msv-btn-icon">🌐</span>
+            Universe
+          </button>
+
           <button className="msv-nav-btn msv-nav-btn-files" onClick={() => setShowManagementModal(true)}>
             <span className="msv-btn-icon">📦</span>
             Files

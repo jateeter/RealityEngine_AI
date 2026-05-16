@@ -12,9 +12,27 @@ import { api, perceptionEngineApi } from './api';
 import type { DomainId } from './components/machineDomains';
 import { DOMAIN_ORDER } from './components/machineDomains';
 
+/** One accepted MQTT PUBLISH forwarded by the PE through the visualizer
+ *  backend.  Used to drive the live-ingest stream in the universe monitor. */
+export interface MqttIngestEvent {
+  sensorId: string;
+  mappingId: string;
+  topic: string;
+  offset: number;
+  length: number;
+  values: number[];
+  ttlMs: number;
+  timestamp: number;
+}
+
+/** Ring-buffer cap on recent MQTT ingests held in the store.  Tuned for the
+ *  universe monitor's live-feed panel — large enough to feel live, small
+ *  enough that re-renders stay cheap. */
+const MQTT_INGEST_CAP = 120;
+
 interface VisualizerState {
   // View state
-  currentView: 'selection' | 'administration' | 'interconnection' | 'tobias';
+  currentView: 'selection' | 'administration' | 'interconnection' | 'tobias' | 'universe';
 
   // Machine management
   machines: Machine[];
@@ -31,11 +49,16 @@ interface VisualizerState {
   currentOutputVectors: OutputVector[];
   highlightedOutputId: string | null;
 
+  // MQTT live-ingest stream — ring buffer of the most recent N accepted
+  // PUBLISH messages.  Pushed by the visualizer backend when it sees
+  // `mqtt-ingest` events forwarded from the Perception Engine's WS.
+  recentMqttIngests: MqttIngestEvent[];
+
   // PE source state — test sources created from machine inputSequences
   peSources: PESource[];
 
   // View actions
-  setCurrentView: (view: 'selection' | 'administration' | 'interconnection' | 'tobias') => void;
+  setCurrentView: (view: 'selection' | 'administration' | 'interconnection' | 'tobias' | 'universe') => void;
 
   // Machine management actions
   setMachines: (machines: Machine[]) => void;
@@ -95,6 +118,7 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   ws: null,
   currentOutputVectors: [],
   highlightedOutputId: null,
+  recentMqttIngests: [],
   peSources: [],
   hoveredDomainId: null,
   graphZoomState: null,
@@ -447,6 +471,32 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
           case 'perceptual-simulation-reset':
             set({ currentOutputVectors: [] });
             break;
+
+          case 'mqtt-ingest': {
+            // Per-message MQTT ingest forwarded by VB from the PE WS.
+            // Append to the ring buffer and drop the oldest if we're over cap.
+            const payload = (message as any).payload;
+            if (
+              payload && typeof payload.sensorId === 'string' &&
+              typeof payload.mappingId === 'string' &&
+              Array.isArray(payload.values)
+            ) {
+              const event: MqttIngestEvent = {
+                sensorId:  payload.sensorId,
+                mappingId: payload.mappingId,
+                topic:     typeof payload.topic === 'string' ? payload.topic : '',
+                offset:    Number(payload.offset) || 0,
+                length:    Number(payload.length) || payload.values.length,
+                values:    payload.values.map((v: unknown) => Number(v) || 0),
+                ttlMs:     Number(payload.ttlMs) || 0,
+                timestamp: Number(payload.timestamp) || Date.now(),
+              };
+              const next = [event, ...get().recentMqttIngests];
+              if (next.length > MQTT_INGEST_CAP) next.length = MQTT_INGEST_CAP;
+              set({ recentMqttIngests: next });
+            }
+            break;
+          }
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);

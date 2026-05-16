@@ -726,12 +726,59 @@ app.get('/api/perception/mqtt/mappings', async (_req: Request, res: Response) =>
     res.json(response.data);
   } catch (error: any) { upstreamError(res, error, 'getMqttMappings'); }
 });
+// Mapping-editor control surface — proxies the PE's PUT.  Body shape is
+// the same { defaults?, mappings: [...] } registry contract that
+// MappingRegistry.fromJson accepts.  Returns warnings on overlap.
+app.put('/api/perception/mqtt/mappings', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.put(`${PERCEPTION_ENGINE_URL}/api/mqtt/mappings`, req.body);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'putMqttMappings'); }
+});
 app.get('/api/perception/sources', async (_req: Request, res: Response) => {
   try {
     const response = await axios.get(`${PERCEPTION_ENGINE_URL}/api/sources`);
     res.json(response.data);
   } catch (error: any) { upstreamError(res, error, 'getPerceptionSources'); }
 });
+
+// ── PE WebSocket subscription (forward mqtt-ingest events) ──────────────────
+//
+// The PE backend emits per-message `mqtt-ingest` events on its own /ws when
+// the MQTT bridge accepts a PUBLISH.  We subscribe as a WS client and
+// forward those events to our own clients so the visualizer's universe
+// monitor can render a live ingest stream without polling.  Reconnects on
+// drop (same shape as connectToREStream).
+
+let peWs: WebSocket | null = null;
+let peWsReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+function connectToPEStream(): void {
+  const peWsUrl = (PERCEPTION_ENGINE_URL.replace(/^http/, 'ws')) + '/ws';
+  try {
+    peWs = new WebSocket(peWsUrl);
+  } catch (e: any) {
+    console.error(`[PE WS] connect failed: ${e?.message ?? e}`);
+    schedulePEReconnect(3000);
+    return;
+  }
+  peWs.on('open',  () => { console.log(`[PE WS] connected to ${peWsUrl}`); });
+  peWs.on('error', (err: Error) => { console.error(`[PE WS] error: ${err.message}`); });
+  peWs.on('close', () => { console.log('[PE WS] closed'); schedulePEReconnect(3000); });
+  peWs.on('message', (data: Buffer) => {
+    try {
+      const msg = JSON.parse(data.toString());
+      // Forward MQTT-related events; ignore PE state updates (we don't
+      // want to duplicate the existing RE-SSE → VB-WS pipe here).
+      if (msg && (msg.type === 'mqtt-ingest' || msg.type === 'mqtt-status' || msg.type === 'mqtt-mappings-reloaded')) {
+        broadcast(msg);
+      }
+    } catch { /* ignore malformed PE events */ }
+  });
+}
+function schedulePEReconnect(delayMs: number): void {
+  if (peWsReconnectTimer) return;
+  peWsReconnectTimer = setTimeout(() => { peWsReconnectTimer = null; connectToPEStream(); }, delayMs);
+}
 
 // ── Start server ─────────────────────────────────────────────────────────────
 
@@ -741,6 +788,7 @@ server.listen(PORT, () => {
   console.log(`Reality Engine Visualizer Backend running on port ${PORT} (${protocol.toUpperCase()})`);
   console.log(`WebSocket server available at ${wsProtocol}://localhost:${PORT}/ws`);
   console.log(`Proxying to Reality Engine at ${REALITY_ENGINE_URL}`);
+  console.log(`Perception Engine WS source: ${PERCEPTION_ENGINE_URL}/ws`);
   console.log(`Allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
   logAuditEvent(auditConfig, 'startup', {
     audit_enabled: auditConfig.enabled,
@@ -749,6 +797,8 @@ server.listen(PORT, () => {
   });
   // Subscribe to RE's SSE step stream — VB is a passive observer of the PE.x.RE.x.PE cycle.
   connectToREStream();
+  // Subscribe to PE's WS — forwards mqtt-ingest events to VB clients.
+  connectToPEStream();
 });
 
 process.on('SIGTERM', () => { console.log('SIGTERM received, shutting down gracefully...'); clearInterval(heartbeatInterval); server.close(() => process.exit(0)); });
