@@ -2,7 +2,7 @@ export default {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>/src', '<rootDir>/perception-engine/backend/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   extensionsToTreatAsEsm: ['.ts'],
   transform: {

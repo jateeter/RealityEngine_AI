@@ -9,7 +9,9 @@ import { readFileSync, existsSync } from 'fs';
 import { PerceptionEngine } from './PerceptionEngine.js';
 import { SourceStore } from './SourceStore.js';
 import { mountMcp } from './mcp.js';
-import type { SourceConfig, PushResult, MatchAlgorithm } from './types.js';
+import { MqttBridge, fromEnvironment as mqttFromEnvironment } from './MqttBridge.js';
+import type { IngestPayload } from './MqttBridge.js';
+import type { SourceConfig, SensorSourceConfig, PushResult, MatchAlgorithm } from './types.js';
 
 const PORT = parseInt(process.env['PORT'] ?? '3004', 10);
 const REALITY_ENGINE_URL = process.env['REALITY_ENGINE_URL'] ?? 'http://localhost:3000';
@@ -44,6 +46,56 @@ console.log(`[SourceStore] Loaded ${engine.getSources().length} source(s) from $
 let autoTimer: ReturnType<typeof setInterval> | null = null;
 let autoIntervalMs = 1000;
 let lastPush: number | null = null;
+
+// ── MQTT bridge (optional) ────────────────────────────────────────────────
+// Built only when MQTT_BROKER_URL is set in the environment.  Per the
+// roadmap design rule, the bridge does NOT special-case MQTT downstream —
+// each accepted message resolves to {sensorId, region, values, ttlMs} and
+// flows through the same engine path that POST /api/sensors/:id uses.
+
+function ingestMqttSignal(payload: IngestPayload): void {
+  // Try update path first: matches the sensorId of an existing source.
+  if (engine.updateSensorValue(payload.sensorId, payload.values)) {
+    scheduleSensorBroadcast();
+    return;
+  }
+  // No matching sensor source yet — auto-create one using the mapping's
+  // declared region + TTL.  This keeps MQTT-driven workflows running
+  // without requiring operators to pre-declare every sensor via POST
+  // /api/sources first.
+  const newSource: Omit<SensorSourceConfig, 'id'> = {
+    type: 'sensor',
+    name: `mqtt:${payload.topic}`,
+    region: { offset: payload.offset, length: payload.length },
+    active: true,
+    sensorId: payload.sensorId,
+    lastValue: payload.values.slice(),
+    lastUpdated: Date.now(),
+    ttlMs: payload.ttlMs > 0 ? payload.ttlMs : 30000,
+  };
+  engine.addSource(newSource);
+  scheduleSensorBroadcast();
+}
+
+let mqttBridge: MqttBridge | null = null;
+{
+  const envBridge = mqttFromEnvironment();
+  if (envBridge) {
+    mqttBridge = new MqttBridge(
+      envBridge.config,
+      envBridge.registry,
+      ingestMqttSignal,
+      () => { void doPush(); },
+    );
+    // start() is async but we don't need to await — broker connection is
+    // best-effort with mqtt.js's built-in reconnect handling the failure path.
+    mqttBridge.start().catch(err => {
+      console.error(`MQTT bridge failed to start: ${err.message}`);
+      mqttBridge = null;
+    });
+    console.log(`[MQTT] bridge enabled — broker=${envBridge.config.brokerUrl} mappings=${envBridge.registry.size}`);
+  }
+}
 
 // ── WebSocket broadcast ───────────────────────────────────────────────────
 
@@ -279,9 +331,23 @@ app.post('/api/reset', (_req: Request, res: Response) => {
   res.json({ success: true });
 });
 
+// Decorate sensor sources with derived freshness fields (ageMs, stale).
+// Matches the LSP source-json shape so a single visualizer panel can show
+// "stale sensor" badges across all three runtimes.
+function decorateSources(sources: SourceConfig[]): Array<SourceConfig & { ageMs?: number; stale?: boolean }> {
+  const now = Date.now();
+  return sources.map(s => {
+    if (s.type !== 'sensor') return s;
+    const sensor = s as SensorSourceConfig;
+    const age   = sensor.lastUpdated ? now - sensor.lastUpdated : 0;
+    const stale = !!sensor.lastUpdated && sensor.ttlMs > 0 && age > sensor.ttlMs;
+    return { ...sensor, ageMs: age, stale };
+  });
+}
+
 // Source list
 app.get('/api/sources', (_req: Request, res: Response) => {
-  res.json({ sources: engine.getSources() });
+  res.json({ sources: decorateSources(engine.getSources()) });
 });
 
 // Add source
@@ -357,6 +423,28 @@ app.post('/api/sensors/:id', (req: Request, res: Response) => {
   // Debounced: rapid sensor pushes coalesce into one broadcast per 50 ms window.
   scheduleSensorBroadcast();
   res.json({ success: true, sensorId: id, timestamp });
+});
+
+// MQTT bridge status — connection state, bridge counters, broker config.
+// Returns enabled:false when MQTT_BROKER_URL was not set at PE startup.
+app.get('/api/mqtt/status', (_req: Request, res: Response) => {
+  if (!mqttBridge) { res.json({ enabled: false }); return; }
+  res.json({
+    enabled: true,
+    connected: mqttBridge.isConnected(),
+    bridge: mqttBridge.getStats(),
+    mappings: mqttBridge.getRegistry().size,
+  });
+});
+
+// MQTT mapping registry — the authoritative topic→region rules + per-
+// mapping counters.  Per the design rule, topics carry no offset info;
+// this endpoint shows the authority that decides projection into the
+// perceptual vector.
+app.get('/api/mqtt/mappings', (_req: Request, res: Response) => {
+  if (!mqttBridge) { res.json({ enabled: false, mappings: [] }); return; }
+  const body = mqttBridge.getRegistry().toJson() as { mappings: object[] };
+  res.json({ enabled: true, ...body });
 });
 
 // Machine listing — proxy from Reality Engine for use in the add-source form
