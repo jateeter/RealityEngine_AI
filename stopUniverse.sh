@@ -46,15 +46,21 @@ USAGE
   esac
 done
 
-# Fall back to the stamped selection when the operator didn't override.
+# Fall back to the stamped selection only when the operator didn't override
+# via the CLI.  Parse the stamp file by hand instead of `source`ing it so
+# CLI values (set before this point) aren't clobbered.
+STAMPED_RE_ENGINE=""
+STAMPED_PE_ENGINE=""
 if [ -f "$RE_DIR/.universe-engine-selection" ]; then
-  # shellcheck disable=SC1091
-  source "$RE_DIR/.universe-engine-selection"
-  RE_ENGINE="${RE_ENGINE:-${RE_ENGINE_:-ai}}"
-  PE_ENGINE="${PE_ENGINE:-${PE_ENGINE_:-ai}}"
+  while IFS='=' read -r k v; do
+    case "$k" in
+      RE_ENGINE) STAMPED_RE_ENGINE="$v" ;;
+      PE_ENGINE) STAMPED_PE_ENGINE="$v" ;;
+    esac
+  done < "$RE_DIR/.universe-engine-selection"
 fi
-RE_ENGINE="${RE_ENGINE:-ai}"
-PE_ENGINE="${PE_ENGINE:-ai}"
+RE_ENGINE="${RE_ENGINE:-${STAMPED_RE_ENGINE:-ai}}"
+PE_ENGINE="${PE_ENGINE:-${STAMPED_PE_ENGINE:-ai}}"
 
 stop_native_engine() {
   local engine_dir="$1" engine_name="$2"
@@ -99,17 +105,21 @@ if [ "$STOP_ALL" = true ]; then
   stop_native_engine "$LSP_DIR" "LSP"
   stop_ai_stack
 else
-  # Stop only the selected engines (RE and PE may differ).
-  declare -A todo
-  [ "$RE_ENGINE" = "ai"  ] && todo[ai]=1
-  [ "$RE_ENGINE" = "cpp" ] && todo[cpp]=1
-  [ "$RE_ENGINE" = "lsp" ] && todo[lsp]=1
-  [ "$PE_ENGINE" = "ai"  ] && todo[ai]=1
-  [ "$PE_ENGINE" = "cpp" ] && todo[cpp]=1
-  [ "$PE_ENGINE" = "lsp" ] && todo[lsp]=1
-  [ -n "${todo[cpp]:-}" ] && stop_native_engine "$CPP_DIR" "CPP"
-  [ -n "${todo[lsp]:-}" ] && stop_native_engine "$LSP_DIR" "LSP"
-  [ -n "${todo[ai]:-}"  ] && stop_ai_stack
+  # Dedup the engine set across RE and PE using plain flags so the script
+  # works under bash 3.2 (macOS's system bash) — declare -A requires 4+.
+  need_ai=false
+  need_cpp=false
+  need_lsp=false
+  for engine in "$RE_ENGINE" "$PE_ENGINE"; do
+    case "$engine" in
+      ai)  need_ai=true ;;
+      cpp) need_cpp=true ;;
+      lsp) need_lsp=true ;;
+    esac
+  done
+  $need_cpp && stop_native_engine "$CPP_DIR" "CPP"
+  $need_lsp && stop_native_engine "$LSP_DIR" "LSP"
+  $need_ai  && stop_ai_stack
 fi
 
 # Clear the selection stamp so the next start defaults fresh
