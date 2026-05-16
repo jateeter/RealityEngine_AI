@@ -61,7 +61,12 @@ export const SensorSourcesPanel: React.FC = () => {
         setError(null);
       } catch (e: any) {
         if (cancelled) return;
-        setError(e?.message ?? String(e));
+        // 404 → VB proxy / PE unreachable.  Show the empty state instead
+        // of a red error so the operator sees a clean panel until the
+        // PE wires through.
+        const status404 = e?.response?.status === 404;
+        if (status404) { setSources([]); setError(null); }
+        else            { setError(e?.message ?? String(e)); }
       }
     }
     refresh();

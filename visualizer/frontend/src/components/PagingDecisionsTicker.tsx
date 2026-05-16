@@ -57,7 +57,18 @@ export const PagingDecisionsTicker: React.FC<Props> = ({ limit = 12 }) => {
         setError(null);
       } catch (e: any) {
         if (cancelled) return;
-        setError(e?.message ?? String(e));
+        // A 404 means either /api/viz/paging-decisions isn't built into the
+        // running visualizer-backend yet, or the RE isn't reachable so the
+        // Prometheus scrape fails upstream.  Show the panel's empty state
+        // rather than a red error — the operator just sees "no decisions
+        // recorded yet" until the RE wires through.
+        const status404 = e?.response?.status === 404;
+        if (status404) {
+          setDecisions([]);
+          setError(null);
+        } else {
+          setError(e?.message ?? String(e));
+        }
       }
     }
     refresh();

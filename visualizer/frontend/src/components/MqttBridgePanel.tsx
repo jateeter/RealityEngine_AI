@@ -97,7 +97,18 @@ export const MqttBridgePanel: React.FC = () => {
         setStatus(s); setMappings(m); setError(null);
       } catch (e: any) {
         if (cancelled) return;
-        setError(e?.message ?? String(e));
+        // A 404 means either the visualizer-backend doesn't expose the
+        // /api/perception/mqtt/* proxy routes yet (old dist/ build) or
+        // the upstream PE isn't reachable.  Either way, downgrade to the
+        // DISABLED state — the bridge simply isn't available here.
+        const status404 = e?.response?.status === 404;
+        if (status404) {
+          setStatus({ enabled: false });
+          setMappings(null);
+          setError(null);
+        } else {
+          setError(e?.message ?? String(e));
+        }
       }
     }
     refresh();
