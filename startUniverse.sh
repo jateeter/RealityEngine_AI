@@ -1,19 +1,39 @@
 #!/bin/bash
 # =============================================================================
-# startUniverse.sh — Unified startup: localAIStack + RealityEngine AI
+# startUniverse.sh — Unified startup orchestrator
 #
-# Startup order (dependency-safe):
+# Default engine = AI (TypeScript on Node, Docker compose stack).  Can be
+# pointed at the CPP or LSP runtimes via --re-engine / --pe-engine.
+#
+# AI path (default) runs the dependency-safe sequence:
 #   1  Pre-flight     — docker compose v2, certs, orphaned container cleanup
 #   2  Ollama         — native LLM runtime
 #   3  Infrastructure — RE Loki + localAIStack Qdrant + Redis
 #   4  RealityEngine  — Scala/Akka stack (consumes Qdrant at :4333)
-#   5  localAIStack API — FastAPI lifespan hooks register sensors + machines in RE
-#   6  Integration    — verify machines, sensors, and Qdrant collections (with retry)
-#   7  Operability    — live smoke-tests: perceive, RAG health, sensor write path
+#   5  localAIStack API — FastAPI lifespan hooks register sensors + machines
+#   6  Integration    — verify machines, sensors, and Qdrant collections
+#   7  Operability    — live smoke-tests: perceive, RAG health, sensor write
 #   8  Summary
 #
-# Usage:  ./startUniverse.sh [--fresh]
-#   --fresh  Wipe perception sources and rebuild all images without cache
+# When --re-engine or --pe-engine is set to cpp or lsp, this script short-
+# circuits to that runtime's native start.sh (no Docker, no localAIStack).
+#
+# Usage:  ./startUniverse.sh [--fresh] [--re-engine=ai|cpp|lsp]
+#                            [--pe-engine=ai|cpp|lsp]
+#                            [--mqtt-broker-url=URL]
+#                            [--mqtt-mappings=PATH]
+#                            [--help]
+#
+# Examples:
+#   ./startUniverse.sh                                    # full AI stack
+#   ./startUniverse.sh --re-engine=cpp --pe-engine=cpp    # native C++ binaries
+#   ./startUniverse.sh --re-engine=lsp --pe-engine=lsp    # Common Lisp
+#   ./startUniverse.sh --re-engine=cpp \                  # MQTT bridge enabled
+#       --mqtt-broker-url=mqtt://broker:1883 \
+#       --mqtt-mappings=$PWD/../RealityEngine_CPP/config/mqtt-mappings.yuma-agriculture.json
+#
+# The stopUniverse.sh companion reads .universe-engine-selection (stamped
+# below) to know which engine to tear down.
 # =============================================================================
 set -e
 set -o pipefail
@@ -21,10 +41,111 @@ set -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RE_DIR="$SCRIPT_DIR"
 LAS_DIR="$SCRIPT_DIR/../localAIStack"
+CPP_DIR="$SCRIPT_DIR/../RealityEngine_CPP"
+LSP_DIR="$SCRIPT_DIR/../RealityEngine_LSP"
 
 # ── flags ──────────────────────────────────────────────────────────────────
 FRESH_START=false
-for arg in "$@"; do [ "$arg" = "--fresh" ] && FRESH_START=true; done
+RE_ENGINE="${RE_ENGINE:-ai}"       # ai | cpp | lsp   (default ai)
+PE_ENGINE="${PE_ENGINE:-ai}"       # ai | cpp | lsp   (default ai)
+MQTT_BROKER_URL_OVERRIDE=""
+MQTT_MAPPINGS_OVERRIDE=""
+
+print_engine_usage() {
+  cat <<'USAGE'
+startUniverse.sh — engine-selectable unified startup
+
+  --fresh                       Wipe AI perception sources + rebuild images no-cache
+  --re-engine=ai|cpp|lsp        Reality Engine implementation (default: ai)
+  --pe-engine=ai|cpp|lsp        Perception Engine implementation (default: ai)
+  --mqtt-broker-url=URL         MQTT_BROKER_URL (AI) / parsed for CPP/LSP
+  --mqtt-mappings=PATH          MQTT_MAPPINGS_FILE — registry projecting topics into PE
+  --help                        Show this message
+
+Examples:
+  ./startUniverse.sh
+  ./startUniverse.sh --re-engine=cpp --pe-engine=cpp
+  ./startUniverse.sh --re-engine=lsp --pe-engine=lsp
+USAGE
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    --fresh)                FRESH_START=true ;;
+    --re-engine=*)          RE_ENGINE="${arg#*=}" ;;
+    --pe-engine=*)          PE_ENGINE="${arg#*=}" ;;
+    --mqtt-broker-url=*)    MQTT_BROKER_URL_OVERRIDE="${arg#*=}" ;;
+    --mqtt-mappings=*)      MQTT_MAPPINGS_OVERRIDE="${arg#*=}" ;;
+    --help|-h)              print_engine_usage; exit 0 ;;
+    *)                      echo "Unknown argument: $arg"; print_engine_usage; exit 2 ;;
+  esac
+done
+
+case "$RE_ENGINE" in ai|cpp|lsp) ;; *) echo "Bad --re-engine=$RE_ENGINE (expected ai|cpp|lsp)"; exit 2 ;; esac
+case "$PE_ENGINE" in ai|cpp|lsp) ;; *) echo "Bad --pe-engine=$PE_ENGINE (expected ai|cpp|lsp)"; exit 2 ;; esac
+
+# Stamp the engine selection so stopUniverse.sh can find it later.  Lives
+# alongside this script so it persists across invocations.
+cat > "$RE_DIR/.universe-engine-selection" <<EOF
+RE_ENGINE=$RE_ENGINE
+PE_ENGINE=$PE_ENGINE
+STARTED_AT=$(date -u +%FT%TZ)
+EOF
+
+# ── Engine-selection short-circuit ─────────────────────────────────────────
+# When the operator picks a non-AI engine, we skip the Docker compose dance
+# entirely and delegate to that runtime's native start.sh.  MQTT env vars
+# are passed through so the bridge boots from the same configuration.
+
+run_native_engine() {
+  local engine_dir="$1"  # absolute path to engine repo (e.g. _CPP)
+  local engine_name="$2" # display name (e.g. CPP)
+
+  [ -d "$engine_dir" ] || { echo "✗ $engine_name engine repo not found at $engine_dir"; exit 1; }
+  [ -x "$engine_dir/start.sh" ] || { echo "✗ $engine_dir/start.sh missing or not executable"; exit 1; }
+
+  # MQTT env vars — both CPP (HOST/PORT) and AI (URL) shapes can be derived
+  # from a single mqtt://host:port URL.  Pass both so each runtime picks
+  # what its bridge boot logic expects.
+  if [ -n "$MQTT_BROKER_URL_OVERRIDE" ]; then
+    export MQTT_BROKER_URL="$MQTT_BROKER_URL_OVERRIDE"
+    # parse host + port for CPP-style env vars
+    local stripped="${MQTT_BROKER_URL_OVERRIDE#mqtt://}"
+    stripped="${stripped#mqtts://}"
+    export MQTT_BROKER_HOST="${stripped%%:*}"
+    local rest="${stripped#*:}"
+    export MQTT_BROKER_PORT="${rest%%/*}"
+    [ "$MQTT_BROKER_PORT" = "$stripped" ] && MQTT_BROKER_PORT=1883
+  fi
+  [ -n "$MQTT_MAPPINGS_OVERRIDE" ] && export MQTT_MAPPINGS_FILE="$MQTT_MAPPINGS_OVERRIDE"
+
+  echo "════════════════════════════════════════════════════════════════════"
+  echo "  Delegating to $engine_name engine: $engine_dir/start.sh"
+  echo "════════════════════════════════════════════════════════════════════"
+  echo "  RE_ENGINE=$RE_ENGINE  PE_ENGINE=$PE_ENGINE"
+  [ -n "${MQTT_BROKER_URL:-}${MQTT_BROKER_HOST:-}" ] && \
+    echo "  MQTT broker: ${MQTT_BROKER_URL:-${MQTT_BROKER_HOST}:${MQTT_BROKER_PORT:-1883}}"
+  [ -n "${MQTT_MAPPINGS_FILE:-}" ] && \
+    echo "  MQTT mappings: $MQTT_MAPPINGS_FILE"
+  echo ""
+
+  exec "$engine_dir/start.sh"
+}
+
+if [ "$RE_ENGINE" = "cpp" ] || [ "$PE_ENGINE" = "cpp" ]; then
+  run_native_engine "$CPP_DIR" "CPP"
+fi
+if [ "$RE_ENGINE" = "lsp" ] || [ "$PE_ENGINE" = "lsp" ]; then
+  run_native_engine "$LSP_DIR" "LSP"
+fi
+
+# ── From here on: AI engine path (the original Docker-based stack) ─────────
+
+# Propagate the MQTT overrides to the AI Docker stack via env so the PE
+# container picks them up.  When neither was set on the CLI, the PE's own
+# env / mqtt-mappings.json wiring continues to govern.
+if [ -n "$MQTT_BROKER_URL_OVERRIDE" ]; then export MQTT_BROKER_URL="$MQTT_BROKER_URL_OVERRIDE"; fi
+if [ -n "$MQTT_MAPPINGS_OVERRIDE"   ]; then export MQTT_MAPPINGS_FILE="$MQTT_MAPPINGS_OVERRIDE"; fi
 
 # ── colours ────────────────────────────────────────────────────────────────
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'
