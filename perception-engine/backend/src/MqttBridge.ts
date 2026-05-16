@@ -160,45 +160,57 @@ export class MqttBridge {
 
   private onMessage(topic: string, payload: Buffer, packet: { retain?: boolean }): void {
     this.stats.messagesReceived += 1;
-    const match = this.registry.match(topic);
-    if (!match) { this.stats.messagesUnmatched += 1; return; }
-    const rule    = this.registry.rules[match.ruleIndex];
-    const metrics = this.registry.metrics[match.ruleIndex];
+    // Fan out to every rule whose filter matches.  A single PUBLISH on a
+    // multi-field sensor topic often drives many mappings (one per
+    // JSON-pointer extraction).
+    const matches = this.registry.matchAll(topic);
+    if (matches.length === 0) { this.stats.messagesUnmatched += 1; return; }
 
-    if (packet.retain && !rule.acceptRetained) {
-      this.stats.messagesRetainedDropped += 1;
-      return;
+    let anyImmediate = false;
+    let minDebounce = -1;
+
+    for (const match of matches) {
+      const rule    = this.registry.rules[match.ruleIndex];
+      const metrics = this.registry.metrics[match.ruleIndex];
+
+      if (packet.retain && !rule.acceptRetained) {
+        this.stats.messagesRetainedDropped += 1;
+        continue;
+      }
+
+      metrics.received += 1;
+      metrics.lastMessageAtMs = Date.now();
+
+      const decoded = this.registry.decode(rule, payload);
+      if (!decoded.valid) {
+        metrics.rejected += 1;
+        metrics.lastError = `[${topic}] ${decoded.error}`;
+        metrics.lastErrorAtMs = Date.now();
+        this.stats.messagesRejected += 1;
+        continue;
+      }
+      const sensorId = this.registry.resolveSensorId(rule, topic, match.captures);
+      this.ingest({
+        sensorId, offset: rule.region.offset, length: rule.region.length,
+        values: decoded.values, ttlMs: rule.ttlMs, topic, mappingId: rule.id,
+      });
+      metrics.mapped += 1;
+      this.stats.messagesMapped += 1;
+
+      if (rule.pushMode === 'immediate') anyImmediate = true;
+      else if (rule.pushMode === 'debounced') {
+        if (minDebounce < 0 || rule.debounceMs < minDebounce) minDebounce = rule.debounceMs;
+      }
     }
 
-    metrics.received += 1;
-    metrics.lastMessageAtMs = Date.now();
-
-    const decoded = this.registry.decode(rule, payload);
-    if (!decoded.valid) {
-      metrics.rejected += 1;
-      metrics.lastError = `[${topic}] ${decoded.error}`;
-      metrics.lastErrorAtMs = Date.now();
-      this.stats.messagesRejected += 1;
-      return;
-    }
-    const sensorId = this.registry.resolveSensorId(rule, topic, match.captures);
-    this.ingest({
-      sensorId, offset: rule.region.offset, length: rule.region.length,
-      values: decoded.values, ttlMs: rule.ttlMs, topic, mappingId: rule.id,
-    });
-    metrics.mapped += 1;
-    this.stats.messagesMapped += 1;
-
-    switch (rule.pushMode) {
-      case 'immediate':
-        this.pushTrigger();
-        this.stats.pushesTriggered += 1;
-        break;
-      case 'debounced':
-        this.schedulePush(rule.debounceMs);
-        break;
-      case 'manual':
-        break;
+    // Push policy across the fan-out: a single Immediate wins over any
+    // Debounced; otherwise schedule one debounced push using the smallest
+    // declared window — never one push per fan-out branch.
+    if (anyImmediate) {
+      this.pushTrigger();
+      this.stats.pushesTriggered += 1;
+    } else if (minDebounce >= 0) {
+      this.schedulePush(minDebounce);
     }
   }
 

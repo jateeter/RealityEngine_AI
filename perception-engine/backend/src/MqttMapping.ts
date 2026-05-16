@@ -214,39 +214,55 @@ export class MappingRegistry {
   }
 
   /**
+   * Try one filter against `topicLevels` — returns captures when matched,
+   * null when not.  Internal helper shared by match() and matchAll().
+   */
+  private static tryFilter(topicLevels: string[], filterLevels: string[]): string[] | null {
+    const captures: string[] = [];
+    let fi = 0, ti = 0;
+    for (; fi < filterLevels.length; ++fi) {
+      const f = filterLevels[fi];
+      if (f === '#') {
+        captures.push(topicLevels.slice(ti).join('/'));
+        ti = topicLevels.length;
+        ++fi;
+        return fi === filterLevels.length ? captures : null;
+      }
+      if (ti >= topicLevels.length) return null;
+      if (f === '+') captures.push(topicLevels[ti]);
+      else if (f !== topicLevels[ti]) return null;
+      ++ti;
+    }
+    return (fi === filterLevels.length && ti === topicLevels.length) ? captures : null;
+  }
+
+  /**
    * Find the first rule whose topicFilter matches `topic`.  MQTT v3.1.1
    * §4.7 wildcards: `+` matches exactly one topic level; `#` matches the
    * remaining tail (must be the last segment).  Captures are returned in
    * order so `sensorIdTemplate` can interpolate them as `{1}`, `{2}`, …
+   * The bridge dispatches via matchAll() so a single PUBLISH fans out to
+   * every rule that shares a filter (e.g. five JSON-pointer extractions
+   * from one multi-field sensor payload).
    */
   match(topic: string): MatchResult | null {
     const topicLevels = splitTopic(topic);
     for (let i = 0; i < this.rules.length; ++i) {
-      const filterLevels = splitTopic(this.rules[i].topicFilter);
-      const captures: string[] = [];
-      let ok = true;
-      let fi = 0, ti = 0;
-      for (; fi < filterLevels.length; ++fi) {
-        const f = filterLevels[fi];
-        if (f === '#') {
-          captures.push(topicLevels.slice(ti).join('/'));
-          ti = topicLevels.length;
-          ++fi;
-          break;
-        }
-        if (ti >= topicLevels.length) { ok = false; break; }
-        if (f === '+') {
-          captures.push(topicLevels[ti]);
-        } else if (f !== topicLevels[ti]) {
-          ok = false; break;
-        }
-        ++ti;
-      }
-      if (ok && fi === filterLevels.length && ti === topicLevels.length) {
-        return { ruleIndex: i, captures };
-      }
+      const captures = MappingRegistry.tryFilter(topicLevels, splitTopic(this.rules[i].topicFilter));
+      if (captures) return { ruleIndex: i, captures };
     }
     return null;
+  }
+
+  /** Every rule matching `topic`, in declaration order.  Empty when none. */
+  matchAll(topic: string): MatchResult[] {
+    const topicLevels = splitTopic(topic);
+    const out: MatchResult[] = [];
+    for (let i = 0; i < this.rules.length; ++i) {
+      const captures = MappingRegistry.tryFilter(topicLevels, splitTopic(this.rules[i].topicFilter));
+      if (captures) out.push({ ruleIndex: i, captures });
+    }
+    return out;
   }
 
   /** Substitute `{n}` placeholders (1-indexed) in sensorIdTemplate. */

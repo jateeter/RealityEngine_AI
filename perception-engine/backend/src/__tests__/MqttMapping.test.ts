@@ -166,7 +166,46 @@ describe('MappingRegistry — validation', () => {
   });
 });
 
+describe('MappingRegistry — fan-out (matchAll)', () => {
+  it('returns every rule that matches a shared topic filter, in declaration order', () => {
+    const r = reg(`{"mappings":[
+      {"id":"temp","topicFilter":"s/x/v1","region":{"offset":0,"length":1},
+       "extract":{"type":"json","pointer":"/t"},"normalize":{"mode":"passthrough","clamp":false}},
+      {"id":"humid","topicFilter":"s/x/v1","region":{"offset":1,"length":1},
+       "extract":{"type":"json","pointer":"/h"},"normalize":{"mode":"passthrough","clamp":false}},
+      {"id":"other","topicFilter":"s/y/v1","region":{"offset":2,"length":1},"extract":{"type":"csv-float"}}
+    ]}`);
+    const all = r.matchAll('s/x/v1');
+    expect(all.map(m => m.ruleIndex)).toEqual([0, 1]);
+    expect(r.matchAll('s/y/v1')).toHaveLength(1);
+    expect(r.matchAll('nothing')).toHaveLength(0);
+  });
+});
+
 describe('MqttBridge — in-process dispatcher', () => {
+  it('drives every rule that shares a topic on a single PUBLISH', () => {
+    const r = reg(`{"mappings":[
+      {"id":"temp","topicFilter":"s/x/v1","region":{"offset":0,"length":1},
+       "extract":{"type":"json","pointer":"/t"},"normalize":{"mode":"passthrough","clamp":false}},
+      {"id":"humid","topicFilter":"s/x/v1","region":{"offset":1,"length":1},
+       "extract":{"type":"json","pointer":"/h"},"normalize":{"mode":"passthrough","clamp":false}}
+    ]}`);
+    const ingests: IngestPayload[] = [];
+    const bridge = new MqttBridge(
+      { brokerUrl: 'mqtt://unreachable:1' }, r,
+      p => { ingests.push(p); },
+      () => { /* no push */ },
+    );
+    bridge.injectMessage('s/x/v1', '{"t":0.25,"h":0.75}');
+    expect(ingests).toHaveLength(2);
+    expect(ingests.map(i => i.mappingId)).toEqual(['temp', 'humid']);
+    expect(ingests[0].values).toEqual([0.25]);
+    expect(ingests[1].values).toEqual([0.75]);
+    expect(bridge.getStats().messagesMapped).toBe(2);
+  });
+});
+
+describe('MqttBridge — in-process dispatcher (single rule)', () => {
   it('runs the full extract → normalize → ingest pipeline', () => {
     const r = reg(`{"mappings":[{
       "id":"zone-temp","topicFilter":"sensors/zone/+/temp","sensorIdTemplate":"zone.{1}.temp",
