@@ -659,6 +659,80 @@ app.get('/api/perceptual-simulation/history', async (_req: Request, res: Respons
   } catch (error: any) { upstreamError(res, error, 'getSimulationHistory'); }
 });
 
+// ── Universe monitor / control surface ───────────────────────────────────────
+//
+// Reads the RE /api/metrics Prometheus text and extracts the most recent
+// paging decisions per (machine, sequence, ownerTeam, ragStatusCode).  The
+// frontend doesn't have to parse Prom text directly — this endpoint returns
+// JSON with a derived ordering by counter magnitude (most-active first).
+app.get('/api/viz/paging-decisions', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/metrics`, {
+      responseType: 'text',
+      transformResponse: [data => data],   // skip axios auto-JSON parse
+    });
+    const text: string = response.data;
+    const decisions: Array<{
+      runtime: string;
+      ownerTeam: string;
+      processStatus: string;
+      ragStatusCode: string;
+      machineId: string;
+      count: number;
+    }> = [];
+    for (const line of text.split('\n')) {
+      if (!line.startsWith('ces_paging_decisions_total{')) continue;
+      // ces_paging_decisions_total{owner_team="...",process_status="...",rag_status_code="...",machine_id="...",runtime="ai"} 42
+      const m = line.match(/^ces_paging_decisions_total\{([^}]+)\}\s+(\d+(?:\.\d+)?)/);
+      if (!m) continue;
+      const labels: Record<string, string> = {};
+      for (const kv of m[1].split(',')) {
+        const eq = kv.indexOf('=');
+        if (eq < 0) continue;
+        const k = kv.slice(0, eq);
+        const v = kv.slice(eq + 1).replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
+        labels[k] = v;
+      }
+      decisions.push({
+        runtime:        labels.runtime ?? 'unknown',
+        ownerTeam:      labels.owner_team ?? 'unrouted',
+        processStatus:  labels.process_status ?? 'unknown',
+        ragStatusCode:  labels.rag_status_code ?? 'unknown',
+        machineId:      labels.machine_id ?? '',
+        count:          Number(m[2]),
+      });
+    }
+    decisions.sort((a, b) => b.count - a.count);
+    res.json({ decisions, total: decisions.length });
+  } catch (error: any) { upstreamError(res, error, 'getPagingDecisions'); }
+});
+
+// ── PE backend proxy (MQTT + sensor freshness) ──────────────────────────────
+//
+// The visualizer's frontend already hits perception-engine-backend through
+// nginx in container deployments, but for dev outside containers the same
+// routes need to work through the visualizer-backend's host.  These passthroughs
+// keep the frontend's PE_BASE_URL consistent regardless of deployment mode.
+const PERCEPTION_ENGINE_URL = process.env.PERCEPTION_ENGINE_URL || 'http://localhost:3004';
+app.get('/api/perception/mqtt/status', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${PERCEPTION_ENGINE_URL}/api/mqtt/status`);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'getMqttStatus'); }
+});
+app.get('/api/perception/mqtt/mappings', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${PERCEPTION_ENGINE_URL}/api/mqtt/mappings`);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'getMqttMappings'); }
+});
+app.get('/api/perception/sources', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${PERCEPTION_ENGINE_URL}/api/sources`);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'getPerceptionSources'); }
+});
+
 // ── Start server ─────────────────────────────────────────────────────────────
 
 server.listen(PORT, () => {

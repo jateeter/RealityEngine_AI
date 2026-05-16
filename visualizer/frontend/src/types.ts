@@ -194,6 +194,73 @@ export interface PESensorSource {
   lastValue: number[];
   lastUpdated: number | null;
   ttlMs: number;
+  // Derived freshness — set by /api/sources at the PE backend.  ageMs is
+  // (now - lastUpdated) in milliseconds; stale = ageMs > ttlMs.  Lets the
+  // visualizer render a freshness badge per sensor without doing the math
+  // client-side.
+  ageMs?: number;
+  stale?: boolean;
+}
+
+// ── MQTT bridge surfaces ────────────────────────────────────────────────────
+
+export interface MqttBridgeStatus {
+  enabled: boolean;
+  connected?: boolean;
+  brokerUrl?: string;
+  clientId?: string;
+  mappings?: number;
+  bridge?: {
+    messagesReceived?: number;
+    messagesMapped?: number;
+    messagesRejected?: number;
+    messagesUnmatched?: number;
+    pushesTriggered?: number;
+  };
+}
+
+export interface MqttMappingRule {
+  id: string;
+  topicFilter: string;
+  sensorIdTemplate: string;
+  region: { offset: number; length: number };
+  extract: { type: string; pointer?: string; index?: number };
+  normalize: { mode: string; min: number; max: number; scale: number; offset: number; clamp: boolean };
+  ttlMs: number;
+  qos: number;
+  acceptRetained: boolean;
+  pushMode: string;
+  debounceMs: number;
+  counters: {
+    received: number;
+    mapped: number;
+    rejected: number;
+    stale: number;
+    lastMessageAtMs: number;
+    lastError: string;
+    lastErrorAtMs: number;
+  };
+}
+
+export interface MqttMappingsResponse {
+  enabled: boolean;
+  mappings: MqttMappingRule[];
+}
+
+// ── Paging decisions (derived from /api/metrics) ────────────────────────────
+
+export interface PagingDecision {
+  runtime: string;
+  ownerTeam: string;
+  processStatus: string;
+  ragStatusCode: string;
+  machineId: string;
+  count: number;
+}
+
+export interface PagingDecisionsResponse {
+  decisions: PagingDecision[];
+  total: number;
 }
 
 export type PESource = PETestSource | PESimulatedSource | PESensorSource;

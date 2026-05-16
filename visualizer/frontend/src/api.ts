@@ -3,7 +3,10 @@ import {
   SequenceGraph,
   Machine,
   MachineCreateRequest,
-  MachineUpdateRequest
+  MachineUpdateRequest,
+  MqttBridgeStatus,
+  MqttMappingsResponse,
+  PagingDecisionsResponse,
 } from './types';
 
 const API_BASE_URL = '/api/viz';
@@ -57,6 +60,18 @@ export const perceptionEngineApi = {
 
   async deleteSource(id: string): Promise<void> {
     await http.delete(`${PE_BASE_URL}/sources/${id}`);
+  },
+
+  // ── MQTT bridge surface ──────────────────────────────────────────────────
+
+  async getMqttStatus(): Promise<MqttBridgeStatus> {
+    const response = await http.get(`${PE_BASE_URL}/mqtt/status`);
+    return response.data;
+  },
+
+  async getMqttMappings(): Promise<MqttMappingsResponse> {
+    const response = await http.get(`${PE_BASE_URL}/mqtt/mappings`);
+    return response.data;
   },
 };
 
@@ -232,6 +247,15 @@ export const api = {
   // Load Kleene star example
   async loadKleeneStarExample(): Promise<{ success: boolean; metadata: any; machine?: any }> {
     const response = await http.get('/api/demo/kleene-star');
+    return response.data;
+  },
+
+  // ── Live paging decisions derived from RE /api/metrics ─────────────────
+  // The backend parses the Prometheus text and returns JSON so the
+  // frontend can render a "what's been alerting" panel without re-deriving
+  // from the machine corpus.
+  async getPagingDecisions(): Promise<PagingDecisionsResponse> {
+    const response = await http.get(`${API_BASE_URL}/paging-decisions`);
     return response.data;
   },
 
