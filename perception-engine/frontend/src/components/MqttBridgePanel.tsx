@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import MqttConfigModal from './MqttConfigModal';
 
 /**
  * MqttBridgePanel — live monitor surface for the MQTT bridge owned by
@@ -120,6 +121,7 @@ export default function MqttBridgePanel() {
   const [status, setStatus] = useState<BridgeStatus | null>(null);
   const [mappings, setMappings] = useState<MappingsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -147,6 +149,15 @@ export default function MqttBridgePanel() {
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
+  const configureBtnStyle: React.CSSProperties = {
+    marginLeft: 'auto',
+    background: status?.enabled ? 'transparent' : '#3b82f6',
+    color: status?.enabled ? C_TEXT : '#fff',
+    border: `1px solid ${status?.enabled ? C_BORDER : '#3b82f6'}`,
+    borderRadius: 4, padding: '6px 12px', fontSize: 11, fontWeight: 700,
+    letterSpacing: 0.5, textTransform: 'uppercase', cursor: 'pointer',
+  };
+
   if (error) {
     return (
       <div style={{ padding: 16, background: C_PANEL_BG, color: C_REJECT, fontFamily: 'monospace', fontSize: 12, border: `1px solid ${C_BORDER}`, borderRadius: 6 }}>
@@ -168,6 +179,9 @@ export default function MqttBridgePanel() {
         {status.enabled && status.brokerUrl && (
           <span style={{ fontSize: 11, color: C_TEXT_DIM, fontFamily: 'monospace' }}>{status.brokerUrl}</span>
         )}
+        <button onClick={() => setConfigOpen(true)} style={configureBtnStyle}>
+          {status.enabled ? 'Reconfigure' : 'Configure MQTT'}
+        </button>
       </div>
 
       {status.enabled && (
@@ -203,12 +217,13 @@ export default function MqttBridgePanel() {
 
       {!status.enabled && (
         <div style={{ color: C_TEXT_DIM, fontSize: 12, lineHeight: 1.5 }}>
-          MQTT ingest is disabled.  Set <code style={{ color: C_TEXT, fontFamily: 'monospace' }}>MQTT_BROKER_URL</code> +
-          {' '}<code style={{ color: C_TEXT, fontFamily: 'monospace' }}>MQTT_MAPPINGS_FILE</code> on this Perception Engine
-          and restart to enable the bridge.  Default broker is{' '}
+          MQTT ingest is disabled.  Click <strong style={{ color: C_TEXT }}>Configure MQTT</strong> to
+          set a broker URL and mapping registry at runtime — no restart needed.  Default broker is{' '}
           <code style={{ color: C_TEXT, fontFamily: 'monospace' }}>mqtt://yuma.lateraledge.cloud:1883</code>.
         </div>
       )}
+
+      <MqttConfigModal open={configOpen} onClose={() => setConfigOpen(false)} />
     </div>
   );
 }

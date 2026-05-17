@@ -13,6 +13,34 @@ import { MqttBridge, fromEnvironment as mqttFromEnvironment } from './MqttBridge
 import type { IngestPayload } from './MqttBridge.js';
 import type { SourceConfig, SensorSourceConfig, PushResult, MatchAlgorithm } from './types.js';
 
+// Bundled example mapping registry — served by GET /api/mqtt/example so
+// the PE visualizer's MqttConfigModal can offer a "Load example" button
+// without reaching out to the host filesystem (the file lives in
+// RealityEngine_CPP, which the Docker PE container can't see).  Mirrors
+// config/mqtt-mappings.yuma-agriculture.json from the CPP repo — the
+// 16-rule yuma-agriculture demo registry.
+const EXAMPLE_MAPPINGS_JSON = {
+  defaults: { ttlMs: 60000, qos: 0, acceptRetained: true, pushMode: 'debounced', debounceMs: 500 },
+  mappings: [
+    { id: 'agx001-ph-ok',         topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.ph.ok',         region: { offset: 40,  length: 1 }, extract: { type: 'json', pointer: '/data/wpH'         }, normalize: { mode: 'band', min: 6.5,  max: 8.5  } },
+    { id: 'agx001-ec-ok',         topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.ec.ok',         region: { offset: 41,  length: 1 }, extract: { type: 'json', pointer: '/data/wEC'         }, normalize: { mode: 'band', min: 0.5,  max: 3.0  } },
+    { id: 'agx001-orp-ok',        topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.orp.ok',        region: { offset: 42,  length: 1 }, extract: { type: 'json', pointer: '/data/wORP'        }, normalize: { mode: 'band', min: 200,  max: 600  } },
+    { id: 'agx001-turbidity-ok',  topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.turbidity.ok',  region: { offset: 43,  length: 1 }, extract: { type: 'json', pointer: '/data/wTurbidity'  }, normalize: { mode: 'band', min: 0,    max: 100  } },
+    { id: 'agx005-do-ok',         topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.level.ok',         region: { offset: 84,  length: 1 }, extract: { type: 'json', pointer: '/data/wDO'         }, normalize: { mode: 'band', min: 5,    max: 25   } },
+    { id: 'agx005-do-temp-ok',    topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.temp.ok',          region: { offset: 85,  length: 1 }, extract: { type: 'json', pointer: '/data/wDOTemp'     }, normalize: { mode: 'band', min: 60,   max: 85   } },
+    { id: 'agx005-do-watch',      topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.watch',            region: { offset: 86,  length: 1 }, extract: { type: 'json', pointer: '/data/wDO'         }, normalize: { mode: 'band', min: 3,    max: 5    } },
+    { id: 'agx005-temp-watch',    topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.temp.watch',       region: { offset: 87,  length: 1 }, extract: { type: 'json', pointer: '/data/wDOTemp'     }, normalize: { mode: 'band', min: 85,   max: 95   } },
+    { id: 'agx026-temp-ok',       topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.temp.ok',           region: { offset: 184, length: 1 }, extract: { type: 'json', pointer: '/data/aTemp'       }, normalize: { mode: 'band', min: 65,   max: 85   } },
+    { id: 'agx026-humidity-ok',   topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.humidity.ok',       region: { offset: 185, length: 1 }, extract: { type: 'json', pointer: '/data/aHum'        }, normalize: { mode: 'band', min: 40,   max: 70   } },
+    { id: 'agx026-temp-watch',    topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.temp.watch',        region: { offset: 186, length: 1 }, extract: { type: 'json', pointer: '/data/aTemp'       }, normalize: { mode: 'band', min: 85,   max: 95   } },
+    { id: 'agx026-humidity-watch',topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.humidity.watch',    region: { offset: 187, length: 1 }, extract: { type: 'json', pointer: '/data/aHum'        }, normalize: { mode: 'band', min: 20,   max: 40   } },
+    { id: 'agx032-co2-ok',        topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.co2.ok',            region: { offset: 228, length: 1 }, extract: { type: 'json', pointer: '/data/aCO2'        }, normalize: { mode: 'band', min: 600,  max: 1500 } },
+    { id: 'agx032-co2-watch',     topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.co2.watch',         region: { offset: 229, length: 1 }, extract: { type: 'json', pointer: '/data/aCO2'        }, normalize: { mode: 'band', min: 1500, max: 3000 } },
+    { id: 'agx032-co2-danger',    topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.co2.danger',        region: { offset: 230, length: 1 }, extract: { type: 'json', pointer: '/data/aCO2'        }, normalize: { mode: 'band', min: 3000, max: 5000 } },
+    { id: 'agx032-temp-ok',       topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.temp.ok',           region: { offset: 231, length: 1 }, extract: { type: 'json', pointer: '/data/aTemp'       }, normalize: { mode: 'band', min: 65,   max: 85   } },
+  ],
+};
+
 const PORT = parseInt(process.env['PORT'] ?? '3004', 10);
 const REALITY_ENGINE_URL = process.env['REALITY_ENGINE_URL'] ?? 'http://localhost:3000';
 const DATA_PATH = process.env['DATA_PATH'] ?? './data';
@@ -532,6 +560,88 @@ app.put('/api/mqtt/mappings', async (req: Request, res: Response) => {
     mappings: registry.size,
     warnings,
   });
+});
+
+// POST /api/mqtt/enable — runtime configurable bridge start.  Accepts a
+// fresh BridgeConfig + mappings registry in one call.  Used by the
+// MqttConfigModal in the PE visualizer when an operator wants to enable
+// MQTT without restarting the PE process (i.e. without setting env vars).
+//
+// Body: {
+//   brokerUrl:  "mqtt://host:port"  (required)
+//   clientId?:  string
+//   username?:  string
+//   password?:  string
+//   keepaliveSec?: number
+//   mappings:   {...registry JSON...}  (required, same shape as PUT /api/mqtt/mappings)
+// }
+//
+// Returns 200 + enabled/connected/mappings count on success; 400 on
+// validation failure; 500 on bridge boot failure.
+app.post('/api/mqtt/enable', async (req: Request, res: Response) => {
+  const body = req.body ?? {};
+  const brokerUrl: string | undefined = body.brokerUrl;
+  if (!brokerUrl || typeof brokerUrl !== 'string') {
+    res.status(400).json({ error: 'brokerUrl is required (e.g. "mqtt://yuma.lateraledge.cloud:1883")' });
+    return;
+  }
+  if (!body.mappings) {
+    res.status(400).json({ error: 'mappings is required (a registry object with a "mappings" array)' });
+    return;
+  }
+  let registry: MappingRegistry;
+  try {
+    registry = MappingRegistry.fromJson(body.mappings);
+  } catch (e: any) {
+    res.status(400).json({ error: `mappings schema: ${e?.message ?? e}` });
+    return;
+  }
+  if (registry.size === 0) {
+    res.status(400).json({ error: 'mappings array is empty — at least one rule is required' });
+    return;
+  }
+  const config: import('./MqttBridge.js').BridgeConfig = {
+    brokerUrl,
+    clientId:     typeof body.clientId === 'string' ? body.clientId : 'reality-engine-pe',
+    username:     typeof body.username === 'string' ? body.username : undefined,
+    password:     typeof body.password === 'string' ? body.password : undefined,
+    keepaliveSec: typeof body.keepaliveSec === 'number' ? body.keepaliveSec : 60,
+  };
+  const allowOverlap = (process.env.MQTT_ALLOW_REGION_OVERLAP === '1' ||
+                        process.env.MQTT_ALLOW_REGION_OVERLAP === 'true');
+  const warnings = registry.validateOverlaps(allowOverlap);
+  try {
+    await bootMqttBridge(config, registry);
+  } catch (e: any) {
+    res.status(500).json({ error: `bridge boot failed: ${e?.message ?? e}` });
+    return;
+  }
+  res.json({
+    success:   true,
+    enabled:   !!mqttBridge,
+    connected: mqttBridge?.isConnected() ?? false,
+    brokerUrl: config.brokerUrl,
+    mappings:  registry.size,
+    warnings,
+  });
+});
+
+// POST /api/mqtt/disable — cleanly stops the bridge.  Idempotent.
+app.post('/api/mqtt/disable', async (_req: Request, res: Response) => {
+  if (mqttBridge) {
+    try { await mqttBridge.stop(); }
+    catch (e: any) { /* swallow — disable is best-effort */ }
+    mqttBridge = null;
+  }
+  res.json({ success: true, enabled: false });
+});
+
+// GET /api/mqtt/example — bundled sample mapping registry.  Lets the
+// PE visualizer's MqttConfigModal offer a "Load example" button without
+// reaching out to the filesystem.  Returns the yuma-agriculture
+// registry the demo binaries use.
+app.get('/api/mqtt/example', (_req: Request, res: Response) => {
+  res.json(EXAMPLE_MAPPINGS_JSON);
 });
 
 // Machine listing — proxy from Reality Engine for use in the add-source form
