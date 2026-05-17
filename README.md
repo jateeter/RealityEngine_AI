@@ -110,6 +110,8 @@ Endpoints exposed by the PE (proxied through the visualizer backend at `/api/per
 
 A full live demonstration against the `yuma.lateraledge.cloud:1883` Lateral Edge sensor mesh is documented in [`RealityEngine_CPP/docs/MQTT_YUMA_DEMONSTRATION.md`](../RealityEngine_CPP/docs/MQTT_YUMA_DEMONSTRATION.md) — covers topic discovery, the agriculture-domain mapping file, and the full audit trail from broker payload to Prometheus `ces_paging_decisions_total` counter.
 
+The same Yuma mappings drive the five **AGX051-AGX055 Yuma maintenance machines** in the agriculture domain — these consume the live MQTT-populated sensor regions and produce a maintenance-lens output (URGENT / FORECAST / CALIBRATE / NORMAL) distinct from the operational-stability machines (AGX001/005/026/032) that read the same regions.  AGX055 then projects all four maintenance outputs onto `AgYieldOptimizationAI`'s input window at `[3959:3971]`, completing the path **live broker → CES machines → cross-domain yield AI**.  See [`docs/AGRICULTURE_INTERCONNECTIONS.md`](docs/AGRICULTURE_INTERCONNECTIONS.md) for the full chain diagram and regenerate with `python3 scripts/generate_yuma_mqtt_maintenance_machines.py`.
+
 ---
 
 ## Universe Monitor
