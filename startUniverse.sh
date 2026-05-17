@@ -92,6 +92,34 @@ PE_ENGINE=$PE_ENGINE
 STARTED_AT=$(date -u +%FT%TZ)
 EOF
 
+# ── colours + helpers (defined early so any block below can use them) ──────
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'
+CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
+
+ok()   { echo -e "${GREEN}✓${NC} $*"; }
+info() { echo -e "${YELLOW}ℹ${NC} $*"; }
+warn() { echo -e "${RED}⚠${NC} $*"; }
+hdr()  { echo -e "\n${CYAN}${BOLD}─── $* ───${NC}"; }
+die()  { echo -e "\n${RED}✗  FATAL:${NC} $*\n"; exit 1; }
+
+WARNS=()
+add_warn() { WARNS+=("$*"); }
+
+# ── poll_http <url> <label> <max_tries> <curl_flags> ───────────────────────
+# Returns 0 on first success, 1 on timeout.  Dots shown while waiting.
+poll_http() {
+    local url="$1" label="$2" max="${3:-30}" flags="${4:--sf}"
+    local n=0
+    while [ "$n" -lt "$max" ]; do
+        if curl $flags "$url" > /dev/null 2>&1; then
+            ok "$label"
+            return 0
+        fi
+        n=$((n+1)); echo -n "."; sleep 2
+    done
+    echo ""; return 1
+}
+
 # ── Engine-selection short-circuit ─────────────────────────────────────────
 # When the operator picks a non-AI engine, we skip the Docker compose dance
 # entirely and delegate to that runtime's native start.sh.  MQTT env vars
@@ -166,34 +194,6 @@ if [ -n "$MQTT_MAPPINGS_OVERRIDE" ]; then
   export MQTT_MAPPINGS_JSON="$(cat "$MQTT_MAPPINGS_OVERRIDE")"
   info "MQTT mappings loaded inline (${#MQTT_MAPPINGS_JSON} bytes from ${MQTT_MAPPINGS_OVERRIDE##*/})"
 fi
-
-# ── colours ────────────────────────────────────────────────────────────────
-GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'
-CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
-
-ok()   { echo -e "${GREEN}✓${NC} $*"; }
-info() { echo -e "${YELLOW}ℹ${NC} $*"; }
-warn() { echo -e "${RED}⚠${NC} $*"; }
-hdr()  { echo -e "\n${CYAN}${BOLD}─── $* ───${NC}"; }
-die()  { echo -e "\n${RED}✗  FATAL:${NC} $*\n"; exit 1; }
-
-WARNS=()
-add_warn() { WARNS+=("$*"); }
-
-# ── poll_http <url> <label> <max_tries> <curl_flags> ───────────────────────
-# Returns 0 on first success, 1 on timeout.  Dots shown while waiting.
-poll_http() {
-    local url="$1" label="$2" max="${3:-30}" flags="${4:--sf}"
-    local n=0
-    while [ "$n" -lt "$max" ]; do
-        if curl $flags "$url" > /dev/null 2>&1; then
-            ok "$label"
-            return 0
-        fi
-        n=$((n+1)); echo -n "."; sleep 2
-    done
-    echo ""; return 1
-}
 
 # =============================================================================
 hdr "1 · Pre-flight"
