@@ -1375,34 +1375,12 @@ export const MachineGraphView: React.FC = () => {
     applyDomainFilter();
   }, [selectedDomains, applyDomainFilter]);
 
-  // ── Render ─────────────────────────────────────────────────────────────────
-  if (error) {
-    return (
-      <div className="machine-graph-view error">
-        <div className="error-message">{error}</div>
-      </div>
-    );
-  }
-
-  if (!graphData) {
-    return (
-      <div className="machine-graph-view loading">
-        <div>Loading machine graph...</div>
-      </div>
-    );
-  }
-
-  const domainCounts = DOMAIN_ORDER.reduce((acc, d) => {
-    acc[d] = graphData.nodes.filter(n => classifyMachine(n).domain === d).length;
-    return acc;
-  }, {} as Record<DomainId, number>);
-
-  const isCompact = graphData.nodes.length > COMPACT_MODE_THRESHOLD;
-
   // Compose live per-step result for the hovered machine.  Walks
   // sequenceResults across all of this machine's CES sequences and
   // unions the activated and matched vector IDs so the tooltip graph
-  // can highlight every node that participated in this step.
+  // can highlight every node that participated in this step.  MUST sit
+  // above any early returns below — Rules of Hooks require hook count
+  // and order to stay stable across renders.
   const tooltipLive: TooltipLiveResult = useMemo(() => {
     if (!tooltip || !currentStep) return EMPTY_LIVE;
     const r = currentStep.machineResults[tooltip.machineId];
@@ -1427,6 +1405,30 @@ export const MachineGraphView: React.FC = () => {
       hasOutput:    !!r.outputVector,
     };
   }, [tooltip, currentStep]);
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  if (error) {
+    return (
+      <div className="machine-graph-view error">
+        <div className="error-message">{error}</div>
+      </div>
+    );
+  }
+
+  if (!graphData) {
+    return (
+      <div className="machine-graph-view loading">
+        <div>Loading machine graph...</div>
+      </div>
+    );
+  }
+
+  const domainCounts = DOMAIN_ORDER.reduce((acc, d) => {
+    acc[d] = graphData.nodes.filter(n => classifyMachine(n).domain === d).length;
+    return acc;
+  }, {} as Record<DomainId, number>);
+
+  const isCompact = graphData.nodes.length > COMPACT_MODE_THRESHOLD;
 
   return (
     <div className="machine-graph-view" ref={containerRef}>
