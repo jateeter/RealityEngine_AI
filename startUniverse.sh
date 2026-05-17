@@ -142,10 +142,30 @@ fi
 # ── From here on: AI engine path (the original Docker-based stack) ─────────
 
 # Propagate the MQTT overrides to the AI Docker stack via env so the PE
-# container picks them up.  When neither was set on the CLI, the PE's own
-# env / mqtt-mappings.json wiring continues to govern.
-if [ -n "$MQTT_BROKER_URL_OVERRIDE" ]; then export MQTT_BROKER_URL="$MQTT_BROKER_URL_OVERRIDE"; fi
-if [ -n "$MQTT_MAPPINGS_OVERRIDE"   ]; then export MQTT_MAPPINGS_FILE="$MQTT_MAPPINGS_OVERRIDE"; fi
+# container picks them up.  Two subtleties:
+#   1. --mqtt-mappings=PATH points at a host file, but the PE container
+#      can't see the host's filesystem.  Read the file contents in the
+#      orchestrator and pass them inline via MQTT_MAPPINGS_JSON, which
+#      the PE backend's MappingRegistry.fromJson also accepts.
+#   2. MQTT_BROKER_URL is a plain env passthrough — the PE container's
+#      docker-compose service declares the env vars on its environment
+#      block so they propagate from the host shell.
+if [ -n "$MQTT_BROKER_URL_OVERRIDE" ]; then
+  export MQTT_BROKER_URL="$MQTT_BROKER_URL_OVERRIDE"
+fi
+if [ -n "$MQTT_MAPPINGS_OVERRIDE" ]; then
+  if [ ! -f "$MQTT_MAPPINGS_OVERRIDE" ]; then
+    die "MQTT mappings file not found: $MQTT_MAPPINGS_OVERRIDE"
+  fi
+  # Pass contents inline so the PE container doesn't need a host mount.
+  # MQTT_MAPPINGS_FILE is still exported for non-Docker engines (CPP / LSP
+  # delegations short-circuit above this block); but for the AI Docker
+  # path the file ABSOLUTELY MUST be readable by the container, so we
+  # default to the JSON-inline form here.
+  export MQTT_MAPPINGS_FILE="$MQTT_MAPPINGS_OVERRIDE"
+  export MQTT_MAPPINGS_JSON="$(cat "$MQTT_MAPPINGS_OVERRIDE")"
+  info "MQTT mappings loaded inline (${#MQTT_MAPPINGS_JSON} bytes from ${MQTT_MAPPINGS_OVERRIDE##*/})"
+fi
 
 # ── colours ────────────────────────────────────────────────────────────────
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'

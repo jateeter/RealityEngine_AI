@@ -199,16 +199,32 @@ services:
   # Perception Engine Backend (Scala/Akka) - accessed via TLS proxy at https://localhost:3004
   perception-engine-backend:
     build:
-      context: .
-      dockerfile: scala/perception-engine/Dockerfile
+      context: ./perception-engine/backend
+      dockerfile: Dockerfile
     container_name: reality-engine-perception-backend
     environment:
       - PORT=3004
       - REALITY_ENGINE_URL=https://reality-engine:3000
       - DATA_PATH=/app/data
-      - KEYSTORE_PATH=/etc/certs/keystore.p12
-      - KEYSTORE_PASSWORD=realityengine
+      - TLS_CERT_PATH=/etc/certs/server.crt
+      - TLS_KEY_PATH=/etc/certs/server.key
       - CA_CERT_PATH=/etc/certs/ca.crt
+      # MQTT bridge — propagated from host shell.  When the operator runs
+      # ./startUniverse.sh --mqtt-broker-url=... --mqtt-mappings=... the
+      # script exports MQTT_BROKER_URL + MQTT_MAPPINGS_JSON (read from the
+      # given file) and Docker passes them through here.  Default broker
+      # (when env is empty but not unset) is mqtt://yuma.lateraledge.cloud:1883;
+      # bridge still requires mappings before it actually boots.
+      - MQTT_BROKER_URL
+      - MQTT_BROKER_PORT
+      - MQTT_CLIENT_ID
+      - MQTT_USERNAME
+      - MQTT_PASSWORD
+      - MQTT_KEEPALIVE
+      - MQTT_MAPPINGS_FILE
+      - MQTT_MAPPINGS_JSON
+      - MQTT_ALLOW_REGION_OVERLAP
+      - MQTT_DISABLED
       - AUDIT_LOG_ENABLED=true
       - AUDIT_LOG_LEVEL=2
       - AUDIT_LOG_SERVICE=perception-engine
