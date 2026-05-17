@@ -382,6 +382,66 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'healthy', timestamp: Date.now() });
 });
 
+// Prometheus metrics — text/plain exposition format on /api/metrics.  Carries
+// the runtime="ai" label so a single Grafana dashboard can pivot across AI /
+// CPP / LSP runtimes without scrape-time relabels.  Includes engine state
+// (sources, globalStep) plus MQTT bridge counters when the bridge is up.
+app.get('/api/metrics', (_req: Request, res: Response) => {
+  const RUNTIME = 'ai';
+  const lines: string[] = [];
+
+  const metric = (
+    name: string,
+    help: string,
+    kind: 'gauge' | 'counter',
+    value: number,
+    labels: Record<string, string> = {},
+  ): void => {
+    lines.push(`# HELP ${name} ${help}`);
+    lines.push(`# TYPE ${name} ${kind}`);
+    const allLabels = { runtime: RUNTIME, ...labels };
+    const ls = Object.entries(allLabels)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}="${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`)
+      .join(',');
+    lines.push(`${name}{${ls}} ${value}`);
+  };
+
+  const sources = engine.getSources();
+  metric('perception_engine_sources_total',        'Total sensor/test/simulated sources registered.', 'gauge', sources.length);
+  metric('perception_engine_global_step',          'Engine globalStep counter (push count since start).', 'gauge', engine.globalStep);
+  metric('perception_engine_vector_size',          'Configured vector dimension.', 'gauge', engine.vectorSize);
+  metric('perception_engine_last_push_ms',         'Wall-clock timestamp of the last successful push (0 if never).', 'gauge', lastPush ?? 0);
+  metric('perception_engine_auto_running',         '1 if auto-push timer is active, 0 otherwise.', 'gauge', autoTimer !== null ? 1 : 0);
+  metric('perception_engine_auto_interval_ms',     'Configured auto-push interval in ms.', 'gauge', autoIntervalMs);
+
+  // MQTT bridge — only emit when the bridge has been booted.  Absent
+  // metrics are easier to read than zero-everywhere counters when the
+  // bridge is intentionally disabled.
+  if (mqttBridge) {
+    const s = mqttBridge.getStats();
+    metric('mqtt_bridge_enabled',              'MQTT bridge is configured (1) or disabled (0).', 'gauge', 1);
+    metric('mqtt_bridge_connected',            'MQTT bridge is currently connected to the broker (1/0).', 'gauge', mqttBridge.isConnected() ? 1 : 0);
+    metric('mqtt_messages_received_total',     'Total MQTT PUBLISH messages received.',          'counter', s.messagesReceived ?? 0);
+    metric('mqtt_messages_mapped_total',       'Total messages successfully mapped to a region.','counter', s.messagesMapped ?? 0);
+    metric('mqtt_messages_rejected_total',     'Total messages rejected by mapping/normalize.',  'counter', s.messagesRejected ?? 0);
+    metric('mqtt_messages_unmatched_total',    'Total messages whose topic matched no rule.',    'counter', s.messagesUnmatched ?? 0);
+    metric('mqtt_pushes_triggered_total',      'Total perceive pushes triggered by MQTT ingest.','counter', s.pushesTriggered ?? 0);
+    metric('mqtt_mappings_loaded',             'Number of mapping rules in the registry.',       'gauge',   mqttBridge.getRegistry().size);
+  } else {
+    metric('mqtt_bridge_enabled',   'MQTT bridge is configured (1) or disabled (0).', 'gauge', 0);
+    metric('mqtt_bridge_connected', 'MQTT bridge is currently connected to the broker (1/0).', 'gauge', 0);
+  }
+
+  // CES paging decisions — placeholder counter so dashboards can be wired
+  // before the per-rule trigger counter is fully instrumented in this
+  // runtime (the RE-side counter under the same name lives at
+  // /api/metrics on the RE).
+  metric('ces_paging_decisions_total', 'Total CES paging decisions emitted (cumulative).', 'counter', 0);
+
+  res.type('text/plain').send(lines.join('\n') + '\n');
+});
+
 // Full engine state
 app.get('/api/state', (_req: Request, res: Response) => {
   const state = engine.getState(lastPush, { running: autoTimer !== null, intervalMs: autoIntervalMs });

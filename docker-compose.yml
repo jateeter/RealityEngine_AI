@@ -36,6 +36,7 @@ services:
       - --web.listen-address=:9090
     volumes:
       - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./certs:/etc/prometheus/certs:ro
       - prometheus_data:/prometheus
     restart: unless-stopped
     networks:

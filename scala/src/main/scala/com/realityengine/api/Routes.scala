@@ -140,11 +140,124 @@ class Routes(
 
   // ── Route tree ────────────────────────────────────────────────────────────
 
+  // ── Prometheus metrics ───────────────────────────────────────────────────
+  // Emits text/plain Prometheus exposition format on /api/metrics.  Carries
+  // the runtime="ai" label so a single Grafana dashboard can pivot across
+  // AI / CPP / LSP runtimes without scrape-time relabels.
+  //
+  // Metric names match the corpus expected by the existing Grafana
+  // dashboards in config/dashboards/ — ces_* and re_runtime_* prefixed.
+  // Gauges are recomputed on every scrape (engine state is the source of
+  // truth); counter metrics that require per-step instrumentation are
+  // emitted as zero for now so dashboards have a series to plot rather
+  // than "No Data".
+  private val metricsRuntimeLabel = "ai"
+
+  private def renderPrometheusMetrics(): String = {
+    val sb = new StringBuilder
+    val runtime = metricsRuntimeLabel
+
+    def escape(s: String): String =
+      s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", " ")
+
+    def emitMeta(name: String, help: String, kind: String): Unit = {
+      sb.append(s"# HELP $name $help\n")
+      sb.append(s"# TYPE $name $kind\n")
+    }
+
+    def emit(name: String, value: Double, labels: Map[String, String] = Map.empty): Unit = {
+      val all = Map("runtime" -> runtime) ++ labels
+      val ls  = all.toList.sortBy(_._1)
+        .map { case (k, v) => s"""$k="${escape(v)}"""" }
+        .mkString(",")
+      sb.append(s"$name{$ls} $value\n")
+    }
+
+    val stats       = engine.getStats.hcursor
+    val machines    = engine.getAllMachines
+    val totalSeqs   = stats.get[Int]("totalSequences").getOrElse(0)
+    val totalVecs   = stats.get[Int]("totalVectors").getOrElse(0)
+    val totalActive = stats.get[Int]("totalActiveVectors").getOrElse(0)
+    val historySize = engine.getHistory().size
+    val simStep     = simulator.getCurrentStep
+
+    // ── Engine totals — match dashboard queries ────────────────────────────
+    emitMeta("ces_machines_total",  "Total machines registered with the engine.", "gauge")
+    emit   ("ces_machines_total",   machines.size.toDouble)
+
+    emitMeta("ces_sequences_total", "Total CES sequences across all machines.",   "gauge")
+    emit   ("ces_sequences_total",  totalSeqs.toDouble)
+
+    emitMeta("ces_vectors_total",   "Total reality vectors across all sequences.","gauge")
+    emit   ("ces_vectors_total",    totalVecs.toDouble)
+
+    emitMeta("ces_active_vectors_total", "Currently-active reality vectors.",     "gauge")
+    emit   ("ces_active_vectors_total",  totalActive.toDouble)
+
+    emitMeta("ces_history_size", "Length of the transition history.", "gauge")
+    emit   ("ces_history_size",  historySize.toDouble)
+
+    emitMeta("ces_simulator_current_step", "Current step of the configured simulation.", "gauge")
+    emit   ("ces_simulator_current_step",  simStep.toDouble)
+
+    // ── Per-machine sequence count + unfired-sequence/vector counts ────────
+    emitMeta("ces_machine_sequence_count", "Number of sequences belonging to a machine.", "gauge")
+    emitMeta("ces_unfired_sequences",      "Sequences that have not produced an output yet.", "gauge")
+    emitMeta("ces_unfired_vectors",        "Vectors that have not been matched yet.", "gauge")
+
+    machines.foreach { m =>
+      val machineLabel = Map("machine" -> m.name, "machine_id" -> m.id)
+      val seqs         = m.getAllSequences
+      // "Unfired" semantics (until per-step instrumentation lands): a
+      // sequence is currently inactive (no live active vectors); a vector
+      // is currently inactive.  This reflects engine state at scrape
+      // time, which is what the dashboard "Topk unfired" panels need.
+      val unfiredSeqs  = seqs.count(_.getActiveVectors.isEmpty)
+      val unfiredVecs  = seqs.flatMap(_.getAllVectors).count(!_.isActive)
+      emit("ces_machine_sequence_count", seqs.size.toDouble,    machineLabel)
+      emit("ces_unfired_sequences",      unfiredSeqs.toDouble,  machineLabel)
+      emit("ces_unfired_vectors",        unfiredVecs.toDouble,  machineLabel)
+    }
+
+    // ── Counter-style metrics (zero until step-phase instrumentation lands) ──
+    // Emitted with `runtime` label only so the dashboards' rate() queries
+    // resolve to a single series per runtime instead of "No Data".  When
+    // per-step instrumentation is added these will gain machine / sequence /
+    // vector / rag_status_code labels as the dashboards expect.
+    emitMeta("ces_vector_matched_total",   "Vector matches accumulated across all sequences.",   "counter")
+    emit   ("ces_vector_matched_total",    0.0)
+    emitMeta("ces_sequence_outputs_total", "Outputs produced by CES sequences.",                 "counter")
+    emit   ("ces_sequence_outputs_total",  0.0)
+    emitMeta("ces_paging_decisions_total", "CES paging decisions emitted (by RAG status).",      "counter")
+    emit   ("ces_paging_decisions_total",  0.0, Map("owner_team" -> "unknown", "rag_status_code" -> "GREEN"))
+    emitMeta("ces_deprecated_fires_total", "Fires from machines tagged deprecated.",             "counter")
+    emit   ("ces_deprecated_fires_total",  0.0)
+
+    // ── Runtime parity gauges — cross-runtime-parity.json dashboard ────────
+    val vectorDim = simulator.getPerceptualSpace.getPerceptualVector.length
+    emitMeta("re_runtime_dimension",          "Current perceptual-space dimension.", "gauge")
+    emit   ("re_runtime_dimension",           vectorDim.toDouble)
+    emitMeta("re_runtime_required_dimension", "Dimension required to fit all machine mappings.", "gauge")
+    emit   ("re_runtime_required_dimension",  vectorDim.toDouble)
+    emitMeta("re_runtime_mapping_version",    "Mapping schema version (1.0.0 → 100).", "gauge")
+    emit   ("re_runtime_mapping_version",     100.0)
+
+    sb.toString
+  }
+
   val routes: Route = AuditLogger.directive(auditCfg) { handleExceptions(exceptionHandler) {
     pathPrefix("api") {
       concat(
         // Health
         path("health") { get { complete(Json.obj("status" -> Json.fromString("healthy"), "timestamp" -> Json.fromLong(System.currentTimeMillis()), "version" -> Json.fromString("1.0.0"))) } },
+
+        // Prometheus metrics — text/plain exposition format on /api/metrics
+        path("metrics") { get {
+          complete(HttpResponse(
+            status = StatusCodes.OK,
+            entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, renderPrometheusMetrics()),
+          ))
+        } },
 
         // Config
         pathPrefix("config") {
