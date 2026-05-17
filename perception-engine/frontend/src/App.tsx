@@ -6,6 +6,8 @@ import SourcesPanel from './components/SourcesPanel.js';
 import VectorDisplay from './components/VectorDisplay.js';
 import PushLog from './components/PushLog.js';
 import AddSourceModal from './components/AddSourceModal.js';
+import MqttBridgePanel from './components/MqttBridgePanel.js';
+import MqttIngestStream from './components/MqttIngestStream.js';
 
 const MAX_LOG = 20;
 
@@ -163,13 +165,20 @@ export default function App() {
           onHover={setHoveredSourceId}
           hoveredSourceId={hoveredSourceId}
         />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '12px', gap: '12px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto', padding: '12px', gap: '12px' }}>
           <VectorDisplay
             vector={state?.assembledVector ?? new Array(state?.vectorSize ?? 256).fill(0)}
             sources={state?.sources ?? []}
             hoveredSourceId={hoveredSourceId}
           />
           <PushLog entries={pushLog} />
+          {/* Universe Monitor — MQTT-side of the PE.  Self-contained
+              panels that hit /api/mqtt/* on this PE directly.  Moved
+              from the RE visualizer because the bridge is fundamentally
+              a PE concern (it owns the broker subscription and the
+              sensor source TTLs). */}
+          <MqttBridgePanel />
+          <MqttIngestStream />
         </div>
       </div>
       {showAddModal && (

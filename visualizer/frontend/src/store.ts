@@ -32,7 +32,7 @@ const MQTT_INGEST_CAP = 120;
 
 interface VisualizerState {
   // View state
-  currentView: 'selection' | 'administration' | 'interconnection' | 'tobias' | 'universe';
+  currentView: 'selection' | 'administration' | 'interconnection' | 'tobias';
 
   // Machine management
   machines: Machine[];
@@ -58,7 +58,7 @@ interface VisualizerState {
   peSources: PESource[];
 
   // View actions
-  setCurrentView: (view: 'selection' | 'administration' | 'interconnection' | 'tobias' | 'universe') => void;
+  setCurrentView: (view: 'selection' | 'administration' | 'interconnection' | 'tobias') => void;
 
   // Machine management actions
   setMachines: (machines: Machine[]) => void;

@@ -241,9 +241,22 @@ export interface EnvBridge {
  * MQTT_MAPPINGS_FILE (path) or MQTT_MAPPINGS_JSON (inline) for the
  * registry source.
  */
+/**
+ * Default broker URL used when MQTT_BROKER_URL is unset.  Points at the
+ * Lateral Edge sensor mesh that the live yuma demonstration runs against
+ * — operators get a sensible target without configuration.  Setting
+ * MQTT_BROKER_URL='' (empty string) or MQTT_DISABLED=1 explicitly opts
+ * out.  Bridge still requires MQTT_MAPPINGS_FILE / MQTT_MAPPINGS_JSON
+ * before it actually boots; without mappings the broker URL is meaningless.
+ */
+export const DEFAULT_MQTT_BROKER_URL = 'mqtt://yuma.lateraledge.cloud:1883';
+
 export function fromEnvironment(env: NodeJS.ProcessEnv = process.env): EnvBridge | null {
-  const brokerUrl = env['MQTT_BROKER_URL'];
-  if (!brokerUrl) return null;
+  // Explicit opt-out — empty MQTT_BROKER_URL or MQTT_DISABLED=1 keeps
+  // the bridge off even if mappings are present.
+  if (env['MQTT_DISABLED'] === '1' || env['MQTT_DISABLED'] === 'true') return null;
+  if (env['MQTT_BROKER_URL'] === '') return null;
+  const brokerUrl = env['MQTT_BROKER_URL'] || DEFAULT_MQTT_BROKER_URL;
 
   const config: BridgeConfig = {
     brokerUrl,

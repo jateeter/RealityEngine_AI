@@ -4,7 +4,6 @@ import MachineSelectionView from './views/MachineSelectionView';
 import MachineAdministrationView from './views/MachineAdministrationView';
 import { MachineInterconnectionView } from './pages/MachineInterconnectionView';
 import TobiasView from './pages/TobiasView';
-import UniverseView from './pages/UniverseView';
 import { perceptualLogger } from './utils/perceptualSequenceLogger';
 
 function App() {
@@ -81,10 +80,6 @@ function App() {
 
   if (currentView === 'tobias') {
     return <TobiasView />;
-  }
-
-  if (currentView === 'universe') {
-    return <UniverseView />;
   }
 
   return <MachineSelectionView />;
