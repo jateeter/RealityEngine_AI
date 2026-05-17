@@ -4,7 +4,7 @@ import cors from 'cors';
 import axios from 'axios';
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer as createHttpServer } from 'http';
-import { createServer as createHttpsServer } from 'https';
+import { Agent as HttpsAgent, createServer as createHttpsServer } from 'https';
 import { readFileSync, existsSync } from 'fs';
 import { PerceptionEngine } from './PerceptionEngine.js';
 import { SourceStore } from './SourceStore.js';
@@ -48,6 +48,28 @@ const VECTOR_SIZE = parseInt(process.env['VECTOR_SIZE'] ?? '256', 10);
 const certPath = process.env['TLS_CERT_PATH'];
 const keyPath  = process.env['TLS_KEY_PATH'];
 const tlsEnabled = !!(certPath && keyPath && existsSync(certPath) && existsSync(keyPath));
+
+// HTTPS agent for outbound calls to the Reality Engine.  When CA_CERT_PATH
+// points at a real file (Docker dev: the bundled self-signed CA at
+// /etc/certs/ca.crt), trust it explicitly — every PE→RE push then
+// validates against that CA instead of erroring with "self-signed
+// certificate in certificate chain" on every step.  When CA_CERT_PATH
+// is unset (deployed against a real CA-signed RE), this stays null and
+// axios uses Node's default trust store — strict TLS validation intact,
+// which is exactly the restriction we want to preserve in production.
+const caCertPath = process.env['CA_CERT_PATH'];
+const reHttpsAgent: HttpsAgent | null =
+  caCertPath && existsSync(caCertPath)
+    ? new HttpsAgent({ ca: readFileSync(caCertPath) })
+    : null;
+if (reHttpsAgent) {
+  console.log(`[TLS] Trusting RE cert chain via CA at ${caCertPath}`);
+}
+
+// Wrap axios calls to the RE so each one carries the CA-aware agent.
+// Use these helpers in place of bare axios.get/post when the URL is on
+// REALITY_ENGINE_URL — they no-op (use default agent) in deployed mode.
+const reAxios = axios.create(reHttpsAgent ? { httpsAgent: reHttpsAgent } : {});
 
 const app = express();
 // Use HTTPS when TLS_CERT_PATH and TLS_KEY_PATH are set (dev outside Docker);
@@ -222,7 +244,7 @@ async function doPush(): Promise<PushResult> {
   try {
     // Direct call to the Reality Engine — bypasses the visualizer entirely.
     // RE returns the step object directly (not wrapped in {success, step}).
-    const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceive`, {
+    const response = await reAxios.post(`${REALITY_ENGINE_URL}/api/perceive`, {
       vector,
       matchAlgorithm: engine.matchAlgorithm,
     });
@@ -311,6 +333,7 @@ mountMcp(app, {
   saveAndBroadcast,
   resetAndBroadcast,
   realityEngineUrl: REALITY_ENGINE_URL,
+  httpClient: reAxios,
 });
 
 // ── HTTP API ──────────────────────────────────────────────────────────────
@@ -647,7 +670,7 @@ app.get('/api/mqtt/example', (_req: Request, res: Response) => {
 // Machine listing — proxy from Reality Engine for use in the add-source form
 app.get('/api/machines', async (_req: Request, res: Response) => {
   try {
-    const response = await axios.get(`${REALITY_ENGINE_URL}/api/machines`);
+    const response = await reAxios.get(`${REALITY_ENGINE_URL}/api/machines`);
     res.json(response.data);
   } catch (err: any) {
     res.status(err.response?.status || 502).json({ error: err.message });
