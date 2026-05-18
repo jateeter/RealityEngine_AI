@@ -289,6 +289,30 @@ else
     ok "RE container state clean"
 fi
 
+# Symmetric cleanup for the localAIStack compose project.  Its services
+# (qdrant, redis, loki, grafana, api, webui) use hardcoded container_name
+# entries, so a stale container from a previous LAS run — even one created
+# outside the compose project label — will collide with `docker compose up`
+# in Phase 3.  Without this sweep the start fails with:
+#   Conflict. The container name "/localai_qdrant" is already in use...
+(cd "$LAS_DIR" && docker compose down 2>/dev/null) || true
+docker rm -f \
+    localai_qdrant \
+    localai_redis \
+    localai_loki \
+    localai_grafana \
+    localai_api \
+    localai_webui > /dev/null 2>&1 || true
+
+LAS_REMAINING=$(docker ps -a --format "{{.Names}}" 2>/dev/null \
+    | grep -c "^localai_" || true)
+if [ "$LAS_REMAINING" -gt 0 ]; then
+    warn "Some localAIStack containers could not be removed — they may cause startup conflicts"
+    add_warn "$LAS_REMAINING localai_* container(s) still present before startup"
+else
+    ok "localAIStack container state clean"
+fi
+
 # Settle time for Docker Desktop VirtioFS file-lock release after container removal
 sleep 2
 
