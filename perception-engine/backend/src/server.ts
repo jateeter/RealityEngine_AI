@@ -396,19 +396,34 @@ async function bootstrapMachineTestSources(
   // skipped reflects what was filtered out.
   const allowList = filter?.machineIds;
 
-  const existingKeys = new Set<string>();
+  // One source per machine, regardless of how many test sequences it
+  // declares — its segments stage the sequences end-to-end so the first
+  // completes before the second starts and a loop iteration spans the
+  // entire concatenated set.  Dedup is per-machine.
+  //
+  // Migration: prior bootstrap created one test source *per sequence*;
+  // machines that still carry that stale layout (>1 test source for the
+  // same machineId) have all of those cleared here so the consolidated
+  // source replaces them.  Single-source machines are left alone — they
+  // are already idempotent under the new shape.
+  const perMachine = new Map<string, string[]>();
   for (const src of engine.getSources()) {
-    if (src.type === 'test') {
-      existingKeys.add(`${src.machineId}|${src.sequenceName}`);
-    }
+    if (src.type !== 'test' || !src.machineId) continue;
+    const list = perMachine.get(src.machineId) ?? [];
+    list.push(src.id);
+    perMachine.set(src.machineId, list);
+  }
+  for (const [, ids] of perMachine) {
+    if (ids.length > 1) for (const id of ids) engine.removeSource(id);
+  }
+
+  const existingMachineIds = new Set<string>();
+  for (const src of engine.getSources()) {
+    if (src.type === 'test') existingMachineIds.add(src.machineId);
   }
 
   for (const machine of machines) {
     if (allowList && !allowList.has(machine.id)) {
-      // Count each sequence the machine would have contributed so the
-      // totals reflect inputs not test machines.  Falls back to 1 when
-      // the catalog has no metadata yet so a filtered-out machine still
-      // shows up in the breakdown.
       const seqs = machine.metadata?.inputSequences;
       reasons.outsideFilter += Array.isArray(seqs) && seqs.length > 0 ? seqs.length : 1;
       continue;
@@ -418,37 +433,42 @@ async function bootstrapMachineTestSources(
     const inputSequences = machine.metadata?.inputSequences ?? [];
     const mapping = machine.perceptualMapping?.input;
     if (!machineId || inputSequences.length === 0) continue;
+    if (existingMachineIds.has(machineId)) { reasons.alreadyExisted++; continue; }
 
+    const concatVectors: number[][] = [];
+    const segments: { name: string; length: number }[] = [];
     for (const seq of inputSequences) {
-      if (!seq?.name || !Array.isArray(seq.vectors) || seq.vectors.length === 0) {
-        reasons.noSequences++;
-        continue;
-      }
-      const key = `${machineId}|${seq.name}`;
-      if (existingKeys.has(key)) { reasons.alreadyExisted++; continue; }
-
-      const length = mapping?.length ?? seq.vectors[0]?.length ?? 0;
-      const offset = mapping?.offset ?? 0;
-      if (length <= 0 || offset < 0 || offset >= VECTOR_SIZE || offset + length > VECTOR_SIZE) {
-        reasons.outOfRange++;
-        continue;
-      }
-
-      const config: Omit<TestSourceConfig, 'id'> = {
-        type: 'test',
-        name: `${machineName} · ${seq.name}`,
-        region: { offset, length },
-        active: true,
-        machineId,
-        machineName,
-        sequenceName: seq.name,
-        inputs: seq.vectors,
-        loop: true,
-      };
-      engine.addSource(config);
-      existingKeys.add(key);
-      created++;
+      if (!seq?.name || !Array.isArray(seq.vectors) || seq.vectors.length === 0) continue;
+      segments.push({ name: seq.name, length: seq.vectors.length });
+      for (const v of seq.vectors) concatVectors.push(v);
     }
+    if (concatVectors.length === 0) { reasons.noSequences++; continue; }
+
+    const length = mapping?.length ?? concatVectors[0]?.length ?? 0;
+    const offset = mapping?.offset ?? 0;
+    if (length <= 0 || offset < 0 || offset >= VECTOR_SIZE || offset + length > VECTOR_SIZE) {
+      reasons.outOfRange++;
+      continue;
+    }
+
+    const segmentLabel = segments.length === 1
+      ? segments[0].name
+      : `${segments.length} sequences (${segments.map(s => s.name).join(', ')})`;
+    const config: Omit<TestSourceConfig, 'id'> = {
+      type: 'test',
+      name: `${machineName} · ${segmentLabel}`,
+      region: { offset, length },
+      active: true,
+      machineId,
+      machineName,
+      sequenceName: segmentLabel,
+      segments,
+      inputs: concatVectors,
+      loop: true,
+    };
+    engine.addSource(config);
+    existingMachineIds.add(machineId);
+    created++;
   }
 
   if (created > 0) {

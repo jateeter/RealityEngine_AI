@@ -65,6 +65,11 @@ class RealityEngine(
 
   val preceptionEngine = new PreceptionEngine(universalDimension)
 
+  // CES coverage counters bump on every non-speculative transition.  Read
+  // from Routes.scala /api/metrics; what-if paths use machine.clone() and
+  // intentionally bypass this registry, matching CPP/LSP semantics.
+  val coverage = new com.realityengine.services.CesCoverageRegistry
+
   // ── Initialization ────────────────────────────────────────────────────────
 
   def initialize()(implicit ec: ExecutionContext): Future[Unit] =
@@ -143,6 +148,7 @@ class RealityEngine(
 
         (actor ? MachineActor.ProcessInput(machineInput)).mapTo[MachineActor.ProcessInputResult].map { pr =>
           val result = pr.result
+          coverage.record(machine, result)
 
           if (verboseLogging)
             println(s"[RealityEngine] machine=${machine.name} id=$machineId " +
@@ -200,6 +206,7 @@ class RealityEngine(
               Future.successful((machine, machineId, cached))
             case _ =>
               (actor ? MachineActor.ProcessInput(machineInput)).mapTo[MachineActor.ProcessInputResult].map { pr =>
+                coverage.record(machine, pr.result)
                 val tagged = pr.result.copy(machineOutput = pr.result.machineOutput.map { ov =>
                   ov.copy(metadata = ov.metadata ++
                     Map("machineId"               -> tagMachineId,

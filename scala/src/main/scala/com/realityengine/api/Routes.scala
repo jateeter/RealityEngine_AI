@@ -200,38 +200,85 @@ class Routes(
     emitMeta("ces_simulator_current_step", "Current step of the configured simulation.", "gauge")
     emit   ("ces_simulator_current_step",  simStep.toDouble)
 
-    // ── Per-machine sequence count + unfired-sequence/vector counts ────────
-    emitMeta("ces_machine_sequence_count", "Number of sequences belonging to a machine.", "gauge")
-    emitMeta("ces_unfired_sequences",      "Sequences that have not produced an output yet.", "gauge")
-    emitMeta("ces_unfired_vectors",        "Vectors that have not been matched yet.", "gauge")
+    // ── Per-machine gauges + counter-label baselines ──────────────────────
+    // Per-machine series back the `$machine` template variable and let
+    // `by (machine)` aggregations on the counter metrics resolve at zero
+    // instead of "No Data".  Event-keyed counter series below carry
+    // sequence / vector sub-labels — distinct Prom label sets — so they
+    // coexist with these baselines without duplication.
+    emitMeta("ces_machine_sequence_count", "Number of sequences belonging to a machine.",       "gauge")
+    emitMeta("ces_machine_vector_count",   "Total vectors declared by this machine.",           "gauge")
+    emitMeta("ces_machine_steps_total",    "process_input calls observed for this machine.",    "counter")
+    emitMeta("ces_unfired_sequences",      "Sequences that have not produced an output yet.",   "gauge")
+    emitMeta("ces_unfired_vectors",        "Vectors that have not been matched yet.",           "gauge")
+    emitMeta("ces_vector_matched_total",   "Vector matches accumulated across all sequences.",  "counter")
+    emitMeta("ces_vector_activated_total", "Vector activations as successors in transitions.",  "counter")
+    emitMeta("ces_sequence_outputs_total", "Outputs produced by CES sequences.",                "counter")
+    emitMeta("ces_paging_decisions_total", "CES paging decisions emitted (by RAG status).",     "counter")
+    emitMeta("ces_deprecated_fires_total", "Fires from machines tagged deprecated.",            "counter")
+
+    val stepsSnap     = engine.coverage.stepsSnap
+    val matchedSnap   = engine.coverage.matchedSnap
+    val activatedSnap = engine.coverage.activatedSnap
+    val outputsSnap   = engine.coverage.outputsSnap
+    // ces_machine_steps_total shares its baseline's {machine, machine_id}
+    // label set, so we suppress the baseline for machines that already
+    // have a real step count to avoid duplicate-series warnings.
+    val seenSteps = stepsSnap.keysIterator
+      .map(k => com.realityengine.services.CesCoverageRegistry.splitKey(k))
+      .collect { case Array(id, _) => id }
+      .toSet
 
     machines.foreach { m =>
       val machineLabel = Map("machine" -> m.name, "machine_id" -> m.id)
       val seqs         = m.getAllSequences
-      // "Unfired" semantics (until per-step instrumentation lands): a
-      // sequence is currently inactive (no live active vectors); a vector
-      // is currently inactive.  This reflects engine state at scrape
-      // time, which is what the dashboard "Topk unfired" panels need.
+      val allVecs      = seqs.flatMap(_.getAllVectors)
+      // "Unfired" semantics: a sequence is currently inactive (no live
+      // active vectors); a vector is currently inactive.  Engine state
+      // at scrape time, which is what the dashboard top-K panels need.
       val unfiredSeqs  = seqs.count(_.getActiveVectors.isEmpty)
-      val unfiredVecs  = seqs.flatMap(_.getAllVectors).count(!_.isActive)
+      val unfiredVecs  = allVecs.count(!_.isActive)
       emit("ces_machine_sequence_count", seqs.size.toDouble,    machineLabel)
+      emit("ces_machine_vector_count",   allVecs.size.toDouble, machineLabel)
       emit("ces_unfired_sequences",      unfiredSeqs.toDouble,  machineLabel)
       emit("ces_unfired_vectors",        unfiredVecs.toDouble,  machineLabel)
+      emit("ces_vector_matched_total",   0.0,                   machineLabel)
+      emit("ces_vector_activated_total", 0.0,                   machineLabel)
+      emit("ces_sequence_outputs_total", 0.0,                   machineLabel)
+      emit("ces_deprecated_fires_total", 0.0,                   machineLabel)
+      emit("ces_paging_decisions_total", 0.0,
+           machineLabel ++ Map("owner_team" -> "unknown", "rag_status_code" -> "GREEN"))
+      if (!seenSteps.contains(m.id))
+        emit("ces_machine_steps_total",  0.0,                   machineLabel)
     }
 
-    // ── Counter-style metrics (zero until step-phase instrumentation lands) ──
-    // Emitted with `runtime` label only so the dashboards' rate() queries
-    // resolve to a single series per runtime instead of "No Data".  When
-    // per-step instrumentation is added these will gain machine / sequence /
-    // vector / rag_status_code labels as the dashboards expect.
-    emitMeta("ces_vector_matched_total",   "Vector matches accumulated across all sequences.",   "counter")
-    emit   ("ces_vector_matched_total",    0.0)
-    emitMeta("ces_sequence_outputs_total", "Outputs produced by CES sequences.",                 "counter")
-    emit   ("ces_sequence_outputs_total",  0.0)
-    emitMeta("ces_paging_decisions_total", "CES paging decisions emitted (by RAG status).",      "counter")
-    emit   ("ces_paging_decisions_total",  0.0, Map("owner_team" -> "unknown", "rag_status_code" -> "GREEN"))
-    emitMeta("ces_deprecated_fires_total", "Fires from machines tagged deprecated.",             "counter")
-    emit   ("ces_deprecated_fires_total",  0.0)
+    // ── Event-keyed counter series from the live coverage registry ────────
+    stepsSnap.foreach { case (k, c) =>
+      val parts = com.realityengine.services.CesCoverageRegistry.splitKey(k)
+      if (parts.length == 2)
+        emit("ces_machine_steps_total", c.toDouble,
+             Map("machine_id" -> parts(0), "machine" -> parts(1)))
+    }
+    matchedSnap.foreach { case (k, c) =>
+      val parts = com.realityengine.services.CesCoverageRegistry.splitKey(k)
+      if (parts.length == 4)
+        emit("ces_vector_matched_total", c.toDouble,
+             Map("machine_id" -> parts(0), "machine" -> parts(1),
+                 "sequence"   -> parts(2), "vector"  -> parts(3)))
+    }
+    activatedSnap.foreach { case (k, c) =>
+      val parts = com.realityengine.services.CesCoverageRegistry.splitKey(k)
+      if (parts.length == 4)
+        emit("ces_vector_activated_total", c.toDouble,
+             Map("machine_id" -> parts(0), "machine" -> parts(1),
+                 "sequence"   -> parts(2), "vector"  -> parts(3)))
+    }
+    outputsSnap.foreach { case (k, c) =>
+      val parts = com.realityengine.services.CesCoverageRegistry.splitKey(k)
+      if (parts.length == 3)
+        emit("ces_sequence_outputs_total", c.toDouble,
+             Map("machine_id" -> parts(0), "machine" -> parts(1), "sequence" -> parts(2)))
+    }
 
     // ── Runtime parity gauges — cross-runtime-parity.json dashboard ────────
     val vectorDim = simulator.getPerceptualSpace.getPerceptualVector.length

@@ -138,6 +138,7 @@ services:
     environment:
       - VIZ_PORT=3001
       - REALITY_ENGINE_URL=https://reality-engine:3000
+      - PERCEPTION_ENGINE_URL=https://perception-engine-backend:3004
       - TLS_CERT_PATH=/etc/certs/server.crt
       - TLS_KEY_PATH=/etc/certs/server.key
       - NODE_EXTRA_CA_CERTS=/etc/certs/ca.crt

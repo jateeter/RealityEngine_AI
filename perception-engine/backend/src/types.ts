@@ -24,8 +24,18 @@ export interface TestSourceConfig {
   machineId: string;
   machineName: string;
   sequenceName: string;
+  // Concatenated step vectors across one or more named sequences.  The
+  // runtime advances through `inputs` sequentially; `segments` (when
+  // present) describes the sub-sequence boundaries so the UI can label
+  // progress as "TC-02 step 3 of 5" instead of a flat step index.
+  segments?: TestSegment[];
   inputs: number[][];
   loop: boolean;
+}
+
+export interface TestSegment {
+  name: string;
+  length: number;
 }
 
 export interface SimulatedSourceConfig {

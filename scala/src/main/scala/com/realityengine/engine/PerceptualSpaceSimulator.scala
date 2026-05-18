@@ -19,11 +19,18 @@ class PerceptualSpaceSimulator(dimension: Int = sys.env.getOrElse("VECTOR_DIMENS
   private var config:            Option[SimulationConfig] = None
   private var onStepComplete:    Option[(SimulationStep, Vector[Double]) => Unit] = None
   private var cachedEdges:       List[Json]           = Nil
+  // CES coverage registry — attached at boot in Main.scala to the same
+  // instance the engine holds, so /api/perceive and /api/process-universal
+  // bump the same counters that /api/metrics emits.
+  private var coverageRegistry:  Option[com.realityengine.services.CesCoverageRegistry] = None
 
   // ── Configuration ─────────────────────────────────────────────────────────
 
   def setOnStepComplete(cb: (SimulationStep, Vector[Double]) => Unit): Unit =
     { onStepComplete = Some(cb) }
+
+  def setCoverageRegistry(reg: com.realityengine.services.CesCoverageRegistry): Unit =
+    { coverageRegistry = Some(reg) }
 
   def addMachine(machine: Machine): Unit = {
     require(machine.perceptualMapping.isDefined,
@@ -122,6 +129,7 @@ class PerceptualSpaceSimulator(dimension: Int = sys.env.getOrElse("VECTOR_DIMENS
     for (machine <- mappedMachines) {
       val snapshot     = inputSnapshots(machine.id)
       val transition   = machine.processInput(snapshot, matchOverride)
+      coverageRegistry.foreach(_.record(machine, transition))
       val outputVector = transition.machineOutput.map(_.vector)
       val mapping      = machine.perceptualMapping.get
 

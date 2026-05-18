@@ -13,7 +13,7 @@
         "name": "machine", "label": "Machine",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(ces_machine_steps_total, machine)",
+        "query": "label_values(ces_machine_sequence_count, machine)",
         "refresh": 2, "multi": true, "includeAll": true,
         "current": { "selected": true, "text": "All", "value": "$__all" }
       }
