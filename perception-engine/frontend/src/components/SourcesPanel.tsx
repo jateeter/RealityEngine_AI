@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { SourceConfig } from '../types.js';
-import type { MachineSummary } from '../api.js';
+import type { BootstrapResult, MachineSummary } from '../api.js';
 import {
   DOMAINS, DOMAIN_ORDER, classifyMachine,
 } from './machineDomains.js';
@@ -12,12 +13,90 @@ import SourceCard from './SourceCard.js';
 // operator can isolate manually-configured non-machine sources.
 type FilterBucket = DomainId | 'other';
 
+/**
+ * BootstrapResultBanner — typed-reasons summary after an Import action.
+ *
+ * The bootstrap endpoint walks every machine × inputSequence and bins each
+ * one of {created, alreadyExisted, outOfRange, noSequences, outsideFilter}.
+ * The dominant skip in production is outOfRange: the visualizer mints
+ * inputSequences at offsets up to PERCEPTUAL_DIM (currently 4128) but PE's
+ * VECTOR_SIZE defaults to 256, so anything past that is silently dropped.
+ * Surface the breakdown plainly so the operator can see why and act on it
+ * (e.g. set VECTOR_SIZE=4128 in the PE env).
+ */
+function BootstrapResultBanner({ result, onDismiss }: { result: BootstrapResult; onDismiss: () => void }) {
+  const r = result.reasons;
+  const outOfRangeBlocking = (r?.outOfRange ?? 0) > 0;
+  const recommendedSize = result.vectorSize ?? 256;
+
+  return (
+    <div style={{
+      padding: '8px 12px', fontSize: 11,
+      background: outOfRangeBlocking ? '#1c1407' : '#0f172a',
+      borderBottom: `1px solid ${outOfRangeBlocking ? '#7c4d0c' : '#1e293b'}`,
+      display: 'flex', flexDirection: 'column', gap: 4,
+      color: '#cbd5e1',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{
+          fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 3,
+          background: result.created > 0 ? '#14532d' : '#1e293b',
+          color: result.created > 0 ? '#86efac' : '#7dd3fc',
+          textTransform: 'uppercase', letterSpacing: 0.5,
+        }}>
+          {result.created > 0 ? `+${result.created} new` : 'no new sources'}
+        </span>
+        <span style={{ color: '#64748b', fontFamily: 'monospace', fontSize: 10 }}>
+          {result.machinesSeen} machines · vector size {recommendedSize}
+        </span>
+        <button
+          onClick={onDismiss}
+          aria-label="Dismiss"
+          style={{
+            marginLeft: 'auto', background: 'transparent', border: 'none',
+            color: '#64748b', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0,
+          }}
+        >
+          ✕
+        </button>
+      </div>
+      {r && (
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 2,
+          fontFamily: 'monospace', fontSize: 10, color: '#94a3b8',
+        }}>
+          {r.alreadyExisted > 0 && <span title="Sequence already imported"           >{r.alreadyExisted} already imported</span>}
+          {r.outOfRange     > 0 && <span title="Offset/length exceeds PE vector size" style={{ color: '#fbbf24' }}>{r.outOfRange} out of range</span>}
+          {r.noSequences    > 0 && <span title="Sequence missing name or vectors"    >{r.noSequences} invalid</span>}
+          {r.outsideFilter  > 0 && <span title="Machine excluded by domain filter"   >{r.outsideFilter} filtered out</span>}
+        </div>
+      )}
+      {outOfRangeBlocking && (
+        <div style={{
+          marginTop: 4, fontSize: 10.5, color: '#fbbf24',
+          lineHeight: 1.45,
+        }}>
+          <strong>{r!.outOfRange} sequences exceed VECTOR_SIZE={recommendedSize}.</strong>{' '}
+          Raise the PE's <code style={{ background: '#1c1407', padding: '0 4px', borderRadius: 3 }}>VECTOR_SIZE</code> env
+          var (typically to 4128 to match the visualizer's <code>PERCEPTUAL_DIM</code>) and restart the PE container —
+          these machines will then bootstrap on the next Import.
+        </div>
+      )}
+      {result.errors?.length > 0 && (
+        <div style={{ marginTop: 4, fontSize: 10.5, color: '#fca5a5' }}>
+          {result.errors.length} error{result.errors.length === 1 ? '' : 's'}: {result.errors[0]}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Props {
   sources: SourceConfig[];
   machines: MachineSummary[];
   machineDomain: ReadonlyMap<string, DomainId>;
   onAdd: () => void;
-  onBootstrap: (opts?: { machineIds?: string[] }) => Promise<{ created: number; skipped: number; machinesSeen: number; errors: string[] }>;
+  onBootstrap: (opts?: { machineIds?: string[] }) => Promise<BootstrapResult>;
   onRefreshMachines: () => Promise<void>;
   onDelete: (id: string) => void;
   onToggle: (id: string, active: boolean) => void;
@@ -33,7 +112,11 @@ export default function SourcesPanel({
   onHover, hoveredSourceId,
 }: Props) {
   const [bootstrapping, setBootstrapping] = useState(false);
-  const [bootstrapMsg, setBootstrapMsg] = useState<string | null>(null);
+  // Last bootstrap response — drives the under-header status block.  Holds
+  // the full reasons breakdown so the operator can see exactly why entries
+  // were skipped (the dominant case is offset >= VECTOR_SIZE).
+  const [lastBootstrap, setLastBootstrap] = useState<BootstrapResult | null>(null);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
   // Import-menu state.  Closed → just a button.  Open → popover with the
   // global "all" action plus a per-domain checklist.
@@ -41,6 +124,39 @@ export default function SourcesPanel({
   const [importPicks, setImportPicks] = useState<Set<DomainId>>(() => new Set());
   const importBtnRef  = useRef<HTMLButtonElement>(null);
   const importMenuRef = useRef<HTMLDivElement>(null);
+
+  // Viewport-anchored menu rect — recomputed on open / scroll / resize so
+  // the portal-rendered menu sits flush against the button regardless of
+  // parent overflow.  Without this the menu gets clipped by the panel's
+  // overflow: hidden container.
+  const [menuRect, setMenuRect] = useState<{ top: number; left: number } | null>(null);
+
+  const MENU_WIDTH = 280;
+
+  useLayoutEffect(() => {
+    if (!importMenuOpen) { setMenuRect(null); return; }
+    const update = () => {
+      const btn = importBtnRef.current;
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      // Align menu's RIGHT edge with the button's right edge — i.e. menu
+      // hangs leftward.  Clamp so its LEFT edge stays at least 8px inside
+      // the viewport; without the clamp the menu gets cut off when the
+      // button sits in a narrow left sidebar.
+      const minLeft = 8;
+      const maxLeft = Math.max(minLeft, window.innerWidth - MENU_WIDTH - 8);
+      const idealLeft = r.right - MENU_WIDTH;
+      const left = Math.min(maxLeft, Math.max(minLeft, idealLeft));
+      setMenuRect({ top: r.bottom + 4, left });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [importMenuOpen]);
 
   // Source-list filter.  Empty = show everything (this matches the "all on"
   // affordance — same shape as the master toggle).  A user can drill down
@@ -178,20 +294,19 @@ export default function SourcesPanel({
   const runImport = async (opts?: { machineIds?: string[] }) => {
     if (bootstrapping) return;
     setBootstrapping(true);
-    setBootstrapMsg(null);
+    setLastBootstrap(null);
+    setBootstrapError(null);
     setImportMenuOpen(false);
     try {
       const r = await onBootstrap(opts);
-      const errs = r.errors?.length ? ` · ${r.errors.length} error(s)` : '';
-      const scope = opts?.machineIds
-        ? ` from ${opts.machineIds.length} machine${opts.machineIds.length === 1 ? '' : 's'}`
-        : '';
-      setBootstrapMsg(`+${r.created} new${scope} (${r.skipped} skipped, ${r.machinesSeen} machines)${errs}`);
+      setLastBootstrap(r);
     } catch (err: any) {
-      setBootstrapMsg(`Bootstrap failed: ${err?.message ?? String(err)}`);
+      setBootstrapError(`Bootstrap failed: ${err?.message ?? String(err)}`);
     } finally {
       setBootstrapping(false);
-      setTimeout(() => setBootstrapMsg(null), 6000);
+      // Auto-dismiss after a longer window since the breakdown often warrants
+      // a close read.  Errors stay until the next attempt.
+      window.setTimeout(() => setLastBootstrap(null), 12000);
     }
   };
 
@@ -281,16 +396,19 @@ export default function SourcesPanel({
             {bootstrapping ? '…' : 'Import'}
             <span style={{ fontSize: 9, opacity: 0.7 }}>▾</span>
           </button>
-          {importMenuOpen && (
+          {importMenuOpen && menuRect && createPortal(
             <div
               ref={importMenuRef}
               role="menu"
+              // Rendered via portal so it escapes the panel's overflow: hidden.
+              // Position is fixed-relative and recomputed on open/scroll/resize
+              // via useLayoutEffect above.
               style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: 4,
-                width: 260, maxHeight: 340, overflowY: 'auto',
+                position: 'fixed', top: menuRect.top, left: menuRect.left,
+                width: MENU_WIDTH, maxHeight: 'min(60vh, 420px)', overflowY: 'auto',
                 background: '#0f172a', border: '1px solid #1e293b',
                 borderRadius: 6, boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
-                zIndex: 50,
+                zIndex: 1000,
                 padding: 8,
               }}
             >
@@ -383,7 +501,8 @@ export default function SourcesPanel({
                   Clear
                 </button>
               </div>
-            </div>
+            </div>,
+            document.body,
           )}
         </div>
 
@@ -399,14 +518,15 @@ export default function SourcesPanel({
         </button>
       </div>
 
-      {bootstrapMsg && (
+      {bootstrapError && (
         <div style={{
-          padding: '6px 12px', fontSize: 11, color: '#7dd3fc',
-          background: '#0f172a', borderBottom: '1px solid #1e293b',
+          padding: '6px 12px', fontSize: 11, color: '#fca5a5',
+          background: '#1f1010', borderBottom: '1px solid #3f1d1d',
         }}>
-          {bootstrapMsg}
+          {bootstrapError}
         </div>
       )}
+      {lastBootstrap && <BootstrapResultBanner result={lastBootstrap} onDismiss={() => setLastBootstrap(null)} />}
 
       {/* Domain filter chips.  Shown only when there's at least one bucket
           worth filtering on; otherwise the row collapses to keep the panel

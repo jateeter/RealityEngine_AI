@@ -78,6 +78,18 @@ export interface BootstrapResult {
   skipped: number;
   machinesSeen: number;
   errors: string[];
+  // Typed breakdown — present on responses from the updated backend; older
+  // backends omit it.  Treat as optional and fall back to the legacy single
+  // `skipped` total in the UI when missing.
+  reasons?: {
+    alreadyExisted: number;
+    outOfRange:     number;
+    noSequences:    number;
+    outsideFilter:  number;
+  };
+  // The PE's configured vector size — surfaced so the UI can hint at the
+  // VECTOR_SIZE env var when outOfRange dominates.
+  vectorSize?: number;
 }
 
 export async function bootstrapFromMachines(

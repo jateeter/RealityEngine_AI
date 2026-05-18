@@ -44,7 +44,13 @@ const EXAMPLE_MAPPINGS_JSON = {
 const PORT = parseInt(process.env['PORT'] ?? '3004', 10);
 const REALITY_ENGINE_URL = process.env['REALITY_ENGINE_URL'] ?? 'http://localhost:3000';
 const DATA_PATH = process.env['DATA_PATH'] ?? './data';
-const VECTOR_SIZE = parseInt(process.env['VECTOR_SIZE'] ?? '256', 10);
+// Default matches the visualizer's PERCEPTUAL_DIM so machine offsets minted
+// by the RE land inside PE's vector out of the box.  Bootstrapping a 50+
+// machine universe with the old 256 default silently dropped every machine
+// whose perceptualMapping.input.offset exceeded 255 — the bootstrap counted
+// them as "skipped" with no diagnostic.  Override via VECTOR_SIZE env var
+// when running a smaller universe to claw the memory back.
+const VECTOR_SIZE = parseInt(process.env['VECTOR_SIZE'] ?? '4128', 10);
 const certPath = process.env['TLS_CERT_PATH'];
 const keyPath  = process.env['TLS_KEY_PATH'];
 const tlsEnabled = !!(certPath && keyPath && existsSync(certPath) && existsSync(keyPath));
@@ -344,6 +350,23 @@ interface BootstrapResult {
   skipped: number;
   machinesSeen: number;
   errors: string[];
+  // Breakdown of why each input was skipped — kept additive so existing
+  // clients reading `skipped` keep working while the UI can show specifics.
+  reasons: {
+    // Sequence already existed for this machine (idempotency skip).
+    alreadyExisted:  number;
+    // perceptualMapping offset/length falls outside [0, vectorSize) —
+    // the dominant failure mode when PE's VECTOR_SIZE is configured
+    // smaller than the visualizer's PERCEPTUAL_DIM.
+    outOfRange:      number;
+    // Sequence record was missing a name or had no input vectors.
+    noSequences:     number;
+    // Machine was filtered out by the caller's machineIds allow-list.
+    outsideFilter:   number;
+  };
+  // Engine's configured vector size, surfaced so the UI can suggest
+  // raising VECTOR_SIZE when outOfRange is non-zero.
+  vectorSize: number;
 }
 
 async function bootstrapMachineTestSources(
@@ -351,7 +374,7 @@ async function bootstrapMachineTestSources(
 ): Promise<BootstrapResult> {
   const errors: string[] = [];
   let created = 0;
-  let skipped = 0;
+  const reasons = { alreadyExisted: 0, outOfRange: 0, noSequences: 0, outsideFilter: 0 };
   let machinesSeen = 0;
 
   let machines: MachineSummary[] = [];
@@ -361,7 +384,10 @@ async function bootstrapMachineTestSources(
     machinesSeen = machines.length;
   } catch (err: any) {
     errors.push(`fetch /api/machines: ${err?.message ?? String(err)}`);
-    return { created, skipped, machinesSeen, errors };
+    return {
+      created, skipped: 0, machinesSeen, errors,
+      reasons, vectorSize: VECTOR_SIZE,
+    };
   }
 
   // Optional allow-list: when caller supplied machineIds (typically the
@@ -378,7 +404,15 @@ async function bootstrapMachineTestSources(
   }
 
   for (const machine of machines) {
-    if (allowList && !allowList.has(machine.id)) { skipped++; continue; }
+    if (allowList && !allowList.has(machine.id)) {
+      // Count each sequence the machine would have contributed so the
+      // totals reflect inputs not test machines.  Falls back to 1 when
+      // the catalog has no metadata yet so a filtered-out machine still
+      // shows up in the breakdown.
+      const seqs = machine.metadata?.inputSequences;
+      reasons.outsideFilter += Array.isArray(seqs) && seqs.length > 0 ? seqs.length : 1;
+      continue;
+    }
     const machineId = machine.id;
     const machineName = machine.name ?? machineId;
     const inputSequences = machine.metadata?.inputSequences ?? [];
@@ -387,16 +421,16 @@ async function bootstrapMachineTestSources(
 
     for (const seq of inputSequences) {
       if (!seq?.name || !Array.isArray(seq.vectors) || seq.vectors.length === 0) {
-        skipped++;
+        reasons.noSequences++;
         continue;
       }
       const key = `${machineId}|${seq.name}`;
-      if (existingKeys.has(key)) { skipped++; continue; }
+      if (existingKeys.has(key)) { reasons.alreadyExisted++; continue; }
 
       const length = mapping?.length ?? seq.vectors[0]?.length ?? 0;
       const offset = mapping?.offset ?? 0;
-      if (length <= 0 || offset < 0 || offset >= VECTOR_SIZE) {
-        skipped++;
+      if (length <= 0 || offset < 0 || offset >= VECTOR_SIZE || offset + length > VECTOR_SIZE) {
+        reasons.outOfRange++;
         continue;
       }
 
@@ -421,7 +455,8 @@ async function bootstrapMachineTestSources(
     await saveAndBroadcast();
   }
 
-  return { created, skipped, machinesSeen, errors };
+  const skipped = reasons.alreadyExisted + reasons.outOfRange + reasons.noSequences + reasons.outsideFilter;
+  return { created, skipped, machinesSeen, errors, reasons, vectorSize: VECTOR_SIZE };
 }
 
 /**
