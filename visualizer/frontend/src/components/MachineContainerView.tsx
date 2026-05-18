@@ -304,8 +304,20 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
     ws,
   } = useVisualizerStore();
 
-  const [viewMode, setViewMode] = useState<'graph' | 'sequences'>('graph');
+  // If a specific CES (sequence) was selected via the Machines tree, open the
+  // sequences (per-CES) graph by default — otherwise show the interconnection
+  // graph as before.
+  const [viewMode, setViewMode] = useState<'graph' | 'sequences'>(
+    selectedSequenceId ? 'sequences' : 'graph'
+  );
   const [allMachines, setAllMachines] = useState(machines);
+
+  // When the tree-selected CES changes after mount (e.g. user picks a sibling
+  // CES under the same machine while admin view is open via deep link), keep
+  // the view in sync.
+  useEffect(() => {
+    if (selectedSequenceId) setViewMode('sequences');
+  }, [selectedSequenceId]);
 
   // Universal Perceptual Space state — updated passively via WebSocket
   const [currentUniversalVector, setCurrentUniversalVector] = useState<number[]>(new Array(PERCEPTUAL_DIM).fill(0));

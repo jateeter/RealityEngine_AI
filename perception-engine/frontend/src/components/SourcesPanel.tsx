@@ -1,9 +1,24 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SourceConfig } from '../types.js';
+import type { MachineSummary } from '../api.js';
+import {
+  DOMAINS, DOMAIN_ORDER, classifyMachine,
+} from './machineDomains.js';
+import type { DomainId } from './machineDomains.js';
 import SourceCard from './SourceCard.js';
+
+// Synthetic bucket id for sources that have no machine (simulated/sensor).
+// Treated as a first-class filter row alongside the real domains so an
+// operator can isolate manually-configured non-machine sources.
+type FilterBucket = DomainId | 'other';
 
 interface Props {
   sources: SourceConfig[];
+  machines: MachineSummary[];
+  machineDomain: ReadonlyMap<string, DomainId>;
   onAdd: () => void;
+  onBootstrap: (opts?: { machineIds?: string[] }) => Promise<{ created: number; skipped: number; machinesSeen: number; errors: string[] }>;
+  onRefreshMachines: () => Promise<void>;
   onDelete: (id: string) => void;
   onToggle: (id: string, active: boolean) => void;
   onToggleAll: (active: boolean) => void;
@@ -11,31 +26,192 @@ interface Props {
   hoveredSourceId: string | null;
 }
 
-export default function SourcesPanel({ sources, onAdd, onDelete, onToggle, onToggleAll, onHover, hoveredSourceId }: Props) {
-  const total       = sources.length;
-  const activeCount = sources.filter(s => s.active).length;
-  const allOn       = total > 0 && activeCount === total;
-  const allOff      = activeCount === 0;
-  const partial     = !allOn && !allOff;
+export default function SourcesPanel({
+  sources, machines, machineDomain,
+  onAdd, onBootstrap, onRefreshMachines,
+  onDelete, onToggle, onToggleAll,
+  onHover, hoveredSourceId,
+}: Props) {
+  const [bootstrapping, setBootstrapping] = useState(false);
+  const [bootstrapMsg, setBootstrapMsg] = useState<string | null>(null);
 
-  // Click action: if any source is currently off (or all off), turn everything on.
-  // Only switch off when every source is already on.  Disabled when there are no sources.
-  const handleAllClick = () => {
-    if (total === 0) return;
-    onToggleAll(!allOn);
+  // Import-menu state.  Closed → just a button.  Open → popover with the
+  // global "all" action plus a per-domain checklist.
+  const [importMenuOpen, setImportMenuOpen] = useState(false);
+  const [importPicks, setImportPicks] = useState<Set<DomainId>>(() => new Set());
+  const importBtnRef  = useRef<HTMLButtonElement>(null);
+  const importMenuRef = useRef<HTMLDivElement>(null);
+
+  // Source-list filter.  Empty = show everything (this matches the "all on"
+  // affordance — same shape as the master toggle).  A user can drill down
+  // to one or more domains; sources outside the active set are hidden.
+  const [filter, setFilter] = useState<Set<FilterBucket>>(() => new Set());
+
+  // ── Derived: which domains the loaded machine catalog actually covers ───
+  // Drives both the import checklist and the filter chip row so we never
+  // surface domains that have no machines / no sources to back them.
+  const sourceBucket = (s: SourceConfig): FilterBucket => {
+    if (s.type !== 'test') return 'other';
+    const d = machineDomain.get(s.machineId);
+    return d ?? 'other';
   };
 
-  const checkboxLabel = total === 0
+  const machinesByDomain = useMemo(() => {
+    const groups = new Map<DomainId, MachineSummary[]>();
+    for (const m of machines) {
+      const d = classifyMachine(m);
+      let list = groups.get(d);
+      if (!list) { list = []; groups.set(d, list); }
+      list.push(m);
+    }
+    return groups;
+  }, [machines]);
+
+  const sourcesByBucket = useMemo(() => {
+    const groups = new Map<FilterBucket, SourceConfig[]>();
+    for (const s of sources) {
+      const b = sourceBucket(s);
+      let list = groups.get(b);
+      if (!list) { list = []; groups.set(b, list); }
+      list.push(s);
+    }
+    return groups;
+    // sourceBucket closure captures machineDomain — that's what we depend on.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sources, machineDomain]);
+
+  // Visible filter rows: every domain that has either machines OR sources,
+  // plus 'other' if there are any non-machine sources.
+  const filterBuckets: FilterBucket[] = useMemo(() => {
+    const out: FilterBucket[] = [];
+    for (const d of DOMAIN_ORDER) {
+      if (machinesByDomain.get(d)?.length || sourcesByBucket.get(d)?.length) out.push(d);
+    }
+    if ((sourcesByBucket.get('other')?.length ?? 0) > 0) out.push('other');
+    return out;
+  }, [machinesByDomain, sourcesByBucket]);
+
+  const importableDomains: DomainId[] = useMemo(() => {
+    const out: DomainId[] = [];
+    for (const d of DOMAIN_ORDER) if ((machinesByDomain.get(d)?.length ?? 0) > 0) out.push(d);
+    return out;
+  }, [machinesByDomain]);
+
+  // Filter logic — empty set means "no filter applied".  This is symmetric
+  // with the master toggle's "all on" semantics so the UI doesn't have to
+  // distinguish between "filter unset" and "filter has every bucket".
+  const filterActive    = filter.size > 0;
+  const visibleSources  = !filterActive
+    ? sources
+    : sources.filter(s => filter.has(sourceBucket(s)));
+
+  // ── Master toggle (acts on the filtered set, not the global list) ─────
+  // Operators expect the master toggle to follow what they're looking at:
+  // if the filter shows only Agriculture, "all on" should flip on only the
+  // Ag sources.  This matches the principle of least surprise.
+  const totalShown   = visibleSources.length;
+  const activeShown  = visibleSources.filter(s => s.active).length;
+  const allShownOn   = totalShown > 0 && activeShown === totalShown;
+  const allShownOff  = activeShown === 0;
+  const partial      = !allShownOn && !allShownOff;
+  const handleAllClick = () => {
+    if (totalShown === 0) return;
+    const target = !allShownOn;
+    // If a filter is active, toggle ONLY those sources by routing through
+    // per-id updates; the parent's onToggleAll flips every source.
+    if (filterActive) {
+      visibleSources.filter(s => s.active !== target).forEach(s => onToggle(s.id, target));
+    } else {
+      onToggleAll(target);
+    }
+  };
+  const checkboxLabel = totalShown === 0
     ? 'No sources'
-    : allOn
-      ? 'All on — click to disable all'
+    : allShownOn
+      ? 'All shown sources on — click to disable'
       : partial
-        ? `${activeCount}/${total} active — click to enable all`
-        : 'All off — click to enable all';
+        ? `${activeShown}/${totalShown} active — click to enable all shown`
+        : 'All shown sources off — click to enable';
+
+  // ── Filter chip handlers ──────────────────────────────────────────────
+  const toggleFilter = (b: FilterBucket) => {
+    setFilter(prev => {
+      const next = new Set(prev);
+      if (next.has(b)) next.delete(b); else next.add(b);
+      return next;
+    });
+  };
+  const clearFilter = () => setFilter(new Set());
+
+  // ── Import popover handlers ───────────────────────────────────────────
+  // Refresh the machine list every time the menu opens so a freshly
+  // imported domain shows up without a page reload.
+  useEffect(() => {
+    if (importMenuOpen) void onRefreshMachines();
+  }, [importMenuOpen, onRefreshMachines]);
+
+  useEffect(() => {
+    if (!importMenuOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (importMenuRef.current?.contains(t)) return;
+      if (importBtnRef.current?.contains(t))  return;
+      setImportMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setImportMenuOpen(false); };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown',   onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown',   onKey);
+    };
+  }, [importMenuOpen]);
+
+  const togglePick = (d: DomainId) => {
+    setImportPicks(prev => {
+      const next = new Set(prev);
+      if (next.has(d)) next.delete(d); else next.add(d);
+      return next;
+    });
+  };
+
+  const runImport = async (opts?: { machineIds?: string[] }) => {
+    if (bootstrapping) return;
+    setBootstrapping(true);
+    setBootstrapMsg(null);
+    setImportMenuOpen(false);
+    try {
+      const r = await onBootstrap(opts);
+      const errs = r.errors?.length ? ` · ${r.errors.length} error(s)` : '';
+      const scope = opts?.machineIds
+        ? ` from ${opts.machineIds.length} machine${opts.machineIds.length === 1 ? '' : 's'}`
+        : '';
+      setBootstrapMsg(`+${r.created} new${scope} (${r.skipped} skipped, ${r.machinesSeen} machines)${errs}`);
+    } catch (err: any) {
+      setBootstrapMsg(`Bootstrap failed: ${err?.message ?? String(err)}`);
+    } finally {
+      setBootstrapping(false);
+      setTimeout(() => setBootstrapMsg(null), 6000);
+    }
+  };
+
+  const handleImportAll = () => runImport();
+
+  const handleImportPicked = () => {
+    if (importPicks.size === 0) return;
+    const ids: string[] = [];
+    for (const d of importPicks) for (const m of machinesByDomain.get(d) ?? []) ids.push(m.id);
+    void runImport({ machineIds: ids });
+  };
+
+  const labelOfBucket = (b: FilterBucket): string =>
+    b === 'other' ? 'Other' : DOMAINS[b].label;
+  const colorOfBucket = (b: FilterBucket): string =>
+    b === 'other' ? '#94a3b8' : DOMAINS[b].color;
 
   return (
     <div style={{
-      width: 280, flexShrink: 0,
+      width: 300, flexShrink: 0,
       borderRight: '1px solid #1e293b',
       display: 'flex', flexDirection: 'column',
       overflow: 'hidden', background: '#0a0f1e',
@@ -45,39 +221,35 @@ export default function SourcesPanel({ sources, onAdd, onDelete, onToggle, onTog
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         gap: 8,
       }}>
-        {/* Master toggle — tri-state visual indicator */}
+        {/* Master toggle — tri-state, scoped to the filtered set */}
         <button
           type="button"
           role="checkbox"
-          aria-checked={allOn ? 'true' : partial ? 'mixed' : 'false'}
+          aria-checked={allShownOn ? 'true' : partial ? 'mixed' : 'false'}
           aria-label={checkboxLabel}
           title={checkboxLabel}
           onClick={handleAllClick}
-          disabled={total === 0}
+          disabled={totalShown === 0}
           style={{
             width: 16, height: 16,
             flexShrink: 0,
             borderRadius: 3,
-            border: `1.5px solid ${allOn ? '#3b82f6' : partial ? '#7dd3fc' : '#475569'}`,
-            background: allOn ? '#1e3a5f' : 'transparent',
-            cursor: total === 0 ? 'not-allowed' : 'pointer',
-            opacity: total === 0 ? 0.4 : 1,
+            border: `1.5px solid ${allShownOn ? '#3b82f6' : partial ? '#7dd3fc' : '#475569'}`,
+            background: allShownOn ? '#1e3a5f' : 'transparent',
+            cursor: totalShown === 0 ? 'not-allowed' : 'pointer',
+            opacity: totalShown === 0 ? 0.4 : 1,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 0,
             transition: 'border-color 0.15s, background 0.15s',
           }}
         >
-          {allOn && (
+          {allShownOn && (
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
               <path d="M2 5.2L4.2 7.5L8.2 2.5" stroke="#7dd3fc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
           {partial && (
-            <span style={{
-              width: 8, height: 2,
-              background: '#7dd3fc',
-              borderRadius: 1,
-            }} />
+            <span style={{ width: 8, height: 2, background: '#7dd3fc', borderRadius: 1 }} />
           )}
         </button>
 
@@ -86,8 +258,135 @@ export default function SourcesPanel({ sources, onAdd, onDelete, onToggle, onTog
           textTransform: 'uppercase', letterSpacing: 1,
           flex: 1,
         }}>
-          Sources ({total})
+          Sources ({filterActive ? `${visibleSources.length}/${sources.length}` : sources.length})
         </span>
+
+        {/* Import button + popover */}
+        <div style={{ position: 'relative' }}>
+          <button
+            ref={importBtnRef}
+            onClick={() => setImportMenuOpen(o => !o)}
+            disabled={bootstrapping}
+            title="Import test sources from machine inputSequences — pick domains or import everything"
+            aria-expanded={importMenuOpen}
+            aria-haspopup="menu"
+            style={{
+              padding: '3px 10px', borderRadius: 4, border: '1px solid #334155',
+              background: bootstrapping ? '#0f172a' : '#1e293b',
+              color: bootstrapping ? '#475569' : '#94a3b8', fontSize: 12,
+              fontWeight: 600, cursor: bootstrapping ? 'wait' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            {bootstrapping ? '…' : 'Import'}
+            <span style={{ fontSize: 9, opacity: 0.7 }}>▾</span>
+          </button>
+          {importMenuOpen && (
+            <div
+              ref={importMenuRef}
+              role="menu"
+              style={{
+                position: 'absolute', top: '100%', right: 0, marginTop: 4,
+                width: 260, maxHeight: 340, overflowY: 'auto',
+                background: '#0f172a', border: '1px solid #1e293b',
+                borderRadius: 6, boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+                zIndex: 50,
+                padding: 8,
+              }}
+            >
+              <button
+                onClick={handleImportAll}
+                style={{
+                  width: '100%', textAlign: 'left',
+                  padding: '7px 10px', borderRadius: 4,
+                  border: '1px solid #3b82f6',
+                  background: '#1e3a5f', color: '#7dd3fc',
+                  fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                  marginBottom: 8,
+                }}
+              >
+                Import all machines ({machines.length})
+              </button>
+              <div style={{
+                fontSize: 10, color: '#64748b',
+                textTransform: 'uppercase', letterSpacing: 1,
+                margin: '4px 4px 6px 4px',
+              }}>
+                Or by domain
+              </div>
+              {importableDomains.length === 0 ? (
+                <div style={{ fontSize: 11, color: '#64748b', padding: '6px 8px' }}>
+                  No machines loaded.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {importableDomains.map(d => {
+                    const list = machinesByDomain.get(d) ?? [];
+                    const picked = importPicks.has(d);
+                    return (
+                      <label
+                        key={d}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '5px 8px', borderRadius: 4,
+                          background: picked ? '#1e293b' : 'transparent',
+                          border: `1px solid ${picked ? DOMAINS[d].color + '88' : 'transparent'}`,
+                          cursor: 'pointer', fontSize: 12, color: '#cbd5e1',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={picked}
+                          onChange={() => togglePick(d)}
+                          style={{ accentColor: DOMAINS[d].color, margin: 0 }}
+                        />
+                        <span style={{
+                          width: 9, height: 9, borderRadius: 2,
+                          background: DOMAINS[d].color, flexShrink: 0,
+                        }} />
+                        <span style={{ flex: 1 }}>{DOMAINS[d].label}</span>
+                        <span style={{ fontSize: 10, color: '#64748b', fontFamily: 'monospace' }}>
+                          {list.length}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                <button
+                  onClick={handleImportPicked}
+                  disabled={importPicks.size === 0}
+                  style={{
+                    flex: 1, padding: '6px 10px', borderRadius: 4,
+                    border: '1px solid #3b82f6',
+                    background: importPicks.size === 0 ? '#0f172a' : '#1e3a5f',
+                    color: importPicks.size === 0 ? '#475569' : '#7dd3fc',
+                    fontSize: 12, fontWeight: 700,
+                    cursor: importPicks.size === 0 ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  Import selected
+                </button>
+                <button
+                  onClick={() => setImportPicks(new Set())}
+                  disabled={importPicks.size === 0}
+                  style={{
+                    padding: '6px 10px', borderRadius: 4,
+                    border: '1px solid #334155',
+                    background: 'transparent', color: '#94a3b8',
+                    fontSize: 12, fontWeight: 600,
+                    cursor: importPicks.size === 0 ? 'not-allowed' : 'pointer',
+                    opacity: importPicks.size === 0 ? 0.5 : 1,
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <button
           onClick={onAdd}
           style={{
@@ -99,22 +398,118 @@ export default function SourcesPanel({ sources, onAdd, onDelete, onToggle, onTog
           + Add
         </button>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>
-        {sources.length === 0 && (
-          <div style={{ color: '#475569', fontSize: 13, textAlign: 'center', marginTop: 24 }}>
-            No sources yet.<br />Click + Add to create one.
+
+      {bootstrapMsg && (
+        <div style={{
+          padding: '6px 12px', fontSize: 11, color: '#7dd3fc',
+          background: '#0f172a', borderBottom: '1px solid #1e293b',
+        }}>
+          {bootstrapMsg}
+        </div>
+      )}
+
+      {/* Domain filter chips.  Shown only when there's at least one bucket
+          worth filtering on; otherwise the row collapses to keep the panel
+          tight on tiny universes (e.g. a fresh start with no machines). */}
+      {filterBuckets.length > 0 && (
+        <div style={{
+          padding: '8px 12px', borderBottom: '1px solid #1e293b',
+          background: '#0a0f1e',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: 5,
+          }}>
+            <span style={{
+              fontSize: 9, color: '#475569',
+              textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700,
+            }}>
+              Filter by domain
+            </span>
+            {filterActive && (
+              <button
+                onClick={clearFilter}
+                style={{
+                  background: 'transparent', border: 'none',
+                  color: '#7dd3fc', fontSize: 10, fontWeight: 600,
+                  cursor: 'pointer', padding: 0,
+                }}
+              >
+                clear ({filter.size})
+              </button>
+            )}
           </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {filterBuckets.map(b => {
+              const count = sourcesByBucket.get(b)?.length ?? 0;
+              const on = filter.has(b);
+              const color = colorOfBucket(b);
+              return (
+                <button
+                  key={b}
+                  onClick={() => toggleFilter(b)}
+                  title={`${labelOfBucket(b)} — ${count} source${count === 1 ? '' : 's'}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    padding: '2px 7px', borderRadius: 10,
+                    border: `1px solid ${on ? color : '#1e293b'}`,
+                    background: on ? color + '22' : '#0f172a',
+                    color: on ? color : '#64748b',
+                    fontSize: 10, fontWeight: 600, cursor: 'pointer',
+                    transition: 'all 0.12s ease',
+                  }}
+                >
+                  <span style={{
+                    width: 6, height: 6, borderRadius: '50%', background: color,
+                    opacity: on ? 1 : 0.55,
+                  }} />
+                  {labelOfBucket(b)}
+                  <span style={{
+                    fontSize: 9, fontFamily: 'monospace',
+                    color: on ? color : '#475569', opacity: 0.85,
+                  }}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* List */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>
+        {sources.length === 0 ? (
+          <div style={{ color: '#475569', fontSize: 13, textAlign: 'center', marginTop: 24 }}>
+            No sources yet.<br />Click + Add to create one, or Import to populate from machines.
+          </div>
+        ) : visibleSources.length === 0 ? (
+          <div style={{ color: '#475569', fontSize: 13, textAlign: 'center', marginTop: 24 }}>
+            No sources match the active filter.<br />
+            <button
+              onClick={clearFilter}
+              style={{
+                marginTop: 8, padding: '4px 10px', borderRadius: 4,
+                border: '1px solid #334155', background: '#0f172a',
+                color: '#7dd3fc', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              Clear filter
+            </button>
+          </div>
+        ) : (
+          visibleSources.map(src => (
+            <SourceCard
+              key={src.id}
+              source={src}
+              domain={sourceBucket(src)}
+              onDelete={onDelete}
+              onToggle={onToggle}
+              onHover={onHover}
+              hovered={hoveredSourceId === src.id}
+            />
+          ))
         )}
-        {sources.map(src => (
-          <SourceCard
-            key={src.id}
-            source={src}
-            onDelete={onDelete}
-            onToggle={onToggle}
-            onHover={onHover}
-            hovered={hoveredSourceId === src.id}
-          />
-        ))}
       </div>
     </div>
   );

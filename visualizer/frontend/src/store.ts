@@ -49,6 +49,13 @@ interface VisualizerState {
   currentOutputVectors: OutputVector[];
   highlightedOutputId: string | null;
 
+  // Currently selected CES (sequence) — set by the hierarchical Machines tree
+  // when a user picks a specific Critical Event Sequence under a machine. The
+  // Machine view scopes its CES graph to this sequence; cleared on machine
+  // change or back-navigation.
+  selectedSequenceId: string | null;
+  setSelectedSequenceId: (id: string | null) => void;
+
   // MQTT live-ingest stream — ring buffer of the most recent N accepted
   // PUBLISH messages.  Pushed by the visualizer backend when it sees
   // `mqtt-ingest` events forwarded from the Perception Engine's WS.
@@ -120,6 +127,8 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   highlightedOutputId: null,
   recentMqttIngests: [],
   peSources: [],
+  selectedSequenceId: null,
+  setSelectedSequenceId: (id) => set({ selectedSequenceId: id }),
   hoveredDomainId: null,
   graphZoomState: null,
   selectedDomains: [...DOMAIN_ORDER],
@@ -133,12 +142,15 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   loadMachine: async (machineId: string) => {
     try {
       const machine = await api.getMachine(machineId);
+      const prevMachineId = get().currentMachineId;
       set({
         currentMachine: machine,
         currentMachineId: machineId,
         lastViewedMachineId: machineId,
         currentView: 'administration',
-        currentOutputVectors: []
+        currentOutputVectors: [],
+        // Drop any prior CES scope when switching machines.
+        selectedSequenceId: prevMachineId === machineId ? get().selectedSequenceId : null,
       });
 
       localStorage.setItem('lastViewedMachineId', machineId);

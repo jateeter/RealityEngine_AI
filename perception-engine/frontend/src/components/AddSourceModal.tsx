@@ -97,7 +97,7 @@ export default function AddSourceModal({ onAdd, onClose, vectorSize = 256 }: Pro
     if (tab === 'test') {
       setMachinesLoading(true);
       getMachines()
-        .then(data => setMachines((data.machines as MachineInfo[]) ?? []))
+        .then(data => setMachines(data as unknown as MachineInfo[]))
         .catch(() => setMachines([]))
         .finally(() => setMachinesLoading(false));
     }

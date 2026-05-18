@@ -11,7 +11,7 @@ interface MachineAdministrationViewProps {
 const MachineAdministrationView: React.FC<MachineAdministrationViewProps> = ({
   onNavigateBack
 }) => {
-  const { currentMachine } = useVisualizerStore();
+  const { currentMachine, selectedSequenceId } = useVisualizerStore();
 
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column' }}>
@@ -23,7 +23,7 @@ const MachineAdministrationView: React.FC<MachineAdministrationViewProps> = ({
 
       {/* Main Content: Machine View with Input/Output Streams */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <MachineContainerView selectedSequenceId={null} />
+        <MachineContainerView selectedSequenceId={selectedSequenceId} />
       </div>
     </div>
   );

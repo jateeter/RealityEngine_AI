@@ -11,7 +11,7 @@ import { SourceStore } from './SourceStore.js';
 import { mountMcp } from './mcp.js';
 import { MqttBridge, fromEnvironment as mqttFromEnvironment } from './MqttBridge.js';
 import type { IngestPayload } from './MqttBridge.js';
-import type { SourceConfig, SensorSourceConfig, PushResult, MatchAlgorithm } from './types.js';
+import type { SourceConfig, SensorSourceConfig, TestSourceConfig, PushResult, MatchAlgorithm } from './types.js';
 
 // Bundled example mapping registry — served by GET /api/mqtt/example so
 // the PE visualizer's MqttConfigModal can offer a "Load example" button
@@ -318,6 +318,137 @@ function resetAndBroadcast(): void {
   lastPush = null;
   const state = engine.getState(null, { running: autoTimer !== null, intervalMs: autoIntervalMs });
   broadcast({ type: 'state-update', state });
+}
+
+// ── Machine→test-source bootstrap ─────────────────────────────────────────
+//
+// On PE startup (and on demand via POST /api/sources/bootstrap-from-machines),
+// fetch the machine list from the Reality Engine and create one `test` source
+// per machine.inputSequences entry.  Each created source defaults to
+// active: true and loop: true so that every test sequence drives the
+// perception loop without operator intervention.
+//
+// Idempotent: the composite key (machineId, sequenceName) is checked against
+// existing sources before insert, so re-runs after restart (with persisted
+// sources already restored) skip the rows already present.
+
+interface MachineSummary {
+  id: string;
+  name: string;
+  metadata?: { inputSequences?: Array<{ name: string; vectors: number[][] }> };
+  perceptualMapping?: { input?: { offset: number; length: number } };
+}
+
+interface BootstrapResult {
+  created: number;
+  skipped: number;
+  machinesSeen: number;
+  errors: string[];
+}
+
+async function bootstrapMachineTestSources(
+  filter?: { machineIds?: ReadonlySet<string> },
+): Promise<BootstrapResult> {
+  const errors: string[] = [];
+  let created = 0;
+  let skipped = 0;
+  let machinesSeen = 0;
+
+  let machines: MachineSummary[] = [];
+  try {
+    const response = await reAxios.get<{ machines: MachineSummary[] }>(`${REALITY_ENGINE_URL}/api/machines`);
+    machines = response.data?.machines ?? [];
+    machinesSeen = machines.length;
+  } catch (err: any) {
+    errors.push(`fetch /api/machines: ${err?.message ?? String(err)}`);
+    return { created, skipped, machinesSeen, errors };
+  }
+
+  // Optional allow-list: when caller supplied machineIds (typically the
+  // frontend submitting a domain-filtered set), skip machines outside it.
+  // Empty Set means "no machines match" — we still walk so the count of
+  // skipped reflects what was filtered out.
+  const allowList = filter?.machineIds;
+
+  const existingKeys = new Set<string>();
+  for (const src of engine.getSources()) {
+    if (src.type === 'test') {
+      existingKeys.add(`${src.machineId}|${src.sequenceName}`);
+    }
+  }
+
+  for (const machine of machines) {
+    if (allowList && !allowList.has(machine.id)) { skipped++; continue; }
+    const machineId = machine.id;
+    const machineName = machine.name ?? machineId;
+    const inputSequences = machine.metadata?.inputSequences ?? [];
+    const mapping = machine.perceptualMapping?.input;
+    if (!machineId || inputSequences.length === 0) continue;
+
+    for (const seq of inputSequences) {
+      if (!seq?.name || !Array.isArray(seq.vectors) || seq.vectors.length === 0) {
+        skipped++;
+        continue;
+      }
+      const key = `${machineId}|${seq.name}`;
+      if (existingKeys.has(key)) { skipped++; continue; }
+
+      const length = mapping?.length ?? seq.vectors[0]?.length ?? 0;
+      const offset = mapping?.offset ?? 0;
+      if (length <= 0 || offset < 0 || offset >= VECTOR_SIZE) {
+        skipped++;
+        continue;
+      }
+
+      const config: Omit<TestSourceConfig, 'id'> = {
+        type: 'test',
+        name: `${machineName} · ${seq.name}`,
+        region: { offset, length },
+        active: true,
+        machineId,
+        machineName,
+        sequenceName: seq.name,
+        inputs: seq.vectors,
+        loop: true,
+      };
+      engine.addSource(config);
+      existingKeys.add(key);
+      created++;
+    }
+  }
+
+  if (created > 0) {
+    await saveAndBroadcast();
+  }
+
+  return { created, skipped, machinesSeen, errors };
+}
+
+/**
+ * Bootstrap retry loop — RE may still be starting when PE comes up.  Polls
+ * /api/health until it responds, then runs the bootstrap once.  Gives up
+ * after maxAttempts so a permanently-down RE doesn't keep this task alive.
+ */
+async function bootstrapWithRetry(maxAttempts: number = 60, delayMs: number = 2000): Promise<void> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await reAxios.get(`${REALITY_ENGINE_URL}/api/health`, { timeout: 1500 });
+      const result = await bootstrapMachineTestSources();
+      console.log(
+        `[bootstrap] machine test sources — seen=${result.machinesSeen} created=${result.created} skipped=${result.skipped} errors=${result.errors.length}`,
+      );
+      if (result.errors.length > 0) {
+        for (const e of result.errors) console.warn(`[bootstrap] ${e}`);
+      }
+      return;
+    } catch (err: any) {
+      if (attempt === maxAttempts) {
+        console.warn(`[bootstrap] gave up after ${maxAttempts} attempts — RE never responded (${err?.message ?? err})`);
+        return;
+      }
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
 }
 
 // ── MCP server ────────────────────────────────────────────────────────────
@@ -737,10 +868,38 @@ app.get('/api/machines', async (_req: Request, res: Response) => {
   }
 });
 
+// POST /api/sources/bootstrap-from-machines — list machines on the RE and
+// create a `test` source for every inputSequence we don't already have a
+// source for.  Each created source is active+looping by default.  Returns
+// the counts so the visualizer can surface "+N new sources" feedback.
+app.post('/api/sources/bootstrap-from-machines', async (req: Request, res: Response) => {
+  // Optional { machineIds: string[] } body — when present, restricts the
+  // import to those machines.  Allows the frontend to compute a domain-
+  // filtered allow-list client-side (it already has the classifier) and
+  // pass it through without duplicating the classifier on the backend.
+  const body = (req.body && typeof req.body === 'object') ? req.body : {};
+  const rawIds = Array.isArray((body as any).machineIds) ? (body as any).machineIds : null;
+  let filter: { machineIds: Set<string> } | undefined;
+  if (rawIds) {
+    const ids = new Set<string>();
+    for (const id of rawIds) if (typeof id === 'string' && id.length > 0) ids.add(id);
+    filter = { machineIds: ids };
+  }
+  const result = await bootstrapMachineTestSources(filter);
+  if (result.errors.length > 0 && result.created === 0) {
+    res.status(502).json(result);
+    return;
+  }
+  res.json(result);
+});
+
 // ── Start server ─────────────────────────────────────────────────────────
 
 server.listen(PORT, () => {
   const protocol = tlsEnabled ? 'HTTPS' : 'HTTP';
   console.log(`Perception Engine backend listening on port ${PORT} (${protocol})`);
   console.log(`  Reality Engine : ${REALITY_ENGINE_URL}`);
+  // Fire and forget — bootstrap polls the RE until reachable, then materializes
+  // a test source per machine inputSequence.  Never blocks listen().
+  void bootstrapWithRetry();
 });
