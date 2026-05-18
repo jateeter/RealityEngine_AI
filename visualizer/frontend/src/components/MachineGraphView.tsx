@@ -100,11 +100,18 @@ const COMPACT_R = 16;  // circle radius (px) in compact mode
 // Sequence tooltip — types, layout helpers, and sub-components
 // ---------------------------------------------------------------------------
 
+interface TooltipVectorElement {
+  value: number;
+  comparatorType: string;
+  threshold?: number;
+}
+
 interface TooltipSeqNode {
   id: string;
   label: string;
   isInitial: boolean;
   hasOutput: boolean;
+  elements: TooltipVectorElement[];
 }
 
 interface TooltipSeq {
@@ -174,6 +181,7 @@ interface TTNode extends d3.SimulationNodeDatum {
   label:     string;
   isInitial: boolean;
   hasOutput: boolean;
+  elements:  TooltipVectorElement[];
   cx:        number;
   cy:        number;
 }
@@ -192,6 +200,13 @@ const ttStrokeW = (n: TTNode) => n.hasOutput ? 3 : 2;
 const TT_STRIP_TOP_H = 30;
 const TT_STRIP_BOT_H = 30;
 
+interface NodeTipState {
+  node: TTNode;
+  x: number;
+  y: number;
+  isActive: boolean;
+}
+
 const TooltipSeqGraph: React.FC<{ sequences: TooltipSeq[]; live: TooltipLiveResult }> = ({ sequences, live }) => {
   const svgRef       = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -200,6 +215,12 @@ const TooltipSeqGraph: React.FC<{ sequences: TooltipSeq[]; live: TooltipLiveResu
   // pulse nodes/edges without forcing a full simulation rebuild.
   const nodeSelRef   = useRef<d3.Selection<SVGCircleElement, TTNode, SVGGElement, unknown> | null>(null);
   const linkSelRef   = useRef<d3.Selection<SVGLineElement, TTLink, SVGGElement, unknown> | null>(null);
+
+  // Per-node hover tooltip (Event Vector + active/inactive). Read by the d3
+  // hover handlers via liveRef so they don't have to be re-bound on every step.
+  const [nodeTip, setNodeTip] = useState<NodeTipState | null>(null);
+  const liveRef = useRef<TooltipLiveResult>(live);
+  useEffect(() => { liveRef.current = live; }, [live]);
 
   // ── Build / rebuild the graph (only when the sequence topology changes) ──
   useEffect(() => {
@@ -224,7 +245,12 @@ const TooltipSeqGraph: React.FC<{ sequences: TooltipSeq[]; live: TooltipLiveResu
 
       for (const n of seq.nodes) {
         if (!nodeMap.has(n.id)) {
-          nodeMap.set(n.id, { id: n.id, label: n.label, isInitial: n.isInitial, hasOutput: n.hasOutput, cx, cy });
+          nodeMap.set(n.id, {
+            id: n.id, label: n.label,
+            isInitial: n.isInitial, hasOutput: n.hasOutput,
+            elements: n.elements ?? [],
+            cx, cy,
+          });
         }
       }
       for (const e of seq.edges) links.push({ source: e.source, target: e.target });
@@ -345,9 +371,10 @@ const TooltipSeqGraph: React.FC<{ sequences: TooltipSeq[]; live: TooltipLiveResu
       sim.alpha(0.3).restart();
     });
 
-    // Hover: dim non-connected nodes / edges, highlight connected
+    // Hover: dim non-connected nodes / edges, highlight connected, and
+    // surface the per-node Event Vector + active/inactive tooltip.
     node
-      .on('mouseover', function(_, d) {
+      .on('mouseover', function(event: MouseEvent, d) {
         d3.select(this).attr('r', TT_NODE_R + 3);
         node.style('opacity', (n: TTNode) => n.id === d.id ? 1 : 0.25);
         link.style('opacity', (l: TTLink) => {
@@ -356,12 +383,28 @@ const TooltipSeqGraph: React.FC<{ sequences: TooltipSeq[]; live: TooltipLiveResu
           return src === d.id || tgt === d.id ? 1 : 0.06;
         });
         label.style('opacity', (n: TTNode) => n.id === d.id ? 1 : 0.15);
+
+        const rect = containerRef.current?.getBoundingClientRect();
+        const x = rect ? event.clientX - rect.left : 0;
+        const y = rect ? event.clientY - rect.top  : 0;
+        const liveNow = liveRef.current;
+        const isActive = liveNow.activatedIds.has(d.id) || liveNow.matchedIds.has(d.id);
+        setNodeTip({ node: d, x, y, isActive });
+      })
+      .on('mousemove', function(event: MouseEvent, d) {
+        const rect = containerRef.current?.getBoundingClientRect();
+        const x = rect ? event.clientX - rect.left : 0;
+        const y = rect ? event.clientY - rect.top  : 0;
+        const liveNow = liveRef.current;
+        const isActive = liveNow.activatedIds.has(d.id) || liveNow.matchedIds.has(d.id);
+        setNodeTip({ node: d, x, y, isActive });
       })
       .on('mouseout', function() {
         d3.select(this).attr('r', TT_NODE_R);
         node.style('opacity', 1);
         link.style('opacity', 0.45);
         label.style('opacity', 1);
+        setNodeTip(null);
       });
 
     // Force simulation
@@ -449,6 +492,14 @@ const TooltipSeqGraph: React.FC<{ sequences: TooltipSeq[]; live: TooltipLiveResu
       svg.select<SVGGElement>('g.tt-strip-output').node(),
       'OUT', live.outputRegion ?? null, (live.outputVector ?? []) as number[], live.hasOutput,
     );
+
+    // Refresh the per-node hover tooltip's active flag if the cursor is
+    // still parked on a node when a new engine step lands.
+    setNodeTip(prev => {
+      if (!prev) return prev;
+      const nowActive = live.activatedIds.has(prev.node.id) || live.matchedIds.has(prev.node.id);
+      return nowActive === prev.isActive ? prev : { ...prev, isActive: nowActive };
+    });
   }, [live]);
 
   useEffect(() => () => { simRef.current?.stop(); }, []);
@@ -467,6 +518,74 @@ const TooltipSeqGraph: React.FC<{ sequences: TooltipSeq[]; live: TooltipLiveResu
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
       <svg ref={svgRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
+      {nodeTip && <NodeEventTip tip={nodeTip} containerRef={containerRef} />}
+    </div>
+  );
+};
+
+// ── NodeEventTip ─────────────────────────────────────────────────────────────
+// Per-node hover overlay rendered inside the machine CES tooltip.
+// Shows the event vector (elements with comparator + threshold) and an
+// active/inactive badge driven by the live step state.
+
+const NodeEventTip: React.FC<{
+  tip: NodeTipState;
+  containerRef: React.RefObject<HTMLDivElement>;
+}> = ({ tip, containerRef }) => {
+  const { node, x, y, isActive } = tip;
+  const cw = containerRef.current?.clientWidth ?? 380;
+  const ch = containerRef.current?.clientHeight ?? 300;
+  const TIP_W = 220;
+  const TIP_MAX_H = 200;
+  // Flip to the other side of the cursor near the container edges so the
+  // tooltip never clips outside the host machine tooltip.
+  const left = x + TIP_W + 12 > cw ? Math.max(4, x - TIP_W - 12) : x + 12;
+  const top  = y + TIP_MAX_H + 12 > ch ? Math.max(4, y - TIP_MAX_H - 8) : y + 8;
+  return (
+    <div
+      style={{
+        position: 'absolute', left, top, width: TIP_W, maxHeight: TIP_MAX_H,
+        background: 'rgba(15, 23, 42, 0.96)',
+        border: '1px solid #334155', borderRadius: 6,
+        boxShadow: '0 6px 18px rgba(0,0,0,0.5)',
+        padding: '8px 10px', pointerEvents: 'none',
+        fontSize: 11, color: '#e2e8f0', zIndex: 5,
+        overflow: 'hidden', display: 'flex', flexDirection: 'column',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <span style={{ fontWeight: 700, color: '#7dd3fc', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {node.label}
+        </span>
+        <span
+          style={{
+            fontSize: 9, fontWeight: 700, letterSpacing: 0.5,
+            padding: '2px 6px', borderRadius: 3,
+            background: isActive ? '#06b6d4' : '#334155',
+            color: isActive ? '#0b1220' : '#94a3b8',
+          }}
+        >
+          {isActive ? 'ACTIVE' : 'INACTIVE'}
+        </span>
+      </div>
+      <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+        Event Vector ({node.elements.length})
+      </div>
+      <div style={{ overflowY: 'auto', background: 'rgba(2, 6, 23, 0.5)', borderRadius: 4, padding: 4 }}>
+        {node.elements.length === 0 && (
+          <div style={{ fontStyle: 'italic', color: '#475569', padding: '2px 4px' }}>no elements</div>
+        )}
+        {node.elements.map((el, i) => (
+          <div key={i} style={{ display: 'flex', gap: 6, fontFamily: 'monospace', fontSize: 10, lineHeight: '14px' }}>
+            <span style={{ color: '#64748b', width: 22, textAlign: 'right' }}>[{i}]</span>
+            <span style={{ color: '#22c55e', width: 50, fontWeight: 600 }}>{el.value.toFixed(3)}</span>
+            <span style={{ color: '#94a3b8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {el.comparatorType}
+              {el.threshold !== undefined ? ` (${el.threshold.toFixed(2)})` : ''}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -797,6 +916,7 @@ export const MachineGraphView: React.FC = () => {
               label:     v.metadata?.name ?? v.id.slice(-6),
               isInitial: v.isInitial ?? false,
               hasOutput: Array.isArray(v.outputVectors) && v.outputVectors.length > 0,
+              elements:  Array.isArray(v.elements) ? (v.elements as TooltipVectorElement[]) : [],
             }));
             const edges: Array<{ source: string; target: string }> = [];
             for (const v of (seq.vectors ?? [])) {
