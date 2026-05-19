@@ -199,9 +199,13 @@
   animation: pulse-link 2s ease-in-out infinite;
 }
 
-/* Tooltip styling */
+/* Tooltip styling — anchored to the graph viewport (not the mouse) so the
+   panel is always fully visible regardless of hover position. Sits below the
+   3D/2D toggle pill (top: 12, right: 12) and above the bottom-left legend. */
 .node-tooltip {
-  position: fixed;
+  position: absolute;
+  top: 60px;
+  right: 16px;
   background-color: rgba(15, 23, 42, 0.98);
   border: 1px solid #3b82f6;
   border-radius: 8px;
@@ -209,9 +213,11 @@
   font-size: 12px;
   color: #e2e8f0;
   pointer-events: none;
-  z-index: 10000;
+  z-index: 30;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
-  max-width: 320px;
+  width: 320px;
+  max-height: calc(100% - 80px);
+  overflow-y: auto;
   backdrop-filter: blur(12px);
 }
 
@@ -246,6 +252,91 @@
   font-size: 11px;
   word-break: break-all;
   text-align: right;
+}
+
+/* Current-machine input-vector summary — pinned to the top of the window */
+.mig-input-summary {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 120px);
+  background-color: rgba(15, 23, 42, 0.96);
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  padding: 8px 14px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mig-input-summary-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.mig-input-summary-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #93c5fd;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mig-input-summary-region {
+  font-size: 11px;
+  font-family: monospace;
+  color: #60a5fa;
+}
+
+.mig-input-summary-meta {
+  font-size: 11px;
+  font-family: monospace;
+  color: #94a3b8;
+  margin-left: auto;
+}
+
+.mig-input-summary-cells {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2px;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #475569 transparent;
+}
+
+.mig-input-cell {
+  min-width: 18px;
+  height: 16px;
+  border-radius: 2px;
+  font-size: 8px;
+  font-family: monospace;
+  color: #0b1220;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.mig-input-cell-more {
+  font-size: 10px;
+  font-family: monospace;
+  color: #94a3b8;
+  padding-left: 4px;
+}
+
+.mig-input-cell-empty {
+  font-size: 10px;
+  font-style: italic;
+  color: #475569;
 }
 
 /* Perceptual space status indicator */

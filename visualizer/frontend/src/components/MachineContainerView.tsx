@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useVisualizerStore } from '../store';
 import { PERCEPTUAL_DIM } from '../constants';
-import CriticalEventGraphView from './CriticalEventGraphView';
 import OutputStreamVisualization from './OutputStreamVisualization';
 import { MachineInterconnectionGraph } from './MachineInterconnectionGraph';
 import { PerceptualLogViewer } from './PerceptualLogViewer';
@@ -295,7 +294,7 @@ const MachineInputsStrip: React.FC<MachineInputsStripProps> = ({
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSequenceId }) => {
+const MachineContainerView: React.FC<MachineContainerViewProps> = () => {
   const {
     currentOutputVectors,
     currentMachine,
@@ -304,20 +303,7 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
     ws,
   } = useVisualizerStore();
 
-  // If a specific CES (sequence) was selected via the Machines tree, open the
-  // sequences (per-CES) graph by default — otherwise show the interconnection
-  // graph as before.
-  const [viewMode, setViewMode] = useState<'graph' | 'sequences'>(
-    selectedSequenceId ? 'sequences' : 'graph'
-  );
   const [allMachines, setAllMachines] = useState(machines);
-
-  // When the tree-selected CES changes after mount (e.g. user picks a sibling
-  // CES under the same machine while admin view is open via deep link), keep
-  // the view in sync.
-  useEffect(() => {
-    if (selectedSequenceId) setViewMode('sequences');
-  }, [selectedSequenceId]);
 
   // Universal Perceptual Space state — updated passively via WebSocket
   const [currentUniversalVector, setCurrentUniversalVector] = useState<number[]>(new Array(PERCEPTUAL_DIM).fill(0));
@@ -431,44 +417,12 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
-                {viewMode === 'graph' ? 'Machine Interconnections' : 'Internal State Visualization'}
+                Machine Interconnections
               </div>
             </div>
 
-            {/* View Toggle + Logs */}
+            {/* Logs */}
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button
-                onClick={() => setViewMode('graph')}
-                style={{
-                  padding: '6px 14px',
-                  background: viewMode === 'graph' ? '#3b82f6' : '#334155',
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: '#e2e8f0',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  boxShadow: viewMode === 'graph' ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none'
-                }}
-              >
-                🔗 Interconnections
-              </button>
-              <button
-                onClick={() => setViewMode('sequences')}
-                style={{
-                  padding: '6px 14px',
-                  background: viewMode === 'sequences' ? '#3b82f6' : '#334155',
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: '#e2e8f0',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  boxShadow: viewMode === 'sequences' ? '0 0 10px rgba(59, 130, 246, 0.5)' : 'none'
-                }}
-              >
-                📊 Sequences
-              </button>
               <button
                 onClick={() => setIsLogViewerOpen(true)}
                 style={{
@@ -531,18 +485,12 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
               padding: '20px',
               overflowY: 'auto'
             }}>
-              {viewMode === 'graph' ? (
-                currentMachine && (
-                  <div style={{ flex: 1, minHeight: '500px' }}>
-                    <MachineInterconnectionGraph
-                      currentMachineId={currentMachine.id}
-                      machines={allMachines}
-                    />
-                  </div>
-                )
-              ) : (
-                <div style={{ height: '420px', flexShrink: 0, position: 'relative' }}>
-                  <CriticalEventGraphView selectedSequenceId={selectedSequenceId} />
+              {currentMachine && (
+                <div style={{ flex: 1, minHeight: '500px' }}>
+                  <MachineInterconnectionGraph
+                    currentMachineId={currentMachine.id}
+                    machines={allMachines}
+                  />
                 </div>
               )}
             </div>

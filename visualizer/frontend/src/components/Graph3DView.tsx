@@ -221,13 +221,20 @@ interface Graph3DViewProps {
     cluster?: string;
   }>;
   eventEdges?: Array<{ source: string; target: string }>;
+  /** For 'machines' mode: fired when the cursor hovers a machine sphere (or
+   *  leaves it — null). The parent renders a shared, in-view tooltip overlay
+   *  so 2D and 3D modes present the same hover content. */
+  onMachineHover?: (machineId: string | null) => void;
 }
 
 export const Graph3DView: React.FC<Graph3DViewProps> = ({
   mode = 'machines',
   eventNodes,
   eventEdges,
+  onMachineHover,
 }) => {
+  const onMachineHoverRef = useRef(onMachineHover);
+  useEffect(() => { onMachineHoverRef.current = onMachineHover; }, [onMachineHover]);
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<ForceGraph3DInstance | null>(null);
   const hullMeshesRef = useRef<THREE.Mesh[]>([]);
@@ -375,14 +382,13 @@ export const Graph3DView: React.FC<Graph3DViewProps> = ({
       .backgroundColor(vizTheme.bg.page)
       .graphData({ nodes: visibleNodes, links: visibleLinks })
       .nodeId('id')
-      .nodeLabel((node: any) => {
-        const n = node as MachineNode3D;
-        return `<div style="background:${vizTheme.bg.panel};color:${vizTheme.text.primary};padding:8px 12px;border-radius:6px;border:1px solid ${domainColorHex(n.domain)};font-size:12px;max-width:280px">
-          <div style="font-weight:bold;margin-bottom:4px;color:${domainColorHex(n.domain)}">${n.name}</div>
-          <div style="color:${vizTheme.text.secondary};font-size:10px;margin-bottom:4px">${DOMAINS[n.domain].label}</div>
-          <div style="color:${vizTheme.accent.input};font-size:10px">In: [${n.inputMapping.offset}:${n.inputMapping.offset + n.inputMapping.length}]</div>
-          <div style="color:${vizTheme.accent.output};font-size:10px">Out: [${n.outputMapping.offset}:${n.outputMapping.offset + n.outputMapping.length}]</div>
-        </div>`;
+      // The built-in mouse-pinned label is suppressed — the parent renders a
+      // shared in-view tooltip overlay driven by onNodeHover below, matching
+      // the 2D MachineInterconnectionGraph behaviour.
+      .nodeLabel(() => '')
+      .onNodeHover((node: any) => {
+        const id = node ? (node as MachineNode3D).id : null;
+        onMachineHoverRef.current?.(id);
       })
       .nodeColor((node: any) => {
         const n = node as MachineNode3D;
@@ -440,6 +446,9 @@ export const Graph3DView: React.FC<Graph3DViewProps> = ({
       clearTimeout(hullTimer);
       clearInterval(hullInterval);
       clearTimeout(stopHullUpdate);
+      // Clear any stale hover state so the shared tooltip overlay closes
+      // when the user toggles back to 2D.
+      onMachineHoverRef.current?.(null);
       // Remove hull meshes
       hullMeshesRef.current.forEach(mesh => {
         graph.scene().remove(mesh);
