@@ -23,6 +23,32 @@ services:
       timeout: 5s
       retries: 5
 
+  # Prometheus — scrapes /api/metrics from each runtime for CES coverage gauges.
+  # Reaches host-side `npm run start` (TS) on host.docker.internal:3000 and
+  # `bin/reality_engine_server` (C++) on host.docker.internal:3299.  Both
+  # runtimes emit identical metric names so a single dashboard covers either.
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: reality-engine-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --web.listen-address=:9090
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./certs:/etc/prometheus/certs:ro
+      - prometheus_data:/prometheus
+    restart: unless-stopped
+    networks:
+      - reality-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
   # Grafana - accessed via TLS proxy at https://localhost:3002
   grafana:
     image: grafana/grafana:10.2.3
@@ -41,6 +67,8 @@ services:
       - ./config/dashboards:/var/lib/grafana/dashboards
     depends_on:
       loki:
+        condition: service_healthy
+      prometheus:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -110,6 +138,7 @@ services:
     environment:
       - VIZ_PORT=3001
       - REALITY_ENGINE_URL=https://reality-engine:3000
+      - PERCEPTION_ENGINE_URL=https://perception-engine-backend:3004
       - TLS_CERT_PATH=/etc/certs/server.crt
       - TLS_KEY_PATH=/etc/certs/server.key
       - NODE_EXTRA_CA_CERTS=/etc/certs/ca.crt
@@ -172,17 +201,32 @@ services:
   # Perception Engine Backend (Scala/Akka) - accessed via TLS proxy at https://localhost:3004
   perception-engine-backend:
     build:
-      context: .
-      dockerfile: scala/perception-engine/Dockerfile
+      context: ./perception-engine/backend
+      dockerfile: Dockerfile
     container_name: reality-engine-perception-backend
     environment:
       - PORT=3004
-      - PERCEPTION_TARGET_URL=https://visualizer-backend:3001
       - REALITY_ENGINE_URL=https://reality-engine:3000
       - DATA_PATH=/app/data
-      - KEYSTORE_PATH=/etc/certs/keystore.p12
-      - KEYSTORE_PASSWORD=realityengine
+      - TLS_CERT_PATH=/etc/certs/server.crt
+      - TLS_KEY_PATH=/etc/certs/server.key
       - CA_CERT_PATH=/etc/certs/ca.crt
+      # MQTT bridge — propagated from host shell.  When the operator runs
+      # ./startUniverse.sh --mqtt-broker-url=... --mqtt-mappings=... the
+      # script exports MQTT_BROKER_URL + MQTT_MAPPINGS_JSON (read from the
+      # given file) and Docker passes them through here.  Default broker
+      # (when env is empty but not unset) is mqtt://yuma.lateraledge.cloud:1883;
+      # bridge still requires mappings before it actually boots.
+      - MQTT_BROKER_URL
+      - MQTT_BROKER_PORT
+      - MQTT_CLIENT_ID
+      - MQTT_USERNAME
+      - MQTT_PASSWORD
+      - MQTT_KEEPALIVE
+      - MQTT_MAPPINGS_FILE
+      - MQTT_MAPPINGS_JSON
+      - MQTT_ALLOW_REGION_OVERLAP
+      - MQTT_DISABLED
       - AUDIT_LOG_ENABLED=true
       - AUDIT_LOG_LEVEL=2
       - AUDIT_LOG_SERVICE=perception-engine
@@ -190,7 +234,7 @@ services:
       - perception_sources_data:/app/data
       - ./certs:/etc/certs:ro
     depends_on:
-      visualizer-backend:
+      reality-engine:
         condition: service_healthy
       loki:
         condition: service_healthy
@@ -285,6 +329,8 @@ volumes:
   loki_data:
     driver: local
   grafana_data:
+    driver: local
+  prometheus_data:
     driver: local
   perception_sources_data:
     driver: local

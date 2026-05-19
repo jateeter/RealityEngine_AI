@@ -48,7 +48,7 @@ Primary simulation control view. Shows all registered machines as a force-direct
 ┌──────────────────────────────────────────────────────────────────┐
 │ ← Back   🔮 Tobias   step N      [⏭ Step]   M/N machines        │  ← Header
 ├────────┬─┬─────────────────────────────────────────────────────────┤
-│Sidebar │g│  PerceptualSpaceBar (heatmap of 256-byte space)         │  ← Input bar
+│Sidebar │g│  PerceptualSpaceBar (dynamic perceptual-space heatmap)   │  ← Input bar
 │        │u│─────────────────────────────────────────────────────────│
 │▶ ⏭ ↺  │t│  TobiasCanvas (force-directed machine cards)            │  ← Canvas
 │⏭ Single│t│                                                          │
@@ -80,7 +80,7 @@ Toggle between **All / Idle / Processing / Active** to reduce canvas clutter.
 
 #### PerceptualSpaceBar
 
-Heatmap strip at the top of the canvas area. Each of the 256 bytes is one pixel wide; brightness shows the current value. Color-coded by machine input region. Region boundaries are marked with faint white lines.
+Heatmap strip at the top of the canvas area. Each perceptual position is rendered as a compact cell; brightness shows the current value. Color-coded by machine input region. Region boundaries are marked with faint white lines.
 
 #### OutputHistoryBar
 
@@ -112,7 +112,7 @@ Table of every step in the `useMachineSimulation` hook's history (max 24 steps),
 
 Separate frontend for managing Perception Engine sources. Use this to:
 - Add / edit / remove sources (test sequences, simulated waveforms, sensors)
-- Monitor the assembled 256-byte vector preview in real time
+- Monitor the assembled perceptual vector preview in real time
 - Start / stop / step the auto-push from the PE's own controls
 
 Changes to sources are persisted to disk and survive container restarts.

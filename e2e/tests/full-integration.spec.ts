@@ -100,18 +100,8 @@ test.describe('Full Integration - End to End Flow', () => {
     await expect(machineCard).toBeVisible({ timeout: 10000 });
     console.log('✓ Visualizer loaded successfully');
 
-    // Step 5: Look for our test sequence in the UI
-    console.log('Step 5: Looking for test sequence in UI...');
-
-    // Try to find the sequence name
-    const sequenceName = page.getByText('Integration Test Sequence');
-    if (await sequenceName.count() > 0) {
-      await expect(sequenceName).toBeVisible();
-      console.log('✓ Test sequence found in UI');
-    }
-
-    // Step 6: Check for active vectors
-    console.log('Step 6: Checking for active vectors...');
+    // Step 5: Check for active vectors
+    console.log('Step 5: Checking for active vectors...');
 
     const activeResponse = await request.get(`${API_BASE_URL}/api/engine/active`);
     expect(activeResponse.ok()).toBeTruthy();
@@ -119,8 +109,8 @@ test.describe('Full Integration - End to End Flow', () => {
     const activeVectors = await activeResponse.json();
     console.log(`✓ Found ${activeVectors.length} active vectors`);
 
-    // Step 7: Cleanup - delete test sequence
-    console.log('Step 7: Cleaning up test sequence...');
+    // Step 6: Cleanup - delete test sequence
+    console.log('Step 6: Cleaning up test sequence...');
 
     const deleteResponse = await request.delete(`${API_BASE_URL}/api/sequences/${sequenceId}`);
     if (deleteResponse.ok()) {
@@ -164,6 +154,8 @@ test.describe('Full Integration - End to End Flow', () => {
       const stopResponse = await request.post(`${API_BASE_URL}/api/sampler/stop`);
       expect(stopResponse.ok()).toBeTruthy();
       console.log('✓ Sampler stopped');
+    } else {
+      expect(startResponse.ok()).toBeTruthy();
     }
   });
 

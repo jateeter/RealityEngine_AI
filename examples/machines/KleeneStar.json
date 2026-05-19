@@ -10,10 +10,17 @@
       "eventSpace": "3D binary vectors: 000-111",
       "outputSpace": "2D binary vectors: {01, 10}",
       "tags": [
+        "ces-sequences",
+        "ces-sequences-2",
+        "digital-logic",
+        "input-sequences",
+        "input-sequences-4",
         "kleene-star",
+        "kleene-star-operator",
         "pattern-matching",
         "repetition",
-        "self-loop"
+        "self-loop",
+        "startup-loadable"
       ],
       "sequenceCount": 2,
       "operator": "Kleene star (*) on loop body; Kleene plus (+) on isInitial trigger (A*A = A+)",
@@ -33,18 +40,103 @@
             "behavior": "Correct — kleene-seq1-010 was activated by the initial vector and matches [0,1,0] immediately"
           }
         ]
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "digital-logic",
+        "domainTags": [
+          "digital-logic"
+        ],
+        "family": "kleene-star-operator",
+        "machineCode": "kleene-star",
+        "capabilityTags": [],
+        "workflowTags": [
+          "kleene-star",
+          "kleene-star-operator",
+          "pattern-matching",
+          "repetition",
+          "self-loop"
+        ],
+        "integrationTags": [
+          "digital-logic"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-4",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "digital-logic",
+          "input-sequences",
+          "input-sequences-4",
+          "kleene-star",
+          "kleene-star-operator",
+          "pattern-matching",
+          "repetition",
+          "self-loop",
+          "startup-loadable"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/kleenestar",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning KleeneStar matures."
+      },
+      "triggerConfig": {
+        "processId": "KLEENESTAR",
+        "processName": "Kleene Star Operator",
+        "rules": [
+          {
+            "sequenceId": "kleene-seq1",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sequence 1 complete: (001)+(000)*(010) matched"
+          },
+          {
+            "sequenceId": "kleene-seq2",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sequence 2 complete: (010)+(000|001)*(001) matched"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 6,
+        "offset": 3913,
         "length": 3
       },
       "output": {
-        "offset": 10,
+        "offset": 3917,
         "length": 2
-      }
+      },
+      "bitsPerElement": 1
     },
     "sequences": [
       {

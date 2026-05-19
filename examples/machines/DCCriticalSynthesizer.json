@@ -8,21 +8,30 @@
       "domain": "Data Center — Critical Alert / Synthesizer",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
-      "eventSpace": "4D binary FF-state vector at [100:104]: [CoolingQ, CoolingQ̄, NetworkQ, NetworkQ̄]",
-      "outputSpace": "2D binary at [72:74]: [1,0]=MULTI_ALARM, [0,1]=ALL_CLEAR",
+      "eventSpace": "4D binary FF-state vector at [1371:1375]: [CoolingQ, CoolingQ̄, NetworkQ, NetworkQ̄]",
+      "outputSpace": "2D binary at [1369:1371]: [1,0]=MULTI_ALARM, [0,1]=ALL_CLEAR",
       "tags": [
-        "synthesizer",
+        "ces-sequences",
+        "ces-sequences-2",
+        "correlation",
+        "critical-alert",
         "data-center",
+        "data-center-critical-alert-synthesizer",
+        "dc-critical-synthesizer",
+        "dccritical-synthesizer",
+        "input-sequences",
+        "input-sequences-3",
         "multi-alarm",
-        "correlation"
+        "startup-loadable",
+        "synthesizer"
       ],
       "sequenceCount": 2,
       "role": "Detects simultaneous thermal AND network failure conditions; drives DCCriticalAlertFF",
       "upstreamMachines": [
-        "DCCoolingControlFF (writes [100:102])",
-        "DCNetworkThrottleFF (writes [102:104])"
+        "DCCoolingControlFF (writes [1371:1373])",
+        "DCNetworkThrottleFF (writes [1373:1375])"
       ],
-      "downstreamMachine": "DCCriticalAlertFF (reads [72:74])",
+      "downstreamMachine": "DCCriticalAlertFF (reads [1369:1371])",
       "correlationLogic": "THERMAL_AND_NETWORK: both CoolingControlFF=SET and NetworkThrottleFF=SET",
       "singleTransitionAssumption": {
         "required": false,
@@ -35,18 +44,105 @@
         "pattern_0101": "Thermal CLEAR + Network CLEAR → ALL systems nominal",
         "pattern_1001": "Thermal ALARM + Network CLEAR → single-system failure, not critical",
         "pattern_0110": "Thermal CLEAR + Network ALARM → single-system failure, not critical"
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "critical-alert",
+          "data-center",
+          "synthesizer"
+        ],
+        "family": "dc-critical-synthesizer",
+        "machineCode": "dccritical-synthesizer",
+        "capabilityTags": [],
+        "workflowTags": [
+          "correlation",
+          "data-center",
+          "dc-critical-synthesizer",
+          "dccritical-synthesizer",
+          "multi-alarm"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "correlation",
+          "critical-alert",
+          "data-center",
+          "data-center-critical-alert-synthesizer",
+          "dc-critical-synthesizer",
+          "dccritical-synthesizer",
+          "input-sequences",
+          "input-sequences-3",
+          "multi-alarm",
+          "startup-loadable",
+          "synthesizer"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "datacenter-noc",
+        "runbook": "https://runbooks.example.org/data-center/dccriticalsynthesizer",
+        "escalationPolicy": "pagerduty:datacenter-noc",
+        "contact": {
+          "primary": "datacenter-noc-primary@example.org",
+          "secondary": "datacenter-noc-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"data-center\".  Review and tune the routing as the team owning DCCriticalSynthesizer matures."
+      },
+      "triggerConfig": {
+        "processId": "DCCRITICALSYNTHESIZER",
+        "processName": "DC Critical Synthesizer",
+        "rules": [
+          {
+            "sequenceId": "dc-synth-multi-alarm-sequence",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "MULTI-SYSTEM CRITICAL: Thermal + Network failure correlation detected"
+          },
+          {
+            "sequenceId": "dc-synth-all-clear-sequence",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "ALL SYSTEMS CLEAR: Both thermal and network conditions nominal"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 100,
+        "offset": 1371,
         "length": 4
       },
       "output": {
-        "offset": 72,
+        "offset": 1369,
         "length": 2
-      }
+      },
+      "bitsPerElement": 1
     },
     "sequences": [
       {

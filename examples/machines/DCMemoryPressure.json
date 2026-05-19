@@ -8,18 +8,27 @@
       "domain": "Data Center — Memory / Pressure",
       "author": "Reality Engine",
       "created": "2026-02-27T00:00:00Z",
-      "eventSpace": "4D continuous sensor vector at [16:20]: [mem_usage_norm, mem_page_fault_rate_norm, mem_cache_miss_norm, swap_usage_norm]",
-      "outputSpace": "2D binary at [66:68]: [1,0]=MEMORY_ALARM, [0,1]=MEMORY_HEALTHY",
+      "eventSpace": "4D continuous sensor vector at [1344:1348]: [mem_usage_norm, mem_page_fault_rate_norm, mem_cache_miss_norm, swap_usage_norm]",
+      "outputSpace": "2D binary at [1367:1369]: [1,0]=MEMORY_ALARM, [0,1]=MEMORY_HEALTHY",
       "tags": [
-        "monitoring",
-        "data-center",
-        "memory",
-        "thrashing",
+        "anomaly-detection",
         "cascading-failure",
-        "continuous"
+        "ces-sequences",
+        "ces-sequences-2",
+        "data-center",
+        "data-center-memory-pressure",
+        "dc-memory-pressure-detector",
+        "dcmemory-pressure",
+        "input-sequences",
+        "input-sequences-1",
+        "memory",
+        "monitoring",
+        "pressure",
+        "startup-loadable",
+        "thrashing"
       ],
       "sequenceCount": 2,
-      "downstreamMachine": "DCMemoryAlertFF (reads [66:68])",
+      "downstreamMachine": "DCMemoryAlertFF (reads [1367:1369])",
       "regularExpression": {
         "escalation": "NORMAL+ → PRESSURE+ → THRASHING → CASCADING+ → FAILURE → output[1,0]",
         "recovery": "HEALTHY+ → output[0,1]",
@@ -37,18 +46,110 @@
         "scope": "continuous sensor space — STA not applicable as defined for binary vectors",
         "compliant": true,
         "notes": "Continuous-space STA analog: gradual memory utilization progression through bands. Memory thrashing typically develops gradually as physical memory fills and the OS begins paging. An abrupt jump from NORMAL to FAILURE (without observed PRESSURE+ or THRASHING transitions) would not trigger the alarm, correctly filtering out measurement artifacts or OOM-killer actions that restore memory suddenly. NORMAL is isInitial (A*A = A+): at least one NORMAL reading is required to arm PRESSURE."
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "data-center",
+          "memory",
+          "pressure"
+        ],
+        "family": "dc-memory-pressure-detector",
+        "machineCode": "dcmemory-pressure",
+        "capabilityTags": [
+          "monitoring"
+        ],
+        "workflowTags": [
+          "anomaly-detection",
+          "cascading-failure",
+          "data-center",
+          "dc-memory-pressure-detector",
+          "dcmemory-pressure",
+          "thrashing"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "anomaly-detection",
+          "cascading-failure",
+          "ces-sequences",
+          "ces-sequences-2",
+          "data-center",
+          "data-center-memory-pressure",
+          "dc-memory-pressure-detector",
+          "dcmemory-pressure",
+          "input-sequences",
+          "input-sequences-1",
+          "memory",
+          "monitoring",
+          "pressure",
+          "startup-loadable",
+          "thrashing"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "datacenter-noc",
+        "runbook": "https://runbooks.example.org/data-center/dcmemorypressure",
+        "escalationPolicy": "pagerduty:datacenter-noc",
+        "contact": {
+          "primary": "datacenter-noc-primary@example.org",
+          "secondary": "datacenter-noc-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"data-center\".  Review and tune the routing as the team owning DCMemoryPressure matures."
+      },
+      "triggerConfig": {
+        "processId": "DCMEMORYPRESSURE",
+        "processName": "DC Memory Pressure Detector",
+        "rules": [
+          {
+            "sequenceId": "dc-memory-escalation",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "MEMORY FAILURE: Alarm signal [1,0] to DCMemoryAlertFF at [1367:1369]"
+          },
+          {
+            "sequenceId": "dc-memory-healthy",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "MEMORY HEALTHY: Reset signal [0,1] to DCMemoryAlertFF at [1367:1369]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 16,
+        "offset": 1344,
         "length": 4
       },
       "output": {
-        "offset": 66,
+        "offset": 1367,
         "length": 2
-      }
+      },
+      "bitsPerElement": 8
     },
     "sequences": [
       {
@@ -231,7 +332,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "MEMORY FAILURE: Alarm signal [1,0] to DCMemoryAlertFF at [66:68]",
+                  "description": "MEMORY FAILURE: Alarm signal [1,0] to DCMemoryAlertFF at [1367:1369]",
                   "severity": "EMERGENCY",
                   "action": "DCMemoryAlertFF will SET; initiate process termination, workload shedding"
                 }
@@ -285,7 +386,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "MEMORY HEALTHY: Reset signal [0,1] to DCMemoryAlertFF at [66:68]",
+                  "description": "MEMORY HEALTHY: Reset signal [0,1] to DCMemoryAlertFF at [1367:1369]",
                   "severity": "INFO",
                   "action": "DCMemoryAlertFF will RESET; memory utilization normal"
                 }

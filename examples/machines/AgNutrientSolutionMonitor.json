@@ -2,20 +2,28 @@
   "version": "1.0.0",
   "machine": {
     "name": "Ag Nutrient Solution Monitor",
-    "description": "Monitors hydroponic nutrient solution quality including pH, electrical conductivity, and nitrogen concentration. Three concurrent patterns detect: pH acidification drift, EC toxicity escalation, and macronutrient deficiency. Upstream: raw nutrient sensors at [248:252]. Downstream: AgNutrientCycleOptimizer reads output at [268:272].",
+    "description": "Monitors hydroponic nutrient solution quality including pH, electrical conductivity, and nitrogen concentration. Three concurrent patterns detect: pH acidification drift, EC toxicity escalation, and macronutrient deficiency. Upstream: raw nutrient sensors at [8:12]. Downstream: AgNutrientCycleOptimizer reads output at [28:32].",
     "metadata": {
       "category": "agriculture",
       "domain": "Agriculture — Nutrient Management / Hydroponics",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [268:272]: [1,0,0,0]=PH_ALERT, [0,1,0,0]=EC_ALERT, [0,0,1,0]=DEFICIENCY_ALERT, [0,0,0,1]=SOLUTION_OK",
+      "outputSpace": "4D binary at [28:32]: [1,0,0,0]=PH_ALERT, [0,1,0,0]=EC_ALERT, [0,0,1,0]=DEFICIENCY_ALERT, [0,0,0,1]=SOLUTION_OK",
       "tags": [
+        "ag-nutrient-solution-monitor",
         "agriculture",
-        "nutrient solution",
+        "agriculture-nutrient-management-hydroponics",
+        "ces-sequences",
+        "ces-sequences-3",
+        "ec-monitoring",
         "hydroponics",
-        "indoor growing",
-        "ph monitoring",
-        "ec monitoring",
-        "kleene-plus"
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "nutrient-management",
+        "nutrition",
+        "ph-monitoring",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "sensorNormalization": {
@@ -24,18 +32,124 @@
         "nitrogen_norm": "0.0=severe N deficit, 0.5=optimal N level, 1.0=N excess/toxicity",
         "micronutrient_norm": "0.0=severe deficit, 0.5=balanced trace minerals, 1.0=excess/lockout"
       },
-      "downstreamMachine": "AgNutrientCycleOptimizer (reads [268:272])"
+      "downstreamMachine": "AgNutrientCycleOptimizer (reads [28:32])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "hydroponics",
+          "nutrient-management"
+        ],
+        "family": "ag-nutrient-solution-monitor",
+        "machineCode": "ag-nutrient-solution-monitor",
+        "capabilityTags": [
+          "ec-monitoring",
+          "ph-monitoring"
+        ],
+        "workflowTags": [
+          "indoor-growing",
+          "kleene-plus",
+          "nutrition"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-nutrient-solution-monitor",
+          "agriculture",
+          "agriculture-nutrient-management-hydroponics",
+          "ces-sequences",
+          "ces-sequences-3",
+          "ec-monitoring",
+          "hydroponics",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "nutrient-management",
+          "nutrition",
+          "ph-monitoring",
+          "startup-loadable"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "agriculture-operations",
+        "runbook": "https://runbooks.example.org/agriculture/agnutrientsolutionmonitor",
+        "escalationPolicy": "pagerduty:ag-ops",
+        "contact": {
+          "primary": "agriculture-operations-primary@example.org",
+          "secondary": "agriculture-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"agriculture\".  Review and tune the routing as the team owning AgNutrientSolutionMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "AGNUTRIENTSOLUTIONMONITOR",
+        "processName": "Ag Nutrient Solution Monitor",
+        "rules": [
+          {
+            "sequenceId": "ag-nutrient-ph-drift",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "PH_ALERT: pH adjustment required immediately at [28:32]"
+          },
+          {
+            "sequenceId": "ag-nutrient-ec-escalation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "EC_ALERT: reservoir dilution required at [28:32]"
+          },
+          {
+            "sequenceId": "ag-nutrient-deficiency",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "DEFICIENCY_ALERT: replenish nutrient stock solution at [28:32]"
+          }
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 248,
+        "offset": 8,
         "length": 4
       },
       "output": {
-        "offset": 268,
+        "offset": 28,
         "length": 4
-      }
+      },
+      "bitsPerElement": 8
     },
     "sequences": [
       {
@@ -50,10 +164,22 @@
           {
             "id": "ag-nut-ph-balanced",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -62,15 +188,30 @@
               "ph_range": "0.44–0.56 (pH6.1–6.9)",
               "ec_range": "0.44–0.56 (1.8–2.2 mS/cm)"
             },
-            "nextVectorIds": ["ag-nut-ph-balanced", "ag-nut-ph-drift"]
+            "nextVectorIds": [
+              "ag-nut-ph-balanced",
+              "ag-nut-ph-drift"
+            ]
           },
           {
             "id": "ag-nut-ph-drift",
             "elements": [
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -78,15 +219,29 @@
               "description": "DRIFT — pH drifting acidic; EC still nominal; nutrients beginning to affect uptake.",
               "ph_range": "0.27–0.44 (pH5.7–6.3)"
             },
-            "nextVectorIds": ["ag-nut-ph-acidic"]
+            "nextVectorIds": [
+              "ag-nut-ph-acidic"
+            ]
           },
           {
             "id": "ag-nut-ph-acidic",
             "elements": [
-              { "value": 0.2,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -94,15 +249,29 @@
               "description": "ACIDIC — pH clearly outside optimal range; nutrient lockout beginning for Fe, Mn, Zn.",
               "ph_range": "0.12–0.28 (pH4.8–5.7)"
             },
-            "nextVectorIds": ["ag-nut-ph-critical"]
+            "nextVectorIds": [
+              "ag-nut-ph-critical"
+            ]
           },
           {
             "id": "ag-nut-ph-critical",
             "elements": [
-              { "value": 0.08, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.08,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -113,9 +282,14 @@
             "outputVectors": [
               {
                 "id": "ag-nut-ph-alert-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "PH_ALERT: pH adjustment required immediately at [268:272]",
+                  "description": "PH_ALERT: pH adjustment required immediately at [28:32]",
                   "action": "Inject pH-up solution; flush reservoir; notify nutrient cycle optimizer"
                 }
               }
@@ -135,10 +309,22 @@
           {
             "id": "ag-nut-ec-nominal",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.45, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.45,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -146,15 +332,30 @@
               "description": "NOMINAL+ — EC below target midpoint; solution is safe. isInitial A*A = A+.",
               "ec_range": "0.38–0.50 (1.5–2.0 mS/cm)"
             },
-            "nextVectorIds": ["ag-nut-ec-nominal", "ag-nut-ec-elevated"]
+            "nextVectorIds": [
+              "ag-nut-ec-nominal",
+              "ag-nut-ec-elevated"
+            ]
           },
           {
             "id": "ag-nut-ec-elevated",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -162,15 +363,29 @@
               "description": "ELEVATED — EC above target; salts accumulating from evapotranspiration.",
               "ec_range": "0.58–0.72 (2.3–2.9 mS/cm)"
             },
-            "nextVectorIds": ["ag-nut-ec-high"]
+            "nextVectorIds": [
+              "ag-nut-ec-high"
+            ]
           },
           {
             "id": "ag-nut-ec-high",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.82, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.82,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -178,15 +393,29 @@
               "description": "HIGH EC — osmotic pressure increasing; growth reduction likely.",
               "ec_range": "0.75–0.88 (3.0–3.5 mS/cm)"
             },
-            "nextVectorIds": ["ag-nut-ec-toxic"]
+            "nextVectorIds": [
+              "ag-nut-ec-toxic"
+            ]
           },
           {
             "id": "ag-nut-ec-toxic",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.93, "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.93,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -197,9 +426,14 @@
             "outputVectors": [
               {
                 "id": "ag-nut-ec-alert-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "EC_ALERT: reservoir dilution required at [268:272]",
+                  "description": "EC_ALERT: reservoir dilution required at [28:32]",
                   "action": "Add fresh water to reservoir; reduce nutrient dosing; flush substrate"
                 }
               }
@@ -219,10 +453,22 @@
           {
             "id": "ag-nut-adequate",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.55, "threshold": 0.5 },
-              { "value": 0.55, "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -231,15 +477,30 @@
               "nitrogen_range": "0.48–0.62 (optimal N availability)",
               "micronutrient_range": "0.48–0.62 (balanced trace minerals)"
             },
-            "nextVectorIds": ["ag-nut-adequate", "ag-nut-declining"]
+            "nextVectorIds": [
+              "ag-nut-adequate",
+              "ag-nut-declining"
+            ]
           },
           {
             "id": "ag-nut-declining",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -248,15 +509,29 @@
               "nitrogen_range": "0.28–0.45",
               "micronutrient_range": "0.28–0.45"
             },
-            "nextVectorIds": ["ag-nut-deficient"]
+            "nextVectorIds": [
+              "ag-nut-deficient"
+            ]
           },
           {
             "id": "ag-nut-deficient",
             "elements": [
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.5,  "threshold": 0.5 },
-              { "value": 0.18, "threshold": 0.5 },
-              { "value": 0.18, "threshold": 0.5 }
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.18,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.18,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -268,9 +543,14 @@
             "outputVectors": [
               {
                 "id": "ag-nut-deficiency-output",
-                "vector": [0, 0, 1, 0],
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
                 "metadata": {
-                  "description": "DEFICIENCY_ALERT: replenish nutrient stock solution at [268:272]",
+                  "description": "DEFICIENCY_ALERT: replenish nutrient stock solution at [28:32]",
                   "action": "Add concentrated A+B nutrient solution; check dosing pump function"
                 }
               }
@@ -285,13 +565,48 @@
         "pattern": "7-step: BALANCED→BALANCED→DRIFT→ACIDIC→CRITICAL_PH→(ph-up dosed)→BALANCED→SOLUTION_OK",
         "description": "Typical 4-day pH drift in an active crop reservoir; pH-up dosed after alert; solution restabilizes.",
         "vectors": [
-          [0.50, 0.50, 0.50, 0.50],
-          [0.49, 0.51, 0.51, 0.50],
-          [0.34, 0.50, 0.50, 0.50],
-          [0.19, 0.50, 0.50, 0.50],
-          [0.07, 0.50, 0.50, 0.50],
-          [0.50, 0.50, 0.51, 0.51],
-          [0.51, 0.50, 0.51, 0.51]
+          [
+            0.5,
+            0.5,
+            0.5,
+            0.5
+          ],
+          [
+            0.49,
+            0.51,
+            0.51,
+            0.5
+          ],
+          [
+            0.34,
+            0.5,
+            0.5,
+            0.5
+          ],
+          [
+            0.19,
+            0.5,
+            0.5,
+            0.5
+          ],
+          [
+            0.07,
+            0.5,
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.5,
+            0.51,
+            0.51
+          ],
+          [
+            0.51,
+            0.5,
+            0.51,
+            0.51
+          ]
         ],
         "metadata": {
           "scenario": "ph-drift-correction",

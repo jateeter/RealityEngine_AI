@@ -16,7 +16,7 @@ export class PerceptionEngine {
   private testStep: Map<string, number> = new Map();
   private walkState: Map<string, number[]> = new Map();
 
-  /** Dimension of the perceptual vector. Defaults to 256; override via VECTOR_SIZE env var. */
+  /** Dimension of the perceptual vector. Defaults to 4128 to match the visualizer's PERCEPTUAL_DIM; override via VECTOR_SIZE env var. */
   readonly vectorSize: number;
 
   // Typed array for the persistent perceptual space — avoids per-element boxing
@@ -39,7 +39,7 @@ export class PerceptionEngine {
   globalStep = 0;
   matchAlgorithm: MatchAlgorithm = 'gte';
 
-  constructor(vectorSize: number = 256) {
+  constructor(vectorSize: number = 4128) {
     this.vectorSize = vectorSize;
     this.persistentVector = new Float64Array(vectorSize);
     this.outBuf = new Float64Array(vectorSize);

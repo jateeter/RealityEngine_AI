@@ -2,20 +2,29 @@
   "version": "1.0.0",
   "machine": {
     "name": "Ag Harvest Readiness Assessor",
-    "description": "Evaluates plant readiness for harvest by correlating growth cycle state with nutrient cycle quality. Reads binary outputs from AgPlantGrowthCycleMonitor [280:284] and AgNutrientCycleOptimizer [284:288]. HARVEST_READY fires only after sustained GROWTH_OK + NUTRIENT_OK signals — ensuring plants have completed adequate vegetative cycles with quality nutrition. Also detects when stress conditions have delayed or compromised the harvest window. Output feeds AgYieldOptimizationAI at [292:296].",
+    "description": "Evaluates plant readiness for harvest by correlating growth cycle state with nutrient cycle quality. Reads binary outputs from AgPlantGrowthCycleMonitor [3955:3959] and AgNutrientCycleOptimizer [3959:3963]. HARVEST_READY fires only after sustained GROWTH_OK + NUTRIENT_OK signals — ensuring plants have completed adequate vegetative cycles with quality nutrition. Also detects when stress conditions have delayed or compromised the harvest window. Output feeds AgYieldOptimizationAI at [3967:3971].",
     "metadata": {
       "category": "agriculture",
       "domain": "Agriculture — Harvest Management / Crop Readiness",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [292:296]: [1,0,0,0]=HARVEST_DELAYED, [0,1,0,0]=STRESS_RECOVERY, [0,0,1,0]=HARVEST_APPROACHING, [0,0,0,1]=HARVEST_READY",
+      "outputSpace": "4D binary at [3967:3971]: [1,0,0,0]=HARVEST_DELAYED, [0,1,0,0]=STRESS_RECOVERY, [0,0,1,0]=HARVEST_APPROACHING, [0,0,0,1]=HARVEST_READY",
       "tags": [
+        "ag-harvest-readiness-assessor",
         "agriculture",
-        "harvest",
-        "crop monitoring",
-        "indoor growing",
-        "growth cycle",
-        "yield",
-        "kleene-plus"
+        "agriculture-generated",
+        "agriculture-harvest-management-crop-readiness",
+        "ces-sequences",
+        "ces-sequences-3",
+        "crop-monitoring",
+        "crop-readiness",
+        "growth-cycle",
+        "harvest-management",
+        "indoor-growing",
+        "input-sequences",
+        "input-sequences-1",
+        "kleene-plus",
+        "startup-loadable",
+        "yield"
       ],
       "sequenceCount": 3,
       "inputSignalMap": {
@@ -29,21 +38,142 @@
         "elem_7": "NUTRIENT_OK from AgNutrientCycleOptimizer [287]"
       },
       "upstreamMachines": [
-        "AgPlantGrowthCycleMonitor (output at [280:284])",
-        "AgNutrientCycleOptimizer (output at [284:288])"
+        "AgPlantGrowthCycleMonitor (output at [3955:3959])",
+        "AgNutrientCycleOptimizer (output at [3959:3963])"
       ],
-      "downstreamMachine": "AgYieldOptimizationAI (reads [292:296])"
+      "downstreamMachine": "AgYieldOptimizationAI (reads [3967:3971])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "agriculture",
+        "domainTags": [
+          "agriculture",
+          "crop-readiness",
+          "harvest-management"
+        ],
+        "family": "ag-harvest-readiness-assessor",
+        "machineCode": "ag-harvest-readiness-assessor",
+        "capabilityTags": [
+          "crop-monitoring"
+        ],
+        "workflowTags": [
+          "agriculture-generated",
+          "agriculture-harvest-management-crop-readiness",
+          "growth-cycle",
+          "indoor-growing",
+          "kleene-plus",
+          "yield"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ag-harvest-readiness-assessor",
+          "agriculture",
+          "agriculture-generated",
+          "agriculture-harvest-management-crop-readiness",
+          "ces-sequences",
+          "ces-sequences-3",
+          "crop-monitoring",
+          "crop-readiness",
+          "growth-cycle",
+          "harvest-management",
+          "indoor-growing",
+          "input-sequences",
+          "input-sequences-1",
+          "kleene-plus",
+          "startup-loadable",
+          "yield"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "agriculture-operations",
+        "runbook": "https://runbooks.example.org/agriculture/agharvestreadinessassessor",
+        "escalationPolicy": "pagerduty:ag-ops",
+        "contact": {
+          "primary": "agriculture-operations-primary@example.org",
+          "secondary": "agriculture-operations-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 3600,
+          "error": 900
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"agriculture\".  Review and tune the routing as the team owning AgHarvestReadinessAssessor matures."
+      },
+      "triggerConfig": {
+        "processId": "AGHARVESTREADINESSASSESSOR",
+        "processName": "Ag Harvest Readiness Assessor",
+        "rules": [
+          {
+            "sequenceId": "ag-harvest-ready-sequence",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "HARVEST_APPROACHING: plant entering harvestable window at [3967:3971]"
+          },
+          {
+            "sequenceId": "ag-harvest-ready-sequence",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "HARVEST_READY: crop is ready for harvest at [3967:3971]"
+          },
+          {
+            "sequenceId": "ag-harvest-delayed",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "HARVEST_DELAYED: stress conditions preventing harvest readiness at [3967:3971]"
+          },
+          {
+            "sequenceId": "ag-harvest-stress-recovery",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "STRESS_RECOVERY: growth resuming after stress event at [3967:3971]"
+          }
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 280,
+        "offset": 3955,
         "length": 8
       },
       "output": {
-        "offset": 292,
+        "offset": 3967,
         "length": 4
-      }
+      },
+      "bitsPerElement": 8
     },
     "sequences": [
       {
@@ -58,14 +188,38 @@
           {
             "id": "ag-hr-growth-nutrient-ok",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -73,19 +227,46 @@
               "description": "GROWTH_NUTRIENT_OK+ — GROWTH_OK=1, NUTRIENT_OK=1, no stress or lockout signals. isInitial A*A = A+: sustained confirmation required before harvest window can open.",
               "condition": "GROWTH_OK=1, NUTRIENT_OK=1, all stress flags=0"
             },
-            "nextVectorIds": ["ag-hr-growth-nutrient-ok", "ag-hr-approaching"]
+            "nextVectorIds": [
+              "ag-hr-growth-nutrient-ok",
+              "ag-hr-approaching"
+            ]
           },
           {
             "id": "ag-hr-approaching",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -96,26 +277,57 @@
             "outputVectors": [
               {
                 "id": "ag-hr-approaching-output",
-                "vector": [0, 0, 1, 0],
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
                 "metadata": {
-                  "description": "HARVEST_APPROACHING: plant entering harvestable window at [292:296]",
+                  "description": "HARVEST_APPROACHING: plant entering harvestable window at [3967:3971]",
                   "action": "Initiate harvest planning; schedule labor; AI optimizer begins yield projection"
                 }
               }
             ],
-            "nextVectorIds": ["ag-hr-ready"]
+            "nextVectorIds": [
+              "ag-hr-ready"
+            ]
           },
           {
             "id": "ag-hr-ready",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -126,9 +338,14 @@
             "outputVectors": [
               {
                 "id": "ag-hr-ready-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "HARVEST_READY: crop is ready for harvest at [292:296]",
+                  "description": "HARVEST_READY: crop is ready for harvest at [3967:3971]",
                   "action": "Execute harvest protocol; AI optimizer calculates optimal harvest window"
                 }
               }
@@ -148,14 +365,38 @@
           {
             "id": "ag-hr-stress-watch",
             "elements": [
-              { "value": 0.9, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -163,19 +404,46 @@
               "description": "STRESS_WATCH+ — TEMP_STRESS=1: temperature stress observed during expected harvest window. isInitial A*A = A+.",
               "condition": "TEMP_STRESS=1 (or WATER_STRESS), no OK signals"
             },
-            "nextVectorIds": ["ag-hr-stress-watch", "ag-hr-stress-sustained"]
+            "nextVectorIds": [
+              "ag-hr-stress-watch",
+              "ag-hr-stress-sustained"
+            ]
           },
           {
             "id": "ag-hr-stress-sustained",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -186,9 +454,14 @@
             "outputVectors": [
               {
                 "id": "ag-hr-delayed-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "HARVEST_DELAYED: stress conditions preventing harvest readiness at [292:296]",
+                  "description": "HARVEST_DELAYED: stress conditions preventing harvest readiness at [3967:3971]",
                   "action": "Extend grow cycle; AI optimizer revises harvest date estimate"
                 }
               }
@@ -208,14 +481,38 @@
           {
             "id": "ag-hr-recovering",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -226,9 +523,14 @@
             "outputVectors": [
               {
                 "id": "ag-hr-recovery-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "STRESS_RECOVERY: growth resuming after stress event at [292:296]",
+                  "description": "STRESS_RECOVERY: growth resuming after stress event at [3967:3971]",
                   "action": "AI optimizer logs recovery; adjusts yield projection; continues monitoring toward harvest window"
                 }
               }
@@ -243,12 +545,66 @@
         "pattern": "6-step: GROWTH_OK+NUTRIENT_OK (×3) → APPROACHING → APPROACHING+NIGHT_REST → READY",
         "description": "Multiple healthy grow-nutrient cycles culminating in harvest readiness signal.",
         "vectors": [
-          [0.1, 0.1, 0.1, 0.9, 0.1, 0.1, 0.1, 0.9],
-          [0.1, 0.1, 0.1, 0.9, 0.1, 0.1, 0.1, 0.9],
-          [0.1, 0.1, 0.1, 0.9, 0.1, 0.1, 0.1, 0.9],
-          [0.1, 0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9],
-          [0.1, 0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9],
-          [0.1, 0.1, 0.1, 0.9, 0.1, 0.1, 0.9, 0.9]
+          [
+            0.1,
+            0.1,
+            0.1,
+            0.9,
+            0.1,
+            0.1,
+            0.1,
+            0.9
+          ],
+          [
+            0.1,
+            0.1,
+            0.1,
+            0.9,
+            0.1,
+            0.1,
+            0.1,
+            0.9
+          ],
+          [
+            0.1,
+            0.1,
+            0.1,
+            0.9,
+            0.1,
+            0.1,
+            0.1,
+            0.9
+          ],
+          [
+            0.1,
+            0.1,
+            0.1,
+            0.9,
+            0.1,
+            0.1,
+            0.9,
+            0.9
+          ],
+          [
+            0.1,
+            0.1,
+            0.1,
+            0.9,
+            0.1,
+            0.1,
+            0.9,
+            0.9
+          ],
+          [
+            0.1,
+            0.1,
+            0.1,
+            0.9,
+            0.1,
+            0.1,
+            0.9,
+            0.9
+          ]
         ],
         "metadata": {
           "scenario": "healthy-growth-to-harvest",

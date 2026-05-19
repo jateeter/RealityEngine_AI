@@ -2,19 +2,27 @@
   "version": "1.0.0",
   "machine": {
     "name": "Enrollment Coordination Monitor",
-    "description": "Integration machine that reads combined output signals from the Benefits Eligibility Screener [430:434] and the Service Intake Assessment Monitor [434:438] to detect enrollment coordination failures — cases where eligible, assessed clients are not transitioning into active services. The gap between confirmed eligibility and actual enrollment is the most significant service delivery failure in community programs: eligible people who never get enrolled. Output at [462:466] is available to downstream care coordination systems.",
+    "description": "Integration machine that reads combined output signals from the Benefits Eligibility Screener [952:956] and the Service Intake Assessment Monitor [956:960] to detect enrollment coordination failures — cases where eligible, assessed clients are not transitioning into active services. The gap between confirmed eligibility and actual enrollment is the most significant service delivery failure in community programs: eligible people who never get enrolled. Output at [984:988] is available to downstream care coordination systems.",
     "metadata": {
       "category": "community-services",
       "domain": "Community Services — Enrollment Coordination / Access",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [462:466]: [1,0,0,0]=ENROLLMENT_FAILURE, [0,1,0,0]=ENROLLMENT_BARRIER, [0,0,1,0]=ENROLLMENT_DELAYED, [0,0,0,1]=ENROLLMENT_ON_TRACK",
+      "outputSpace": "4D binary at [984:988]: [1,0,0,0]=ENROLLMENT_FAILURE, [0,1,0,0]=ENROLLMENT_BARRIER, [0,0,1,0]=ENROLLMENT_DELAYED, [0,0,0,1]=ENROLLMENT_ON_TRACK",
       "tags": [
+        "access",
+        "benefits-eligibility",
+        "ces-sequences",
+        "ces-sequences-3",
         "community-services",
-        "enrollment coordination",
-        "benefits eligibility",
-        "intake assessment",
-        "service delivery",
-        "kleene-plus"
+        "community-services-enrollment-coordination-access",
+        "enrollment-coordination",
+        "enrollment-coordination-monitor",
+        "input-sequences",
+        "input-sequences-1",
+        "intake",
+        "kleene-plus",
+        "service-delivery",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Eligible community service applicants who have completed intake but not enrolled; clients in the gap between determination and benefits issuance",
@@ -25,20 +33,125 @@
         "worker_assignment_norm": "0.0=no case worker assigned (client in queue with no owner), 0.5=assigned but worker caseload preventing timely action, 1.0=case worker assigned and first contact made"
       },
       "upstreamMachines": [
-        "BenefitsEligibilityScreener (output [430:434])",
-        "ServiceIntakeAssessmentMonitor (output [434:438])"
-      ]
+        "BenefitsEligibilityScreener (output [952:956])",
+        "ServiceIntakeAssessmentMonitor (output [956:960])"
+      ],
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "community-services",
+        "domainTags": [
+          "access",
+          "community-services",
+          "enrollment-coordination"
+        ],
+        "family": "enrollment-coordination-monitor",
+        "machineCode": "enrollment-coordination-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "benefits-eligibility",
+          "community-services-enrollment-coordination-access",
+          "enrollment-coordination-monitor",
+          "intake",
+          "kleene-plus",
+          "service-delivery"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-1",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "access",
+          "benefits-eligibility",
+          "ces-sequences",
+          "ces-sequences-3",
+          "community-services",
+          "community-services-enrollment-coordination-access",
+          "enrollment-coordination",
+          "enrollment-coordination-monitor",
+          "input-sequences",
+          "input-sequences-1",
+          "intake",
+          "kleene-plus",
+          "service-delivery",
+          "startup-loadable"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "social-services-on-call",
+        "runbook": "https://runbooks.example.org/community-services/enrollmentcoordinationmonitor",
+        "escalationPolicy": "pagerduty:social-services",
+        "contact": {
+          "primary": "social-services-on-call-primary@example.org",
+          "secondary": "social-services-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 600
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"community-services\".  Review and tune the routing as the team owning EnrollmentCoordinationMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "ENROLLMENTCOORDINATIONMONITOR",
+        "processName": "Enrollment Coordination Monitor",
+        "rules": [
+          {
+            "sequenceId": "enrollment-failure-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "ENROLLMENT_FAILURE: eligible client not enrolled; urgent needs unmet; enrollment pathway collapsed at [984:988]"
+          },
+          {
+            "sequenceId": "enrollment-barrier",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "ENROLLMENT_BARRIER: eligible client facing functional or logistical barriers to completing enrollment at [984:988]"
+          },
+          {
+            "sequenceId": "enrollment-on-track-ok",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "ENROLLMENT_ON_TRACK: eligible client through intake and moving toward active enrollment at [984:988]"
+          }
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 430,
+        "offset": 952,
         "length": 8
       },
       "output": {
-        "offset": 462,
+        "offset": 984,
         "length": 4
-      }
+      },
+      "bitsPerElement": 8
     },
     "sequences": [
       {
@@ -53,14 +166,38 @@
           {
             "id": "ec-on-track",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -68,19 +205,46 @@
               "description": "ON_TRACK+ — ELIGIBILITY_CONFIRMED (bit 433) and INTAKE_COMPLETE (bit 437) both high. Eligible applicant has completed intake; enrollment should proceed. isInitial A*A = A+.",
               "upstream_state": "BenefitsEligibility=ELIGIBILITY_CONFIRMED, ServiceIntake=INTAKE_COMPLETE"
             },
-            "nextVectorIds": ["ec-on-track", "ec-stalled"]
+            "nextVectorIds": [
+              "ec-on-track",
+              "ec-stalled"
+            ]
           },
           {
             "id": "ec-stalled",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -88,19 +252,45 @@
               "description": "STALLED — DOCUMENTATION_NEEDED (bit 432) and COMPLEX_INTAKE (bit 435). Eligibility gated by documentation; intake revealed complexity requiring more intensive handling. Enrollment stalled.",
               "upstream_state": "BenefitsEligibility=DOCUMENTATION_NEEDED, ServiceIntake=COMPLEX_INTAKE"
             },
-            "nextVectorIds": ["ec-lapsed"]
+            "nextVectorIds": [
+              "ec-lapsed"
+            ]
           },
           {
             "id": "ec-lapsed",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -111,9 +301,14 @@
             "outputVectors": [
               {
                 "id": "ec-failure-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "ENROLLMENT_FAILURE: eligible client not enrolled; urgent needs unmet; enrollment pathway collapsed at [462:466]",
+                  "description": "ENROLLMENT_FAILURE: eligible client not enrolled; urgent needs unmet; enrollment pathway collapsed at [984:988]",
                   "action": "Case manager emergency outreach; alternative program eligibility review; emergency service bridge; supervisor escalation"
                 }
               }
@@ -133,14 +328,38 @@
           {
             "id": "ec-blocked",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -151,9 +370,14 @@
             "outputVectors": [
               {
                 "id": "ec-barrier-output",
-                "vector": [0, 1, 0, 0],
+                "vector": [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "ENROLLMENT_BARRIER: eligible client facing functional or logistical barriers to completing enrollment at [462:466]",
+                  "description": "ENROLLMENT_BARRIER: eligible client facing functional or logistical barriers to completing enrollment at [984:988]",
                   "action": "Benefits navigator direct assistance; application completion support; agency-assisted enrollment; proxy application where permitted"
                 }
               }
@@ -173,14 +397,38 @@
           {
             "id": "ec-proceeding",
             "elements": [
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 },
-              { "value": 0.65, "threshold": 0.5 }
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.65,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -191,9 +439,14 @@
             "outputVectors": [
               {
                 "id": "ec-on-track-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "ENROLLMENT_ON_TRACK: eligible client through intake and moving toward active enrollment at [462:466]",
+                  "description": "ENROLLMENT_ON_TRACK: eligible client through intake and moving toward active enrollment at [984:988]",
                   "action": "Case assignment queue populated; benefit issuance workflow initiated"
                 }
               }
@@ -208,11 +461,56 @@
         "pattern": "5-step: ON_TRACK→ON_TRACK→STALLED (documentation gap)→LAPSED (deadline missed)→ON_TRACK (after navigator intervention)",
         "description": "Eligible client's 30-day SNAP determination window lapses while documentation gap unresolved; priority re-intake triggers navigator intervention; eligibility confirmed again; enrollment completed.",
         "vectors": [
-          [0.09, 0.09, 0.09, 0.63, 0.09, 0.09, 0.09, 0.63],
-          [0.08, 0.08, 0.08, 0.62, 0.08, 0.08, 0.08, 0.62],
-          [0.09, 0.09, 0.63, 0.09, 0.09, 0.63, 0.09, 0.09],
-          [0.63, 0.09, 0.09, 0.09, 0.63, 0.09, 0.09, 0.09],
-          [0.09, 0.09, 0.09, 0.66, 0.09, 0.09, 0.09, 0.66]
+          [
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.63
+          ],
+          [
+            0.08,
+            0.08,
+            0.08,
+            0.62,
+            0.08,
+            0.08,
+            0.08,
+            0.62
+          ],
+          [
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09
+          ],
+          [
+            0.63,
+            0.09,
+            0.09,
+            0.09,
+            0.63,
+            0.09,
+            0.09,
+            0.09
+          ],
+          [
+            0.09,
+            0.09,
+            0.09,
+            0.66,
+            0.09,
+            0.09,
+            0.09,
+            0.66
+          ]
         ],
         "metadata": {
           "scenario": "eligible-client-lost-between-determination-and-enrollment",

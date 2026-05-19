@@ -23,6 +23,13 @@ export class RealityVector {
   private wasJustMatched: boolean;
   private lastOutputVector: OutputVector | null;
   public metadata: Record<string, any>;
+  // Predecessor chain — the ordered list of vector IDs whose matches led
+  // to this vector becoming active.  Empty for initial vectors (which are
+  // active from the start and have no predecessor).  Updated by setActive()
+  // when CriticalEventSequence activates a successor: the successor inherits
+  // its activator's full chain so the eventual emitted output carries the
+  // whole evidence trail.
+  private predecessorChain: string[] = [];
 
   constructor(
     elements: VectorElement[],
@@ -62,10 +69,17 @@ export class RealityVector {
   }
 
   /**
-   * Set this vector to active state
+   * Set this vector to active state.  `predecessorChain` is the path of
+   * vector IDs whose matches led to this activation — passed by the
+   * sequence when activating a successor.  Initial vectors are activated
+   * with no predecessor (chain stays empty); when they later match, their
+   * output's provenance is just [this.id].
    */
-  public setActive(): void {
+  public setActive(predecessorChain: readonly string[] = []): void {
     this.state = VectorState.ACTIVE;
+    // Capture a defensive copy so the sequence cannot mutate the chain
+    // out from under us between activation and the next match.
+    this.predecessorChain = [...predecessorChain];
   }
 
   /**
@@ -75,7 +89,16 @@ export class RealityVector {
   public clearActive(): void {
     if (!this.isInitial) {
       this.state = VectorState.INACTIVE;
+      this.predecessorChain = [];
     }
+  }
+
+  /**
+   * The full ordered evidence chain that would justify this vector's next
+   * emitted output: the predecessors that activated it plus its own id.
+   */
+  public getProvenanceChain(): string[] {
+    return [...this.predecessorChain, this.id];
   }
 
   /**
@@ -278,6 +301,10 @@ export class RealityVector {
     nextVectorIds: string[];
     outputVectors: OutputVector[];
     matchResult: MatchResult;
+    // Full ordered evidence chain through this match.  The sequence passes
+    // it to every newly-activated successor so the chain extends naturally
+    // until the terminal output fires.
+    provenanceChain: string[];
   } {
     const matchResult = this.match(inputVector, matchAlgorithmOverride);
 
@@ -290,16 +317,26 @@ export class RealityVector {
         matched: false,
         nextVectorIds: [],
         outputVectors: [],
-        matchResult
+        matchResult,
+        provenanceChain: [],
       };
     }
 
-    // Match successful - return next vectors and outputs
+    // Match successful — stamp provenance onto every emitted output so the
+    // listener sees the full evidence chain that justified the assertion.
+    const provenance = this.getProvenanceChain();
+    const stampedOutputs: OutputVector[] = this.outputVectors.map(o => ({
+      ...o,
+      provenance,
+      timestamp: o.timestamp || Date.now(),
+    }));
+
     const result = {
       matched: true,
       nextVectorIds: this.nextVectorIds,
-      outputVectors: this.outputVectors,
-      matchResult
+      outputVectors: stampedOutputs,
+      matchResult,
+      provenanceChain: provenance,
     };
 
     // Deactivate transitional vectors after successful match

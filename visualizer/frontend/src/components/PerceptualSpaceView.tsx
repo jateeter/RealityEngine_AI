@@ -19,7 +19,9 @@ interface PerceptualSpaceState {
     perceptualMapping: {
       input: { offset: number; length: number };
       output: { offset: number; length: number };
+      bitsPerElement?: number;
     };
+    severity?: string;
   }>;
 }
 
@@ -47,7 +49,7 @@ export const PerceptualSpaceView: React.FC = () => {
       const response = await fetch('/api/perceptual-simulation/state');
       const result = await response.json();
 
-      if (result.success) {
+      if (result.success || result.state) {
         setState(result.state);
         setError(null);
       } else {
@@ -115,17 +117,23 @@ export const PerceptualSpaceView: React.FC = () => {
     return null;
   };
 
-  // Helper to get machine name for a region
-  const getMachineForDimension = (index: number): string | null => {
+  // Helper to get machine name + cell-width hint for a region.  The cell
+  // width comes from `perceptualMapping.bitsPerElement` (Option A1 narrow-
+  // cell declaration) so an operator can see, at the cell granularity,
+  // whether the slot is a 1-bit boolean, 2-bit ordinal, etc.  Falls back
+  // to a single name string when no bpe is declared.
+  const getMachineForDimension = (
+    index: number
+  ): { name: string; bitsPerElement?: number; severity?: string } | null => {
     if (!state.machines) return null;
 
     for (const machine of state.machines) {
-      const { input, output } = machine.perceptualMapping;
+      const { input, output, bitsPerElement } = machine.perceptualMapping;
       if (index >= input.offset && index < input.offset + input.length) {
-        return `${machine.name} (In)`;
+        return { name: `${machine.name} (In)`, bitsPerElement, severity: machine.severity };
       }
       if (index >= output.offset && index < output.offset + output.length) {
-        return `${machine.name} (Out)`;
+        return { name: `${machine.name} (Out)`, bitsPerElement, severity: machine.severity };
       }
     }
     return null;
@@ -163,18 +171,26 @@ export const PerceptualSpaceView: React.FC = () => {
                     {blockValues.map((value, cellIndex) => {
                       const globalIndex = startIdx + cellIndex;
                       const activeType = isInActiveRegion(globalIndex);
-                      const machineName = getMachineForDimension(globalIndex);
+                      const machineInfo = getMachineForDimension(globalIndex);
+                      // Title surfaces the cell width + severity so an operator
+                      // can audit slot-level encoding while inspecting values.
+                      const bpeStr = machineInfo?.bitsPerElement
+                        ? `\n${machineInfo.bitsPerElement}-bit cell`
+                        : '';
+                      const sevStr = machineInfo?.severity
+                        ? `\nSeverity: ${machineInfo.severity}`
+                        : '';
 
                       return (
                         <div
                           key={cellIndex}
-                          className={`space-cell ${activeType ? `active-${activeType}` : ''}`}
-                          title={`[${globalIndex}] = ${value.toFixed(2)}${machineName ? `\n${machineName}` : ''}`}
+                          className={`space-cell ${activeType ? `active-${activeType}` : ''}${machineInfo?.severity === 'life-safety' ? ' severity-life-safety' : ''}`}
+                          title={`[${globalIndex}] = ${value.toFixed(2)}${machineInfo ? `\n${machineInfo.name}` : ''}${bpeStr}${sevStr}`}
                         >
                           <div className="cell-index">{globalIndex}</div>
                           <div className="cell-value">{value.toFixed(1)}</div>
-                          {machineName && (
-                            <div className="cell-machine">{machineName.substring(0, 10)}</div>
+                          {machineInfo && (
+                            <div className="cell-machine">{machineInfo.name.substring(0, 10)}</div>
                           )}
                         </div>
                       );

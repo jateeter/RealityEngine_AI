@@ -24,9 +24,26 @@ describe('PerceptualSpace', () => {
       expect(vector.every(v => v === 0)).toBe(true);
     });
 
-    it('should use default dimension of 256', () => {
+    it('should default to a fully-dynamic (dimension 0) space', () => {
+      // PerceptualSpace is dynamic by design — the default constructor starts at 0
+      // and growTo expands the space as machines are registered.
       const defaultSpace = new PerceptualSpace();
-      expect(defaultSpace.getDimension()).toBe(256);
+      expect(defaultSpace.getDimension()).toBe(0);
+    });
+
+    it('should grow to fit a larger vector when set', () => {
+      const dyn = new PerceptualSpace();
+      dyn.setPerceptualVector([1, 2, 3, 4]);
+      expect(dyn.getDimension()).toBe(4);
+      expect(dyn.getPerceptualVector()).toEqual([1, 2, 3, 4]);
+    });
+
+    it('growTo never shrinks the dimension', () => {
+      const dyn = new PerceptualSpace(8);
+      dyn.growTo(4);
+      expect(dyn.getDimension()).toBe(8);
+      dyn.growTo(16);
+      expect(dyn.getDimension()).toBe(16);
     });
   });
 
@@ -38,9 +55,22 @@ describe('PerceptualSpace', () => {
       expect(retrieved.every(v => v === 1)).toBe(true);
     });
 
-    it('should throw error for wrong dimension', () => {
-      const wrongVector = new Array(128).fill(1);
-      expect(() => space.setPerceptualVector(wrongVector)).toThrow();
+    it('zero-fills the tail when the input is shorter than the current dimension', () => {
+      // Tolerant set_vector semantics — shorter inputs overwrite the prefix and
+      // leave a zeroed tail, so the full space is always well-defined.
+      const shorter = new Array(128).fill(1);
+      space.setPerceptualVector(shorter);
+      expect(space.getDimension()).toBe(256);
+      const v = space.getPerceptualVector();
+      expect(v.slice(0, 128).every(x => x === 1)).toBe(true);
+      expect(v.slice(128).every(x => x === 0)).toBe(true);
+    });
+
+    it('grows to fit when the input is longer than the current dimension', () => {
+      const longer = new Array(512).fill(2);
+      space.setPerceptualVector(longer);
+      expect(space.getDimension()).toBe(512);
+      expect(space.getPerceptualVector().every(x => x === 2)).toBe(true);
     });
 
     it('should create a copy of the vector', () => {
@@ -159,7 +189,9 @@ describe('PerceptualSpace', () => {
     });
 
     it('should throw error for invalid offset', () => {
-      expect(() => space.updateRegion(-1, [1, 2])).toThrow(/out of bounds/);
+      // Negative offsets and offsets at-or-past the end both fail; the messages
+      // differ ("must be non-negative" vs "is out of bounds") so we match each.
+      expect(() => space.updateRegion(-1, [1, 2])).toThrow(/non-negative/);
       expect(() => space.updateRegion(256, [1, 2])).toThrow(/out of bounds/);
     });
 

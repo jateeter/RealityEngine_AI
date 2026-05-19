@@ -25,7 +25,6 @@ object PerceptionMain extends App {
 
   val port               = sys.env.getOrElse("PORT", "3004").toIntOption.getOrElse(3004)
   val host               = sys.env.getOrElse("HOST", "0.0.0.0")
-  val perceptionTarget   = sys.env.getOrElse("PERCEPTION_TARGET_URL", "https://localhost:3001")
   val realityEngineUrl   = sys.env.getOrElse("REALITY_ENGINE_URL",   "https://localhost:3000")
   val dataPath           = sys.env.getOrElse("DATA_PATH", "./data")
   val isFresh            = args.contains("--fresh") || sys.env.getOrElse("FRESH_START", "false") == "true"
@@ -54,7 +53,7 @@ object PerceptionMain extends App {
     else None
 
   // Set as JVM-wide default so sttp's HttpURLConnectionBackend trusts our CA
-  // for all outgoing HTTPS calls (Reality Engine, visualizer notify, etc.).
+  // for all outgoing HTTPS calls (Reality Engine, etc.).
   sslContext.foreach(SSLContext.setDefault)
 
   // ── Engine bootstrap ──────────────────────────────────────────────────────
@@ -74,12 +73,11 @@ object PerceptionMain extends App {
   val broadcastActor = system.actorOf(WsBroadcastActor.props(), "ws-broadcast")
 
   val routes = new PerceptionRoutes(
-    engine              = engine,
-    store               = store,
-    broadcastActor      = broadcastActor,
-    perceptionTargetUrl = perceptionTarget,
-    realityEngineUrl    = realityEngineUrl,
-    auditCfg            = auditCfg,
+    engine           = engine,
+    store            = store,
+    broadcastActor   = broadcastActor,
+    realityEngineUrl = realityEngineUrl,
+    auditCfg         = auditCfg,
   )
 
   val serverAt = Http().newServerAt(host, port)
@@ -99,7 +97,6 @@ object PerceptionMain extends App {
     case Success(b) =>
       val scheme = if (tlsEnabled) "https" else "http"
       println(s"\n✅ Perception Engine running on $scheme://$host:$port")
-      println(s"   Push target    : $perceptionTarget/api/perceive")
       println(s"   Reality Engine : $realityEngineUrl")
       seedSources(realityEngineUrl, engine, store, mergeOnly = !isFresh)
 

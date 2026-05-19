@@ -13,7 +13,7 @@ const auditConfig = loadAuditConfig('visualizer-backend');
 const REALITY_ENGINE_URL = process.env.REALITY_ENGINE_URL || 'http://localhost:3000';
 // Comma-separated list of allowed browser origins (no trailing slash).
 const ALLOWED_ORIGINS: string[] = (
-  process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173,http://localhost:3001'
+  process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173,https://localhost:5173,http://localhost:3001,https://localhost:3001'
 ).split(',').map(o => o.trim()).filter(Boolean);
 const certPath = process.env.TLS_CERT_PATH;
 const keyPath  = process.env.TLS_KEY_PATH;
@@ -237,30 +237,111 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'healthy', service: 'reality-engine-visualizer', timestamp: Date.now() });
 });
 
-// ── Passive step-notification endpoint ───────────────────────────────────────
-// The Perception Engine calls this asynchronously (fire-and-forget) after it has
-// pushed a vector directly to the Reality Engine.  The visualizer is NOT in the
-// perception loop critical path — this endpoint exists solely to fan out the
-// already-computed step result to connected frontend WebSocket clients.
-app.post('/api/perceive-notify', (req: Request, res: Response) => {
-  // Respond immediately so the PE is never kept waiting.
-  res.status(204).end();
-  const { step } = req.body;
-  if (step && typeof step.stepNumber === 'number') {
-    setImmediate(() => broadcast({
-      type: 'perceptual-simulation-stepped',
-      step,
-      data: { activeMachineIds: Object.keys(step.machineResults ?? {}) },
-      timestamp: Date.now()
-    }));
-  }
-});
+// ── RE step-stream subscriber ─────────────────────────────────────────────────
+// The Visualizer Backend subscribes to the Reality Engine's SSE endpoint and
+// fans out each step to connected frontend WebSocket clients.  This makes the
+// VB a fully passive observer: it never sits in the PE→RE critical path and
+// automatically skips ahead when it falls behind (RE uses dropHead buffering).
+//
+// Reconnect handling: a single in-flight reconnect timer is tracked so that
+// overlapping error/close/end callbacks don't schedule multiple reconnects in
+// parallel (which would otherwise cascade into an unbounded retry storm).
+
+let reconnectTimer: NodeJS.Timeout | null = null;
+
+function scheduleReconnect(reason: string, delayMs: number): void {
+  if (reconnectTimer) return;
+  console.warn(`[SSE] ${reason}, reconnecting in ${Math.round(delayMs / 1000)} s`);
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connectToREStream();
+  }, delayMs);
+}
+
+function connectToREStream(): void {
+  const reUrl = new URL(`${REALITY_ENGINE_URL}/api/engine/stream`);
+  const transport = reUrl.protocol === 'https:' ? https : http;
+
+  // Load the internal CA so the self-signed Reality Engine cert is trusted.
+  const caPath = process.env.NODE_EXTRA_CA_CERTS;
+  const reqOpts: http.RequestOptions = {
+    hostname: reUrl.hostname,
+    port: reUrl.port ? parseInt(reUrl.port, 10) : (reUrl.protocol === 'https:' ? 443 : 80),
+    path: reUrl.pathname,
+    headers: { Accept: 'text/event-stream', 'Cache-Control': 'no-cache' },
+    // Long-lived stream — disable any default request timeouts.
+    timeout: 0,
+    ...(reUrl.protocol === 'https:' && caPath && existsSync(caPath)
+      ? { ca: readFileSync(caPath) }
+      : {}),
+  };
+
+  const req = transport.get(
+    reqOpts,
+    (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        scheduleReconnect(`RE stream returned ${res.statusCode}`, 3000);
+        return;
+      }
+      console.log('[SSE] Connected to Reality Engine step stream');
+      // Heartbeat tracking — RE sends a comment line every 15 s; if we go
+      // 45 s without any bytes, treat the connection as stale and reconnect.
+      let lastByteAt = Date.now();
+      const stallCheck = setInterval(() => {
+        if (Date.now() - lastByteAt > 45_000) {
+          clearInterval(stallCheck);
+          req.destroy(new Error('stalled — no heartbeat for 45 s'));
+        }
+      }, 15_000);
+
+      let buf = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk: string) => {
+        lastByteAt = Date.now();
+        buf += chunk;
+        const lines = buf.split('\n');
+        buf = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;       // skip heartbeats and other comment lines
+          const payload = line.slice(5).trimStart();
+          if (!payload) continue;
+          try {
+            const step = JSON.parse(payload);
+            broadcast({
+              type: 'perceptual-simulation-stepped',
+              step,
+              data: { activeMachineIds: Object.keys(step.machineResults ?? {}) },
+              timestamp: Date.now(),
+            });
+          } catch { /* ignore malformed events */ }
+        }
+      });
+      res.on('end', () => {
+        clearInterval(stallCheck);
+        scheduleReconnect('RE stream closed', 2000);
+      });
+      res.on('error', (e: Error) => {
+        clearInterval(stallCheck);
+        scheduleReconnect(`RE stream error: ${e.message}`, 2000);
+      });
+    }
+  );
+
+  // Disable socket-level idle timeout (long-lived stream).
+  req.setTimeout(0);
+
+  req.on('error', (e: Error) => {
+    scheduleReconnect(`RE connection failed: ${e.message}`, 3000);
+  });
+
+  req.end();
+}
 
 // ── Legacy direct-perceive path ───────────────────────────────────────────────
-// Kept for backward-compatibility.  In production the PE calls RE directly and
-// notifies this server via /api/perceive-notify above.  If this path IS called
-// the response is sent before the WS broadcast so the caller is never blocked
-// by fan-out latency.
+// Retained for backward-compatibility (e.g. manual curl calls).  In production
+// the PE calls RE directly and RE pushes steps to the VB via SSE.  Responses
+// are sent before the WS broadcast so the caller is never blocked by fan-out.
 app.post('/api/perceive', async (req: Request, res: Response) => {
   try {
     const response = await axios.post(`${REALITY_ENGINE_URL}/api/perceive`, req.body);
@@ -401,7 +482,7 @@ app.get('/api/machines/:id/export', async (req: Request, res: Response) => {
   } catch (error: any) { upstreamError(res, error, 'exportMachine'); }
 });
 
-app.get('/api/machines', rateLimit(20), async (req: Request, res: Response) => {
+app.get('/api/machines', rateLimit(120), async (req: Request, res: Response) => {
   if (req.query.expand === 'sequences') {
     const cacheKey = 'machines:expanded';
     const cached = getCached(cacheKey);
@@ -424,9 +505,9 @@ app.get('/api/machines', rateLimit(20), async (req: Request, res: Response) => {
               }),
               8
             );
-            return { id: machine.id, name: machine.name, isExample: machine.isExample ?? false, perceptualMapping: machine.perceptualMapping ?? null, sequences: sequences.filter(Boolean) };
+            return { id: machine.id, name: machine.name, description: machine.description ?? '', metadata: machine.metadata ?? {}, isExample: machine.isExample ?? false, perceptualMapping: machine.perceptualMapping ?? null, sequences: sequences.filter(Boolean) };
           } catch {
-            return { id: m.id, name: m.name, isExample: m.isExample ?? false, sequences: [] };
+            return { id: m.id, name: m.name, description: m.description ?? '', metadata: m.metadata ?? {}, isExample: m.isExample ?? false, sequences: [] };
           }
         }),
         8
@@ -578,6 +659,127 @@ app.get('/api/perceptual-simulation/history', async (_req: Request, res: Respons
   } catch (error: any) { upstreamError(res, error, 'getSimulationHistory'); }
 });
 
+// ── Universe monitor / control surface ───────────────────────────────────────
+//
+// Reads the RE /api/metrics Prometheus text and extracts the most recent
+// paging decisions per (machine, sequence, ownerTeam, ragStatusCode).  The
+// frontend doesn't have to parse Prom text directly — this endpoint returns
+// JSON with a derived ordering by counter magnitude (most-active first).
+app.get('/api/viz/paging-decisions', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${REALITY_ENGINE_URL}/api/metrics`, {
+      responseType: 'text',
+      transformResponse: [data => data],   // skip axios auto-JSON parse
+    });
+    const text: string = response.data;
+    const decisions: Array<{
+      runtime: string;
+      ownerTeam: string;
+      processStatus: string;
+      ragStatusCode: string;
+      machineId: string;
+      count: number;
+    }> = [];
+    for (const line of text.split('\n')) {
+      if (!line.startsWith('ces_paging_decisions_total{')) continue;
+      // ces_paging_decisions_total{owner_team="...",process_status="...",rag_status_code="...",machine_id="...",runtime="ai"} 42
+      const m = line.match(/^ces_paging_decisions_total\{([^}]+)\}\s+(\d+(?:\.\d+)?)/);
+      if (!m) continue;
+      const labels: Record<string, string> = {};
+      for (const kv of m[1].split(',')) {
+        const eq = kv.indexOf('=');
+        if (eq < 0) continue;
+        const k = kv.slice(0, eq);
+        const v = kv.slice(eq + 1).replace(/^"/, '').replace(/"$/, '').replace(/\\"/g, '"');
+        labels[k] = v;
+      }
+      decisions.push({
+        runtime:        labels.runtime ?? 'unknown',
+        ownerTeam:      labels.owner_team ?? 'unrouted',
+        processStatus:  labels.process_status ?? 'unknown',
+        ragStatusCode:  labels.rag_status_code ?? 'unknown',
+        machineId:      labels.machine_id ?? '',
+        count:          Number(m[2]),
+      });
+    }
+    decisions.sort((a, b) => b.count - a.count);
+    res.json({ decisions, total: decisions.length });
+  } catch (error: any) { upstreamError(res, error, 'getPagingDecisions'); }
+});
+
+// ── PE backend proxy (MQTT + sensor freshness) ──────────────────────────────
+//
+// The visualizer's frontend already hits perception-engine-backend through
+// nginx in container deployments, but for dev outside containers the same
+// routes need to work through the visualizer-backend's host.  These passthroughs
+// keep the frontend's PE_BASE_URL consistent regardless of deployment mode.
+const PERCEPTION_ENGINE_URL = process.env.PERCEPTION_ENGINE_URL || 'http://localhost:3004';
+app.get('/api/perception/mqtt/status', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${PERCEPTION_ENGINE_URL}/api/mqtt/status`);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'getMqttStatus'); }
+});
+app.get('/api/perception/mqtt/mappings', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${PERCEPTION_ENGINE_URL}/api/mqtt/mappings`);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'getMqttMappings'); }
+});
+// Mapping-editor control surface — proxies the PE's PUT.  Body shape is
+// the same { defaults?, mappings: [...] } registry contract that
+// MappingRegistry.fromJson accepts.  Returns warnings on overlap.
+app.put('/api/perception/mqtt/mappings', async (req: Request, res: Response) => {
+  try {
+    const response = await axios.put(`${PERCEPTION_ENGINE_URL}/api/mqtt/mappings`, req.body);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'putMqttMappings'); }
+});
+app.get('/api/perception/sources', async (_req: Request, res: Response) => {
+  try {
+    const response = await axios.get(`${PERCEPTION_ENGINE_URL}/api/sources`);
+    res.json(response.data);
+  } catch (error: any) { upstreamError(res, error, 'getPerceptionSources'); }
+});
+
+// ── PE WebSocket subscription (forward mqtt-ingest events) ──────────────────
+//
+// The PE backend emits per-message `mqtt-ingest` events on its own /ws when
+// the MQTT bridge accepts a PUBLISH.  We subscribe as a WS client and
+// forward those events to our own clients so the visualizer's universe
+// monitor can render a live ingest stream without polling.  Reconnects on
+// drop (same shape as connectToREStream).
+
+let peWs: WebSocket | null = null;
+let peWsReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+function connectToPEStream(): void {
+  const peWsUrl = (PERCEPTION_ENGINE_URL.replace(/^http/, 'ws')) + '/ws';
+  try {
+    peWs = new WebSocket(peWsUrl);
+  } catch (e: any) {
+    console.error(`[PE WS] connect failed: ${e?.message ?? e}`);
+    schedulePEReconnect(3000);
+    return;
+  }
+  peWs.on('open',  () => { console.log(`[PE WS] connected to ${peWsUrl}`); });
+  peWs.on('error', (err: Error) => { console.error(`[PE WS] error: ${err.message}`); });
+  peWs.on('close', () => { console.log('[PE WS] closed'); schedulePEReconnect(3000); });
+  peWs.on('message', (data: Buffer) => {
+    try {
+      const msg = JSON.parse(data.toString());
+      // Forward MQTT-related events; ignore PE state updates (we don't
+      // want to duplicate the existing RE-SSE → VB-WS pipe here).
+      if (msg && (msg.type === 'mqtt-ingest' || msg.type === 'mqtt-status' || msg.type === 'mqtt-mappings-reloaded')) {
+        broadcast(msg);
+      }
+    } catch { /* ignore malformed PE events */ }
+  });
+}
+function schedulePEReconnect(delayMs: number): void {
+  if (peWsReconnectTimer) return;
+  peWsReconnectTimer = setTimeout(() => { peWsReconnectTimer = null; connectToPEStream(); }, delayMs);
+}
+
 // ── Start server ─────────────────────────────────────────────────────────────
 
 server.listen(PORT, () => {
@@ -586,12 +788,17 @@ server.listen(PORT, () => {
   console.log(`Reality Engine Visualizer Backend running on port ${PORT} (${protocol.toUpperCase()})`);
   console.log(`WebSocket server available at ${wsProtocol}://localhost:${PORT}/ws`);
   console.log(`Proxying to Reality Engine at ${REALITY_ENGINE_URL}`);
+  console.log(`Perception Engine WS source: ${PERCEPTION_ENGINE_URL}/ws`);
   console.log(`Allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
   logAuditEvent(auditConfig, 'startup', {
     audit_enabled: auditConfig.enabled,
     audit_level:   auditConfig.level,
     port:          PORT,
   });
+  // Subscribe to RE's SSE step stream — VB is a passive observer of the PE.x.RE.x.PE cycle.
+  connectToREStream();
+  // Subscribe to PE's WS — forwards mqtt-ingest events to VB clients.
+  connectToPEStream();
 });
 
 process.on('SIGTERM', () => { console.log('SIGTERM received, shutting down gracefully...'); clearInterval(heartbeatInterval); server.close(() => process.exit(0)); });

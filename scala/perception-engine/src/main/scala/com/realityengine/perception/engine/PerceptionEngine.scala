@@ -13,14 +13,33 @@ import scala.util.Random
  *
  * Signal generation lives in the companion object as pure functions.
  */
-class PerceptionEngine(val vectorDimension: Int = sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768)) {
+class PerceptionEngine(initialDimension: Int = sys.env.getOrElse("VECTOR_DIMENSION", "768").toIntOption.getOrElse(768)) {
   private val uuidGen = Generators.timeBasedReorderedGenerator()
 
   private var sources: Map[String, SourceConfig]        = Map.empty
   private var testStep: Map[String, Int]                = Map.empty
   private var walkState: Map[String, Vector[Double]]    = Map.empty
-  // Persistent perceptual space — carries machine outputs forward.
-  private var persistentVector: Array[Double]           = new Array[Double](vectorDimension)
+  // Persistent perceptual space — carries machine outputs forward.  Grows
+  // dynamically as sources with higher offsets are added so machines whose
+  // perceptualMapping extends beyond the initial dimension still receive
+  // input on every push.  Without this, sources whose region starts at or
+  // beyond vectorDimension are silently skipped in assembleVector and the
+  // corresponding machines never see their inputs change.
+  @volatile private var _vectorDimension: Int           = initialDimension
+  private var persistentVector: Array[Double]           = new Array[Double](initialDimension)
+  def vectorDimension: Int = _vectorDimension
+
+  /** Expand persistentVector and vectorDimension to cover [0, requiredEnd). */
+  private def ensureCapacity(requiredEnd: Int): Unit = {
+    if (requiredEnd > _vectorDimension) {
+      val previous = _vectorDimension
+      val grown = new Array[Double](requiredEnd)
+      System.arraycopy(persistentVector, 0, grown, 0, previous)
+      persistentVector  = grown
+      _vectorDimension  = requiredEnd
+      System.err.println(s"[PerceptionEngine] vectorDimension grew $previous → $requiredEnd")
+    }
+  }
 
   var globalStep: Long = 0L
   var matchAlgorithm: MatchAlgorithm = MatchAlgorithm.Gte
@@ -34,6 +53,7 @@ class PerceptionEngine(val vectorDimension: Int = sys.env.getOrElse("VECTOR_DIME
   def addSource(config: SourceConfig): SourceConfig = synchronized {
     val id  = uuidGen.generate().toString
     val src = applyId(config, id)
+    ensureCapacity(src.region.offset + src.region.length)
     sources = sources + (id -> src)
     initRuntimeState(id, src)
     src
@@ -41,6 +61,7 @@ class PerceptionEngine(val vectorDimension: Int = sys.env.getOrElse("VECTOR_DIME
 
   /** Restore a previously persisted source preserving its original ID. */
   def restoreSource(src: SourceConfig): Unit = synchronized {
+    ensureCapacity(src.region.offset + src.region.length)
     sources = sources + (src.id -> src)
     initRuntimeState(src.id, src)
   }
@@ -66,6 +87,11 @@ class PerceptionEngine(val vectorDimension: Int = sys.env.getOrElse("VECTOR_DIME
   def getSource(id: String): Option[SourceConfig] = synchronized { sources.get(id) }
 
   def getSources: Vector[SourceConfig] = synchronized { sources.values.toVector }
+
+  /** Find an existing sensor source by its logical sensorId (not its UUID). */
+  def findSensorBySensorId(sensorId: String): Option[SensorSourceConfig] = synchronized {
+    sources.values.collectFirst { case s: SensorSourceConfig if s.sensorId == sensorId => s }
+  }
 
   // ── Sensor push ───────────────────────────────────────────────────────────
 
@@ -109,11 +135,16 @@ class PerceptionEngine(val vectorDimension: Int = sys.env.getOrElse("VECTOR_DIME
     out.toVector
   }
 
-  /** Sync the persistent base vector from the RE post-merge state. */
+  /** Sync the persistent base vector from the RE post-merge state.  RE may
+    * return a vector larger than our current dimension if it has grown to fit
+    * machines whose perceptualMapping extends past our initial allocation;
+    * we grow to match so the next assembleVector covers the same range. */
   def updateFromPerceptualSpace(ps: Vector[Double]): Unit = synchronized {
+    if (ps.length > _vectorDimension) ensureCapacity(ps.length)
     var i = 0
-    while (i < vectorDimension) {
-      persistentVector(i) = ps.applyOrElse(i, (_: Int) => 0.0)
+    val n = _vectorDimension
+    while (i < n) {
+      persistentVector(i) = if (i < ps.length) ps(i) else 0.0
       i += 1
     }
   }
@@ -163,7 +194,7 @@ class PerceptionEngine(val vectorDimension: Int = sys.env.getOrElse("VECTOR_DIME
 
   def reset(): Unit = synchronized {
     globalStep       = 0L
-    persistentVector = new Array[Double](vectorDimension)
+    persistentVector = new Array[Double](_vectorDimension)
     for ((id, src) <- sources) src match {
       case t: TestSourceConfig =>
         testStep = testStep + (id -> 0)

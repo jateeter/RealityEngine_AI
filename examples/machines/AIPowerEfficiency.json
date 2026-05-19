@@ -8,25 +8,237 @@
     "matchAlgorithm": "gte",
     "perceptualMapping": {
       "input": {
-        "offset": 120,
+        "offset": 256,
         "length": 4
       },
       "output": {
-        "offset": 150,
+        "offset": 280,
         "length": 6
-      }
+      },
+      "bitsPerElement": 8
     },
     "metadata": {
       "category": "ai-services",
-      "domain": "AI Infrastructure \u2014 Power Efficiency / PUE",
+      "domain": "AI Infrastructure — Power Efficiency / PUE",
       "tags": [
-        "data-center",
-        "power",
-        "pue",
+        "ai-infrastructure",
+        "ai-infrastructure-power-efficiency-pue",
+        "ai-power-efficiency-monitor",
+        "ai-services",
+        "ai-workload",
+        "aipower-efficiency",
         "carbon",
-        "ai-workload"
+        "ces-sequences",
+        "ces-sequences-2",
+        "data-center",
+        "input-sequences",
+        "input-sequences-3",
+        "power",
+        "power-efficiency",
+        "pue",
+        "startup-loadable"
       ],
-      "rationale": "PUE, grid carbon intensity, and power draw are data-center facility concerns."
+      "rationale": "PUE, grid carbon intensity, and power draw are data-center facility concerns.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "ai-infrastructure",
+          "ai-services",
+          "power-efficiency",
+          "pue"
+        ],
+        "family": "ai-power-efficiency-monitor",
+        "machineCode": "aipower-efficiency",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-infrastructure-power-efficiency-pue",
+          "ai-power-efficiency-monitor",
+          "ai-workload",
+          "aipower-efficiency",
+          "carbon",
+          "data-center",
+          "power"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-infrastructure",
+          "ai-infrastructure-power-efficiency-pue",
+          "ai-power-efficiency-monitor",
+          "ai-services",
+          "ai-workload",
+          "aipower-efficiency",
+          "carbon",
+          "ces-sequences",
+          "ces-sequences-2",
+          "data-center",
+          "input-sequences",
+          "input-sequences-3",
+          "power",
+          "power-efficiency",
+          "pue",
+          "startup-loadable"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "ml-platform-on-call",
+        "runbook": "https://runbooks.example.org/ai-services/aipowerefficiency",
+        "escalationPolicy": "pagerduty:ml-platform",
+        "contact": {
+          "primary": "ml-platform-on-call-primary@example.org",
+          "secondary": "ml-platform-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 300
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"ai-services\".  Review and tune the routing as the team owning AIPowerEfficiency matures."
+      },
+      "triggerConfig": {
+        "processId": "AIPOWEREFFICIENCY",
+        "processName": "AI Power Efficiency Monitor",
+        "rules": [
+          {
+            "sequenceId": "aipe-pue-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Power efficiency OPTIMAL — PUE within target, renewable mix healthy"
+          },
+          {
+            "sequenceId": "aipe-pue-escalation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Power efficiency ELEVATED WASTE — PUE rising, review workload scheduling"
+          },
+          {
+            "sequenceId": "aipe-pue-escalation",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Power efficiency HIGH WASTE — PUE critical, throttle non-priority workloads"
+          },
+          {
+            "sequenceId": "aipe-pue-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Throttle batch and non-priority ML training jobs"
+          },
+          {
+            "sequenceId": "aipe-pue-escalation",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Power efficiency EMERGENCY — PUE critical, immediate action required"
+          },
+          {
+            "sequenceId": "aipe-pue-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Throttle all non-essential compute immediately"
+          },
+          {
+            "sequenceId": "aipe-pue-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Action: Activate emergency power save mode, suspend training jobs"
+          },
+          {
+            "sequenceId": "aipe-carbon-spike",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Carbon spike: grid carbon intensity high despite acceptable power efficiency"
+          },
+          {
+            "sequenceId": "aipe-carbon-spike",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Migrate deferrable AI workloads to renewable-powered datacenter regions"
+          }
+        ]
+      }
     },
     "sequences": [
       {
@@ -69,7 +281,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Power efficiency OPTIMAL \u2014 PUE within target, renewable mix healthy",
+                  "description": "Power efficiency OPTIMAL — PUE within target, renewable mix healthy",
                   "severity": "INFO"
                 }
               }
@@ -111,7 +323,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Power efficiency ELEVATED WASTE \u2014 PUE rising, review workload scheduling",
+                  "description": "Power efficiency ELEVATED WASTE — PUE rising, review workload scheduling",
                   "severity": "WARNING"
                 }
               }
@@ -153,7 +365,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Power efficiency HIGH WASTE \u2014 PUE critical, throttle non-priority workloads",
+                  "description": "Power efficiency HIGH WASTE — PUE critical, throttle non-priority workloads",
                   "severity": "CRITICAL"
                 }
               },
@@ -208,7 +420,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Power efficiency EMERGENCY \u2014 PUE critical, immediate action required",
+                  "description": "Power efficiency EMERGENCY — PUE critical, immediate action required",
                   "severity": "EMERGENCY"
                 }
               },

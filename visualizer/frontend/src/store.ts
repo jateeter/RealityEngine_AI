@@ -9,7 +9,26 @@ import {
   PETestSource,
 } from './types';
 import { api, perceptionEngineApi } from './api';
-import { PERCEPTUAL_DIM } from './constants';
+import type { DomainId } from './components/machineDomains';
+import { DOMAIN_ORDER } from './components/machineDomains';
+
+/** One accepted MQTT PUBLISH forwarded by the PE through the visualizer
+ *  backend.  Used to drive the live-ingest stream in the universe monitor. */
+export interface MqttIngestEvent {
+  sensorId: string;
+  mappingId: string;
+  topic: string;
+  offset: number;
+  length: number;
+  values: number[];
+  ttlMs: number;
+  timestamp: number;
+}
+
+/** Ring-buffer cap on recent MQTT ingests held in the store.  Tuned for the
+ *  universe monitor's live-feed panel — large enough to feel live, small
+ *  enough that re-renders stay cheap. */
+const MQTT_INGEST_CAP = 120;
 
 interface VisualizerState {
   // View state
@@ -29,6 +48,18 @@ interface VisualizerState {
   // Output stream state (used by MachineContainerView / CriticalEventGraphView)
   currentOutputVectors: OutputVector[];
   highlightedOutputId: string | null;
+
+  // Currently selected CES (sequence) — set by the hierarchical Machines tree
+  // when a user picks a specific Critical Event Sequence under a machine. The
+  // Machine view scopes its CES graph to this sequence; cleared on machine
+  // change or back-navigation.
+  selectedSequenceId: string | null;
+  setSelectedSequenceId: (id: string | null) => void;
+
+  // MQTT live-ingest stream — ring buffer of the most recent N accepted
+  // PUBLISH messages.  Pushed by the visualizer backend when it sees
+  // `mqtt-ingest` events forwarded from the Perception Engine's WS.
+  recentMqttIngests: MqttIngestEvent[];
 
   // PE source state — test sources created from machine inputSequences
   peSources: PESource[];
@@ -66,6 +97,21 @@ interface VisualizerState {
   // Output stream actions
   setCurrentOutputVectors: (outputs: OutputVector[]) => void;
   setHighlightedOutputId: (outputId: string | null) => void;
+
+  // Domain hover (set by MachineGraphView hull hover, read by TobiasView header)
+  hoveredDomainId: DomainId | null;
+  setHoveredDomainId: (id: DomainId | null) => void;
+
+  // Persisted zoom transform — survives view switches so the settled layout
+  // is the starting point for every context that mounts MachineGraphView.
+  graphZoomState: { k: number; x: number; y: number } | null;
+  setGraphZoomState: (state: { k: number; x: number; y: number } | null) => void;
+
+  // Domain visibility filter — shared across all graph view contexts.
+  // All domains selected by default; multi-select; empty = all hidden.
+  selectedDomains: DomainId[];
+  toggleDomain:   (id: DomainId) => void;
+  setAllDomains:  (selected: boolean) => void;
 }
 
 export const useVisualizerStore = create<VisualizerState>((set, get) => ({
@@ -79,7 +125,13 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   ws: null,
   currentOutputVectors: [],
   highlightedOutputId: null,
+  recentMqttIngests: [],
   peSources: [],
+  selectedSequenceId: null,
+  setSelectedSequenceId: (id) => set({ selectedSequenceId: id }),
+  hoveredDomainId: null,
+  graphZoomState: null,
+  selectedDomains: [...DOMAIN_ORDER],
 
   // View actions
   setCurrentView: (view) => set({ currentView: view }),
@@ -90,12 +142,15 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   loadMachine: async (machineId: string) => {
     try {
       const machine = await api.getMachine(machineId);
+      const prevMachineId = get().currentMachineId;
       set({
         currentMachine: machine,
         currentMachineId: machineId,
         lastViewedMachineId: machineId,
         currentView: 'administration',
-        currentOutputVectors: []
+        currentOutputVectors: [],
+        // Drop any prior CES scope when switching machines.
+        selectedSequenceId: prevMachineId === machineId ? get().selectedSequenceId : null,
       });
 
       localStorage.setItem('lastViewedMachineId', machineId);
@@ -117,12 +172,12 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
         }
       }
 
-      // Create PE TestSources from the machine's inputSequences.
-      // Only machines whose entire input region fits within the configured
-      // perceptual space dimension can be driven by the PE.
+      // Create PE TestSources from the machine's inputSequences.  The PE
+      // auto-grows its persistent vector to fit any source it receives, so
+      // we no longer gate this on PERCEPTUAL_DIM — every machine with a
+      // mapping and inputSequences gets sources created.
       const mapping = machine.perceptualMapping?.input;
-      const inRange = mapping && (mapping.offset + mapping.length <= PERCEPTUAL_DIM);
-      if (inRange && machine.metadata?.inputSequences?.length) {
+      if (mapping && machine.metadata?.inputSequences?.length) {
         try {
           const region = mapping!;
           const inputSeqs: Array<{ name: string; vectors: number[][] }> =
@@ -428,6 +483,32 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
           case 'perceptual-simulation-reset':
             set({ currentOutputVectors: [] });
             break;
+
+          case 'mqtt-ingest': {
+            // Per-message MQTT ingest forwarded by VB from the PE WS.
+            // Append to the ring buffer and drop the oldest if we're over cap.
+            const payload = (message as any).payload;
+            if (
+              payload && typeof payload.sensorId === 'string' &&
+              typeof payload.mappingId === 'string' &&
+              Array.isArray(payload.values)
+            ) {
+              const event: MqttIngestEvent = {
+                sensorId:  payload.sensorId,
+                mappingId: payload.mappingId,
+                topic:     typeof payload.topic === 'string' ? payload.topic : '',
+                offset:    Number(payload.offset) || 0,
+                length:    Number(payload.length) || payload.values.length,
+                values:    payload.values.map((v: unknown) => Number(v) || 0),
+                ttlMs:     Number(payload.ttlMs) || 0,
+                timestamp: Number(payload.timestamp) || Date.now(),
+              };
+              const next = [event, ...get().recentMqttIngests];
+              if (next.length > MQTT_INGEST_CAP) next.length = MQTT_INGEST_CAP;
+              set({ recentMqttIngests: next });
+            }
+            break;
+          }
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
@@ -450,4 +531,15 @@ export const useVisualizerStore = create<VisualizerState>((set, get) => ({
   // Output stream actions
   setCurrentOutputVectors: (outputs: OutputVector[]) => set({ currentOutputVectors: outputs }),
   setHighlightedOutputId: (outputId: string | null) => set({ highlightedOutputId: outputId }),
+
+  setHoveredDomainId: (id: DomainId | null) => set({ hoveredDomainId: id }),
+  setGraphZoomState: (state) => set({ graphZoomState: state }),
+
+  toggleDomain: (id) => set(state => {
+    const cur = state.selectedDomains;
+    return {
+      selectedDomains: cur.includes(id) ? cur.filter(d => d !== id) : [...cur, id],
+    };
+  }),
+  setAllDomains: (selected) => set({ selectedDomains: selected ? [...DOMAIN_ORDER] : [] }),
 }));

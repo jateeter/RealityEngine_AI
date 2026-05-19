@@ -5,11 +5,13 @@
  * and visualizes the flow of data through the system.
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import { useVisualizerStore } from '../store';
 import { classifyMachine, DOMAINS, DOMAIN_ORDER, DomainId } from './machineDomains';
 import { vizTheme } from '../styles/vizTheme';
+import { Graph3DView } from './Graph3DView';
+import { Graph3DToggle } from './Graph3DToggle';
 import './MachineGraphView.css';
 import './VisLegend.css';
 
@@ -49,6 +51,12 @@ interface SimulationStep {
     outputVector: number[] | null;
     inputRegion: { offset: number; length: number };
     outputRegion: { offset: number; length: number } | null;
+    transitionResult?: {
+      sequenceResults?: Record<string, {
+        activatedVectors?: string[];
+        matchedVectors?: string[];
+      }>;
+    };
   }>;
   activeRegions: Array<{
     offset: number;
@@ -57,6 +65,695 @@ interface SimulationStep {
     type: 'input' | 'output';
   }>;
 }
+
+// ── Machine color state ──────────────────────────────────────────────────────
+// idle   → no meaningful transition this step
+// active → sequence advanced (vectors activated) but no output yet
+// fired  → final event matched, output vector produced
+type MachineColorState = 'idle' | 'active' | 'fired';
+
+function getMachineColorState(
+  result: SimulationStep['machineResults'][string] | undefined,
+): MachineColorState {
+  if (!result) return 'idle';
+  if (result.outputVector !== null && result.outputVector !== undefined) return 'fired';
+  const seqResults = result.transitionResult?.sequenceResults;
+  if (seqResults) {
+    for (const sr of Object.values(seqResults)) {
+      if ((sr.activatedVectors?.length ?? 0) > 0) return 'active';
+    }
+  }
+  return 'idle';
+}
+
+const CARD_FIRED_FILL   = '#2d0808';
+const CARD_FIRED_STROKE = '#ef4444';
+
+// Off-white blue-grey — visible against the deep navy background.
+const EDGE_IDLE_COLOR = '#8ab4cc';
+
+// When node count exceeds this threshold, switch to compact circle layout.
+const COMPACT_MODE_THRESHOLD = 100;
+const COMPACT_R = 16;  // circle radius (px) in compact mode
+
+// ---------------------------------------------------------------------------
+// Sequence tooltip — types, layout helpers, and sub-components
+// ---------------------------------------------------------------------------
+
+interface TooltipVectorElement {
+  value: number;
+  comparatorType: string;
+  threshold?: number;
+}
+
+interface TooltipSeqNode {
+  id: string;
+  label: string;
+  isInitial: boolean;
+  hasOutput: boolean;
+  elements: TooltipVectorElement[];
+}
+
+interface TooltipSeq {
+  sequenceId: string;
+  name: string;
+  nodes: TooltipSeqNode[];
+  edges: Array<{ source: string; target: string }>;
+}
+
+interface TooltipMachineData {
+  id: string;
+  name: string;
+  description: string;
+  sequences: TooltipSeq[];
+}
+
+interface TooltipState {
+  machineId: string;
+  name: string;
+  x: number;
+  y: number;
+  pinned: boolean;
+  data: TooltipMachineData | null;
+}
+
+// ── TooltipSeqGraph ───────────────────────────────────────────────────────────
+// Force-directed sequence graph embedded in the machine tooltip.
+// Visual language matches CriticalEventGraphView (same colors, drag/zoom/hover).
+//
+// Animation: when the engine steps and one of THIS machine's CES vectors
+// activates, the corresponding node pulses cyan and any edge whose target
+// just activated flashes — giving an operator a moving picture of CES
+// transitions instead of a static topology snapshot.
+
+const TT_NODE_R     = 11;
+const TT_C_INITIAL  = '#3b82f6';
+const TT_C_TERMINAL = '#111827';
+const TT_C_DEFAULT  = '#64748b';
+const TT_C_FIRED    = '#f59e0b';
+const TT_EDGE_CLR   = '#e2e8f0';
+const TT_C_ACTIVE   = '#06b6d4';  // pulse color for activated vectors
+const TT_C_MATCHED  = '#fbbf24';  // ring for matched-but-not-fired vectors
+
+// Live per-step state for the hovered machine — drives node pulses,
+// edge flashes, and the input/output vector strips at the top and
+// bottom of the tooltip SVG.  Every field is optional so the tooltip
+// renders cleanly before the first WebSocket step arrives.
+interface TooltipLiveResult {
+  stepNumber?:   number;
+  inputVector?:  number[];
+  outputVector?: number[] | null;
+  inputRegion?:  { offset: number; length: number };
+  outputRegion?: { offset: number; length: number } | null;
+  activatedIds:  Set<string>;
+  matchedIds:    Set<string>;
+  hasOutput:     boolean;
+}
+
+const EMPTY_LIVE: TooltipLiveResult = {
+  activatedIds: new Set(),
+  matchedIds:   new Set(),
+  hasOutput:    false,
+};
+
+interface TTNode extends d3.SimulationNodeDatum {
+  id:        string;
+  label:     string;
+  isInitial: boolean;
+  hasOutput: boolean;
+  elements:  TooltipVectorElement[];
+  cx:        number;
+  cy:        number;
+}
+interface TTLink extends d3.SimulationLinkDatum<TTNode> {
+  source: string | TTNode;
+  target: string | TTNode;
+}
+
+const ttFill    = (n: TTNode) => n.hasOutput ? TT_C_TERMINAL : n.isInitial ? TT_C_INITIAL : TT_C_DEFAULT;
+const ttStroke  = (n: TTNode) => n.hasOutput ? TT_C_FIRED    : n.isInitial ? '#2563eb'    : '#475569';
+const ttStrokeW = (n: TTNode) => n.hasOutput ? 3 : 2;
+
+// Strip geometry — reserved at the top and bottom of the tooltip SVG
+// for live input/output vector display.  The graph zoom only affects
+// the middle area so the strips stay legible at all zoom levels.
+const TT_STRIP_TOP_H = 30;
+const TT_STRIP_BOT_H = 30;
+
+interface NodeTipState {
+  node: TTNode;
+  x: number;
+  y: number;
+  isActive: boolean;
+}
+
+const TooltipSeqGraph: React.FC<{ sequences: TooltipSeq[]; live: TooltipLiveResult }> = ({ sequences, live }) => {
+  const svgRef       = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const simRef       = useRef<d3.Simulation<TTNode, TTLink> | null>(null);
+  // Persisted selections so the live-update effect can recolour and
+  // pulse nodes/edges without forcing a full simulation rebuild.
+  const nodeSelRef   = useRef<d3.Selection<SVGCircleElement, TTNode, SVGGElement, unknown> | null>(null);
+  const linkSelRef   = useRef<d3.Selection<SVGLineElement, TTLink, SVGGElement, unknown> | null>(null);
+
+  // Per-node hover tooltip (Event Vector + active/inactive). Read by the d3
+  // hover handlers via liveRef so they don't have to be re-bound on every step.
+  const [nodeTip, setNodeTip] = useState<NodeTipState | null>(null);
+  const liveRef = useRef<TooltipLiveResult>(live);
+  useEffect(() => { liveRef.current = live; }, [live]);
+
+  // ── Build / rebuild the graph (only when the sequence topology changes) ──
+  useEffect(() => {
+    simRef.current?.stop();
+    if (!svgRef.current || !containerRef.current || !sequences.length) return;
+
+    const W  = containerRef.current.clientWidth  || 380;
+    const H  = containerRef.current.clientHeight || 300;
+    const GH = Math.max(140, H - TT_STRIP_TOP_H - TT_STRIP_BOT_H);
+
+    // Build graph data
+    const nodeMap = new Map<string, TTNode>();
+    const links: TTLink[] = [];
+
+    sequences.forEach((seq, si) => {
+      const angle = sequences.length > 1
+        ? (si / sequences.length) * 2 * Math.PI - Math.PI / 2
+        : 0;
+      const r  = Math.min(W, GH) * 0.28;
+      const cx = sequences.length > 1 ? W  / 2 + r * Math.cos(angle) : W  / 2;
+      const cy = sequences.length > 1 ? GH / 2 + r * Math.sin(angle) : GH / 2;
+
+      for (const n of seq.nodes) {
+        if (!nodeMap.has(n.id)) {
+          nodeMap.set(n.id, {
+            id: n.id, label: n.label,
+            isInitial: n.isInitial, hasOutput: n.hasOutput,
+            elements: n.elements ?? [],
+            cx, cy,
+          });
+        }
+      }
+      for (const e of seq.edges) links.push({ source: e.source, target: e.target });
+    });
+
+    const nodes = Array.from(nodeMap.values());
+
+    // Pre-position nodes near their cluster center so the initial layout is clean
+    nodes.forEach(n => {
+      n.x = n.cx + (Math.random() - 0.5) * 40;
+      n.y = n.cy + (Math.random() - 0.5) * 40;
+    });
+
+    // SVG setup
+    const svg = d3.select(svgRef.current);
+    svg.selectAll('*').remove();
+    svg.attr('width', W).attr('height', H);
+
+    const defs = svg.append('defs');
+    defs.append('marker')
+      .attr('id', 'tt-arrowhead')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', TT_NODE_R + 10)
+      .attr('refY', 0)
+      .attr('markerWidth', 7)
+      .attr('markerHeight', 7)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', TT_EDGE_CLR);
+    defs.append('marker')
+      .attr('id', 'tt-arrowhead-active')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', TT_NODE_R + 10)
+      .attr('refY', 0)
+      .attr('markerWidth', 8)
+      .attr('markerHeight', 8)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', TT_C_ACTIVE);
+
+    // Strip groups — outside the zoomable graph group so they stay fixed.
+    // Painted by drawVectorStrip() in the live-update effect below.
+    svg.append('g')
+      .attr('class', 'tt-strip-input')
+      .attr('transform', 'translate(0,0)');
+    svg.append('g')
+      .attr('class', 'tt-strip-output')
+      .attr('transform', `translate(0,${H - TT_STRIP_BOT_H})`);
+
+    // Zoomable graph group, offset down past the top strip.
+    const baseTransform = `translate(0,${TT_STRIP_TOP_H})`;
+    const g = svg.append('g').attr('class', 'tt-graph').attr('transform', baseTransform);
+
+    // Zoom / pan — strip clicks shouldn't pan the graph.
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.2, 5])
+      .filter(event => {
+        const t = event.target as Element | null;
+        if (t?.closest?.('.tt-strip-input') || t?.closest?.('.tt-strip-output')) return false;
+        return true;
+      })
+      .on('zoom', event => g.attr('transform', `${baseTransform} ${event.transform.toString()}`));
+    svg.call(zoom);
+
+    // Edges
+    const link = g.append('g')
+      .selectAll<SVGLineElement, TTLink>('line')
+      .data(links)
+      .join('line')
+      .attr('stroke', TT_EDGE_CLR)
+      .attr('stroke-width', 1.5)
+      .attr('stroke-opacity', 0.45)
+      .attr('marker-end', 'url(#tt-arrowhead)');
+    linkSelRef.current = link;
+
+    // Nodes
+    const node = g.append('g')
+      .selectAll<SVGCircleElement, TTNode>('circle')
+      .data(nodes)
+      .join('circle')
+      .attr('r', TT_NODE_R)
+      .attr('fill',         d => ttFill(d))
+      .attr('stroke',       d => ttStroke(d))
+      .attr('stroke-width', d => ttStrokeW(d))
+      .style('cursor', 'grab');
+    nodeSelRef.current = node;
+
+    // Labels
+    const label = g.append('g')
+      .selectAll<SVGTextElement, TTNode>('text')
+      .data(nodes)
+      .join('text')
+      .text(d => d.label)
+      .attr('font-size', 9)
+      .attr('fill', '#94a3b8')
+      .attr('dx', TT_NODE_R + 3)
+      .attr('dy', 3)
+      .style('pointer-events', 'none');
+
+    // Drag — pin on drop
+    const drag = d3.drag<SVGCircleElement, TTNode>()
+      .on('start', (event, d) => {
+        if (!event.active) sim.alphaTarget(0.3).restart();
+        d.fx = d.x; d.fy = d.y;
+      })
+      .on('drag',  (event, d) => { d.fx = event.x; d.fy = event.y; })
+      .on('end',   (event, d) => {
+        if (!event.active) sim.alphaTarget(0);
+        d.fx = d.x; d.fy = d.y;
+      });
+    node.call(drag as any);
+
+    // Double-click to unpin
+    node.on('dblclick', function(_, d) {
+      d.fx = null; d.fy = null;
+      sim.alpha(0.3).restart();
+    });
+
+    // Hover: dim non-connected nodes / edges, highlight connected, and
+    // surface the per-node Event Vector + active/inactive tooltip.
+    node
+      .on('mouseover', function(event: MouseEvent, d) {
+        d3.select(this).attr('r', TT_NODE_R + 3);
+        node.style('opacity', (n: TTNode) => n.id === d.id ? 1 : 0.25);
+        link.style('opacity', (l: TTLink) => {
+          const src = typeof l.source === 'object' ? (l.source as TTNode).id : l.source as string;
+          const tgt = typeof l.target === 'object' ? (l.target as TTNode).id : l.target as string;
+          return src === d.id || tgt === d.id ? 1 : 0.06;
+        });
+        label.style('opacity', (n: TTNode) => n.id === d.id ? 1 : 0.15);
+
+        const rect = containerRef.current?.getBoundingClientRect();
+        const x = rect ? event.clientX - rect.left : 0;
+        const y = rect ? event.clientY - rect.top  : 0;
+        const liveNow = liveRef.current;
+        const isActive = liveNow.activatedIds.has(d.id) || liveNow.matchedIds.has(d.id);
+        setNodeTip({ node: d, x, y, isActive });
+      })
+      .on('mousemove', function(event: MouseEvent, d) {
+        const rect = containerRef.current?.getBoundingClientRect();
+        const x = rect ? event.clientX - rect.left : 0;
+        const y = rect ? event.clientY - rect.top  : 0;
+        const liveNow = liveRef.current;
+        const isActive = liveNow.activatedIds.has(d.id) || liveNow.matchedIds.has(d.id);
+        setNodeTip({ node: d, x, y, isActive });
+      })
+      .on('mouseout', function() {
+        d3.select(this).attr('r', TT_NODE_R);
+        node.style('opacity', 1);
+        link.style('opacity', 0.45);
+        label.style('opacity', 1);
+        setNodeTip(null);
+      });
+
+    // Force simulation
+    const sim = d3.forceSimulation<TTNode>(nodes)
+      .force('link',      d3.forceLink<TTNode, TTLink>(links).id(d => d.id).distance(60).strength(1))
+      .force('charge',    d3.forceManyBody<TTNode>().strength(-160))
+      .force('collision', d3.forceCollide<TTNode>().radius(TT_NODE_R + 7))
+      .force('x',         d3.forceX<TTNode>(d => d.cx).strength(0.35))
+      .force('y',         d3.forceY<TTNode>(d => d.cy).strength(0.35));
+
+    simRef.current = sim;
+
+    sim.on('tick', () => {
+      link
+        .attr('x1', d => (d.source as TTNode).x ?? 0)
+        .attr('y1', d => (d.source as TTNode).y ?? 0)
+        .attr('x2', d => (d.target as TTNode).x ?? 0)
+        .attr('y2', d => (d.target as TTNode).y ?? 0);
+      node.attr('cx', d => d.x ?? 0).attr('cy', d => d.y ?? 0);
+      label.attr('x', d => d.x ?? 0).attr('y', d => d.y ?? 0);
+    });
+
+    return () => { sim.stop(); };
+  }, [sequences]);
+
+  // ── Live update: animate transitions + repaint vector strips ────────────
+  // Runs whenever `live` changes (every WebSocket step).  Does not touch
+  // simulation forces or node positions — purely a visual overlay.
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg     = d3.select(svgRef.current);
+    const nodeSel = nodeSelRef.current;
+    const linkSel = linkSelRef.current;
+
+    if (nodeSel) {
+      nodeSel.each(function(d: TTNode) {
+        const sel = d3.select(this);
+        const isActivated = live.activatedIds.has(d.id);
+        const isMatched   = live.matchedIds.has(d.id);
+        // Cancel any in-flight transition to keep state deterministic.
+        sel.interrupt();
+
+        if (isActivated) {
+          sel.attr('stroke', TT_C_ACTIVE).attr('stroke-width', 4);
+          // Single pulse: radius grows then settles back.
+          sel.attr('r', TT_NODE_R)
+            .transition().duration(220).attr('r', TT_NODE_R + 5)
+            .transition().duration(320).attr('r', TT_NODE_R);
+        } else if (isMatched) {
+          sel.attr('stroke', TT_C_MATCHED).attr('stroke-width', 3).attr('r', TT_NODE_R);
+        } else {
+          sel.attr('stroke', ttStroke(d)).attr('stroke-width', ttStrokeW(d)).attr('r', TT_NODE_R);
+        }
+      });
+    }
+
+    if (linkSel) {
+      linkSel.each(function(d: TTLink) {
+        const sel = d3.select(this);
+        const tgtId = typeof d.target === 'object' ? (d.target as TTNode).id : d.target as string;
+        // An edge "transitions" when its target vector activates this step —
+        // that's the CES advancing from source → target.
+        const isTransition = live.activatedIds.has(tgtId);
+        sel.interrupt();
+
+        if (isTransition) {
+          sel.attr('stroke', TT_C_ACTIVE).attr('stroke-opacity', 0.95)
+             .attr('marker-end', 'url(#tt-arrowhead-active)');
+          sel.attr('stroke-width', 3)
+            .transition().duration(220).attr('stroke-width', 5)
+            .transition().duration(380).attr('stroke-width', 2.5);
+        } else {
+          sel.attr('stroke', TT_EDGE_CLR).attr('stroke-width', 1.5)
+             .attr('stroke-opacity', 0.45).attr('marker-end', 'url(#tt-arrowhead)');
+        }
+      });
+    }
+
+    // Repaint input/output strips with the current step's vectors.
+    drawVectorStrip(
+      svg.select<SVGGElement>('g.tt-strip-input').node(),
+      'IN', live.inputRegion, live.inputVector ?? [], live.activatedIds.size > 0,
+    );
+    drawVectorStrip(
+      svg.select<SVGGElement>('g.tt-strip-output').node(),
+      'OUT', live.outputRegion ?? null, (live.outputVector ?? []) as number[], live.hasOutput,
+    );
+
+    // Refresh the per-node hover tooltip's active flag if the cursor is
+    // still parked on a node when a new engine step lands.
+    setNodeTip(prev => {
+      if (!prev) return prev;
+      const nowActive = live.activatedIds.has(prev.node.id) || live.matchedIds.has(prev.node.id);
+      return nowActive === prev.isActive ? prev : { ...prev, isActive: nowActive };
+    });
+  }, [live]);
+
+  useEffect(() => () => { simRef.current?.stop(); }, []);
+
+  if (!sequences.length) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: '100%', fontSize: 10, color: 'var(--re-text-2)', fontStyle: 'italic',
+      }}>
+        no sequences
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <svg ref={svgRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
+      {nodeTip && <NodeEventTip tip={nodeTip} containerRef={containerRef} />}
+    </div>
+  );
+};
+
+// ── NodeEventTip ─────────────────────────────────────────────────────────────
+// Per-node hover overlay rendered inside the machine CES tooltip.
+// Shows the event vector (elements with comparator + threshold) and an
+// active/inactive badge driven by the live step state.
+
+const NodeEventTip: React.FC<{
+  tip: NodeTipState;
+  containerRef: React.RefObject<HTMLDivElement>;
+}> = ({ tip, containerRef }) => {
+  const { node, x, y, isActive } = tip;
+  const cw = containerRef.current?.clientWidth ?? 380;
+  const ch = containerRef.current?.clientHeight ?? 300;
+  const TIP_W = 220;
+  const TIP_MAX_H = 200;
+  // Flip to the other side of the cursor near the container edges so the
+  // tooltip never clips outside the host machine tooltip.
+  const left = x + TIP_W + 12 > cw ? Math.max(4, x - TIP_W - 12) : x + 12;
+  const top  = y + TIP_MAX_H + 12 > ch ? Math.max(4, y - TIP_MAX_H - 8) : y + 8;
+  return (
+    <div
+      style={{
+        position: 'absolute', left, top, width: TIP_W, maxHeight: TIP_MAX_H,
+        background: 'rgba(15, 23, 42, 0.96)',
+        border: '1px solid #334155', borderRadius: 6,
+        boxShadow: '0 6px 18px rgba(0,0,0,0.5)',
+        padding: '8px 10px', pointerEvents: 'none',
+        fontSize: 11, color: '#e2e8f0', zIndex: 5,
+        overflow: 'hidden', display: 'flex', flexDirection: 'column',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <span style={{ fontWeight: 700, color: '#7dd3fc', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {node.label}
+        </span>
+        <span
+          style={{
+            fontSize: 9, fontWeight: 700, letterSpacing: 0.5,
+            padding: '2px 6px', borderRadius: 3,
+            background: isActive ? '#06b6d4' : '#334155',
+            color: isActive ? '#0b1220' : '#94a3b8',
+          }}
+        >
+          {isActive ? 'ACTIVE' : 'INACTIVE'}
+        </span>
+      </div>
+      <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+        Event Vector ({node.elements.length})
+      </div>
+      <div style={{ overflowY: 'auto', background: 'rgba(2, 6, 23, 0.5)', borderRadius: 4, padding: 4 }}>
+        {node.elements.length === 0 && (
+          <div style={{ fontStyle: 'italic', color: '#475569', padding: '2px 4px' }}>no elements</div>
+        )}
+        {node.elements.map((el, i) => (
+          <div key={i} style={{ display: 'flex', gap: 6, fontFamily: 'monospace', fontSize: 10, lineHeight: '14px' }}>
+            <span style={{ color: '#64748b', width: 22, textAlign: 'right' }}>[{i}]</span>
+            <span style={{ color: '#22c55e', width: 50, fontWeight: 600 }}>{el.value.toFixed(3)}</span>
+            <span style={{ color: '#94a3b8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {el.comparatorType}
+              {el.threshold !== undefined ? ` (${el.threshold.toFixed(2)})` : ''}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// drawVectorStrip — paint a label + per-cell value visualization inside
+// the supplied <g>.  Clears and re-draws on every call so the strip
+// stays synchronised with the latest WebSocket step.  Cell brightness
+// scales with |value| so non-zero activations are visible at a glance.
+function drawVectorStrip(
+  gNode: SVGGElement | null,
+  kind: 'IN' | 'OUT',
+  region: { offset: number; length: number } | null | undefined,
+  values: number[],
+  active: boolean,
+): void {
+  if (!gNode) return;
+  const g = d3.select(gNode);
+  g.selectAll('*').remove();
+  const containerSvg = gNode.ownerSVGElement;
+  if (!containerSvg) return;
+  const W = containerSvg.clientWidth || 380;
+
+  const LABEL_W  = 72;
+  const CELL_W   = 16;
+  const CELL_GAP = 2;
+  const CELL_H   = 14;
+  const STRIP_H  = kind === 'IN' ? TT_STRIP_TOP_H : TT_STRIP_BOT_H;
+  const baseY    = (STRIP_H - CELL_H) / 2;
+  const accent   = kind === 'IN' ? '#60a5fa' : '#f59e0b';
+
+  // Backdrop strip — distinguishes the strip area from the graph above/below.
+  g.append('rect')
+    .attr('x', 0).attr('y', 0).attr('width', W).attr('height', STRIP_H)
+    .attr('fill', kind === 'IN' ? 'rgba(59, 130, 246, 0.10)' : 'rgba(245, 158, 11, 0.10)');
+
+  // Thin accent line separating the strip from the graph.
+  g.append('line')
+    .attr('x1', 0).attr('x2', W)
+    .attr('y1', kind === 'IN' ? STRIP_H : 0)
+    .attr('y2', kind === 'IN' ? STRIP_H : 0)
+    .attr('stroke', accent).attr('stroke-opacity', 0.35).attr('stroke-width', 1);
+
+  // Kind label + region annotation
+  const labelText = region
+    ? `${kind} [${region.offset}:${region.offset + region.length - 1}]`
+    : `${kind}`;
+  g.append('text')
+    .attr('x', 6).attr('y', STRIP_H / 2 + 4)
+    .attr('font-size', 9).attr('font-weight', 700)
+    .attr('letter-spacing', 0.5)
+    .attr('fill', kind === 'IN' ? accent : (active ? '#fbbf24' : '#94a3b8'))
+    .text(labelText);
+
+  // Capacity for cells in the remaining width
+  const availW   = Math.max(0, W - LABEL_W - 8);
+  const maxCells = Math.max(0, Math.floor(availW / (CELL_W + CELL_GAP)));
+  const showCount = Math.min(values.length, maxCells);
+
+  for (let i = 0; i < showCount; i++) {
+    const v    = values[i] ?? 0;
+    const norm = Math.max(0, Math.min(1, Math.abs(v)));
+    const fill = kind === 'IN'
+      ? `rgba(59, 130, 246, ${0.18 + norm * 0.72})`
+      : `rgba(245, 158, 11, ${0.18 + norm * 0.72})`;
+    const cx = LABEL_W + i * (CELL_W + CELL_GAP);
+    g.append('rect')
+      .attr('x', cx).attr('y', baseY)
+      .attr('width', CELL_W).attr('height', CELL_H).attr('rx', 2)
+      .attr('fill', fill)
+      .attr('stroke', norm > 0.5 ? accent : 'rgba(148, 163, 184, 0.25)')
+      .attr('stroke-width', norm > 0.5 ? 1 : 0.5);
+    g.append('text')
+      .attr('x', cx + CELL_W / 2).attr('y', baseY + CELL_H / 2 + 3)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 8).attr('font-weight', 600)
+      .attr('fill', norm > 0.5 ? '#0b1220' : '#cbd5e1')
+      .text(formatCellValue(v));
+  }
+  if (values.length > showCount) {
+    const cx = LABEL_W + showCount * (CELL_W + CELL_GAP);
+    g.append('text')
+      .attr('x', cx + 2).attr('y', STRIP_H / 2 + 4)
+      .attr('font-size', 9).attr('fill', '#94a3b8')
+      .text(`+${values.length - showCount}`);
+  }
+  if (values.length === 0) {
+    g.append('text')
+      .attr('x', LABEL_W).attr('y', STRIP_H / 2 + 4)
+      .attr('font-size', 9).attr('fill', '#475569')
+      .attr('font-style', 'italic')
+      .text(kind === 'IN' ? '(no input yet)' : (region ? '(no output yet)' : '(no output region)'));
+  }
+}
+
+function formatCellValue(v: number): string {
+  if (v === 0) return '0';
+  if (Number.isInteger(v)) return String(v);
+  const a = Math.abs(v);
+  if (a >= 100) return v.toFixed(0);
+  if (a >= 10)  return v.toFixed(1);
+  return v.toFixed(2);
+}
+
+// ── SequenceTooltip ───────────────────────────────────────────────────────────
+
+const SequenceTooltip: React.FC<{
+  tooltip: TooltipState;
+  live: TooltipLiveResult;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onPin: () => void;
+  onClose: () => void;
+}> = ({ tooltip, live, onMouseEnter, onMouseLeave, onPin, onClose }) => {
+  const { x, y, pinned, name, data } = tooltip;
+  return (
+    <div
+      className={`mgv-tooltip${pinned ? ' mgv-tooltip-pinned' : ''}`}
+      style={{ left: x, top: y }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <div className="mgv-tooltip-header">
+        <span className="mgv-tooltip-title">{name}</span>
+        <div className="mgv-tooltip-btns">
+          <button
+            className={`mgv-tooltip-pin${pinned ? ' active' : ''}`}
+            onClick={onPin}
+            title={pinned ? 'Unpin' : 'Pin'}
+          >⊕</button>
+          <button className="mgv-tooltip-close" onClick={onClose} title="Close">✕</button>
+        </div>
+      </div>
+
+      {data ? (
+        <>
+          {data.description && (
+            <div className="mgv-tooltip-desc">{data.description}</div>
+          )}
+          <div className="mgv-tooltip-seq-hdr">
+            Event Sequences
+            {live.stepNumber != null && (
+              <span style={{ marginLeft: 8, color: '#94a3b8', fontWeight: 400 }}>
+                · step {live.stepNumber}
+                {live.activatedIds.size > 0 && (
+                  <span style={{ marginLeft: 6, color: TT_C_ACTIVE, fontWeight: 700 }}>
+                    {live.activatedIds.size} active
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
+          <div className="mgv-tooltip-body">
+            <TooltipSeqGraph sequences={data.sequences} live={live} />
+          </div>
+          <div className="mgv-tooltip-foot">
+            <span style={{ color: '#3b82f6' }}>◆ Initial</span>
+            <span style={{ color: '#64748b' }}>● Intermediate</span>
+            <span style={{ color: '#f59e0b' }}>○ Terminal</span>
+            <span style={{ color: TT_C_ACTIVE }}>✦ Activated</span>
+            <span style={{ color: TT_C_MATCHED }}>○ Matched</span>
+          </div>
+        </>
+      ) : (
+        <div className="mgv-tooltip-loading">Loading sequences…</div>
+      )}
+    </div>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // Layout persistence
@@ -91,20 +788,42 @@ export const MachineGraphView: React.FC = () => {
 
   // D3 objects that must persist across step updates
   const nodeSelRef      = useRef<d3.Selection<SVGGElement, MachineNode, SVGGElement, unknown> | null>(null);
+  const linkSelRef      = useRef<d3.Selection<SVGPathElement, any, SVGGElement, unknown> | null>(null);
+  const linkLabelSelRef = useRef<d3.Selection<SVGTextElement, any, SVGGElement, unknown> | null>(null);
   const stepTextRef     = useRef<d3.Selection<SVGTextElement, MachineNode, SVGGElement, unknown> | null>(null);
   const simRef          = useRef<d3.Simulation<MachineNode & d3.SimulationNodeDatum, undefined> | null>(null);
-  const zoomTransformRef = useRef<d3.ZoomTransform | null>(null);
+  const zoomTransformRef  = useRef<d3.ZoomTransform | null>(null);
+  const compactModeRef    = useRef(false);
+
+  const [tooltip,     setTooltip]     = useState<TooltipState | null>(null);
+  const tooltipCacheRef = useRef<Map<string, TooltipMachineData>>(new Map());
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showTooltipRef  = useRef<(id: string, name: string, x: number, y: number) => void>(() => {});
 
   const [graphData,   setGraphData]   = useState<MachineGraphData | null>(null);
   const [currentStep, setCurrentStep] = useState<SimulationStep | null>(null);
   const [error,       setError]       = useState<string | null>(null);
   const [dimensions,  setDimensions]  = useState({ width: 1200, height: 600 });
   const [legendOpen,  setLegendOpen]  = useState(false);
+  const [is3D,        setIs3D]        = useState(false);
   // Incrementing this forces a full layout rebuild (Reset Layout)
   const [layoutEpoch, setLayoutEpoch] = useState(0);
 
-  const ws          = useVisualizerStore(state => state.ws);
-  const loadMachine = useVisualizerStore(state => state.loadMachine);
+  // SVG is hidden until the simulation fully settles. On warm restarts
+  // (saved zoom + saved positions) we reveal immediately.
+  const [isReady, setIsReady] = useState(() => {
+    const { graphZoomState } = useVisualizerStore.getState();
+    return graphZoomState !== null && Object.keys(loadLayout()).length > 0;
+  });
+
+  const ws               = useVisualizerStore(state => state.ws);
+  const loadMachine      = useVisualizerStore(state => state.loadMachine);
+  const setGraphZoomState = useVisualizerStore(state => state.setGraphZoomState);
+  const selectedDomains  = useVisualizerStore(state => state.selectedDomains);
+  const selectedDomainsRef = useRef(selectedDomains);
+  useEffect(() => { selectedDomainsRef.current = selectedDomains; }, [selectedDomains]);
+  const toggleDomain     = useVisualizerStore(state => state.toggleDomain);
+  const setAllDomains    = useVisualizerStore(state => state.setAllDomains);
   const loadMachineRef = useRef(loadMachine);
   useEffect(() => { loadMachineRef.current = loadMachine; }, [loadMachine]);
 
@@ -165,7 +884,94 @@ export const MachineGraphView: React.FC = () => {
   const handleResetLayout = useCallback(() => {
     try { localStorage.removeItem(LAYOUT_KEY); } catch { /* ignore */ }
     zoomTransformRef.current = null;
+    setGraphZoomState(null);
+    setIsReady(false);
     setLayoutEpoch(e => e + 1);
+  }, [setGraphZoomState]);
+
+  // ── Tooltip data fetch ─────────────────────────────────────────────────────
+  const showTooltip = useCallback((id: string, name: string, x: number, y: number) => {
+    setTooltip(prev => {
+      if (prev?.pinned) return prev;
+      return { machineId: id, name, x, y, pinned: false, data: null };
+    });
+
+    const cached = tooltipCacheRef.current.get(id);
+    if (cached) {
+      setTooltip(prev => prev?.machineId === id ? { ...prev, data: cached } : prev);
+      return;
+    }
+
+    fetch(`/api/machines/${id}/export`)
+      .then(r => r.json())
+      .then((json: any) => {
+        const m = json.machine ?? json;
+        const data: TooltipMachineData = {
+          id,
+          name:        m.name        ?? name,
+          description: m.description ?? '',
+          sequences: (m.sequences ?? []).map((seq: any) => {
+            const nodes: TooltipSeqNode[] = (seq.vectors ?? []).map((v: any) => ({
+              id:        v.id,
+              label:     v.metadata?.name ?? v.id.slice(-6),
+              isInitial: v.isInitial ?? false,
+              hasOutput: Array.isArray(v.outputVectors) && v.outputVectors.length > 0,
+              elements:  Array.isArray(v.elements) ? (v.elements as TooltipVectorElement[]) : [],
+            }));
+            const edges: Array<{ source: string; target: string }> = [];
+            for (const v of (seq.vectors ?? [])) {
+              for (const nid of (v.nextVectorIds ?? [])) edges.push({ source: v.id, target: nid });
+            }
+            return { sequenceId: seq.id, name: seq.name, nodes, edges };
+          }),
+        };
+        tooltipCacheRef.current.set(id, data);
+        setTooltip(prev => prev?.machineId === id ? { ...prev, data } : prev);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { showTooltipRef.current = showTooltip; }, [showTooltip]);
+
+  // ── Shared domain-visibility filter ──────────────────────────────────────────
+  // Called after layout rebuild AND whenever selectedDomains changes so that
+  // nodes, edges (including cross-domain arcs), edge labels, hulls, and domain
+  // anchor labels are all toggled consistently.
+  const applyDomainFilter = useCallback(() => {
+    if (!svgRef.current) return;
+    const domains = selectedDomainsRef.current;
+    const selected = new Set(domains);
+    const allSelected = domains.length === DOMAIN_ORDER.length;
+
+    if (nodeSelRef.current) {
+      nodeSelRef.current
+        .style('opacity', (d: MachineNode) =>
+          allSelected || selected.has(d.domain ?? 'general') ? 1 : 0.04)
+        .style('pointer-events', (d: MachineNode) =>
+          allSelected || selected.has(d.domain ?? 'general') ? 'all' : 'none');
+    }
+
+    const isLinkVisible = (d: any): boolean => {
+      if (allSelected) return true;
+      const srcDom = (typeof d.source === 'object' ? d.source.domain : null) ?? 'general';
+      const tgtDom = (typeof d.target === 'object' ? d.target.domain : null) ?? 'general';
+      return selected.has(srcDom) && selected.has(tgtDom);
+    };
+
+    if (linkSelRef.current) {
+      linkSelRef.current
+        .style('display', (d: any) => isLinkVisible(d) ? null : 'none');
+    }
+    if (linkLabelSelRef.current) {
+      linkLabelSelRef.current
+        .style('display', (d: any) => isLinkVisible(d) ? null : 'none');
+    }
+    d3.select(svgRef.current)
+      .selectAll<SVGPathElement, { domainId: DomainId }>('path.domain-hull')
+      .style('opacity', d => allSelected || selected.has(d.domainId) ? 1 : 0);
+    d3.select(svgRef.current)
+      .selectAll<SVGTextElement, DomainId>('.domain-labels text')
+      .style('opacity', (d: DomainId) => allSelected || selected.has(d) ? 1 : 0);
   }, []);
 
   // ── Layout effect — only runs on structural changes, NOT on each step ──────
@@ -175,6 +981,8 @@ export const MachineGraphView: React.FC = () => {
     const svg    = d3.select(svgRef.current);
     svg.selectAll('*').remove();
     nodeSelRef.current  = null;
+    linkSelRef.current  = null;
+    linkLabelSelRef.current = null;
     stepTextRef.current = null;
     simRef.current?.stop();
     simRef.current = null;
@@ -184,20 +992,27 @@ export const MachineGraphView: React.FC = () => {
     const margin = { top: 40, right: 40, bottom: 40, left: 40 };
     svg.attr('width', width).attr('height', height);
 
-    // Arrowhead markers for directed edges
-    svg.append('defs').selectAll('marker')
-      .data(['mgv-arrow', 'mgv-arrow-active'])
-      .join('marker')
-      .attr('id', t => t)
-      .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 10)
-      .attr('refY', 0)
-      .attr('markerWidth', 10)
-      .attr('markerHeight', 10)
-      .attr('orient', 'auto')
-      .append('path')
-      .attr('d', 'M0,-5L10,0L0,5')
-      .attr('fill', t => t === 'mgv-arrow-active' ? vizTheme.edge.active : vizTheme.edge.arrowhead);
+    const compact = graphData.nodes.length > COMPACT_MODE_THRESHOLD;
+    compactModeRef.current = compact;
+
+    // Arrowhead markers — compact mode uses smaller tips (circles are smaller than cards).
+    const defs = svg.append('defs');
+    ([
+      { id: 'mgv-arrow',        fill: EDGE_IDLE_COLOR,      mw: compact ? 6 : 10 },
+      { id: 'mgv-arrow-active', fill: vizTheme.edge.active, mw: compact ? 5 :  7 },
+    ] as const).forEach(({ id, fill, mw }) => {
+      defs.append('marker')
+        .attr('id', id)
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 10)
+        .attr('refY', 0)
+        .attr('markerWidth', mw)
+        .attr('markerHeight', mw)
+        .attr('orient', 'auto')
+        .append('path')
+        .attr('d', 'M0,-5L10,0L0,5')
+        .attr('fill', fill);
+    });
 
     // Outer group owned by zoom/pan; inner group owns margin translation
     const outerG = svg.append('g');
@@ -221,21 +1036,30 @@ export const MachineGraphView: React.FC = () => {
       .on('zoom', (event) => {
         outerG.attr('transform', event.transform);
         zoomTransformRef.current = event.transform;
+        const { k, x, y } = event.transform;
+        useVisualizerStore.getState().setGraphZoomState({ k, x, y });
       });
     svg.call(zoom);
-    if (zoomTransformRef.current) {
-      svg.call(zoom.transform, zoomTransformRef.current);
+    // Restore zoom: prefer local ref (mid-session pan), then store (cross-mount).
+    const storedZoom = useVisualizerStore.getState().graphZoomState;
+    const restoreTransform = zoomTransformRef.current
+      ?? (storedZoom ? d3.zoomIdentity.translate(storedZoom.x, storedZoom.y).scale(storedZoom.k) : null);
+    if (restoreTransform) {
+      svg.call(zoom.transform, restoreTransform);
+      zoomTransformRef.current = restoreTransform;
     }
 
     // Restore saved positions before starting simulation
     const savedLayout = loadLayout();
+    const spread = compact ? 60 : 160;
     const simNodes = graphData.nodes.map(n => {
       const saved = savedLayout[n.id];
       const domain = classifyMachine(n).domain;
+      const anchor = DOMAINS[domain ?? 'general'].anchor;
       return Object.assign({}, n, {
         domain,
-        x:  saved?.fx ?? undefined,
-        y:  saved?.fy ?? undefined,
+        x:  saved?.fx ?? (anchor.x * innerWidth  + (Math.random() - 0.5) * spread),
+        y:  saved?.fy ?? (anchor.y * innerHeight + (Math.random() - 0.5) * spread),
         fx: saved?.fx ?? null,
         fy: saved?.fy ?? null,
       });
@@ -252,9 +1076,9 @@ export const MachineGraphView: React.FC = () => {
     // Domain anchors pull same-domain nodes toward a shared quadrant so the
     // hulls emerge as visible bubbles rather than tangled blobs in the center.
     const simulation = d3.forceSimulation(simNodes)
-      .force('link', d3.forceLink(simEdges).id((d: any) => d.id).distance(200))
-      .force('charge', d3.forceManyBody().strength(-500))
-      .force('collision', d3.forceCollide().radius(80))
+      .force('link', d3.forceLink(simEdges).id((d: any) => d.id).distance(compact ? 80 : 200))
+      .force('charge', d3.forceManyBody().strength(compact ? -180 : -500))
+      .force('collision', d3.forceCollide().radius(compact ? COMPACT_R + 8 : 80))
       .force('domainX', d3.forceX<MachineNode & d3.SimulationNodeDatum>(
         d => DOMAINS[(d.domain ?? 'general')].anchor.x * innerWidth,
       ).strength(0.16))
@@ -286,19 +1110,18 @@ export const MachineGraphView: React.FC = () => {
       .attr('pointer-events', 'none')
       .text(d => DOMAINS[d].label.toUpperCase());
 
-    // Expand each card into its four corners so the hull wraps the card, not
-    // just its center point. Matches the pattern from MachineInterconnectionGraph
-    // but sized for this view's 160×100 cards with a 20px pad.
-    const HULL_PAD = 20;
+    // Expand each node into its bounding box corners so the hull wraps it.
+    // Compact: circles (uniform radius). Full: 160×100 cards.
+    const HULL_PAD  = compact ? 8 : 20;
+    const nodeHW    = compact ? COMPACT_R + HULL_PAD : 80 + HULL_PAD;
+    const nodeHH    = compact ? COMPACT_R + HULL_PAD : 50 + HULL_PAD;
     const cornerPoints = (n: MachineNode & d3.SimulationNodeDatum): [number, number][] => {
       const x = n.x ?? 0, y = n.y ?? 0;
-      const halfW = 80 + HULL_PAD;
-      const halfH = 50 + HULL_PAD;
       return [
-        [x - halfW, y - halfH],
-        [x + halfW, y - halfH],
-        [x + halfW, y + halfH],
-        [x - halfW, y + halfH],
+        [x - nodeHW, y - nodeHH],
+        [x + nodeHW, y - nodeHH],
+        [x + nodeHW, y + nodeHH],
+        [x - nodeHW, y + nodeHH],
       ];
     };
 
@@ -366,6 +1189,12 @@ export const MachineGraphView: React.FC = () => {
         .attr('stroke-dasharray', '8,6')
         .attr('pointer-events', 'all')
         .style('cursor', 'grab')
+        .on('mouseenter', (_event, d) => {
+          useVisualizerStore.getState().setHoveredDomainId(d.domainId);
+        })
+        .on('mouseleave', () => {
+          useVisualizerStore.getState().setHoveredDomainId(null);
+        })
         .call(hullDrag as any);
 
       enter.merge(sel as any).attr('d', d => {
@@ -382,15 +1211,17 @@ export const MachineGraphView: React.FC = () => {
       .join('path')
       .attr('class', 'edge')
       .attr('fill', 'none')
-      .attr('stroke', vizTheme.edge.idle)
-      .attr('stroke-width', 2)
-      .attr('stroke-dasharray', '5,5')
-      .attr('opacity', 0.85)
+      .attr('stroke', EDGE_IDLE_COLOR)
+      .attr('stroke-width', 2.5)
+      .attr('stroke-dasharray', '7,3')
+      .attr('opacity', 0.8)
       .attr('marker-end', 'url(#mgv-arrow)');
+
+    linkSelRef.current = link as any;
 
     const linkLabels = g.append('g')
       .selectAll<SVGTextElement, typeof simEdges[0]>('text')
-      .data(simEdges)
+      .data(compact ? [] : simEdges)
       .join('text')
       .attr('class', 'edge-label')
       .attr('font-size', '10px')
@@ -403,6 +1234,8 @@ export const MachineGraphView: React.FC = () => {
           : '';
       });
 
+    linkLabelSelRef.current = linkLabels as any;
+
     // ── Nodes ──────────────────────────────────────────────────────────────
     const node = g.append('g')
       .selectAll<SVGGElement, MachineNode & d3.SimulationNodeDatum>('g')
@@ -412,54 +1245,69 @@ export const MachineGraphView: React.FC = () => {
 
     nodeSelRef.current = node as any;
 
-    node.append('rect')
-      .attr('width', 160)
-      .attr('height', 100)
-      .attr('x', -80)
-      .attr('y', -50)
-      .attr('rx', 8)
-      .attr('fill', vizTheme.bg.cardIdle)
-      .attr('stroke', (d: MachineNode) => DOMAINS[(d.domain ?? 'general')].color)
-      .attr('stroke-width', 2.5);
+    if (compact) {
+      // ── Compact mode: bare circles, no card content ──────────────────────
+      node.append('circle')
+        .attr('r', COMPACT_R)
+        .attr('fill', vizTheme.bg.cardIdle)
+        .attr('stroke', (d: MachineNode) => DOMAINS[(d.domain ?? 'general')].color)
+        .attr('stroke-width', 2);
+      stepTextRef.current = null;
+    } else {
+      // ── Full mode: cards with name + mapping labels ───────────────────────
+      node.append('rect')
+        .attr('width', 160)
+        .attr('height', 100)
+        .attr('x', -80)
+        .attr('y', -50)
+        .attr('rx', 8)
+        .attr('fill', vizTheme.bg.cardIdle)
+        .attr('stroke', (d: MachineNode) => DOMAINS[(d.domain ?? 'general')].color)
+        .attr('stroke-width', 2.5);
 
-    node.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('y', -20)
-      .attr('font-size', '14px')
-      .attr('font-weight', 'bold')
-      .attr('fill', vizTheme.text.primary)
-      .text((d: MachineNode) => d.name);
+      node.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('y', -20)
+        .attr('font-size', '14px')
+        .attr('font-weight', 'bold')
+        .attr('fill', vizTheme.text.primary)
+        .text((d: MachineNode) => d.name);
 
-    node.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('y', 0)
-      .attr('font-size', '11px')
-      .attr('fill', vizTheme.accent.input)
-      .text((d: MachineNode) => `In: [${d.inputMapping.offset}:${d.inputMapping.offset + d.inputMapping.length}]`);
+      node.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('y', 0)
+        .attr('font-size', '11px')
+        .attr('fill', vizTheme.accent.input)
+        .text((d: MachineNode) => `In: [${d.inputMapping.offset}:${d.inputMapping.offset + d.inputMapping.length}]`);
 
-    node.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('y', 15)
-      .attr('font-size', '11px')
-      .attr('fill', vizTheme.accent.output)
-      .text((d: MachineNode) => `Out: [${d.outputMapping.offset}:${d.outputMapping.offset + d.outputMapping.length}]`);
+      node.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('y', 15)
+        .attr('font-size', '11px')
+        .attr('fill', vizTheme.accent.output)
+        .text((d: MachineNode) => `Out: [${d.outputMapping.offset}:${d.outputMapping.offset + d.outputMapping.length}]`);
 
-    const stepText = node.append<SVGTextElement>('text')
-      .attr('text-anchor', 'middle')
-      .attr('y', 35)
-      .attr('font-size', '10px')
-      .attr('fill', 'white');
+      const stepText = node.append<SVGTextElement>('text')
+        .attr('text-anchor', 'middle')
+        .attr('y', 35)
+        .attr('font-size', '10px')
+        .attr('fill', 'white');
 
-    stepTextRef.current = stepText as any;
+      stepTextRef.current = stepText as any;
+    }
 
     // ── Drag — pin on drop ────────────────────────────────────────────────
+    let didDrag = false;
+
     const drag = d3.drag<SVGGElement, MachineNode & d3.SimulationNodeDatum>()
       .on('start', (event, d) => {
+        didDrag = false;
         if (!event.active) simulation.alphaTarget(0.3).restart();
         d.fx = d.x ?? 0;
         d.fy = d.y ?? 0;
       })
       .on('drag', (event, d) => {
+        didDrag = true;
         d.fx = event.x;
         d.fy = event.y;
       })
@@ -477,10 +1325,43 @@ export const MachineGraphView: React.FC = () => {
       loadMachineRef.current(d.id);
     });
 
+    // ── Tooltip hover / click handlers ────────────────────────────────────
+    node
+      .on('mouseenter.tooltip', (event: MouseEvent, d: any) => {
+        if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+        tooltipTimerRef.current = setTimeout(() => {
+          const rect = containerRef.current!.getBoundingClientRect();
+          showTooltipRef.current(d.id, d.name, event.clientX - rect.left + 14, event.clientY - rect.top - 10);
+        }, 180);
+      })
+      .on('mouseleave.tooltip', () => {
+        if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+        tooltipTimerRef.current = setTimeout(() => {
+          setTooltip(prev => (prev?.pinned ? prev : null));
+        }, 220);
+      })
+      .on('click.tooltip', (_event: any, d: any) => {
+        if (didDrag) return;
+        setTooltip(prev => {
+          if (!prev || prev.machineId !== d.id) return prev;
+          return prev.pinned ? null : { ...prev, pinned: true };
+        });
+      });
+
+    svg.on('click.tooltip', (event: any) => {
+      if (!(event.target as Element).closest?.('g.node')) {
+        setTooltip(prev => (prev?.pinned ? prev : null));
+      }
+    });
+
     // ── Simulation tick ────────────────────────────────────────────────────
-    // Card half-dims (px): width=160 → halfW=80, height=100 → halfH=50.
-    // Pull endpoints ~84px from each center so arrows land at card edges.
-    const CARD_PAD = 84;
+    // CARD_PAD offsets arrow endpoints to the node edge (card or circle).
+    const CARD_PAD = compact ? COMPACT_R + 3 : 84;
+    // Auto-fit: on first load (no saved zoom), zoom to show all nodes once
+    // the simulation has settled enough that positions are stable.
+    const shouldAutoFit = !zoomTransformRef.current;
+    let autoFitDone = false;
+
     simulation.on('tick', () => {
       drawHulls();
 
@@ -499,24 +1380,104 @@ export const MachineGraphView: React.FC = () => {
         .attr('y', (d: any) => (d.source.y + d.target.y) / 2);
 
       node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
+
+      if (!autoFitDone && shouldAutoFit && simulation.alpha() < 0.05) {
+        autoFitDone = true;
+
+        // Compute fit-to-bounds
+        const xs = simNodes.map(n => n.x ?? 0);
+        const ys = simNodes.map(n => n.y ?? 0);
+        const halfW = compact ? COMPACT_R : 80;
+        const halfH = compact ? COMPACT_R : 50;
+        const fitPad = 48;
+        const minX = Math.min(...xs) - halfW - fitPad;
+        const maxX = Math.max(...xs) + halfW + fitPad;
+        const minY = Math.min(...ys) - halfH - fitPad;
+        const maxY = Math.max(...ys) + halfH + fitPad;
+        const graphW = maxX - minX;
+        const graphH = maxY - minY;
+        const s = Math.min(
+          width  / graphW,
+          height / graphH,
+          compact ? 1.0 : 0.85,
+        );
+        const cx = (minX + maxX) / 2;
+        const cy = (minY + maxY) / 2;
+        const fitTx = width  / 2 - s * (margin.left + cx);
+        const fitTy = height / 2 - s * (margin.top  + cy);
+        svg.call(zoom.transform, d3.zoomIdentity.translate(fitTx, fitTy).scale(s));
+
+        // Pin all nodes at their settled positions so the layout is preserved
+        // across view switches (nodes load from savedLayout as fx/fy next mount).
+        for (const n of simNodes) { n.fx = n.x ?? null; n.fy = n.y ?? null; }
+        saveLayout(simNodes);
+
+        // Persist zoom to store — survives unmount/remount across view switches.
+        useVisualizerStore.getState().setGraphZoomState({ k: s, x: fitTx, y: fitTy });
+
+        // Reveal the graph.
+        setIsReady(true);
+      }
     });
+
+    // Apply current domain visibility to the freshly created elements so arcs
+    // for unchecked domains don't flash visible until the filter effect re-runs.
+    applyDomainFilter();
 
     return () => { simulation.stop(); };
     // layoutEpoch is intentionally included so Reset Layout triggers a rebuild
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graphData, dimensions, layoutEpoch]);
 
-  // ── State update effect — updates node appearance on each step ─────────────
+  // ── State update effect — updates node and edge appearance on each step ──────
   // Does NOT touch the simulation or positions.
   useEffect(() => {
     const node     = nodeSelRef.current;
+    const link     = linkSelRef.current;
     const stepText = stepTextRef.current;
     if (!node) return;
 
-    node.select<SVGRectElement>('rect')
-      .attr('fill', (d: MachineNode) =>
-        currentStep?.machineResults[d.id] ? '#06b6d4' : vizTheme.bg.cardIdle
+    // ── Edge highlighting — fired-source edges glow cyan ───────────────────
+    if (link) {
+      const firedIds = new Set(
+        currentStep
+          ? Object.entries(currentStep.machineResults)
+              .filter(([, r]) => r.outputVector !== null && r.outputVector !== undefined)
+              .map(([id]) => id)
+          : [],
       );
+      link
+        .classed('active', (d: any) => firedIds.has(
+          typeof d.source === 'object' ? d.source.id : d.source,
+        ))
+        .attr('marker-end', (d: any) => {
+          const srcId = typeof d.source === 'object' ? d.source.id : d.source;
+          return firedIds.has(srcId) ? 'url(#mgv-arrow-active)' : 'url(#mgv-arrow)';
+        });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nodeShape: d3.Selection<any, MachineNode, SVGGElement, unknown> = compactModeRef.current
+      ? node.select<SVGCircleElement>('circle')
+      : node.select<SVGRectElement>('rect');
+    nodeShape
+      .attr('fill', (d: MachineNode) => {
+        const state = getMachineColorState(currentStep?.machineResults[d.id]);
+        if (state === 'fired')  return CARD_FIRED_FILL;
+        if (state === 'active') return vizTheme.bg.cardActive;
+        return vizTheme.bg.cardIdle;
+      })
+      .attr('stroke', (d: MachineNode) => {
+        const state = getMachineColorState(currentStep?.machineResults[d.id]);
+        if (state === 'fired')  return CARD_FIRED_STROKE;
+        if (state === 'active') return vizTheme.accent.input;
+        return DOMAINS[(d.domain ?? 'general')].color;
+      })
+      .attr('stroke-width', (d: MachineNode) => {
+        const state = getMachineColorState(currentStep?.machineResults[d.id]);
+        if (state !== 'idle') return 3;
+        return compactModeRef.current ? 2 : 2.5;
+      });
 
     if (stepText) {
       stepText.text((d: MachineNode) => {
@@ -528,6 +1489,42 @@ export const MachineGraphView: React.FC = () => {
       });
     }
   }, [currentStep]);
+
+  // ── Domain visibility filter ────────────────────────────────────────────────
+  useEffect(() => {
+    applyDomainFilter();
+  }, [selectedDomains, applyDomainFilter]);
+
+  // Compose live per-step result for the hovered machine.  Walks
+  // sequenceResults across all of this machine's CES sequences and
+  // unions the activated and matched vector IDs so the tooltip graph
+  // can highlight every node that participated in this step.  MUST sit
+  // above any early returns below — Rules of Hooks require hook count
+  // and order to stay stable across renders.
+  const tooltipLive: TooltipLiveResult = useMemo(() => {
+    if (!tooltip || !currentStep) return EMPTY_LIVE;
+    const r = currentStep.machineResults[tooltip.machineId];
+    if (!r) return EMPTY_LIVE;
+    const activated = new Set<string>();
+    const matched   = new Set<string>();
+    const seqResults = r.transitionResult?.sequenceResults;
+    if (seqResults) {
+      for (const sr of Object.values(seqResults)) {
+        for (const id of sr.activatedVectors ?? []) activated.add(id);
+        for (const id of sr.matchedVectors   ?? []) matched.add(id);
+      }
+    }
+    return {
+      stepNumber:   currentStep.stepNumber,
+      inputVector:  r.inputVector,
+      outputVector: r.outputVector,
+      inputRegion:  r.inputRegion,
+      outputRegion: r.outputRegion,
+      activatedIds: activated,
+      matchedIds:   matched,
+      hasOutput:    !!r.outputVector,
+    };
+  }, [tooltip, currentStep]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   if (error) {
@@ -551,9 +1548,33 @@ export const MachineGraphView: React.FC = () => {
     return acc;
   }, {} as Record<DomainId, number>);
 
+  const isCompact = graphData.nodes.length > COMPACT_MODE_THRESHOLD;
+
   return (
     <div className="machine-graph-view" ref={containerRef}>
       <div className="machine-graph-svg-wrapper">
+
+        <Graph3DToggle is3D={is3D} onToggle={() => setIs3D(v => !v)} />
+
+        {is3D && (
+          <Graph3DView mode="machines" />
+        )}
+
+        {/* ── Working overlay — shown while simulation settles ── */}
+        {!is3D && !isReady && (
+          <div className="mgv-working-overlay">
+            <div className="mgv-working-inner">
+              <div className="mgv-working-rings">
+                <span /><span /><span />
+              </div>
+              <div className="mgv-working-label">Initializing Universe</div>
+              <div className="mgv-working-sub">
+                {graphData ? `${graphData.nodes.length} machines · simulation settling…` : 'Loading machine graph…'}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Floating left-side legend */}
         <div className={`vis-legend-panel${legendOpen ? ' open' : ''}`}>
           <button
@@ -566,12 +1587,16 @@ export const MachineGraphView: React.FC = () => {
           <div className="vis-legend-content">
             <div className="vis-legend-items">
               <div className="vis-legend-item">
-                <span className="vis-legend-dot" style={{ background: '#06b6d4' }} />
-                <span>Active machine</span>
+                <span className="vis-legend-dot" style={{ background: CARD_FIRED_FILL, border: `1.5px solid ${CARD_FIRED_STROKE}` }} />
+                <span>Output fired</span>
+              </div>
+              <div className="vis-legend-item">
+                <span className="vis-legend-dot" style={{ background: vizTheme.bg.cardActive, border: `1.5px solid ${vizTheme.accent.input}` }} />
+                <span>Event active</span>
               </div>
               <div className="vis-legend-item">
                 <span className="vis-legend-dot" style={{ background: vizTheme.bg.cardIdle, border: `1px solid ${vizTheme.outline.idle}` }} />
-                <span>Idle machine</span>
+                <span>Idle</span>
               </div>
               <div className="vis-legend-divider" />
               <div className="vis-legend-item">
@@ -579,14 +1604,30 @@ export const MachineGraphView: React.FC = () => {
                 <span>Data flow</span>
               </div>
               <div className="vis-legend-divider" />
+              <div className="vis-legend-domain-header">
+                <span style={{ fontSize: '10px', color: vizTheme.text.secondary, textTransform: 'uppercase', letterSpacing: 1 }}>Domains</span>
+                <button
+                  className="vis-legend-domain-toggle"
+                  onClick={() => setAllDomains(selectedDomains.length < DOMAIN_ORDER.filter(d => domainCounts[d] > 0).length)}
+                  title={selectedDomains.length < DOMAIN_ORDER.filter(d => domainCounts[d] > 0).length ? 'Show all' : 'Hide all'}
+                >
+                  {selectedDomains.length < DOMAIN_ORDER.filter(d => domainCounts[d] > 0).length ? 'All' : 'None'}
+                </button>
+              </div>
               {DOMAIN_ORDER.filter(d => domainCounts[d] > 0).map(d => (
-                <div key={d} className="vis-legend-item">
-                  <span className="vis-legend-dot" style={{ background: DOMAINS[d].color }} />
-                  <span style={{ flex: 1 }}>{DOMAINS[d].label}</span>
-                  <span style={{ color: DOMAINS[d].color, fontWeight: 700, fontSize: '10px', marginLeft: 6 }}>
+                <label key={d} className="vis-legend-domain-row">
+                  <input
+                    type="checkbox"
+                    className="vis-legend-domain-cb"
+                    checked={selectedDomains.includes(d)}
+                    onChange={() => toggleDomain(d)}
+                  />
+                  <span className="vis-legend-dot" style={{ background: DOMAINS[d].color, flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: '11px' }}>{DOMAINS[d].label}</span>
+                  <span style={{ color: DOMAINS[d].color, fontWeight: 700, fontSize: '10px' }}>
                     {domainCounts[d]}
                   </span>
-                </div>
+                </label>
               ))}
               <div className="vis-legend-divider" />
               <div className="vis-legend-item" style={{ color: vizTheme.text.secondary, fontSize: '10px' }}>
@@ -595,6 +1636,17 @@ export const MachineGraphView: React.FC = () => {
               <div className="vis-legend-item" style={{ color: vizTheme.text.secondary, fontSize: '10px' }}>
                 Drag node to pin · Dbl-click to open
               </div>
+              <div className="vis-legend-item" style={{ color: vizTheme.text.secondary, fontSize: '10px' }}>
+                Hover for sequences · Click to pin tooltip
+              </div>
+              {isCompact && (
+                <>
+                  <div className="vis-legend-divider" />
+                  <div className="vis-legend-item" style={{ color: vizTheme.accent.input, fontSize: '10px' }}>
+                    ⬤ Compact ({graphData.nodes.length} nodes)
+                  </div>
+                </>
+              )}
               <div className="vis-legend-divider" />
               <button
                 className="vis-reset-layout-btn"
@@ -607,7 +1659,25 @@ export const MachineGraphView: React.FC = () => {
           </div>
         </div>
 
-        <svg ref={svgRef} className="machine-graph-svg"></svg>
+        <svg ref={svgRef} className="machine-graph-svg" style={{ opacity: isReady && !is3D ? 1 : 0, transition: 'opacity 0.4s ease', display: is3D ? 'none' : undefined }}></svg>
+
+        {!is3D && tooltip && (
+          <SequenceTooltip
+            tooltip={tooltip}
+            live={tooltipLive}
+            onMouseEnter={() => {
+              if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+            }}
+            onMouseLeave={() => {
+              tooltipTimerRef.current = setTimeout(
+                () => setTooltip(prev => (prev?.pinned ? prev : null)),
+                220,
+              );
+            }}
+            onPin={() => setTooltip(prev => prev ? { ...prev, pinned: !prev.pinned } : null)}
+            onClose={() => setTooltip(null)}
+          />
+        )}
       </div>
     </div>
   );

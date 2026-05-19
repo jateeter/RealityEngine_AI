@@ -13,6 +13,10 @@ import io.circe.syntax._
 import JsonProtocol._
 
 import akka.actor.Cancellable
+import akka.stream.scaladsl.{BroadcastHub, Keep, Source}
+import akka.stream.{Materializer, OverflowStrategy}
+import akka.http.scaladsl.model.sse.ServerSentEvent
+import akka.http.scaladsl.marshalling.sse.EventStreamMarshalling._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
@@ -57,6 +61,15 @@ class Routes(
   // Auto-play scheduler
   private val autoPlayTask = new AtomicReference[Option[Cancellable]](None)
 
+  // SSE broadcast hub — dropHead means slow subscribers always see the latest step,
+  // never accumulate a backlog that would stall the PE.x.RE.x.PE cycle.
+  private val (sseQueue, sseBroadcast) = {
+    implicit val m: Materializer = Materializer(system)
+    Source.queue[SimulationStep](1, OverflowStrategy.dropHead)
+      .toMat(BroadcastHub.sink[SimulationStep](bufferSize = 1))(Keep.both)
+      .run()
+  }
+
   private def cancelAutoPlay(): Unit = {
     autoPlayTask.getAndSet(None).foreach(_.cancel())
   }
@@ -65,8 +78,8 @@ class Routes(
     cancelAutoPlay()
     val task = system.scheduler.scheduleWithFixedDelay(0.milliseconds, delayMs.milliseconds) { () =>
       simulator.step() match {
-        case None    => cancelAutoPlay()
-        case Some(_) => ()
+        case None       => cancelAutoPlay()
+        case Some(step) => sseQueue.offer(step); ()
       }
     }
     autoPlayTask.set(Some(task))
@@ -127,11 +140,171 @@ class Routes(
 
   // ── Route tree ────────────────────────────────────────────────────────────
 
+  // ── Prometheus metrics ───────────────────────────────────────────────────
+  // Emits text/plain Prometheus exposition format on /api/metrics.  Carries
+  // the runtime="ai" label so a single Grafana dashboard can pivot across
+  // AI / CPP / LSP runtimes without scrape-time relabels.
+  //
+  // Metric names match the corpus expected by the existing Grafana
+  // dashboards in config/dashboards/ — ces_* and re_runtime_* prefixed.
+  // Gauges are recomputed on every scrape (engine state is the source of
+  // truth); counter metrics that require per-step instrumentation are
+  // emitted as zero for now so dashboards have a series to plot rather
+  // than "No Data".
+  private val metricsRuntimeLabel = "ai"
+
+  private def renderPrometheusMetrics(): String = {
+    val sb = new StringBuilder
+    val runtime = metricsRuntimeLabel
+
+    def escape(s: String): String =
+      s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", " ")
+
+    def emitMeta(name: String, help: String, kind: String): Unit = {
+      sb.append(s"# HELP $name $help\n")
+      sb.append(s"# TYPE $name $kind\n")
+    }
+
+    def emit(name: String, value: Double, labels: Map[String, String] = Map.empty): Unit = {
+      val all = Map("runtime" -> runtime) ++ labels
+      val ls  = all.toList.sortBy(_._1)
+        .map { case (k, v) => s"""$k="${escape(v)}"""" }
+        .mkString(",")
+      sb.append(s"$name{$ls} $value\n")
+    }
+
+    val stats       = engine.getStats.hcursor
+    val machines    = engine.getAllMachines
+    val totalSeqs   = stats.get[Int]("totalSequences").getOrElse(0)
+    val totalVecs   = stats.get[Int]("totalVectors").getOrElse(0)
+    val totalActive = stats.get[Int]("totalActiveVectors").getOrElse(0)
+    val historySize = engine.getHistory().size
+    val simStep     = simulator.getCurrentStep
+
+    // ── Engine totals — match dashboard queries ────────────────────────────
+    emitMeta("ces_machines_total",  "Total machines registered with the engine.", "gauge")
+    emit   ("ces_machines_total",   machines.size.toDouble)
+
+    emitMeta("ces_sequences_total", "Total CES sequences across all machines.",   "gauge")
+    emit   ("ces_sequences_total",  totalSeqs.toDouble)
+
+    emitMeta("ces_vectors_total",   "Total reality vectors across all sequences.","gauge")
+    emit   ("ces_vectors_total",    totalVecs.toDouble)
+
+    emitMeta("ces_active_vectors_total", "Currently-active reality vectors.",     "gauge")
+    emit   ("ces_active_vectors_total",  totalActive.toDouble)
+
+    emitMeta("ces_history_size", "Length of the transition history.", "gauge")
+    emit   ("ces_history_size",  historySize.toDouble)
+
+    emitMeta("ces_simulator_current_step", "Current step of the configured simulation.", "gauge")
+    emit   ("ces_simulator_current_step",  simStep.toDouble)
+
+    // ── Per-machine gauges + counter-label baselines ──────────────────────
+    // Per-machine series back the `$machine` template variable and let
+    // `by (machine)` aggregations on the counter metrics resolve at zero
+    // instead of "No Data".  Event-keyed counter series below carry
+    // sequence / vector sub-labels — distinct Prom label sets — so they
+    // coexist with these baselines without duplication.
+    emitMeta("ces_machine_sequence_count", "Number of sequences belonging to a machine.",       "gauge")
+    emitMeta("ces_machine_vector_count",   "Total vectors declared by this machine.",           "gauge")
+    emitMeta("ces_machine_steps_total",    "process_input calls observed for this machine.",    "counter")
+    emitMeta("ces_unfired_sequences",      "Sequences that have not produced an output yet.",   "gauge")
+    emitMeta("ces_unfired_vectors",        "Vectors that have not been matched yet.",           "gauge")
+    emitMeta("ces_vector_matched_total",   "Vector matches accumulated across all sequences.",  "counter")
+    emitMeta("ces_vector_activated_total", "Vector activations as successors in transitions.",  "counter")
+    emitMeta("ces_sequence_outputs_total", "Outputs produced by CES sequences.",                "counter")
+    emitMeta("ces_paging_decisions_total", "CES paging decisions emitted (by RAG status).",     "counter")
+    emitMeta("ces_deprecated_fires_total", "Fires from machines tagged deprecated.",            "counter")
+
+    val stepsSnap     = engine.coverage.stepsSnap
+    val matchedSnap   = engine.coverage.matchedSnap
+    val activatedSnap = engine.coverage.activatedSnap
+    val outputsSnap   = engine.coverage.outputsSnap
+    // ces_machine_steps_total shares its baseline's {machine, machine_id}
+    // label set, so we suppress the baseline for machines that already
+    // have a real step count to avoid duplicate-series warnings.
+    val seenSteps = stepsSnap.keysIterator
+      .map(k => com.realityengine.services.CesCoverageRegistry.splitKey(k))
+      .collect { case Array(id, _) => id }
+      .toSet
+
+    machines.foreach { m =>
+      val machineLabel = Map("machine" -> m.name, "machine_id" -> m.id)
+      val seqs         = m.getAllSequences
+      val allVecs      = seqs.flatMap(_.getAllVectors)
+      // "Unfired" semantics: a sequence is currently inactive (no live
+      // active vectors); a vector is currently inactive.  Engine state
+      // at scrape time, which is what the dashboard top-K panels need.
+      val unfiredSeqs  = seqs.count(_.getActiveVectors.isEmpty)
+      val unfiredVecs  = allVecs.count(!_.isActive)
+      emit("ces_machine_sequence_count", seqs.size.toDouble,    machineLabel)
+      emit("ces_machine_vector_count",   allVecs.size.toDouble, machineLabel)
+      emit("ces_unfired_sequences",      unfiredSeqs.toDouble,  machineLabel)
+      emit("ces_unfired_vectors",        unfiredVecs.toDouble,  machineLabel)
+      emit("ces_vector_matched_total",   0.0,                   machineLabel)
+      emit("ces_vector_activated_total", 0.0,                   machineLabel)
+      emit("ces_sequence_outputs_total", 0.0,                   machineLabel)
+      emit("ces_deprecated_fires_total", 0.0,                   machineLabel)
+      emit("ces_paging_decisions_total", 0.0,
+           machineLabel ++ Map("owner_team" -> "unknown", "rag_status_code" -> "GREEN"))
+      if (!seenSteps.contains(m.id))
+        emit("ces_machine_steps_total",  0.0,                   machineLabel)
+    }
+
+    // ── Event-keyed counter series from the live coverage registry ────────
+    stepsSnap.foreach { case (k, c) =>
+      val parts = com.realityengine.services.CesCoverageRegistry.splitKey(k)
+      if (parts.length == 2)
+        emit("ces_machine_steps_total", c.toDouble,
+             Map("machine_id" -> parts(0), "machine" -> parts(1)))
+    }
+    matchedSnap.foreach { case (k, c) =>
+      val parts = com.realityengine.services.CesCoverageRegistry.splitKey(k)
+      if (parts.length == 4)
+        emit("ces_vector_matched_total", c.toDouble,
+             Map("machine_id" -> parts(0), "machine" -> parts(1),
+                 "sequence"   -> parts(2), "vector"  -> parts(3)))
+    }
+    activatedSnap.foreach { case (k, c) =>
+      val parts = com.realityengine.services.CesCoverageRegistry.splitKey(k)
+      if (parts.length == 4)
+        emit("ces_vector_activated_total", c.toDouble,
+             Map("machine_id" -> parts(0), "machine" -> parts(1),
+                 "sequence"   -> parts(2), "vector"  -> parts(3)))
+    }
+    outputsSnap.foreach { case (k, c) =>
+      val parts = com.realityengine.services.CesCoverageRegistry.splitKey(k)
+      if (parts.length == 3)
+        emit("ces_sequence_outputs_total", c.toDouble,
+             Map("machine_id" -> parts(0), "machine" -> parts(1), "sequence" -> parts(2)))
+    }
+
+    // ── Runtime parity gauges — cross-runtime-parity.json dashboard ────────
+    val vectorDim = simulator.getPerceptualSpace.getPerceptualVector.length
+    emitMeta("re_runtime_dimension",          "Current perceptual-space dimension.", "gauge")
+    emit   ("re_runtime_dimension",           vectorDim.toDouble)
+    emitMeta("re_runtime_required_dimension", "Dimension required to fit all machine mappings.", "gauge")
+    emit   ("re_runtime_required_dimension",  vectorDim.toDouble)
+    emitMeta("re_runtime_mapping_version",    "Mapping schema version (1.0.0 → 100).", "gauge")
+    emit   ("re_runtime_mapping_version",     100.0)
+
+    sb.toString
+  }
+
   val routes: Route = AuditLogger.directive(auditCfg) { handleExceptions(exceptionHandler) {
     pathPrefix("api") {
       concat(
         // Health
         path("health") { get { complete(Json.obj("status" -> Json.fromString("healthy"), "timestamp" -> Json.fromLong(System.currentTimeMillis()), "version" -> Json.fromString("1.0.0"))) } },
+
+        // Prometheus metrics — text/plain exposition format on /api/metrics
+        path("metrics") { get {
+          complete(HttpResponse(
+            status = StatusCodes.OK,
+            entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, renderPrometheusMetrics()),
+          ))
+        } },
 
         // Config
         pathPrefix("config") {
@@ -550,7 +723,7 @@ class Routes(
                 "isRunning"       -> Json.fromBoolean(simulator.getIsRunning),
                 "machines"        -> simulator.toJson.hcursor.downField("machines").as[Json].getOrElse(Json.arr())
               )
-              complete(Json.obj("state" -> stateObj))
+              complete(Json.obj("success" -> Json.fromBoolean(true), "state" -> stateObj))
             } },
             path("history") { get { complete(Json.obj("history" -> simulator.getHistory.asJson)) } }
           )
@@ -569,8 +742,21 @@ class Routes(
           val step     = simulator.processImmediate(vec, matchOvr)
           // Sync PreceptionEngine's space with post-merge state
           engine.preceptionEngine.getPerceptualSpace.setPerceptualVector(step.perceptualSpace)
+          // Non-blocking push to the SSE broadcast hub so observers never stall the caller
+          sseQueue.offer(step)
           complete(step.asJson)
         } } },
+
+        // SSE step-stream — Visualizer Backend subscribes here as a passive observer.
+        // Each subscriber gets a live-only feed; the dropHead queue ensures the VB
+        // always sees the latest step and never blocks the PE.x.RE.x.PE cycle.
+        // keepAlive injects a heartbeat comment every 15 s so the connection
+        // survives Akka HTTP's default 60 s idle-timeout when no steps flow.
+        path("engine" / "stream") { get {
+          complete(sseBroadcast
+            .map(step => ServerSentEvent(step.asJson.noSpaces))
+            .keepAlive(15.seconds, () => ServerSentEvent.heartbeat))
+        } },
 
         // Root
         pathEndOrSingleSlash { get { complete(Json.obj(

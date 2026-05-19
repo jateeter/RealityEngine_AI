@@ -1,12 +1,24 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useVisualizerStore } from '../store';
 import { useMachineSimulation, StepRecord, VisMachine } from '../hooks/useMachineSimulation';
-import TobiasCanvas, { TobiasCanvasHandle } from '../components/tobias/TobiasCanvas';
+import { MachineGraphView } from '../components/MachineGraphView';
 import TobiasAISequencePulse from '../components/tobias/TobiasAISequencePulse';
 import { classifyMachine, domainColor, DOMAINS, DOMAIN_ORDER, DomainId } from '../components/machineDomains';
 import { PERCEPTUAL_DIM } from '../constants';
 
 import './TobiasView.css';
+
+// ---------------------------------------------------------------------------
+// GraphNode — shape returned by /api/machine-graph
+// ---------------------------------------------------------------------------
+interface GraphNode {
+  id: string;
+  name: string;
+  description: string;
+  metadata: Record<string, any>;
+  inputMapping:  { offset: number; length: number };
+  outputMapping: { offset: number; length: number };
+}
 
 // Parse "#rrggbb" → "r,g,b" for use inside rgba(...) fill strings.
 function hexToRgbTriplet(hex: string): string {
@@ -21,7 +33,6 @@ function hexToRgbTriplet(hex: string): string {
 // PerceptualSpaceBar
 // Condensed canvas heatmap of the full global perceptual space.
 // Machine input regions are color-coded and labeled.
-// SEQUENCES button opens the sequence management panel.
 // ---------------------------------------------------------------------------
 
 interface PerceptualSpaceBarProps {
@@ -50,7 +61,7 @@ const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
     const DIM = PERCEPTUAL_DIM;
     const H   = canvas.height;
 
-    ctx.fillStyle = '#080c12';
+    ctx.fillStyle = '#020609';
     ctx.fillRect(0, 0, W, H);
 
     // Pre-assign a domain-colored rgb triplet per perceptual-space index based on
@@ -137,11 +148,40 @@ const PerceptualSpaceBar: React.FC<PerceptualSpaceBarProps> = ({
       </div>
 
       <div className="tobias-psbar-meta">
-        {latestStep !== null ? `step ${latestStep}` : '—'}
+        <span className="tobias-psbar-meta-label">step</span>
+        <span className="tobias-psbar-meta-value">
+          {latestStep !== null ? latestStep : '—'}
+        </span>
       </div>
     </div>
   );
 };
+
+// ---------------------------------------------------------------------------
+// OutputDots — shared dot renderer for both collapsed and expanded views.
+// ---------------------------------------------------------------------------
+
+const OUTPUT_DOT_RGB = '240,62,138'; // --re-pink
+const OUTPUT_DOT_MIN = 0.12;
+
+const OutputDots: React.FC<{
+  ov?: number[] | null;
+  getTitle?: (i: number, v: number) => string;
+}> = ({ ov, getTitle }) => (
+  <>
+    {ov && ov.length > 0
+      ? ov.slice(0, 4).map((v, i) => (
+          <div
+            key={i}
+            className="tobias-outbar-dot"
+            style={{ background: `rgba(${OUTPUT_DOT_RGB},${Math.max(OUTPUT_DOT_MIN, Math.min(1, v))})` }}
+            title={getTitle?.(i, v)}
+          />
+        ))
+      : <div className="tobias-outbar-dot tobias-outbar-dot-nil" />
+    }
+  </>
+);
 
 // ---------------------------------------------------------------------------
 // OutputHistoryBar
@@ -166,7 +206,7 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
     if (scrollRef.current) {
       scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
     }
-  }, [stepHistory.length, expanded]);
+  }, [stepHistory, expanded]);
 
   // Selected machine first, then up to 8 total
   const displayMachines = useMemo(() => {
@@ -210,18 +250,7 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
                     {m.name.replace(/^DC/, '').slice(0, 10)}
                   </span>
                   <div className="tobias-outbar-dots">
-                    {ov && ov.length > 0
-                      ? ov.slice(0, 4).map((v, i) => (
-                          <div
-                            key={i}
-                            className="tobias-outbar-dot"
-                            style={{
-                              background: `rgba(168,85,247,${Math.max(0.07, Math.min(1, v))})`,
-                            }}
-                          />
-                        ))
-                      : <div className="tobias-outbar-dot tobias-outbar-dot-nil" />
-                    }
+                    <OutputDots ov={ov} />
                   </div>
                 </div>
               );
@@ -252,19 +281,10 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
                   const ov     = result?.outputVector;
                   return (
                     <div key={m.id} className="tobias-outbar-cell">
-                      {ov && ov.length > 0
-                        ? ov.slice(0, 4).map((v, i) => (
-                            <div
-                              key={i}
-                              className="tobias-outbar-dot"
-                              style={{
-                                background: `rgba(168,85,247,${Math.max(0.07, Math.min(1, v))})`,
-                              }}
-                              title={`${m.name}[out${i}] = ${v.toFixed(3)} @ step ${step.stepNumber}`}
-                            />
-                          ))
-                        : <div className="tobias-outbar-dot tobias-outbar-dot-nil" />
-                      }
+                      <OutputDots
+                        ov={ov}
+                        getTitle={(i, v) => `${m.name}[out${i}] = ${v.toFixed(3)} @ step ${step.stepNumber}`}
+                      />
                     </div>
                   );
                 })}
@@ -282,76 +302,92 @@ const OutputHistoryBar: React.FC<OutputHistoryBarProps> = ({
 // ---------------------------------------------------------------------------
 
 /**
- * Tobias — Canvas 2D Machine Visualization
+ * Tobias — Machine Visualization (D3 SVG — same graph as Machine Interconnect)
  *
  * Layout:
  *   header  (back button · title · step indicator · machine count)
  *   body (flex-row):
- *     sidebar (collapsible, LEFT) ← layout controls + machine/domain filters
- *                                    (simulation controls live in the PE UI)
+ *     sidebar (collapsible, LEFT) ← domain filters (counts from /api/machine-graph)
  *     sidebar-gutter              ← collapse toggle
  *     canvas-area (flex-1, flex-col):
  *       PerceptualSpaceBar  [INPUT STREAM]   — top  (~44px)
  *       canvas-center (flex-1):
- *         floating legend panel              — left-margin overlay
- *         TobiasCanvas                       — fills remaining space
+ *         MachineGraphView (D3 SVG — same component as Machine Interconnect)
+ *       TobiasAISequencePulse                — below graph
  *       OutputHistoryBar    [OUTPUT STREAM]  — bottom (32px collapsed / 148px expanded)
- *   TobiasSequencesPanel                    — modal overlay
  */
 const TobiasView: React.FC = () => {
-  const { setCurrentView } = useVisualizerStore();
+  const { setCurrentView, hoveredDomainId, selectedDomains } = useVisualizerStore();
 
-  // Simulation controls (play / pause / step / reset) now live exclusively
-  // in the Perception Engine visualization — Tobias is read-only for
-  // simulation state.  We still consume machines + stepHistory for display.
+  // Step history + live simulation state from the shared hook.
+  // We use machines only for step-based display (OutputHistoryBar, TobiasAISequencePulse).
   const {
     machines,
     selectedMachineId,
     stepHistory,
-    selectMachine,
   } = useMachineSimulation();
 
-  const canvasRef = useRef<TobiasCanvasHandle>(null);
+  // ── Machine graph data (same source as MachineGraphView / Machine Interconnect) ──
+  // Fetching from /api/machine-graph gives us full metadata including `category`,
+  // so domain classification matches the Machine Interconnect view exactly.
+  const [graphNodes, setGraphNodes] = useState<GraphNode[]>([]);
+  useEffect(() => {
+    fetch('/api/machine-graph')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data.nodes)) setGraphNodes(data.nodes); })
+      .catch(() => {});
+  }, []);
 
-  const [sidebarOpen,  setSidebarOpen]  = useState(true);
-  const [legendOpen,   setLegendOpen]   = useState(false);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'idle' | 'processing' | 'active'>('all');
-  const [domainFilter, setDomainFilter] = useState<'all' | DomainId>('all');
-
-  // Classify once per machine list change; both the filter predicate and the
-  // per-domain counts rely on the same classification.
-  const domainById = useMemo(
-    () => new Map(machines.map(m => [m.id, classifyMachine(m).domain])),
-    [machines],
+  // Map graphNodes → VisMachine shape for PerceptualSpaceBar (needs inputRegion).
+  const graphAsMachines = useMemo((): VisMachine[] =>
+    graphNodes.map(n => ({
+      id:          n.id,
+      name:        n.name,
+      description: n.description,
+      metadata:    n.metadata,
+      isExample:   false,
+      sequences:   [],
+      status:      'idle' as const,
+      justFired:   false,
+      hasInitialMatch: false,
+      inputRegion:  n.inputMapping,
+      outputRegion: n.outputMapping,
+    })),
+    [graphNodes],
   );
 
+  // Domain classification + counts from graphNodes — single pass, correct metadata.
+  const { domainById, domainCounts } = useMemo(() => {
+    const byId   = new Map(graphNodes.map(n => [n.id, classifyMachine(n).domain]));
+    const counts = Object.fromEntries(DOMAIN_ORDER.map(d => [d, 0])) as Record<DomainId, number>;
+    for (const n of graphNodes) counts[byId.get(n.id) ?? 'general']++;
+    return { domainById: byId, domainCounts: counts };
+  }, [graphNodes]);
+
+  const allDomainsSelected = selectedDomains.length === DOMAIN_ORDER.length;
+
+  // PerceptualSpaceBar uses graphAsMachines filtered by domain for correct region coloring.
+  const filteredGraphMachines = useMemo(() => {
+    if (allDomainsSelected) return graphAsMachines;
+    const sel = new Set(selectedDomains);
+    return graphAsMachines.filter(m => sel.has(domainById.get(m.id) ?? 'general'));
+  }, [graphAsMachines, selectedDomains, allDomainsSelected, domainById]);
+
+  // OutputHistoryBar uses useMachineSimulation machines (has live step state).
   const filteredMachines = useMemo(() => {
-    return machines.filter(m => {
-      if (statusFilter !== 'all' && m.status !== statusFilter) return false;
-      if (domainFilter !== 'all' && domainById.get(m.id) !== domainFilter) return false;
-      return true;
-    });
-  }, [machines, statusFilter, domainFilter, domainById]);
-
-  const statusCounts = useMemo(
-    () => machines.reduce(
-      (acc, m) => { acc[m.status]++; return acc; },
-      { idle: 0, processing: 0, active: 0 } as Record<string, number>,
-    ),
-    [machines],
-  );
-
-  const domainCounts = useMemo(() => {
-    const counts: Record<DomainId, number> = {
-      healthservices: 0, ai: 0, datacenter: 0, agriculture: 0, communityservices: 0, general: 0,
-    };
-    for (const m of machines) counts[domainById.get(m.id) ?? 'general']++;
-    return counts;
-  }, [machines, domainById]);
+    if (allDomainsSelected) return machines;
+    const sel = new Set(selectedDomains);
+    return machines.filter(m => sel.has(domainById.get(m.id) ?? 'general'));
+  }, [machines, selectedDomains, allDomainsSelected, domainById]);
 
   const latestStep       = stepHistory[stepHistory.length - 1];
   const latestStepNumber = latestStep?.stepNumber ?? null;
   const perceptualSpace  = latestStep?.perceptualSpace ?? [];
+
+  const totalMachines    = graphNodes.length;
+  const filteredTotal    = allDomainsSelected
+    ? totalMachines
+    : selectedDomains.reduce((sum, d) => sum + (domainCounts[d] ?? 0), 0);
 
   return (
     <div className="tobias-view">
@@ -367,12 +403,18 @@ const TobiasView: React.FC = () => {
             ← Back
           </button>
           <div className="tobias-title-group">
-            <h1 className="tobias-title">🔮 Tobias</h1>
-            <p className="tobias-subtitle">Canvas 2D · machine visualization</p>
+            <h1 className="tobias-title">🔮 <span className="tobias-title-accent">Tobias</span></h1>
+            <p className="tobias-subtitle">D3 force graph · machine visualization</p>
           </div>
         </div>
 
         <div className="tobias-header-right">
+          {hoveredDomainId && (
+            <span className="tobias-domain-hover-label" style={{ borderColor: DOMAINS[hoveredDomainId].color, color: DOMAINS[hoveredDomainId].color }}>
+              <span className="tobias-domain-hover-dot" style={{ background: DOMAINS[hoveredDomainId].color }} />
+              {DOMAINS[hoveredDomainId].label}
+            </span>
+          )}
           {latestStepNumber !== null && (
             <span className="tobias-step-indicator">
               step <strong>{latestStepNumber}</strong>
@@ -384,8 +426,8 @@ const TobiasView: React.FC = () => {
             </span>
           )}
           <span className="tobias-machine-count">
-            {filteredMachines.length}/{machines.length} machine
-            {machines.length !== 1 ? 's' : ''}
+            {filteredTotal}/{totalMachines} machine
+            {totalMachines !== 1 ? 's' : ''}
           </span>
         </div>
       </header>
@@ -393,148 +435,22 @@ const TobiasView: React.FC = () => {
       {/* ── Body ──────────────────────────────────────────────── */}
       <div className="tobias-body">
 
-        {/* ── Sidebar (LEFT) ───────────────────────────────────── */}
-        <aside className={`tobias-sidebar${sidebarOpen ? '' : ' collapsed'}`}>
-          {sidebarOpen && (
-            <div className="tobias-sidebar-content">
-
-              {/* Section: Layout ──────────────────────────────── */}
-              <div className="tbs-section">
-                <div className="tbs-section-title">Layout</div>
-                <button
-                  className="tbs-demo-btn"
-                  onClick={() => canvasRef.current?.clearLayout()}
-                  title="Clear pinned bubble positions and restore the domain grid layout"
-                >
-                  ⊹ Reset Layout
-                </button>
-                <div className="tbs-layout-hint">
-                  Click expands. Double-click opens live view. Drag bubbles to pin.
-                </div>
-              </div>
-
-              {/* Section: Machine Filter ──────────────────────── */}
-              <div className="tbs-section">
-                <div className="tbs-section-title">Machine Filter</div>
-                <div className="tbs-filter">
-                  {(['all', 'idle', 'processing', 'active'] as const).map(s => (
-                    <button
-                      key={s}
-                      className={`tbs-filter-btn${statusFilter === s ? ' active' : ''}`}
-                      onClick={() => setStatusFilter(s)}
-                    >
-                      {s === 'all'
-                        ? `All (${machines.length})`
-                        : `${s[0].toUpperCase()}${s.slice(1)} (${statusCounts[s]})`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Section: Domain Filter ──────────────────────── */}
-              <div className="tbs-section">
-                <div className="tbs-section-title">Domain Filter</div>
-                <div className="tbs-filter">
-                  <button
-                    className={`tbs-filter-btn${domainFilter === 'all' ? ' active' : ''}`}
-                    onClick={() => setDomainFilter('all')}
-                  >
-                    All ({machines.length})
-                  </button>
-                  {DOMAIN_ORDER.map(d => (
-                    <button
-                      key={d}
-                      className={`tbs-filter-btn${domainFilter === d ? ' active' : ''}`}
-                      onClick={() => setDomainFilter(d)}
-                      title={DOMAINS[d].description}
-                      style={{
-                        borderLeft: `3px solid ${DOMAINS[d].color}`,
-                        paddingLeft: 6,
-                      }}
-                    >
-                      {DOMAINS[d].short} ({domainCounts[d]})
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          )}
-        </aside>
-
-        {/* ── Sidebar gutter ───────────────────────────────────── */}
-        <div className="tobias-sidebar-gutter">
-          <button
-            className="tobias-sidebar-toggle"
-            onClick={() => setSidebarOpen(o => !o)}
-            title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {sidebarOpen ? '‹' : '›'}
-          </button>
-        </div>
-
         {/* ── Canvas column ────────────────────────────────────── */}
         <div className="tobias-canvas-area">
 
           {/* TOP: condensed global perceptual input stream */}
           <PerceptualSpaceBar
             perceptualSpace={perceptualSpace}
-            machines={filteredMachines}
+            machines={filteredGraphMachines}
             latestStep={latestStepNumber}
           />
 
-          {/* CENTER: canvas + floating legend overlay */}
+          {/* CENTER: D3 SVG — same MachineGraphView as Machine Interconnect */}
           <div className="tobias-canvas-center">
-            <div className={`tobias-legend-panel${legendOpen ? ' open' : ''}`}>
-              <button
-                className="tobias-legend-tab"
-                onClick={() => setLegendOpen(o => !o)}
-                title={legendOpen ? 'Hide legend' : 'Show legend'}
-              >
-                LEGEND
-              </button>
-              <div className="tobias-legend-content">
-                <div className="tbs-legend">
-                  <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot" style={{ background: '#3b82f6' }} />
-                    <span>Start node (A+)</span>
-                  </div>
-                  <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot" style={{ background: '#93c5fd' }} />
-                    <span>Start matched (A+ fired)</span>
-                  </div>
-                  <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot" style={{ background: '#06b6d4' }} />
-                    <span>Queued / active</span>
-                  </div>
-                  <div className="tbs-legend-item">
-                    <span
-                      className="tbs-legend-dot tbs-legend-ring"
-                      style={{ background: '#111827', borderColor: '#f59e0b' }}
-                    />
-                    <span>Terminal node (output)</span>
-                  </div>
-                  <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot" style={{ background: '#f59e0b' }} />
-                    <span>Output emitted</span>
-                  </div>
-                  <div className="tbs-legend-item">
-                    <span className="tbs-legend-dot" style={{ background: '#64748b' }} />
-                    <span>Intermediate</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <TobiasCanvas
-              ref={canvasRef}
-              machines={filteredMachines}
-              selectedMachineId={selectedMachineId}
-              onSelectMachine={selectMachine}
-            />
+            <MachineGraphView />
           </div>
 
-          {/* BELOW CANVAS: AI sequence-fire pulse readout (localAI observability) */}
+          {/* BELOW GRAPH: AI sequence-fire pulse readout (localAI observability) */}
           <TobiasAISequencePulse
             stepHistory={stepHistory}
             machines={machines}

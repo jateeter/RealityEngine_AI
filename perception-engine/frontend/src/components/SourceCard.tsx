@@ -1,7 +1,13 @@
 import type { SourceConfig, TestSourceConfig, SimulatedSourceConfig, SensorSourceConfig } from '../types.js';
+import { DOMAINS } from './machineDomains.js';
+import type { DomainId } from './machineDomains.js';
 
 interface Props {
   source: SourceConfig;
+  // Classification bucket — DomainId for test sources whose machine is
+  // known, or 'other' for simulated/sensor sources (or when the machine
+  // catalog hasn't loaded yet).
+  domain: DomainId | 'other';
   onDelete: (id: string) => void;
   onToggle: (id: string, active: boolean) => void;
   onHover: (id: string | null) => void;
@@ -28,8 +34,11 @@ function subtitle(src: SourceConfig): string {
   return `id=${se.sensorId} (${age}) — [${src.region.offset}:${src.region.offset + src.region.length}]`;
 }
 
-export default function SourceCard({ source, onDelete, onToggle, onHover, hovered }: Props) {
+export default function SourceCard({ source, domain, onDelete, onToggle, onHover, hovered }: Props) {
   const color = TYPE_COLOR[source.type] ?? '#94a3b8';
+  const domainColor = domain === 'other' ? '#94a3b8' : DOMAINS[domain].color;
+  const domainLabel = domain === 'other' ? 'Other' : DOMAINS[domain].label;
+  const domainShort = domain === 'other' ? 'OT' : DOMAINS[domain].short;
 
   return (
     <div
@@ -38,7 +47,12 @@ export default function SourceCard({ source, onDelete, onToggle, onHover, hovere
       style={{
         padding: '8px 10px',
         borderRadius: 6,
+        // Left border keyed to the domain so a long source list can be
+        // scanned for "which Ag rule is acting up" without reading labels.
+        borderLeft: `3px solid ${domainColor}`,
         border: `1px solid ${hovered ? color : '#1e293b'}`,
+        borderLeftColor: domainColor,
+        borderLeftWidth: 3,
         background: hovered ? '#1e293b' : '#111827',
         marginBottom: 6,
         cursor: 'default',
@@ -52,6 +66,20 @@ export default function SourceCard({ source, onDelete, onToggle, onHover, hovere
           textTransform: 'uppercase', letterSpacing: 0.5,
         }}>
           {source.type}
+        </span>
+        <span
+          title={`Domain: ${domainLabel}`}
+          style={{
+            fontSize: 9, fontWeight: 700, padding: '1px 5px',
+            borderRadius: 3,
+            background: domainColor + '22',
+            color: domainColor,
+            border: `1px solid ${domainColor}44`,
+            textTransform: 'uppercase', letterSpacing: 0.5,
+            fontFamily: 'monospace',
+          }}
+        >
+          {domainShort}
         </span>
         <span style={{ fontWeight: 600, fontSize: 13, flex: 1 }}>{source.name}</span>
         <button

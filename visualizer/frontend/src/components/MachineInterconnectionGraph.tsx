@@ -15,10 +15,13 @@ import { useVisualizerStore } from '../store';
 import {
   classifyMachine,
   DOMAINS,
+  DOMAIN_BOX_HALF,
   DOMAIN_ORDER,
   DomainId,
 } from './machineDomains';
 import { vizTheme } from '../styles/vizTheme';
+import { Graph3DView } from './Graph3DView';
+import { Graph3DToggle } from './Graph3DToggle';
 
 interface Machine {
   id: string;
@@ -27,9 +30,11 @@ interface Machine {
   perceptualMapping?: {
     input: { offset: number; length: number };
     output: { offset: number; length: number };
+    bitsPerElement?: number;
   };
   metadata?: Record<string, any>;
   sequenceCount?: number;
+  severity?: string;
 }
 
 interface MachineNode extends d3.SimulationNodeDatum {
@@ -45,10 +50,30 @@ interface MachineNode extends d3.SimulationNodeDatum {
   // Domain classification
   domain: DomainId;
   isExternal: boolean;
-  // Runtime status
+  // CES / governance decoration (static — drawn from machine JSON)
+  severity?: string;
+  bitsPerElement?: number;
+  governance?: {
+    ownerTeam?: string;
+    escalationPolicy?: string;
+    contact?: string;
+    runbook?: string;
+    sla?: Record<string, number>;
+  };
+  composeSubscriptionCount?: number;
+  // Runtime status (updated live by per-step effect)
   status?: 'idle' | 'processing' | 'active';
   lastInput?: number[];
   lastOutput?: number[];
+  // CES live decoration (latched from the most recent mergeBatch entry for
+  // this machine — surfaced in the tooltip so an operator sees current
+  // operational state, not just static config).
+  lastRagStatusCode?: string;
+  lastProcessStatus?: string;
+  lastProvenanceLength?: number;
+  lastDeprecationSince?: string;
+  lastDeprecationReplacedBy?: string;
+  lastFiredSequenceId?: string;
 }
 
 interface MachineLink {
@@ -100,15 +125,42 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
     lastInput?: number[];
     lastOutput?: number[];
   }>>({});
+  // Live CES decoration latched from the most recent mergeBatch entry for
+  // each machine.  Keys are machineIds — values reflect what the machine
+  // just fired (governance + deprecation + provenance length).  Cleared on
+  // simulation-reset alongside machineStatuses.
+  type CesDecoration = {
+    ragStatusCode?: string;
+    processStatus?: string;
+    provenanceLength?: number;
+    deprecationSince?: string;
+    deprecationReplacedBy?: string;
+    firedSequenceId?: string;
+  };
+  const [machineCesDecoration, setMachineCesDecoration] = useState<Record<string, CesDecoration>>({});
+  // Mirror in a ref so showTooltip — captured in the rebuild useEffect closure —
+  // can read the latest decoration without re-creating the simulation on every
+  // WebSocket step.
+  const machineCesDecorationRef = useRef<Record<string, CesDecoration>>({});
+  const machineStatusesRef = useRef<typeof machineStatuses>({});
+  useEffect(() => { machineCesDecorationRef.current = machineCesDecoration; }, [machineCesDecoration]);
+  useEffect(() => { machineStatusesRef.current = machineStatuses; }, [machineStatuses]);
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const [is3D, setIs3D] = useState(false);
 
   // Domain filter — each entry enables/disables a whole domain cluster.
   const [enabledDomains, setEnabledDomains] = useState<Record<DomainId, boolean>>({
     healthservices: true,
-    ai: true,
-    datacenter: true,
-    agriculture: true,
+    lifebalance: true,
+    healthpersonal: true,
+    builtspace: true,
+    transportation: true,
+    legalservices: true,
     communityservices: true,
+    agriculture: true,
+    datacenter: true,
+    digitallogic: true,
+    ai: true,
     general: true,
   });
 
@@ -122,7 +174,10 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
   // Domain membership counts for the legend.
   const domainCounts = useMemo(() => {
     const counts: Record<DomainId, number> = {
-      healthservices: 0, ai: 0, datacenter: 0, agriculture: 0, communityservices: 0, general: 0,
+      healthservices: 0, lifebalance: 0, healthpersonal: 0,
+      builtspace: 0, transportation: 0, legalservices: 0,
+      communityservices: 0, agriculture: 0, datacenter: 0,
+      digitallogic: 0, ai: 0, general: 0,
     };
     for (const c of classifications.values()) counts[c.domain]++;
     return counts;
@@ -172,9 +227,39 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
           };
         });
         setMachineStatuses(newStatuses);
+
+        // CES decoration: walk the mergeBatch entries on this step and latch
+        // the most recent fire (governance + deprecation + provenance) per
+        // machine.  This gives the tooltip a "what just happened" snapshot.
+        const mergeBatch: any[] = Array.isArray((data.step as any)?.mergeBatch)
+          ? (data.step as any).mergeBatch
+          : [];
+        if (mergeBatch.length > 0) {
+          setMachineCesDecoration(prev => {
+            const next = { ...prev };
+            // Iterate in array order; later entries for the same machine win.
+            for (const op of mergeBatch) {
+              const mid = typeof op?.machineId === 'string' ? op.machineId : null;
+              if (!mid) continue;
+              const gov = op.governance ?? {};
+              const dep = op.deprecation;
+              const prov: string[] = Array.isArray(op.provenance) ? op.provenance : [];
+              next[mid] = {
+                ragStatusCode:   gov.ragStatusCode ?? next[mid]?.ragStatusCode,
+                processStatus:   gov.processStatus ?? next[mid]?.processStatus,
+                provenanceLength: prov.length > 0 ? prov.length : next[mid]?.provenanceLength,
+                deprecationSince:      dep?.since      ?? next[mid]?.deprecationSince,
+                deprecationReplacedBy: dep?.replacedBy ?? next[mid]?.deprecationReplacedBy,
+                firedSequenceId:       typeof op.sequenceId === 'string' ? op.sequenceId : next[mid]?.firedSequenceId,
+              };
+            }
+            return next;
+          });
+        }
       } else if (data.type === 'perceptual-simulation-reset') {
         setPerceptualSpace([]);
         setMachineStatuses({});
+        setMachineCesDecoration({});
         setCurrentStep(0);
       }
     };
@@ -234,15 +319,39 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       });
     }
 
+    // Per-domain disjoint bounding box.  Each domain occupies one cell in
+    // a 4×3 grid; node positions are clamped to this box on every tick so
+    // hulls from different domains never overlap.
+    const domainBox = (domain: DomainId) => {
+      const a = DOMAINS[domain].anchor;
+      return {
+        xMin: a.x * width - DOMAIN_BOX_HALF.x * width,
+        xMax: a.x * width + DOMAIN_BOX_HALF.x * width,
+        yMin: a.y * height - DOMAIN_BOX_HALF.y * height,
+        yMax: a.y * height + DOMAIN_BOX_HALF.y * height,
+      };
+    };
+    const clampX = (x: number, box: { xMin: number; xMax: number }) =>
+      Math.max(box.xMin, Math.min(box.xMax, x));
+    const clampY = (y: number, box: { yMin: number; yMax: number }) =>
+      Math.max(box.yMin, Math.min(box.yMax, y));
+
     // Convert machines to nodes — status starts idle; the separate update
     // effect applies live per-step status without rebuilding the simulation.
     const nodes: MachineNode[] = validMachines.map(m => {
       const saved = nodePositionsRef.current.get(m.id);
       const cls = classifications.get(m.id) ?? { domain: 'general' as DomainId, isExternal: false, reason: 'missing' };
-      const anchor = DOMAINS[cls.domain].anchor;
-      // Seed unclassified-but-new nodes near their domain anchor instead of center
-      const seedX = anchor.x * width + (Math.random() - 0.5) * 180;
-      const seedY = anchor.y * height + (Math.random() - 0.5) * 180;
+      const box = domainBox(cls.domain);
+      // Seed positions inside the domain's box, distributed so the force
+      // simulation has a starting point that already respects disjointness.
+      const seedX = box.xMin + Math.random() * (box.xMax - box.xMin);
+      const seedY = box.yMin + Math.random() * (box.yMax - box.yMin);
+      const meta = m.metadata ?? {};
+      // Severity sits at the machine top-level in the canonical JSON, but a
+      // few older records carry it under metadata.severity — accept both.
+      const severity = (m as any).severity ?? meta.severity;
+      const governance = meta.governance ?? undefined;
+      const subs = Array.isArray(meta.compose?.subscriptions) ? meta.compose.subscriptions.length : 0;
       return {
         id: m.id,
         name: m.name,
@@ -255,10 +364,15 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         sequenceCount: m.sequenceCount,
         domain: cls.domain,
         isExternal: cls.isExternal,
+        severity,
+        bitsPerElement: m.perceptualMapping?.bitsPerElement,
+        governance,
+        composeSubscriptionCount: subs,
         status: 'idle' as const,
-        // Restore saved position so layout is preserved when topology changes
-        x: saved?.x ?? seedX,
-        y: saved?.y ?? seedY,
+        // Restore saved position when valid, but clamp to the current box so
+        // a domain rename or grid resize re-anchors the node correctly.
+        x: saved ? clampX(saved.x, box) : seedX,
+        y: saved ? clampY(saved.y, box) : seedY,
       };
     });
 
@@ -562,54 +676,41 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
     for (const d of DOMAIN_ORDER) nodesByDomain.set(d, []);
     for (const n of nodes) nodesByDomain.get(n.domain)!.push(n);
 
-    // Expand each node into corner points so the hull wraps card extents.
-    const HULL_PAD = 22;
+    // Tight hull halo — a small offset around the node *center* (not around
+    // the full card extent).  The inter-cell gap in the 4×3 grid is at least
+    // 28 px vertically and 48 px horizontally, so a 12 px halo guarantees
+    // hulls from adjacent domains never share a pixel.
+    const HULL_HALO = 12;
     const cornerPoints = (n: MachineNode): [number, number][] => {
       const x = n.x ?? 0, y = n.y ?? 0;
-      const w = 100 + HULL_PAD, h = 70 + HULL_PAD;
-      return [[x - w, y - h], [x + w, y - h], [x + w, y + h], [x - w, y + h]];
+      return [
+        [x - HULL_HALO, y - HULL_HALO],
+        [x + HULL_HALO, y - HULL_HALO],
+        [x + HULL_HALO, y + HULL_HALO],
+        [x - HULL_HALO, y + HULL_HALO],
+      ];
     };
 
-    // ── Domain hull drag — move all machines in the domain as one group ─────
-    let hullDragStarts: Map<string, { x: number; y: number }> = new Map();
-    let hullDragOrigin = { x: 0, y: 0 };
-    const hullDrag = d3.drag<SVGPathElement, { domainId: DomainId; hull: [number, number][] | null }>()
-      .on('start', (event, d) => {
-        if (!event.active) simulation.alphaTarget(0.05).restart();
-        hullDragStarts = new Map();
-        hullDragOrigin = { x: event.x, y: event.y };
-        for (const n of nodes) {
-          if (n.domain === d.domainId) {
-            hullDragStarts.set(n.id, { x: n.x ?? 0, y: n.y ?? 0 });
-            n.fx = n.x ?? 0;
-            n.fy = n.y ?? 0;
-          }
-        }
-        (event.sourceEvent as Event)?.stopPropagation?.();
-      })
-      .on('drag', (event, d) => {
-        const dx = event.x - hullDragOrigin.x;
-        const dy = event.y - hullDragOrigin.y;
-        for (const n of nodes) {
-          if (n.domain === d.domainId) {
-            const start = hullDragStarts.get(n.id);
-            if (!start) continue;
-            n.fx = start.x + dx;
-            n.fy = start.y + dy;
-          }
-        }
-      })
-      .on('end', (event) => {
-        if (!event.active) simulation.alphaTarget(0);
-        // Keep the domain pinned at its new position so the moved bubble "sticks"
-      });
+    // Domain hull drag is intentionally disabled: each domain is bound to a
+    // fixed grid cell so its hull can't be moved without breaking
+    // disjointness.  Hull elements are pointer-events:none so they don't
+    // intercept clicks meant for nodes underneath.
 
     const drawHulls = () => {
       const hullData = DOMAIN_ORDER
         .map(domainId => {
           const group = nodesByDomain.get(domainId)!;
           if (group.length === 0) return null;
-          const pts: [number, number][] = [];
+          // Anchor the hull at its domain's box corners as a fallback so
+          // domains with a single node (or fewer than 3 unique points) still
+          // render a bubble that sits inside the cell.
+          const box = domainBox(domainId);
+          const pts: [number, number][] = [
+            [box.xMin + 4, box.yMin + 4],
+            [box.xMax - 4, box.yMin + 4],
+            [box.xMax - 4, box.yMax - 4],
+            [box.xMin + 4, box.yMax - 4],
+          ];
           for (const n of group) pts.push(...cornerPoints(n));
           const hull = pts.length >= 3 ? d3.polygonHull(pts) : pts;
           return { domainId, hull };
@@ -628,9 +729,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         .attr('stroke-opacity', 0.75)
         .attr('stroke-width', 2.5)
         .attr('stroke-dasharray', '8,6')
-        .attr('pointer-events', 'all')
-        .style('cursor', 'grab')
-        .call(hullDrag as any);
+        .attr('pointer-events', 'none');
 
       hullEnter.merge(hullSel as any).attr('d', d => {
         if (!d.hull || d.hull.length === 0) return null;
@@ -657,7 +756,17 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
     // Update simulation — also persist positions so rebuilds preserve layout
     simulation.on('tick', () => {
+      // Clamp every node to its domain's box.  This runs after the force
+      // step, so cross-domain link forces and charge repulsion can shove
+      // nodes around but they always snap back inside their cell.  Both
+      // the live position (x/y) and any pinned position (fx/fy from drag)
+      // are clamped so dragging a node out of its cell is rejected.
       for (const n of nodes) {
+        const box = domainBox(n.domain);
+        if (n.fx != null) n.fx = clampX(n.fx, box);
+        else if (n.x != null) n.x = clampX(n.x, box);
+        if (n.fy != null) n.fy = clampY(n.fy, box);
+        else if (n.y != null) n.y = clampY(n.y, box);
         if (n.x != null && n.y != null) nodePositionsRef.current.set(n.id, { x: n.x, y: n.y });
       }
 
@@ -702,8 +811,35 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
       const tooltip = d3.select(tooltipRef.current);
       tooltip.style('display', 'block');
 
+      // Live decoration latched from mergeBatch entries on every WebSocket step.
+      const deco = machineCesDecorationRef.current[d.id] ?? {};
+      // Live runtime status from per-step machine results (also used by the
+      // status-rect updater); falls back to the node's static idle state.
+      const live = machineStatusesRef.current[d.id];
+      const status = live?.status ?? d.status ?? 'idle';
+      const lastInput = live?.lastInput ?? d.lastInput;
+      const lastOutput = live?.lastOutput ?? d.lastOutput;
+
+      const ragColor =
+        deco.ragStatusCode === 'red'   ? '#ef4444' :
+        deco.ragStatusCode === 'amber' ? '#f59e0b' :
+        deco.ragStatusCode === 'green' ? '#22c55e' :
+        '#94a3b8';
+      const statusColor =
+        status === 'active'     ? '#22c55e' :
+        status === 'processing' ? '#06b6d4' : '#94a3b8';
+
+      const severityBadge = d.severity === 'life-safety'
+        ? `<span style="display:inline-block;background:#7f1d1d;color:#fecaca;border:1px solid #ef4444;padding:2px 8px;border-radius:6px;font-size:9px;font-weight:700;letter-spacing:0.5px;margin-left:8px;vertical-align:middle;">LIFE-SAFETY</span>`
+        : d.severity
+          ? `<span style="display:inline-block;background:#312e81;color:#c7d2fe;padding:2px 8px;border-radius:6px;font-size:9px;font-weight:700;margin-left:8px;vertical-align:middle;">${d.severity.toUpperCase()}</span>`
+          : '';
+      const deprecationBadge = deco.deprecationSince
+        ? `<span style="display:inline-block;background:#78350f;color:#fed7aa;border:1px solid #f59e0b;padding:2px 8px;border-radius:6px;font-size:9px;font-weight:700;margin-left:8px;vertical-align:middle;">DEPRECATED ${deco.deprecationSince}</span>`
+        : '';
+
       let content = `
-        <div class="tooltip-title">${d.name}</div>
+        <div class="tooltip-title">${d.name}${severityBadge}${deprecationBadge}</div>
         <div class="tooltip-row">
           <span class="tooltip-label">Domain:</span>
           <span class="tooltip-value" style="color: ${DOMAINS[d.domain].color}">
@@ -712,7 +848,7 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         </div>
         <div class="tooltip-row">
           <span class="tooltip-label">Status:</span>
-          <span class="tooltip-value">${d.status || 'idle'}</span>
+          <span class="tooltip-value" style="color:${statusColor};font-weight:600;">${status}</span>
         </div>
         <div class="tooltip-row">
           <span class="tooltip-label">Description:</span>
@@ -728,6 +864,15 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         </div>
       `;
 
+      if (typeof d.bitsPerElement === 'number') {
+        content += `
+          <div class="tooltip-row">
+            <span class="tooltip-label">Cell width:</span>
+            <span class="tooltip-value" style="font-family:monospace;">${d.bitsPerElement}-bit</span>
+          </div>
+        `;
+      }
+
       if (d.sequenceCount) {
         content += `
           <div class="tooltip-row">
@@ -737,35 +882,108 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         `;
       }
 
-      if (d.metadata) {
-        const metaKeys = Object.keys(d.metadata);
-        if (metaKeys.length > 0) {
-          content += `<div class="tooltip-row"><span class="tooltip-label">Metadata:</span></div>`;
-          metaKeys.slice(0, 3).forEach(key => {
-            content += `
-              <div class="tooltip-row" style="margin-left: 10px;">
-                <span class="tooltip-label">${key}:</span>
-                <span class="tooltip-value">${JSON.stringify(d.metadata![key]).substring(0, 30)}</span>
-              </div>
-            `;
-          });
-        }
-      }
-
-      if (d.lastInput && d.lastInput.length > 0) {
+      if (d.composeSubscriptionCount && d.composeSubscriptionCount > 0) {
         content += `
           <div class="tooltip-row">
-            <span class="tooltip-label">Last Input:</span>
-            <span class="tooltip-value">[${d.lastInput.map(v => v.toFixed(2)).join(', ')}]</span>
+            <span class="tooltip-label">Compose subs:</span>
+            <span class="tooltip-value" style="color:#a78bfa;">${d.composeSubscriptionCount}</span>
           </div>
         `;
       }
 
-      if (d.lastOutput && d.lastOutput.length > 0) {
+      // ── Governance block — only shown when the machine's metadata carries it.
+      // Pulls ownerTeam/escalation/contact/runbook + a one-line SLA summary.
+      const gov = d.governance;
+      if (gov && (gov.ownerTeam || gov.escalationPolicy || gov.sla || gov.runbook)) {
+        const slaLines = gov.sla
+          ? Object.entries(gov.sla)
+              .map(([k, v]) => `${k}=${v}s`)
+              .join(', ')
+          : '';
+        content += `
+          <div class="tooltip-row" style="margin-top:8px;padding-top:6px;border-top:1px solid #334155;">
+            <span class="tooltip-label" style="color:#94a3b8;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:0.5px;">Governance</span>
+          </div>
+        `;
+        if (gov.ownerTeam) content += `
+          <div class="tooltip-row" style="margin-left:10px;">
+            <span class="tooltip-label">Owner:</span>
+            <span class="tooltip-value" style="color:#fbbf24;">${gov.ownerTeam}</span>
+          </div>`;
+        if (gov.escalationPolicy) content += `
+          <div class="tooltip-row" style="margin-left:10px;">
+            <span class="tooltip-label">Escalation:</span>
+            <span class="tooltip-value">${gov.escalationPolicy}</span>
+          </div>`;
+        if (slaLines) content += `
+          <div class="tooltip-row" style="margin-left:10px;">
+            <span class="tooltip-label">SLA:</span>
+            <span class="tooltip-value" style="font-family:monospace;font-size:10px;">${slaLines}</span>
+          </div>`;
+        if (gov.contact) content += `
+          <div class="tooltip-row" style="margin-left:10px;">
+            <span class="tooltip-label">Contact:</span>
+            <span class="tooltip-value">${gov.contact}</span>
+          </div>`;
+        if (gov.runbook) content += `
+          <div class="tooltip-row" style="margin-left:10px;">
+            <span class="tooltip-label">Runbook:</span>
+            <span class="tooltip-value" style="color:#60a5fa;word-break:break-all;font-size:10px;">${gov.runbook}</span>
+          </div>`;
+      }
+
+      // ── Live CES decoration: only present after at least one fire on this
+      // machine.  Rendered as a distinct block so an operator can see the
+      // most recent fire's RAG/process status without clicking into the
+      // machine.
+      if (deco.ragStatusCode || deco.processStatus || deco.firedSequenceId || deco.provenanceLength) {
+        content += `
+          <div class="tooltip-row" style="margin-top:8px;padding-top:6px;border-top:1px solid #334155;">
+            <span class="tooltip-label" style="color:#94a3b8;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:0.5px;">Last Fire</span>
+          </div>`;
+        if (deco.firedSequenceId) content += `
+          <div class="tooltip-row" style="margin-left:10px;">
+            <span class="tooltip-label">Sequence:</span>
+            <span class="tooltip-value" style="color:#8b5cf6;">${deco.firedSequenceId}</span>
+          </div>`;
+        if (deco.ragStatusCode) content += `
+          <div class="tooltip-row" style="margin-left:10px;">
+            <span class="tooltip-label">RAG:</span>
+            <span class="tooltip-value" style="color:${ragColor};font-weight:700;text-transform:uppercase;">${deco.ragStatusCode}</span>
+          </div>`;
+        if (deco.processStatus) content += `
+          <div class="tooltip-row" style="margin-left:10px;">
+            <span class="tooltip-label">Process:</span>
+            <span class="tooltip-value">${deco.processStatus}</span>
+          </div>`;
+        if (deco.provenanceLength) content += `
+          <div class="tooltip-row" style="margin-left:10px;">
+            <span class="tooltip-label">Provenance:</span>
+            <span class="tooltip-value">${deco.provenanceLength}-step chain</span>
+          </div>`;
+        if (deco.deprecationReplacedBy) content += `
+          <div class="tooltip-row" style="margin-left:10px;">
+            <span class="tooltip-label">Replaced by:</span>
+            <span class="tooltip-value" style="color:#fbbf24;">${deco.deprecationReplacedBy}</span>
+          </div>`;
+      }
+
+      if (lastInput && lastInput.length > 0) {
+        const preview = lastInput.slice(0, 8).map(v => v.toFixed(2)).join(', ');
+        content += `
+          <div class="tooltip-row">
+            <span class="tooltip-label">Last Input:</span>
+            <span class="tooltip-value" style="font-family:monospace;font-size:10px;">[${preview}${lastInput.length > 8 ? '…' : ''}]</span>
+          </div>
+        `;
+      }
+
+      if (lastOutput && lastOutput.length > 0) {
+        const preview = lastOutput.slice(0, 8).map(v => v.toFixed(2)).join(', ');
         content += `
           <div class="tooltip-row">
             <span class="tooltip-label">Last Output:</span>
-            <span class="tooltip-value">[${d.lastOutput.map(v => v.toFixed(2)).join(', ')}]</span>
+            <span class="tooltip-value" style="font-family:monospace;font-size:10px;">[${preview}${lastOutput.length > 8 ? '…' : ''}]</span>
           </div>
         `;
       }
@@ -855,10 +1073,16 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
 
   return (
     <div ref={containerRef} className="machine-interconnection-graph">
-      <svg ref={svgRef} className="graph-svg"></svg>
+      <Graph3DToggle is3D={is3D} onToggle={() => setIs3D(v => !v)} />
+
+      {is3D && (
+        <Graph3DView mode="machines" />
+      )}
+
+      <svg ref={svgRef} className="graph-svg" style={{ display: is3D ? 'none' : undefined }}></svg>
 
       {/* Enhanced tooltip */}
-      <div ref={tooltipRef} className="node-tooltip" style={{ display: 'none' }}></div>
+      {!is3D && <div ref={tooltipRef} className="node-tooltip" style={{ display: 'none' }}></div>}
 
       {/* Perceptual space status indicator */}
       {perceptualSpace.length > 0 && (
@@ -929,11 +1153,6 @@ export const MachineInterconnectionGraph: React.FC<MachineInterconnectionGraphPr
         </div>
       </div>
 
-      <div className="graph-controls">
-        <div className="control-hint">
-          💡 Hover nodes for details • Drag to rearrange • Scroll to zoom
-        </div>
-      </div>
     </div>
   );
 };

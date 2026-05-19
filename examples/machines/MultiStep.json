@@ -10,8 +10,15 @@
       "eventSpace": "3D binary vectors: 000-111",
       "outputSpace": "2D binary vectors: {00, 01, 10, 11}",
       "tags": [
-        "state-machine",
+        "ces-sequences",
+        "ces-sequences-2",
+        "digital-logic",
+        "input-sequences",
+        "input-sequences-3",
         "multi-step",
+        "multi-step-state-machine",
+        "startup-loadable",
+        "state-machine",
         "three-step"
       ],
       "sequenceCount": 2,
@@ -32,18 +39,101 @@
             "behavior": "Correct — ms-seq2-100 matches immediately"
           }
         ]
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "digital-logic",
+        "domainTags": [
+          "digital-logic"
+        ],
+        "family": "multi-step-state-machine",
+        "machineCode": "multi-step",
+        "capabilityTags": [],
+        "workflowTags": [
+          "multi-step",
+          "multi-step-state-machine",
+          "state-machine",
+          "three-step"
+        ],
+        "integrationTags": [
+          "digital-logic"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "digital-logic",
+          "input-sequences",
+          "input-sequences-3",
+          "multi-step",
+          "multi-step-state-machine",
+          "startup-loadable",
+          "state-machine",
+          "three-step"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "reliability-engineering",
+        "runbook": "https://runbooks.example.org/digital-logic/multistep",
+        "escalationPolicy": "slack:#reliability-test",
+        "contact": {
+          "primary": "reliability-engineering-primary@example.org",
+          "secondary": "reliability-engineering-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": null,
+          "error": null
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"digital-logic\".  Review and tune the routing as the team owning MultiStep matures."
+      },
+      "triggerConfig": {
+        "processId": "MULTISTEP",
+        "processName": "Multi-Step State Machine",
+        "rules": [
+          {
+            "sequenceId": "multi-step-seq1",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sequence 1 complete: output [0,1]"
+          },
+          {
+            "sequenceId": "multi-step-seq2",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Sequence 2 complete: output [1,0]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 0,
+        "offset": 3907,
         "length": 3
       },
       "output": {
-        "offset": 3,
+        "offset": 3910,
         "length": 2
-      }
+      },
+      "bitsPerElement": 1
     },
     "sequences": [
       {

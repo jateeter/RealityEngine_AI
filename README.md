@@ -1,6 +1,13 @@
 # Reality Engine
 
-A vector-based state machine system that models reality through observable events and CriticalEventSequence (CES) machines. Inputs are assembled by the **Perception Engine** from configurable sources and pushed into the **Reality Engine**, where registered machines process them through a shared 256-byte perceptual space.
+A vector-based state machine system that models reality through observable events and CriticalEventSequence (CES) machines.  Inputs are assembled by the **Perception Engine** from configurable sources (test sequences, simulated waveforms, live sensors, **MQTT brokers**) and pushed into the **Reality Engine**, where registered machines process them through a shared perceptual space (768-element default; grows dynamically to accommodate all machine mappings).
+
+This repo (`RealityEngine_AI`) hosts the **default** runtime — TypeScript on Node.js.  Two sibling implementations provide black-box equivalence on the same JSON corpus:
+
+- [`RealityEngine_CPP`](../RealityEngine_CPP) — native C++ (Boost.Asio/Beast, zero external runtime deps)
+- [`RealityEngine_LSP`](../RealityEngine_LSP) — Common Lisp on SBCL (actor model via bordeaux-threads)
+
+All three runtimes share the same `/api/*` surface, machine JSON corpus, governance contracts, MQTT mapping registry, and Prometheus metrics shape.  `startUniverse.sh --re-engine=ai|cpp|lsp` selects which runtime backs the stack.
 
 > Claude Code generated seed version of the Reality Engine (with incremental prompt specification)
 
@@ -8,47 +15,120 @@ A vector-based state machine system that models reality through observable event
 
 ## Service Access URLs
 
-All services are exposed via a TLS-terminating nginx proxy. Start the stack, then open:
+The AI runtime exposes its services through a TLS-terminating nginx proxy:
 
 | Service | URL | Description |
 |---|---|---|
-| **Visualizer Frontend** | https://localhost:5173 | Primary web UI (Tobias canvas view, machine administration) |
-| **Perception Engine UI** | https://localhost:3005 | Source management and live push controls |
+| **Visualizer Frontend** | https://localhost:5173 | Primary web UI — Tobias canvas, machine administration, **Universe Monitor** |
+| **Perception Engine UI** | https://localhost:3005 | Source management + live push controls |
 | **Grafana Logs** | https://localhost:3002 | Centralized log dashboard (admin / admin) |
-| **Reality Engine API** | https://localhost:3000 | Scala/Akka HTTP core engine |
-| **Visualizer Backend** | https://localhost:3001 | WebSocket proxy and REST passthrough |
-| **Perception Engine API** | https://localhost:3004 | Source assembly, auto-push, and perceive endpoint |
+| **Reality Engine API** | https://localhost:3000 | TypeScript / Node.js HTTP core engine |
+| **Visualizer Backend** | https://localhost:3001 | WebSocket proxy + REST passthrough + MQTT-ingest forwarder |
+| **Perception Engine API** | https://localhost:3004 | Source assembly, auto-push, `/api/signals`, **`/api/mqtt/*`** |
 | **Qdrant Dashboard** | http://localhost:6333/dashboard | Vector database UI |
+
+CPP and LSP runtimes listen on `3299` (RE) + `3300` (PE) without the TLS proxy.
 
 ---
 
 ## Quick Start
 
 ```bash
-# Generate dev TLS certificates (first time only)
+# Generate dev TLS certificates (first time only — AI engine path uses HTTPS)
 bash certs/generate-dev-certs.sh
 
-# Start the full universe (localAIStack + Reality Engine + integration verify)
+# Default: full AI stack (Docker + localAIStack + integration verification)
 ./startUniverse.sh
 
-# Or start fresh (wipe perception sources, rebuild RE images with --no-cache)
+# Native C++ runtime (no Docker, no localAIStack — delegates to ../RealityEngine_CPP/start.sh)
+./startUniverse.sh --re-engine=cpp --pe-engine=cpp
+
+# Common Lisp runtime
+./startUniverse.sh --re-engine=lsp --pe-engine=lsp
+
+# Fresh AI start (wipe perception sources, rebuild images --no-cache)
 ./startUniverse.sh --fresh
 
-# Stop all services
-./scripts/stop.sh
+# MQTT-enabled boot (any engine — see "MQTT Integration" below)
+./startUniverse.sh --re-engine=cpp \
+    --mqtt-broker-url=mqtt://broker:1883 \
+    --mqtt-mappings=$PWD/../RealityEngine_CPP/config/mqtt-mappings.yuma-agriculture.json
+
+# Tear down — reads .universe-engine-selection so it knows what to stop
+./stopUniverse.sh
+
+# Or explicitly:
+./stopUniverse.sh --all                          # tear down every engine
+./stopUniverse.sh --re-engine=cpp --pe-engine=ai # stop a mixed-engine deployment
 ```
 
-`startUniverse.sh` is the recommended entry point — it brings up Ollama, localAIStack (Qdrant + Redis + API), and all Reality Engine services, then verifies machine/sensor/Qdrant integration.
+| Flag | Values | Default | Behaviour |
+|---|---|---|---|
+| `--re-engine` | `ai`, `cpp`, `lsp` | `ai` | RE implementation |
+| `--pe-engine` | `ai`, `cpp`, `lsp` | `ai` | PE implementation |
+| `--fresh` | | — | Wipe AI perception sources + rebuild images without cache |
+| `--mqtt-broker-url=URL` | `mqtt://host:port` | — | Enable MQTT ingest on the chosen PE |
+| `--mqtt-mappings=PATH` | path to JSON | — | Topic→region mapping registry |
 
-If localAIStack is already running and you only need to (re)start Reality Engine services, use `./scripts/start.sh` instead.
+For low-level AI-only operations (without the localAIStack orchestration), `./scripts/start.sh` and `./scripts/start-local.sh` are still available; `./scripts/stop-local.sh` stops the matching local processes.
 
 Browsers will warn about the self-signed certificate — add an exception or use `--ignore-certificate-errors` when running Playwright.
 
 ---
 
+## MQTT Integration
+
+Every PE (all three runtimes) can subscribe to an external MQTT broker and project incoming sensor messages into perceptual-space regions via a **mapping registry**.  Per the design rule, topics describe the outside world; the registry decides how that world projects into perceptual space — topic strings never embed offsets.
+
+```bash
+# Schema:
+#   mqtt-mappings.json
+#   ├── defaults: { ttlMs, qos, acceptRetained, pushMode, debounceMs }
+#   └── mappings: [
+#         { id, topicFilter (+ and # wildcards),
+#           sensorIdTemplate ({1}, {2} captures),
+#           region: { offset, length },
+#           extract: { type: csv-float | json | raw | single-float, pointer?, index? },
+#           normalize: { mode: passthrough | minmax | linear | band, min, max, scale, offset, clamp },
+#           ttlMs, qos, acceptRetained,
+#           pushMode: debounced | manual | immediate, debounceMs } ]
+
+# Boot with the bridge enabled
+MQTT_BROKER_URL=mqtt://broker:1883 \
+MQTT_MAPPINGS_FILE=$PWD/../RealityEngine_CPP/config/mqtt-mappings.yuma-agriculture.json \
+./startUniverse.sh
+```
+
+Endpoints exposed by the PE (proxied through the visualizer backend at `/api/perception/*`):
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/mqtt/status` | Connection state, bridge counters (received / mapped / rejected / unmatched / pushes triggered), broker config |
+| `GET /api/mqtt/mappings` | Loaded registry + per-mapping counters (received, mapped, rejected, lastError) |
+| `PUT /api/mqtt/mappings` | Replace the registry + reload the bridge (AI and LSP today; CPP via file restart) |
+| `GET /api/sources` | All sensor sources with `ageMs` + `stale` fields per source |
+
+A full live demonstration against the `yuma.lateraledge.cloud:1883` Lateral Edge sensor mesh is documented in [`RealityEngine_CPP/docs/MQTT_YUMA_DEMONSTRATION.md`](../RealityEngine_CPP/docs/MQTT_YUMA_DEMONSTRATION.md) — covers topic discovery, the agriculture-domain mapping file, and the full audit trail from broker payload to Prometheus `ces_paging_decisions_total` counter.
+
+The same Yuma mappings drive the five **AGX051-AGX055 Yuma maintenance machines** in the agriculture domain — these consume the live MQTT-populated sensor regions and produce a maintenance-lens output (URGENT / FORECAST / CALIBRATE / NORMAL) distinct from the operational-stability machines (AGX001/005/026/032) that read the same regions.  AGX055 then projects all four maintenance outputs onto `AgYieldOptimizationAI`'s input window at `[3959:3971]`, completing the path **live broker → CES machines → cross-domain yield AI**.  See [`docs/AGRICULTURE_INTERCONNECTIONS.md`](docs/AGRICULTURE_INTERCONNECTIONS.md) for the full chain diagram and regenerate with `python3 scripts/generate_yuma_mqtt_maintenance_machines.py`.
+
+---
+
+## Universe Monitor
+
+A dedicated visualizer view (`Universe` button on the selection screen, or `currentView === 'universe'`) provides the operator window onto the full PE→RE→CES→governance pipeline:
+
+- **MQTT Bridge** panel — connection state badge, bridge counters, per-mapping table with `Edit Mappings` button (opens an inline JSON editor that PUTs back to the PE and reloads the bridge in <100 ms).
+- **Live MQTT Ingest** stream — WebSocket-driven (`mqtt-ingest` events forwarded by the visualizer backend from the PE's WS); shows every accepted PUBLISH with timestamp, sensor id, topic, region, and decoded values.  Rows fade older toward the bottom.
+- **Sensor Sources** panel — every PE sensor source with a freshness badge (FRESH / AGING / STALE / IDLE), derived from `lastUpdated` + `ttlMs` server-side.
+- **Paging Decisions** ticker — RAG-coloured table of resolved governance contracts, parsed from the RE's Prometheus `ces_paging_decisions_total` counter by the visualizer backend.
+- **Trigger Push** button — manual `POST /api/perception/push` for ad-hoc verification.
+
+---
+
 ## Architecture
 
-The system runs as nine Docker services connected on a private `reality-network`:
+The system runs as eight Docker services connected on a private `reality-network` (Qdrant and Redis run externally via localAIStack):
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -73,7 +153,7 @@ The system runs as nine Docker services connected on a private `reality-network`
          ▼
 ┌──────────────────┐    ┌──────────┐   ┌─────────┐
 │ Reality Engine   │───►│  Qdrant  │   │  Loki   │
-│ (Scala/Akka)     │    │  :6333   │   │  :3100  │
+│ (Node.js / TS)   │    │  :6333   │   │  :3100  │
 │ :3000            │    └──────────┘   └────────┬┘
 └──────────────────┘                            │
                                      ┌──────────▼──────┐
@@ -83,7 +163,7 @@ The system runs as nine Docker services connected on a private `reality-network`
 
 ### Data flow
 
-1. **Perception Engine** assembles a 256-element vector from its configured sources (test sequences, simulated signals, or live sensors).
+1. **Perception Engine** assembles a vector from its configured sources (test sequences, simulated signals, or live sensors) and writes each source into its assigned region of the shared perceptual space.
 2. It posts the vector to **Visualizer Backend** `/api/perceive`, which forwards it to **Reality Engine** `/api/perceive`.
 3. The Reality Engine runs a 3-phase snapshot → process → merge loop over all registered machines, writing machine outputs back into the shared perceptual space.
 4. The Visualizer Backend broadcasts `perceptual-simulation-stepped` to all WebSocket clients.
@@ -105,11 +185,11 @@ A directed graph of RealityVectors. Requires at least one `isInitial` vector (al
 
 ### Machine
 
-A named collection of CriticalEventSequences with a **perceptual mapping** — `inputRegion` and `outputRegion` — that defines which bytes of the 256-element shared perceptual space the machine reads from and writes to.
+A named collection of CriticalEventSequences with a **perceptual mapping** — `inputRegion` and `outputRegion` — that defines which elements of the shared perceptual space the machine reads from and writes to.
 
 ### Perceptual Space
 
-A 256-byte shared vector. All machines snapshot their input region, process concurrently, then merge their outputs in a single atomic phase. Sources outside a machine's assigned regions are unaffected.
+A shared vector (768 elements by default; grows to the highest machine mapping offset + length). All machines snapshot their input region, process concurrently, then merge their outputs in a single atomic phase. Sources outside a machine's assigned regions are unaffected.
 
 ### Perception Engine
 
@@ -139,10 +219,25 @@ Graph showing all machines and their perceptual space region overlaps (edges ind
 
 ## Machine JSON Files
 
-Machines are defined as JSON files in `examples/machines/`. Every `*.json` in
-that directory is **auto-loaded at engine startup** (see
-`scala/.../Routes.scala::loadDefaultMachines`), so adding a new file and
-restarting the stack is all that's needed — no allowlist to edit.
+Machines are defined as JSON files in `examples/machines/`.  Every `*.json` in
+that directory is **auto-loaded at engine startup** by all three runtimes
+(TS `src/services/MachineLoader.ts`, C++ `load_machines_from_directory`, LSP
+`load-machines-from-directory`), so adding a new file and restarting the
+stack is all that's needed — no allowlist to edit.
+
+The generated example corpus currently contains `1009` startup-loadable machines
+across `11` active domains. The searchable index is generated at
+[`docs/EXAMPLE_DOMAIN_COMPENDIUM.md`](docs/EXAMPLE_DOMAIN_COMPENDIUM.md), and
+the current packed domain/bridge layout is documented in
+[`docs/DOMAIN_PERCEPTUAL_SPACE_REMAP.md`](docs/DOMAIN_PERCEPTUAL_SPACE_REMAP.md).
+The community-services domain now includes `102` machines, including `90`
+generated examples for health and human services, law enforcement/public safety,
+homelessness response, city operations, and bridge interconnects to
+health-services and transportation.
+The life-balance domain adds `100` machines for lifestyle-psychiatry workflow
+tracking, projection, and automation across intake, nutrition, sleep, movement,
+stress resilience, psychiatric care, adolescent/family support, monitoring, and
+care-team escalation.
 
 ```bash
 # Via API
@@ -231,9 +326,13 @@ See `LOKI_GRAFANA_SETUP.md` for dashboard and alerting configuration.
 
 | Doc | Description |
 |---|---|
-| `ARCHITECTURE.md` | Detailed Scala engine and perceptual space internals |
+| `docs/README.md` | Maintained documentation index |
+| `ARCHITECTURE.md` | Visual service architecture and data flow |
 | `API_ENDPOINTS_GUIDE.md` | Complete REST and WebSocket API reference |
-| `PERCEPTUAL_SPACE_ARCHITECTURE.md` | 256-byte space layout and machine interconnection model |
+| `PERCEPTUAL_SPACE_ARCHITECTURE.md` | Dynamic perceptual-space model |
+| `docs/EXAMPLE_DOMAIN_COMPENDIUM.md` | Generated searchable compendium of all active domains, machines, triggers, mappings, and interconnections |
+| `docs/ACRONYMS.md` | Acronym definitions |
+| `docs/BIBLIOGRAPHY.md` | External and project references |
 | `RS_FLIP_FLOP.md` | RS flip-flop machine example walkthrough |
 | `NAND-GATE-PROOF.md` | NAND gate logical proof using CES machines |
 | `ARBITER_ARCHITECTURE.md` | Output arbiter and shouldOutput semantics |

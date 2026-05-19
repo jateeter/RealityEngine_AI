@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { useVisualizerStore } from '../store';
 import { VectorNode, OutputVector } from '../types';
+import { Graph3DView } from './Graph3DView';
+import { Graph3DToggle } from './Graph3DToggle';
 import './VisLegend.css';
 
 // ── Shared vis-palette (matches Tobias/MachineGraphView) ─────────────────────
@@ -112,6 +114,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
   const structuralKeyRef = useRef<string>('');
   const { sequences, currentMachine, setHighlightedOutputId } = useVisualizerStore();
   const [legendOpen, setLegendOpen] = useState(false);
+  const [is3D,       setIs3D]       = useState(false);
   const [layoutResetKey, setLayoutResetKey] = useState(0);
 
   useEffect(() => {
@@ -530,7 +533,7 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
     };
 
     // Helper function to format output vectors
-    const formatOutputVectors = (outputs: Array<{ id: string; vector: number[]; timestamp: number; metadata?: string | Record<string, any> }> | undefined) => {
+    const formatOutputVectors = (outputs: Array<{ id: string; vector: number[]; timestamp: number; metadata?: string | Record<string, any>; provenance?: string[] }> | undefined) => {
       if (!outputs || outputs.length === 0) return '';
 
       const outputItems = outputs
@@ -542,12 +545,18 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
                 : JSON.stringify(output.metadata))
             : '';
           const timestamp = new Date(output.timestamp).toLocaleTimeString();
+          // Provenance chain: comma-separated vector ids that led to this fire.
+          // Helps an operator audit *why* a RED-tier output was asserted.
+          const provStr = Array.isArray(output.provenance) && output.provenance.length > 0
+            ? output.provenance.join(' → ')
+            : '';
 
           return `
             <div style="margin: 6px 0; padding: 6px; background: rgba(245, 158, 11, 0.1); border-left: 2px solid #f59e0b; border-radius: 4px;">
               <div style="font-weight: 600; color: #fbbf24; margin-bottom: 3px;">#${idx + 1}: ${output.id}</div>
               <div style="font-family: monospace; font-size: 10px; color: #cbd5e1; margin: 2px 0;">[${vectorStr}]</div>
               ${metaStr ? `<div style="font-size: 10px; color: #94a3b8; margin-top: 3px;">${metaStr}</div>` : ''}
+              ${provStr ? `<div style="font-size: 10px; color: #a78bfa; margin-top: 3px; font-family: monospace; word-break: break-all;">↳ ${provStr}</div>` : ''}
               <div style="font-size: 9px; color: #64748b; margin-top: 3px;">⏱ ${timestamp}</div>
             </div>
           `;
@@ -783,19 +792,60 @@ const CriticalEventGraphView: React.FC<CriticalEventGraphViewProps> = ({ selecte
     };
   }, []);
 
+  // Build event node/edge data for 3D mode
+  const eventNodes3D = React.useMemo(() => {
+    if (!is3D) return undefined;
+    const displaySequences = currentMachine
+      ? sequences.filter(seq => currentMachine.sequenceIds.includes(seq.sequenceId))
+      : selectedSequenceId
+      ? sequences.filter(s => s.sequenceId === selectedSequenceId)
+      : sequences;
+    return displaySequences.flatMap(seq =>
+      seq.nodes.map(n => ({
+        id: n.id,
+        label: n.label,
+        isInitial: n.isInitial,
+        isActive: n.isActive,
+        hasOutput: n.hasOutput || (n.outputVectors?.length ?? 0) > 0,
+        wasJustMatched: n.wasJustMatched,
+        cluster: seq.sequenceId,
+      }))
+    );
+  }, [is3D, sequences, currentMachine, selectedSequenceId]);
+
+  const eventEdges3D = React.useMemo(() => {
+    if (!is3D) return undefined;
+    const displaySequences = currentMachine
+      ? sequences.filter(seq => currentMachine.sequenceIds.includes(seq.sequenceId))
+      : selectedSequenceId
+      ? sequences.filter(s => s.sequenceId === selectedSequenceId)
+      : sequences;
+    return displaySequences.flatMap(seq =>
+      seq.edges.map(e => ({ source: e.source, target: e.target }))
+    );
+  }, [is3D, sequences, currentMachine, selectedSequenceId]);
+
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', background: '#0a0a0a' }}>
-      <svg ref={svgRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
+      <Graph3DToggle is3D={is3D} onToggle={() => setIs3D(v => !v)} />
+
+      {is3D && (
+        <Graph3DView mode="events" eventNodes={eventNodes3D} eventEdges={eventEdges3D} />
+      )}
+
+      <svg ref={svgRef} style={{ width: '100%', height: '100%', cursor: 'grab', display: is3D ? 'none' : undefined }} />
 
       {/* Reset Layout — top-right, consistent with MachineGraphView header style */}
+      {!is3D && (
       <button
         className="vis-reset-layout-btn"
         onClick={() => setLayoutResetKey(prev => prev + 1)}
-        style={{ position: 'absolute', top: '14px', right: '14px', zIndex: 50 }}
+        style={{ position: 'absolute', top: '14px', right: '50px', zIndex: 50 }}
         title="Clear pinned positions and let force layout run freely"
       >
         ⊹ Reset Layout
       </button>
+      )}
 
       {/* Floating left-side legend — same placement as Tobias */}
       <div className={`vis-legend-panel${legendOpen ? ' open' : ''}`}>

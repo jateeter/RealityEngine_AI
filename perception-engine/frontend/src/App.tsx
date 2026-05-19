@@ -1,11 +1,19 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import type { EngineState, PushLogEntry, SourceConfig, MatchAlgorithm } from './types.js';
-import { getState, push, startAuto, stopAuto, resetEngine, addSource, deleteSource, updateSource, setMatchAlgorithm } from './api.js';
+import {
+  getState, push, startAuto, stopAuto, resetEngine, addSource, deleteSource, updateSource,
+  setMatchAlgorithm, bootstrapFromMachines, getMachines,
+} from './api.js';
+import type { MachineSummary } from './api.js';
+import { classifyMachine } from './components/machineDomains.js';
+import type { DomainId } from './components/machineDomains.js';
 import Header from './components/Header.js';
 import SourcesPanel from './components/SourcesPanel.js';
 import VectorDisplay from './components/VectorDisplay.js';
 import PushLog from './components/PushLog.js';
 import AddSourceModal from './components/AddSourceModal.js';
+import MqttBridgePanel from './components/MqttBridgePanel.js';
+import MqttIngestStream from './components/MqttIngestStream.js';
 
 const MAX_LOG = 20;
 
@@ -14,13 +22,32 @@ export default function App() {
   const [pushLog, setPushLog] = useState<PushLogEntry[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [hoveredSourceId, setHoveredSourceId] = useState<string | null>(null);
+  const [machines, setMachines] = useState<MachineSummary[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const autoIntervalRef = useRef<number>(1000);
 
-  // Load initial state
+  const refreshMachines = useCallback(async () => {
+    try { setMachines(await getMachines()); }
+    catch (err) { console.error('Failed to load machines:', err); }
+  }, []);
+
+  // Load initial state + machine catalog.  Machines drive the domain filter
+  // / domain-targeted import.  Failure to fetch is non-fatal — the UI just
+  // omits domain affordances until the next refresh.
   useEffect(() => {
     getState().then(setState).catch(console.error);
-  }, []);
+    void refreshMachines();
+  }, [refreshMachines]);
+
+  // machineId → domain table; built once per machine list change.  Sources
+  // live in PE state but carry only machineId — the domain decoration is
+  // computed here so the source pipeline never needs to mirror the
+  // classifier.
+  const machineDomain = useMemo<ReadonlyMap<string, DomainId>>(() => {
+    const m = new Map<string, DomainId>();
+    for (const machine of machines) m.set(machine.id, classifyMachine(machine));
+    return m;
+  }, [machines]);
 
   // WebSocket connection with reconnect
   useEffect(() => {
@@ -118,9 +145,36 @@ export default function App() {
     await updateSource(id, { active });
   }, []);
 
+  const handleToggleAllSources = useCallback(async (active: boolean) => {
+    const current = state?.sources ?? [];
+    const targets = current.filter(s => s.active !== active);
+    if (targets.length === 0) return;
+    // Optimistic update so the checkbox flips immediately; the WS state-update
+    // broadcast will reconcile with the server's authoritative state when each
+    // PATCH lands.
+    setState(prev => prev ? {
+      ...prev,
+      sources: prev.sources.map(s => s.active === active ? s : { ...s, active }),
+    } : prev);
+    await Promise.all(targets.map(s => updateSource(s.id, { active }).catch(err => {
+      console.error(`Failed to toggle source ${s.id}:`, err);
+    })));
+  }, [state?.sources]);
+
   const handleMatchAlgorithmChange = useCallback(async (algo: MatchAlgorithm) => {
     await setMatchAlgorithm(algo);
     // State will update via WebSocket state-update broadcast
+  }, []);
+
+  const handleBootstrap = useCallback(async (opts?: { machineIds?: string[] }) => {
+    const result = await bootstrapFromMachines(opts);
+    // Server broadcasts state-update after saving; refresh explicitly in
+    // case the WS message arrives after the button's status pill renders.
+    if (result.created > 0) {
+      const updated = await getState();
+      setState(updated);
+    }
+    return result;
   }, []);
 
   return (
@@ -140,19 +194,31 @@ export default function App() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <SourcesPanel
           sources={state?.sources ?? []}
+          machines={machines}
+          machineDomain={machineDomain}
           onAdd={() => setShowAddModal(true)}
+          onBootstrap={handleBootstrap}
+          onRefreshMachines={refreshMachines}
           onDelete={handleDeleteSource}
           onToggle={handleToggleSource}
+          onToggleAll={handleToggleAllSources}
           onHover={setHoveredSourceId}
           hoveredSourceId={hoveredSourceId}
         />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '12px', gap: '12px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto', padding: '12px', gap: '12px' }}>
           <VectorDisplay
             vector={state?.assembledVector ?? new Array(state?.vectorSize ?? 256).fill(0)}
             sources={state?.sources ?? []}
             hoveredSourceId={hoveredSourceId}
           />
           <PushLog entries={pushLog} />
+          {/* Universe Monitor — MQTT-side of the PE.  Self-contained
+              panels that hit /api/mqtt/* on this PE directly.  Moved
+              from the RE visualizer because the bridge is fundamentally
+              a PE concern (it owns the broker subscription and the
+              sensor source TTLs). */}
+          <MqttBridgePanel />
+          <MqttIngestStream />
         </div>
       </div>
       {showAddModal && (

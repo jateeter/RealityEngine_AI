@@ -12,6 +12,9 @@ import { PreceptionOfReality } from '../engine/PreceptionOfReality.js';
 import { RealitySampler, SamplingStrategy } from '../engine/RealitySampler.js';
 import { PerceptualSpaceSimulator } from '../engine/PerceptualSpaceSimulator.js';
 import { MachineLoader } from '../services/MachineLoader.js';
+import { resolveForOutput } from '../services/GovernanceResolver.js';
+import { encodePackedBase64, storageFootprint, isAllowedBits } from '../services/CellPacking.js';
+import type { BitsPerElement } from '../services/CellPacking.js';
 import config from '../config/config.js';
 
 /**
@@ -31,7 +34,7 @@ export class RealityEngineAPI {
     this.router = express.Router();
     this.engine = engine;
     this.perception = new PreceptionOfReality(config.getVectorDimension());
-    this.perceptualSimulator = new PerceptualSpaceSimulator(256);
+    this.perceptualSimulator = new PerceptualSpaceSimulator();
 
     // Sync the simulator's evolved perceptual space back into the PreceptionEngine
     // after every simulation step (manual or auto-play).  This ensures the engine's
@@ -53,21 +56,15 @@ export class RealityEngineAPI {
     // Add to RealityEngine (always)
     this.engine.addMachine(machine);
 
-    // Add to PerceptualSpaceSimulator (only if it has perceptual mapping)
-    if (machine.perceptualMapping) {
-      this.perceptualSimulator.addMachine(machine);
-      console.log(`  ✓ Machine "${machine.name}" registered with perceptual simulator`);
-      console.log(`    Input region: [${machine.perceptualMapping.input.offset}:${machine.perceptualMapping.input.offset + machine.perceptualMapping.input.length}]`);
-      console.log(`    Output region: [${machine.perceptualMapping.output.offset}:${machine.perceptualMapping.output.offset + machine.perceptualMapping.output.length}]`);
-    } else {
-      console.log(`  ⚠ Machine "${machine.name}" has no perceptual mapping - not added to perceptual simulator`);
-    }
+    // Auto-allocates region if no explicit perceptualMapping
+    this.perceptualSimulator.addMachine(machine);
+    const m = machine.perceptualMapping!;
+    console.log(`  ✓ Machine "${machine.name}" registered with perceptual simulator`);
+    console.log(`    Input region:  [${m.input.offset}:${m.input.offset + m.input.length})`);
+    console.log(`    Output region: [${m.output.offset}:${m.output.offset + m.output.length})`);
   }
 
   /**
-   * Helper: Convert machine-specific input vectors to universal perceptual space vectors
-   * Embeds machine inputs at their designated offset in 256-byte universal vectors
-   */
   /**
    * Initialize default machines from JSON files on startup
    */
@@ -85,20 +82,9 @@ export class RealityEngineAPI {
         return;
       }
 
-      // List of machines to load on startup
-      const machinesToLoad = [
-        'RSFlipFlop.json',
-        'RS2.json',
-        'MultiStep.json',
-        'DataCenterMonitoring.json',
-        'KleeneStar.json',
-        'AIPowerEfficiency.json',
-        'AICoolingRegulator.json',
-        'AICapacityThrottler.json',
-        'AISecurityMonitor.json',
-        'AIModelWellness.json',
-        'AIHardwareResilience.json',
-      ];
+      const machinesToLoad = readdirSync(machinesDir)
+        .filter(filename => filename.toLowerCase().endsWith('.json'))
+        .sort();
 
       let loadedCount = 0;
       let failedCount = 0;
@@ -219,8 +205,158 @@ export class RealityEngineAPI {
     this.router.get('/demo/data-center', this.loadDataCenterExample.bind(this));
     this.router.get('/demo/kleene-star', this.loadKleeneStarExample.bind(this));
 
+    // Perceptual space introspection
+    this.router.get('/perceptual-space/dimension', this.getPerceptualSpaceDimension.bind(this));
+    this.router.get('/perceptual-space/regions', this.getPerceptualSpaceRegions.bind(this));
+
+    // Cross-runtime vector-space descriptor — identical shape in AI and C++.
+    this.router.get('/runtime/vector-space', this.getRuntimeVectorSpace.bind(this));
+
+    // CES coverage telemetry in Prometheus text format — scraped by the
+    // ops Prometheus / Grafana stack to surface unfired sequences.
+    this.router.get('/metrics', this.getMetrics.bind(this));
+
+    // Governance / paging contract — single source of truth for on-call
+    // routing.  Lookup endpoint exposes the resolved decision for a given
+    // (machineId, sequenceId, values).  See GovernanceResolver.ts.
+    this.router.get('/governance/route', this.getGovernanceRoute.bind(this));
+
     // Perception Engine push endpoint — accepts a pre-assembled reality vector
     this.router.post('/perceive', this.perceive.bind(this));
+
+    // Storage-footprint introspection for Option A1 (narrow-cell cells).
+    // Reports total cells, total float64 bytes, and the equivalent packed
+    // size if every machine carried its declared bitsPerElement.
+    this.router.get('/runtime/storage-footprint', this.getStorageFootprint.bind(this));
+  }
+
+  /**
+   * GET /api/runtime/vector-space
+   * Cross-runtime descriptor reporting the current PE shape. Identical in
+   * AI and C++ so a client can probe either engine the same way.
+   */
+  private getRuntimeVectorSpace(_req: Request, res: Response): void {
+    res.json({
+      dimension: this.perceptualSimulator.getDimension(),
+      requiredDimension: this.perceptualSimulator.getRequiredDimension(),
+      encoding: 'dense-float64-clamped-0-1',
+      mappingVersion: this.perceptualSimulator.getMappingVersion(),
+    });
+  }
+
+  /**
+   * GET /api/metrics
+   * Prometheus text-format exposition of CES coverage telemetry plus a
+   * few runtime gauges (dimension, required dimension, mapping version,
+   * uptime).  The metric names and labels match the C++ runtime so a
+   * single Prometheus scrape config covers both targets.
+   */
+  private getMetrics(_req: Request, res: Response): void {
+    const coverage = this.perceptualSimulator.getCesCoverage();
+    const machines = this.engine.getAllMachines();
+    // Stamp every CES coverage line with runtime="ai" so a single Grafana
+    // dashboard can filter by source runtime without re-deriving from
+    // scrape-time relabels.  CPP + LSP emit the same shape with their own
+    // runtime tag.
+    const base = coverage.toPrometheusText(machines, { baseLabels: { runtime: 'ai' } });
+
+    const extras = [
+      '# HELP re_runtime_dimension Current dimension of the shared perceptual space.',
+      '# TYPE re_runtime_dimension gauge',
+      `re_runtime_dimension{runtime="ai"} ${this.perceptualSimulator.getDimension()}`,
+      '# HELP re_runtime_required_dimension Max(offset+length) across all registered machine mappings.',
+      '# TYPE re_runtime_required_dimension gauge',
+      `re_runtime_required_dimension{runtime="ai"} ${this.perceptualSimulator.getRequiredDimension()}`,
+      '# HELP re_runtime_mapping_version Monotonic version bumped on every addMachine/removeMachine.',
+      '# TYPE re_runtime_mapping_version gauge',
+      `re_runtime_mapping_version{runtime="ai"} ${this.perceptualSimulator.getMappingVersion()}`,
+      '',
+    ].join('\n');
+
+    res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+    res.send(base + extras);
+  }
+
+  /**
+   * GET /api/governance/route?machineId=...&sequenceId=...&values=4,3
+   *
+   * Resolves the paging contract for the (machineId, sequenceId, values) tuple
+   * — owner team, SLA, runbook URL, escalation policy, contact roster.  The
+   * decision is derived solely from the machine's CES JSON metadata, so
+   * runbook URLs, on-call teams, and SLAs can be evolved in one place.
+   */
+  private getGovernanceRoute(req: Request, res: Response): void {
+    const machineId  = (req.query['machineId']  as string | undefined) ?? '';
+    const sequenceId = (req.query['sequenceId'] as string | undefined) ?? '';
+    const valuesQ    =  req.query['values'] as string | undefined;
+    if (!machineId || !sequenceId || !valuesQ) {
+      res.status(400).json({ success: false, error: 'machineId, sequenceId, and values query parameters are required' });
+      return;
+    }
+    const values = valuesQ.split(',').map(s => Number(s.trim())).filter(n => !Number.isNaN(n));
+    const machine = this.engine.getMachine(machineId);
+    if (!machine) {
+      res.status(404).json({ success: false, error: `Machine not found: ${machineId}` });
+      return;
+    }
+    const decision = resolveForOutput(machine, sequenceId, values);
+    if (!decision) {
+      res.status(404).json({ success: false, error: `No triggerConfig rule matches (sequenceId=${sequenceId}, values=${JSON.stringify(values)})` });
+      return;
+    }
+    res.json({ success: true, decision });
+  }
+
+  /**
+   * GET /api/runtime/storage-footprint
+   *
+   * Reports the current per-machine storage footprint under Option A1
+   * (narrow-cell cells).  Each registered machine declares
+   * `perceptualMapping.bitsPerElement`; this endpoint sums the cells
+   * the machine owns (input + output regions) and reports both the
+   * Float64 baseline and the equivalent packed bytes.
+   *
+   * Used by the visualizer + ops dashboards to surface the wire-format
+   * shrinkage Option A1 enables, and to flag any machine whose
+   * declared cell width disagrees with what the API would emit.
+   */
+  private getStorageFootprint(_req: Request, res: Response): void {
+    const machines = this.engine.getAllMachines();
+    let totalCells = 0;
+    let totalFloat64 = 0;
+    let totalPacked = 0;
+    const histogram: Record<number, number> = { 1: 0, 2: 0, 4: 0, 8: 0 };
+    const perMachine = [] as Array<{
+      machineId: string; machineName: string; bitsPerElement: number;
+      inputCells: number; outputCells: number;
+      float64Bytes: number; packedBytes: number; shrinkFactor: number;
+    }>;
+    for (const m of machines) {
+      const pm: any = m.perceptualMapping;
+      if (!pm) continue;
+      const bpe = (typeof pm.bitsPerElement === 'number' && isAllowedBits(pm.bitsPerElement)) ? pm.bitsPerElement : 8;
+      histogram[bpe] = (histogram[bpe] ?? 0) + 1;
+      const inputCells  = pm.input?.length  ?? 0;
+      const outputCells = pm.output?.length ?? 0;
+      const cells = inputCells + outputCells;
+      const fp = storageFootprint(cells, bpe as BitsPerElement);
+      totalCells   += cells;
+      totalFloat64 += fp.float64Bytes;
+      totalPacked  += fp.packedBytes;
+      perMachine.push({
+        machineId: m.id, machineName: m.name, bitsPerElement: bpe,
+        inputCells, outputCells,
+        float64Bytes: fp.float64Bytes, packedBytes: fp.packedBytes,
+        shrinkFactor: fp.shrinkFactor,
+      });
+    }
+    res.json({
+      machinesRegistered: machines.length,
+      totalCells, totalFloat64Bytes: totalFloat64, totalPackedBytes: totalPacked,
+      cumulativeShrinkFactor: totalPacked === 0 ? 0 : totalFloat64 / totalPacked,
+      widthHistogram: histogram,
+      perMachine,
+    });
   }
 
   // Health check
@@ -815,7 +951,7 @@ export class RealityEngineAPI {
    *
    * Body:
    * {
-   *   "universalInputSpace": number[] // 256-byte universal input vector
+   *   "universalInputSpace": number[] // N-dimensional universal input vector
    * }
    */
   private processUniversalInput(req: Request, res: Response): void {
@@ -830,14 +966,6 @@ export class RealityEngineAPI {
 
       if (!Array.isArray(universalInputSpace)) {
         res.status(400).json({ error: 'universalInputSpace must be an array' });
-        return;
-      }
-
-      if (universalInputSpace.length !== 256) {
-        res.status(400).json({
-          error: 'universalInputSpace must be 256 bytes',
-          provided: universalInputSpace.length
-        });
         return;
       }
 
@@ -882,7 +1010,7 @@ export class RealityEngineAPI {
    *
    * Body:
    * {
-   *   "universalInputSpace": number[] // 256-byte universal input vector
+   *   "universalInputSpace": number[] // N-dimensional universal input vector
    * }
    */
   private processUniversalInputForAllMachines(req: Request, res: Response): void {
@@ -891,14 +1019,6 @@ export class RealityEngineAPI {
 
       if (!Array.isArray(universalInputSpace)) {
         res.status(400).json({ error: 'universalInputSpace must be an array' });
-        return;
-      }
-
-      if (universalInputSpace.length !== 256) {
-        res.status(400).json({
-          error: 'universalInputSpace must be 256 bytes',
-          provided: universalInputSpace.length
-        });
         return;
       }
 
@@ -1115,7 +1235,7 @@ export class RealityEngineAPI {
    *
    * Body:
    * {
-   *   "universalInputSpace": number[] // 256-byte universal input vector
+   *   "universalInputSpace": number[] // N-dimensional universal input vector
    * }
    */
   private getPreceptionDiagnostic(req: Request, res: Response): void {
@@ -1124,14 +1244,6 @@ export class RealityEngineAPI {
 
       if (!Array.isArray(universalInputSpace)) {
         res.status(400).json({ error: 'universalInputSpace must be an array' });
-        return;
-      }
-
-      if (universalInputSpace.length !== 256) {
-        res.status(400).json({
-          error: 'universalInputSpace must be 256 bytes',
-          provided: universalInputSpace.length
-        });
         return;
       }
 
@@ -1511,6 +1623,41 @@ export class RealityEngineAPI {
     }
   }
 
+  private getPerceptualSpaceDimension(_req: Request, res: Response): void {
+    res.json({
+      dimension: this.perceptualSimulator.getDimension(),
+      allocatorHighWaterMark: this.perceptualSimulator.getAllocator().getHighWaterMark(),
+      timestamp: Date.now(),
+    });
+  }
+
+  private getPerceptualSpaceRegions(_req: Request, res: Response): void {
+    const regions: Array<{
+      machineId: string;
+      machineName: string;
+      input:  { offset: number; length: number };
+      output: { offset: number; length: number };
+    }> = [];
+
+    for (const machine of this.engine.getAllMachines()) {
+      const m = machine.perceptualMapping;
+      if (m) {
+        regions.push({
+          machineId:   machine.id,
+          machineName: machine.name,
+          input:  m.input,
+          output: m.output,
+        });
+      }
+    }
+
+    res.json({
+      dimension: this.perceptualSimulator.getDimension(),
+      regions,
+      timestamp: Date.now(),
+    });
+  }
+
   /**
    * Append a chunk of vectors to the staging buffer.
    * Send { reset: true, inputRegion, stepDelayMs, maxSteps? } on the first chunk
@@ -1524,7 +1671,7 @@ export class RealityEngineAPI {
       if (reset) {
         this.sequenceBuffer = [];
         this.sequenceBufferConfig = {
-          inputRegion: inputRegion || { offset: 0, length: 256 },
+          inputRegion: inputRegion || { offset: 0, length: this.perceptualSimulator.getDimension() },
           stepDelayMs: stepDelayMs || 1000,
           maxSteps
         };
@@ -1753,32 +1900,60 @@ export class RealityEngineAPI {
   }
 
   /**
-   * Accept a pre-assembled 256-byte reality vector from the external Perception Engine.
+   * Accept a pre-assembled N-dimensional reality vector from the external Perception Engine.
    * POST /api/perceive
    *
-   * Body: { "vector": number[] }  — must be exactly 256 elements in [0, 1]
+   * Body (exactly one of):
+   *   { "vector":        number[] }                          — dense, may be shorter or longer than PE dim
+   *   { "sparseVector":  { index, value }[] }                — per-index writes; everything else stays 0
+   *   { "domainVectors": { offset, values: number[] }[] }    — per-region writes; gaps stay 0
    *
-   * Installs the vector directly into the perceptual space simulator and runs
-   * one processing cycle through all registered machines. The result is identical
-   * in shape to /api/perceptual-simulation/step.
+   * Runs one processing cycle through all registered machines. Result shape
+   * matches /api/perceptual-simulation/step.
    */
   private perceive(req: Request, res: Response): void {
     try {
-      const { vector, matchAlgorithm } = req.body;
+      const { vector, sparseVector, domainVectors, matchAlgorithm } = req.body;
 
-      if (!Array.isArray(vector)) {
-        res.status(400).json({ success: false, error: 'vector must be an array' });
-        return;
+      let assembled: number[] | null = null;
+
+      if (Array.isArray(vector)) {
+        assembled = vector;
+      } else if (Array.isArray(sparseVector)) {
+        let maxIdx = -1;
+        for (const e of sparseVector) {
+          if (typeof e?.index !== 'number' || typeof e?.value !== 'number') {
+            res.status(400).json({ success: false, error: 'sparseVector entries must be { index: number, value: number }' });
+            return;
+          }
+          if (e.index > maxIdx) maxIdx = e.index;
+        }
+        const length = Math.max(maxIdx + 1, this.perceptualSimulator.getDimension());
+        assembled = new Array<number>(length).fill(0);
+        for (const e of sparseVector) assembled[e.index] = e.value;
+      } else if (Array.isArray(domainVectors)) {
+        let maxEnd = 0;
+        for (const r of domainVectors) {
+          if (typeof r?.offset !== 'number' || !Array.isArray(r?.values)) {
+            res.status(400).json({ success: false, error: 'domainVectors entries must be { offset: number, values: number[] }' });
+            return;
+          }
+          maxEnd = Math.max(maxEnd, r.offset + r.values.length);
+        }
+        const length = Math.max(maxEnd, this.perceptualSimulator.getDimension());
+        assembled = new Array<number>(length).fill(0);
+        for (const r of domainVectors) {
+          for (let i = 0; i < r.values.length; i++) assembled[r.offset + i] = r.values[i];
+        }
       }
 
-      if (vector.length !== 256) {
-        res.status(400).json({
-          success: false,
-          error: 'vector must be exactly 256 elements',
-          provided: vector.length
-        });
+      if (!assembled) {
+        res.status(400).json({ success: false, error: 'Provide exactly one of: vector, sparseVector, domainVectors' });
         return;
       }
+      // Continue with the assembled dense vector. The simulator's
+      // setPerceptualVector tolerates over/under-sized input.
+      const vectorForStep = assembled;
 
       // Resolve optional match algorithm override — only 'gte' and 'equals' accepted
       let matchAlgorithmOverride: ComparatorType | undefined;
@@ -1796,7 +1971,7 @@ export class RealityEngineAPI {
         }
       }
 
-      const step = this.perceptualSimulator.processImmediate(vector, matchAlgorithmOverride);
+      const step = this.perceptualSimulator.processImmediate(vectorForStep, matchAlgorithmOverride);
 
       // Serialize machineResults Map → plain object for JSON transport
       const machineResults: Record<string, any> = {};
@@ -1804,11 +1979,46 @@ export class RealityEngineAPI {
         machineResults[key] = value;
       }
 
+      // Compact mode: pack every mergeBatch entry's `values` array as
+      // base64 at its machine's declared bitsPerElement.  Falls back to
+      // 8-bit when the machine hasn't been migrated yet.  Listeners
+      // that pass ?compact=true get the wire-format shrinkage Option
+      // A1 enables; the original `values` field is preserved for
+      // backward compatibility next to a new `valuesPacked` block.
+      const compact = req.query['compact'] === 'true' || req.query['compact'] === '1';
+      const mergeBatch = step.mergeBatch.map(op => {
+        if (!compact) return op;
+        const m = this.engine.getMachine(op.machineId);
+        const pm: any = m?.perceptualMapping;
+        const rawBpe = typeof pm?.bitsPerElement === 'number' ? pm.bitsPerElement : 8;
+        const bpe: BitsPerElement = isAllowedBits(rawBpe) ? rawBpe : 8;
+        try {
+          return {
+            ...op,
+            valuesPacked: {
+              base64: encodePackedBase64(op.values, bpe),
+              bitsPerElement: bpe,
+              length: op.values.length,
+            },
+          };
+        } catch (e: any) {
+          // Range error → fall back to keeping the unpacked values.
+          // Surfaces as a `valuesPacked.error` so consumers know to
+          // diagnose the machine's declared width.
+          return { ...op, valuesPacked: { error: e.message, bitsPerElement: bpe, length: op.values.length } };
+        }
+      });
+
+      // perceptualSpace is a debug projection of the post-merge state.
+      // mergeBatch is the authoritative synchronization result — clients
+      // should apply mergeBatch[] writes to stay in sync with the engine.
       res.json({
         success: true,
         step: {
           ...step,
-          machineResults
+          mergeBatch,
+          machineResults,
+          perceptualSpaceIsDebugProjection: true,
         },
         timestamp: Date.now()
       });

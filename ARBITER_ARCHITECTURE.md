@@ -1,13 +1,10 @@
 # Reality Engine Output Arbiter Architecture
 
-**Date**: January 30, 2026
-**Status**: ✅ **COMPLETE AND DEPLOYED**
-
----
+> **Implementation note:** The arbiter described here was originally designed in TypeScript (`src/models/OutputArbiter.ts`). The production Docker container runs the Scala implementation in `scala/src/main/scala/com/realityengine/`. The arbiter semantics (AND/OR/PASSTHROUGH) are equivalent in both, but the file paths and class names differ.
 
 ## Overview
 
-Implemented a new 3-phase Reality Engine workflow with an Output Arbiter that manages the output stream generation flow. The arbiter uses combinatorial logic (AND/OR/PASSTHROUGH) to resolve the final machine output from sequence outputs.
+The Reality Engine uses a 3-phase processing workflow with an Output Arbiter that manages output assertion. The arbiter uses combinatorial logic (AND/OR/PASSTHROUGH) to resolve the final machine output from sequence outputs.
 
 ---
 
@@ -450,7 +447,7 @@ if (result.machineOutput) {
 
 ```bash
 # Process input through a machine
-curl -X POST http://localhost:3000/api/machines/nand-gate-example/process \
+curl -k -X POST https://localhost:3000/api/machines/nand-gate-example/process \
   -H "Content-Type: application/json" \
   -d '{"vector": [1, 0]}'
 ```

@@ -10,7 +10,7 @@
     "dev": "ts-node src/server.ts"
   },
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=25.4.0",
     "npm": ">=10.0.0"
   },
   "dependencies": {
@@ -21,6 +21,9 @@
     "uuid": "^9.0.1",
     "ws": "^8.14.2",
     "zod": "^3.25.76"
+  },
+  "optionalDependencies": {
+    "mqtt": "^5.10.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

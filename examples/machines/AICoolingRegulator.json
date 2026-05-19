@@ -8,25 +8,237 @@
     "matchAlgorithm": "gte",
     "perceptualMapping": {
       "input": {
-        "offset": 124,
+        "offset": 260,
         "length": 4
       },
       "output": {
-        "offset": 156,
+        "offset": 286,
         "length": 6
-      }
+      },
+      "bitsPerElement": 8
     },
     "metadata": {
       "category": "ai-services",
-      "domain": "AI Infrastructure \u2014 Thermal / Cooling Control",
+      "domain": "AI Infrastructure — Thermal / Cooling Control",
       "tags": [
+        "ai-cooling-regulator",
+        "ai-infrastructure",
+        "ai-infrastructure-thermal-cooling-control",
+        "ai-services",
+        "ai-workload",
+        "aicooling-regulator",
+        "ces-sequences",
+        "ces-sequences-2",
+        "cooling-control",
         "data-center",
-        "cooling",
-        "thermal",
         "hvac",
-        "ai-workload"
+        "input-sequences",
+        "input-sequences-3",
+        "startup-loadable",
+        "thermal",
+        "thermal-comfort"
       ],
-      "rationale": "Cooling is a physical data-center concern even when AI workloads drive the heat load."
+      "rationale": "Cooling is a physical data-center concern even when AI workloads drive the heat load.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "ai-infrastructure",
+          "ai-services",
+          "cooling-control",
+          "thermal"
+        ],
+        "family": "ai-cooling-regulator",
+        "machineCode": "aicooling-regulator",
+        "capabilityTags": [],
+        "workflowTags": [
+          "ai-cooling-regulator",
+          "ai-infrastructure-thermal-cooling-control",
+          "ai-workload",
+          "aicooling-regulator",
+          "data-center",
+          "hvac",
+          "thermal-comfort"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-cooling-regulator",
+          "ai-infrastructure",
+          "ai-infrastructure-thermal-cooling-control",
+          "ai-services",
+          "ai-workload",
+          "aicooling-regulator",
+          "ces-sequences",
+          "ces-sequences-2",
+          "cooling-control",
+          "data-center",
+          "hvac",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable",
+          "thermal",
+          "thermal-comfort"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "ml-platform-on-call",
+        "runbook": "https://runbooks.example.org/ai-services/aicoolingregulator",
+        "escalationPolicy": "pagerduty:ml-platform",
+        "contact": {
+          "primary": "ml-platform-on-call-primary@example.org",
+          "secondary": "ml-platform-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 300
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"ai-services\".  Review and tune the routing as the team owning AICoolingRegulator matures."
+      },
+      "triggerConfig": {
+        "processId": "AICOOLINGREGULATOR",
+        "processName": "AI Cooling Regulator",
+        "rules": [
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "Cooling OPTIMAL — coolant temp nominal, chiller efficient, flow unrestricted"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Cooling WARM — temperature rising, monitor for continued escalation"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Cooling HOT — thermal margins shrinking, boost cooling flow now"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Increase coolant pump speed and open supplemental cooling valves"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Cooling CRITICAL — thermal emergency, hardware damage risk imminent"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Activate all backup cooling units and increase flow to maximum"
+          },
+          {
+            "sequenceId": "aicr-thermal-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Action: Shed compute load — suspend non-critical inference and training"
+          },
+          {
+            "sequenceId": "aicr-flow-restriction",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Flow restriction detected — chiller efficiency dropping and coolant flow impeded"
+          },
+          {
+            "sequenceId": "aicr-flow-restriction",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Inspect and clear coolant flow path; increase pump pressure"
+          }
+        ]
+      }
     },
     "sequences": [
       {
@@ -69,7 +281,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Cooling OPTIMAL \u2014 coolant temp nominal, chiller efficient, flow unrestricted",
+                  "description": "Cooling OPTIMAL — coolant temp nominal, chiller efficient, flow unrestricted",
                   "severity": "INFO"
                 }
               }
@@ -111,7 +323,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Cooling WARM \u2014 temperature rising, monitor for continued escalation",
+                  "description": "Cooling WARM — temperature rising, monitor for continued escalation",
                   "severity": "WARNING"
                 }
               }
@@ -153,7 +365,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Cooling HOT \u2014 thermal margins shrinking, boost cooling flow now",
+                  "description": "Cooling HOT — thermal margins shrinking, boost cooling flow now",
                   "severity": "CRITICAL"
                 }
               },
@@ -208,7 +420,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Cooling CRITICAL \u2014 thermal emergency, hardware damage risk imminent",
+                  "description": "Cooling CRITICAL — thermal emergency, hardware damage risk imminent",
                   "severity": "EMERGENCY"
                 }
               },
@@ -238,7 +450,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "Action: Shed compute load \u2014 suspend non-critical inference and training",
+                  "description": "Action: Shed compute load — suspend non-critical inference and training",
                   "severity": "ACTION"
                 }
               }
@@ -310,7 +522,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Flow restriction detected \u2014 chiller efficiency dropping and coolant flow impeded",
+                  "description": "Flow restriction detected — chiller efficiency dropping and coolant flow impeded",
                   "severity": "WARNING"
                 }
               },

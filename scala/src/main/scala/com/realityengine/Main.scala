@@ -58,6 +58,9 @@ object Main extends App {
   simulator.setOnStepComplete { (_, spaceVector) =>
     engine.preceptionEngine.getPerceptualSpace.setPerceptualVector(spaceVector)
   }
+  // Share the engine's coverage registry so /api/perceive transitions
+  // route through to /api/metrics without a second instance drifting.
+  simulator.setCoverageRegistry(engine.coverage)
 
   val startup = for {
     _ <- vectorStore.initialize()

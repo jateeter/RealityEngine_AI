@@ -18,6 +18,12 @@ export class CriticalEventSequence {
   private initialVectorIds: Set<string>;
   private outputVectorIds: Set<string>;
   public metadata: Record<string, any>;
+  // Lifecycle metadata — schemaVersion lets authoring teams pin a body
+  // version to the sequence definition; deprecatedAt + replacedBy let the
+  // engine emit warnings and stamp mergeBatch entries when stale CESs fire.
+  public schemaVersion?: string;
+  public deprecatedAt?: string;
+  public replacedBy?:   string;
 
   constructor(name: string, id?: string) {
     this.id = id || uuidv4();
@@ -26,6 +32,23 @@ export class CriticalEventSequence {
     this.initialVectorIds = new Set();
     this.outputVectorIds = new Set();
     this.metadata = {};
+  }
+
+  /** True iff this sequence carries a deprecatedAt date. */
+  public isDeprecated(): boolean {
+    return Boolean(this.deprecatedAt);
+  }
+
+  /**
+   * Days elapsed since the sequence was deprecated, useful for ranking
+   * "longest-stale CESs" in dashboards.  Returns 0 if the sequence is not
+   * deprecated or the date doesn't parse.
+   */
+  public daysSinceDeprecation(now: Date = new Date()): number {
+    if (!this.deprecatedAt) return 0;
+    const t = Date.parse(this.deprecatedAt);
+    if (Number.isNaN(t)) return 0;
+    return Math.floor((now.getTime() - t) / 86_400_000);
   }
 
   /**
@@ -67,10 +90,22 @@ export class CriticalEventSequence {
   }
 
   /**
-   * Get all active vectors in this sequence
+   * Get all active vectors in this sequence, sorted by id ASC.
+   *
+   * Sorting matters for cross-runtime parity: when multiple active vectors
+   * match in the same cycle, the order in which their outputs appear in
+   * `assertedOutputs[]` determines each output's `outputIndex` (and hence
+   * its position in mergeBatch).  The C++ runtime stores vectors in a
+   * `std::map<std::string, RealityVector>` whose iteration is alphabetical
+   * by vector id — so we mirror that here.  Without this, AI's JSON
+   * insertion order would differ from C++ alphabetical order and the same
+   * (sequence, input) tuple would produce different mergeBatches across
+   * runtimes (caught by tests/cesgen_contracts_parity.cpp).
    */
   public getActiveVectors(): RealityVector[] {
-    return Array.from(this.vectors.values()).filter(v => v.isActive());
+    return Array.from(this.vectors.values())
+      .filter(v => v.isActive())
+      .sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   }
 
   /**
@@ -132,7 +167,13 @@ export class CriticalEventSequence {
     // loop node) is seen as "already active" by one matched vector and then
     // deactivated by its own no-match later in the same loop iteration —
     // causing the activation to be silently dropped.
-    const pendingActivations = new Set<string>();
+    // Carry the activator's provenance chain alongside each pending id so
+    // the successor inherits the evidence trail.  If two activators target
+    // the same successor in one cycle, the first one wins — chains diverge
+    // on the activation event, and downstream determinism matters more
+    // than capturing every possible parent (we still see them all in the
+    // matchedVectors list for that cycle).
+    const pendingActivations = new Map<string, string[]>();
 
     // Match every currently active vector against the input.
     for (const vector of this.getActiveVectors()) {
@@ -151,9 +192,14 @@ export class CriticalEventSequence {
         }
 
         // Queue successors — applied after the full loop so the activation is
-        // never lost due to same-cycle deactivation of those successors.
+        // never lost due to same-cycle deactivation of those successors.  The
+        // activator's provenanceChain is forwarded so the successor's eventual
+        // output carries the full chain from the original activator through
+        // every intermediate.
         for (const id of transitionResult.nextVectorIds) {
-          pendingActivations.add(id);
+          if (!pendingActivations.has(id)) {
+            pendingActivations.set(id, transitionResult.provenanceChain);
+          }
         }
 
         // Collect asserted outputs for this cycle.
@@ -163,10 +209,10 @@ export class CriticalEventSequence {
 
     // Apply all queued successor activations now that the processing loop is
     // complete and all deactivations have settled.
-    for (const id of pendingActivations) {
+    for (const [id, chain] of pendingActivations) {
       const nextVector = this.vectors.get(id);
       if (nextVector && !nextVector.isActive()) {
-        nextVector.setActive();
+        nextVector.setActive(chain);
         activatedVectors.push(id);
       }
     }
@@ -227,14 +273,18 @@ export class CriticalEventSequence {
    * Serialize to JSON
    */
   public toJSON(): any {
-    return {
+    const out: Record<string, unknown> = {
       id: this.id,
       name: this.name,
       vectors: Array.from(this.vectors.values()).map(v => v.toJSON()),
       initialVectorIds: Array.from(this.initialVectorIds),
       outputVectorIds: Array.from(this.outputVectorIds),
-      metadata: this.metadata
+      metadata: this.metadata,
     };
+    if (this.schemaVersion) out['schemaVersion'] = this.schemaVersion;
+    if (this.deprecatedAt) out['deprecatedAt'] = this.deprecatedAt;
+    if (this.replacedBy)   out['replacedBy']   = this.replacedBy;
+    return out;
   }
 
   /**

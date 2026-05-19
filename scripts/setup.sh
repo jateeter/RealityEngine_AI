@@ -39,9 +39,9 @@ if command -v node &> /dev/null; then
     NODE_MAJOR=$(echo $NODE_VERSION | cut -d'.' -f1 | sed 's/v//')
     print_success "Node.js installed: $NODE_VERSION"
 
-    if [ "$NODE_MAJOR" -lt 22 ]; then
-        print_error "Node.js version 22+ required (found: $NODE_VERSION)"
-        echo "  Please install Node.js 22+ from https://nodejs.org/"
+    if [ "$NODE_MAJOR" -lt 25 ]; then
+        print_error "Node.js version 25.4+ required (found: $NODE_VERSION)"
+        echo "  Please install Node.js 25.4+ from https://nodejs.org/"
         exit 1
     fi
 else

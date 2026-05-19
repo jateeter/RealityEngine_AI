@@ -17,6 +17,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import axios from 'axios';
+import type { AxiosInstance } from 'axios';
 import type { Express } from 'express';
 import type { PerceptionEngine } from './PerceptionEngine.js';
 import type { SourceStore } from './SourceStore.js';
@@ -41,6 +42,11 @@ export interface McpDeps {
   /** engine.reset() + clear lastPush + broadcast state-update. */
   resetAndBroadcast: () => void;
   realityEngineUrl: string;
+  /** Optional axios instance for outbound RE calls.  Pre-configured with
+   *  a CA-aware https.Agent in TLS deployments — passing this in lets
+   *  the PE→RE proxy tools validate the self-signed dev cert instead of
+   *  erroring on every step.  Defaults to a fresh axios. */
+  httpClient?: AxiosInstance;
 }
 
 // ── MCP server factory (one per session) ─────────────────────────────────
@@ -49,8 +55,9 @@ function buildMcpServer(deps: McpDeps): McpServer {
   const {
     engine, store, push, startAuto, stopAuto,
     getAutoState, getLastPush, saveAndBroadcast, resetAndBroadcast,
-    realityEngineUrl,
+    realityEngineUrl, httpClient,
   } = deps;
+  const http = httpClient ?? axios;
 
   const vectorSize = engine.vectorSize;
 
@@ -367,8 +374,8 @@ function buildMcpServer(deps: McpDeps): McpServer {
     {},
     async () => reCall(async () => {
       const [health, stats] = await Promise.all([
-        axios.get(re('/health')).then(r => r.data),
-        axios.get(re('/engine/stats')).then(r => r.data).catch(() => null),
+        http.get(re('/health')).then(r => r.data),
+        http.get(re('/engine/stats')).then(r => r.data).catch(() => null),
       ]);
       return { health, stats };
     }),
@@ -381,8 +388,8 @@ function buildMcpServer(deps: McpDeps): McpServer {
     {},
     async () => reCall(async () => {
       const [loaded, jsonFiles] = await Promise.all([
-        axios.get(re('/machines')).then(r => r.data),
-        axios.get(re('/machines/json/list')).then(r => r.data),
+        http.get(re('/machines')).then(r => r.data),
+        http.get(re('/machines/json/list')).then(r => r.data),
       ]);
       return { loaded, jsonFiles };
     }),
@@ -396,7 +403,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
         .describe('Filename from machines_list.jsonFiles (e.g. "RSFlipFlop.json")'),
     },
     async ({ filename }) => reCall(async () => {
-      const { data } = await axios.get(re(`/machines/json/${encodeURIComponent(filename)}`));
+      const { data } = await http.get(re(`/machines/json/${encodeURIComponent(filename)}`));
       return data;
     }),
   );
@@ -409,7 +416,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
     'machines, perceptual space vector, current step, and running status.',
     {},
     async () => reCall(async () => {
-      const { data } = await axios.get(re('/perceptual-simulation/state'));
+      const { data } = await http.get(re('/perceptual-simulation/state'));
       return data;
     }),
   );
@@ -420,7 +427,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
     'firing results and the updated perceptual space vector.',
     {},
     async () => reCall(async () => {
-      const { data } = await axios.post(re('/perceptual-simulation/step'));
+      const { data } = await http.post(re('/perceptual-simulation/step'));
       return data;
     }),
   );
@@ -433,7 +440,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
         .describe('Delay between automatic steps in milliseconds'),
     },
     async ({ step_delay_ms }) => reCall(async () => {
-      const { data } = await axios.post(re('/perceptual-simulation/start'), { stepDelayMs: step_delay_ms });
+      const { data } = await http.post(re('/perceptual-simulation/start'), { stepDelayMs: step_delay_ms });
       return data;
     }),
   );
@@ -443,7 +450,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
     'Stop the automatic stepping of the Reality Engine perceptual simulation.',
     {},
     async () => reCall(async () => {
-      const { data } = await axios.post(re('/perceptual-simulation/stop'));
+      const { data } = await http.post(re('/perceptual-simulation/stop'));
       return data;
     }),
   );
@@ -453,7 +460,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
     'Reset the Reality Engine perceptual simulation to its initial state.',
     {},
     async () => reCall(async () => {
-      const { data } = await axios.post(re('/perceptual-simulation/reset'));
+      const { data } = await http.post(re('/perceptual-simulation/reset'));
       return data;
     }),
   );
@@ -466,7 +473,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
         .describe('Maximum number of history entries to return'),
     },
     async ({ limit }) => reCall(async () => {
-      const { data } = await axios.get(re('/perceptual-simulation/history'), { params: { limit } });
+      const { data } = await http.get(re('/perceptual-simulation/history'), { params: { limit } });
       return data;
     }),
   );
@@ -479,7 +486,7 @@ function buildMcpServer(deps: McpDeps): McpServer {
         .describe('Which demo to load'),
     },
     async ({ demo }) => reCall(async () => {
-      const { data } = await axios.get(re(`/demo/${demo}`));
+      const { data } = await http.get(re(`/demo/${demo}`));
       return data;
     }),
   );

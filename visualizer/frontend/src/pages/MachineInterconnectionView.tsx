@@ -9,7 +9,6 @@
 import React from 'react';
 import { useVisualizerStore } from '../store';
 import { MachineGraphView } from '../components/MachineGraphView';
-import { PerceptualSpaceView } from '../components/PerceptualSpaceView';
 import './MachineInterconnectionView.css';
 
 export const MachineInterconnectionView: React.FC = () => {
@@ -36,10 +35,6 @@ export const MachineInterconnectionView: React.FC = () => {
         <div className="left-panel">
           <div className="panel-section">
             <MachineGraphView />
-          </div>
-
-          <div className="panel-section">
-            <PerceptualSpaceView />
           </div>
         </div>
       </div>

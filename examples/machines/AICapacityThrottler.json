@@ -3,30 +3,244 @@
   "machine": {
     "id": "ai-capacity-throttler",
     "name": "AI Capacity Throttler",
-    "description": "Monitor AI compute capacity \u2014 GPU utilization, job queue depth, memory pressure, thermal headroom. Prevent cascade overloads by triggering throttling before saturation.",
+    "description": "Monitor AI compute capacity — GPU utilization, job queue depth, memory pressure, thermal headroom. Prevent cascade overloads by triggering throttling before saturation.",
     "arbiterRule": "PASSTHROUGH",
     "matchAlgorithm": "gte",
     "perceptualMapping": {
       "input": {
-        "offset": 128,
+        "offset": 264,
         "length": 4
       },
       "output": {
-        "offset": 162,
+        "offset": 292,
         "length": 6
-      }
+      },
+      "bitsPerElement": 8
     },
     "metadata": {
       "category": "ai-services",
-      "domain": "AI Infrastructure \u2014 AI Workload Capacity Throttling",
+      "domain": "AI Infrastructure — AI Workload Capacity Throttling",
       "tags": [
-        "data-center",
+        "ai-capacity-throttler",
+        "ai-infrastructure",
+        "ai-infrastructure-ai-workload-capacity-throttling",
+        "ai-services",
+        "ai-workload",
+        "ai-workload-capacity-throttling",
+        "aicapacity-throttler",
         "capacity",
+        "ces-sequences",
+        "ces-sequences-2",
+        "data-center",
         "gpu",
-        "throttling",
-        "ai-workload"
+        "input-sequences",
+        "input-sequences-3",
+        "startup-loadable",
+        "throttling"
       ],
-      "rationale": "Manages AI-workload-driven GPU/memory saturation \u2014 a data-center infrastructure concern, not an AI-pipeline concern."
+      "rationale": "Manages AI-workload-driven GPU/memory saturation — a data-center infrastructure concern, not an AI-pipeline concern.",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "ai-services",
+        "domainTags": [
+          "ai-infrastructure",
+          "ai-services",
+          "ai-workload-capacity-throttling"
+        ],
+        "family": "ai-capacity-throttler",
+        "machineCode": "aicapacity-throttler",
+        "capabilityTags": [
+          "ai-capacity-throttler",
+          "ai-infrastructure-ai-workload-capacity-throttling",
+          "ai-workload-capacity-throttling",
+          "aicapacity-throttler",
+          "capacity"
+        ],
+        "workflowTags": [
+          "ai-workload",
+          "data-center",
+          "gpu",
+          "throttling"
+        ],
+        "integrationTags": [
+          "ai-services"
+        ],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "ai-capacity-throttler",
+          "ai-infrastructure",
+          "ai-infrastructure-ai-workload-capacity-throttling",
+          "ai-services",
+          "ai-workload",
+          "ai-workload-capacity-throttling",
+          "aicapacity-throttler",
+          "capacity",
+          "ces-sequences",
+          "ces-sequences-2",
+          "data-center",
+          "gpu",
+          "input-sequences",
+          "input-sequences-3",
+          "startup-loadable",
+          "throttling"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "ml-platform-on-call",
+        "runbook": "https://runbooks.example.org/ai-services/aicapacitythrottler",
+        "escalationPolicy": "pagerduty:ml-platform",
+        "contact": {
+          "primary": "ml-platform-on-call-primary@example.org",
+          "secondary": "ml-platform-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 1800,
+          "error": 300
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"ai-services\".  Review and tune the routing as the team owning AICapacityThrottler matures."
+      },
+      "triggerConfig": {
+        "processId": "AICAPACITYTHROTTLER",
+        "processName": "AI Capacity Throttler",
+        "rules": [
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Compute capacity AVAILABLE — accepting new inference and training jobs"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              1,
+              0,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Compute capacity BUSY — high utilization, monitor queue depth"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Compute capacity SATURATED — queue growing, inference latency increasing"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Rate-limit new inference requests to prevent queue overflow"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Compute capacity OVERLOADED — OOM risk, SLO violations imminent"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Hard throttle all inference, reject new requests"
+          },
+          {
+            "sequenceId": "aict-capacity-escalation",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Immediately preempt and shed low-priority batch training jobs"
+          },
+          {
+            "sequenceId": "aict-memory-pressure",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "Memory pressure CRITICAL — GPU memory nearing exhaustion despite moderate compute load"
+          },
+          {
+            "sequenceId": "aict-memory-pressure",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "Action: Shed batch jobs to reclaim GPU memory before OOM kills active inference"
+          }
+        ]
+      }
     },
     "sequences": [
       {
@@ -69,7 +283,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Compute capacity AVAILABLE \u2014 accepting new inference and training jobs",
+                  "description": "Compute capacity AVAILABLE — accepting new inference and training jobs",
                   "severity": "INFO"
                 }
               }
@@ -111,7 +325,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Compute capacity BUSY \u2014 high utilization, monitor queue depth",
+                  "description": "Compute capacity BUSY — high utilization, monitor queue depth",
                   "severity": "WARNING"
                 }
               }
@@ -153,7 +367,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Compute capacity SATURATED \u2014 queue growing, inference latency increasing",
+                  "description": "Compute capacity SATURATED — queue growing, inference latency increasing",
                   "severity": "CRITICAL"
                 }
               },
@@ -208,7 +422,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Compute capacity OVERLOADED \u2014 OOM risk, SLO violations imminent",
+                  "description": "Compute capacity OVERLOADED — OOM risk, SLO violations imminent",
                   "severity": "EMERGENCY"
                 }
               },
@@ -310,7 +524,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "Memory pressure CRITICAL \u2014 GPU memory nearing exhaustion despite moderate compute load",
+                  "description": "Memory pressure CRITICAL — GPU memory nearing exhaustion despite moderate compute load",
                   "severity": "CRITICAL"
                 }
               },

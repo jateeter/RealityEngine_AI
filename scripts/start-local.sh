@@ -146,6 +146,25 @@ mkdir -p qdrant_storage
 print_success "Directories created"
 echo ""
 
+# MQTT bridge env passthrough — the PE backend (perception-engine/backend)
+# reads MQTT_BROKER_URL + MQTT_MAPPINGS_FILE at boot to enable the MQTT
+# ingest path.  When MQTT_BROKER_URL is unset the bridge stays disabled
+# and the PE behaves as a pure HTTP-driven engine.  Export here so child
+# processes inherit unchanged.
+export MQTT_BROKER_URL="${MQTT_BROKER_URL:-}"
+export MQTT_BROKER_PORT="${MQTT_BROKER_PORT:-1883}"
+export MQTT_CLIENT_ID="${MQTT_CLIENT_ID:-reality-engine-pe-ai}"
+export MQTT_USERNAME="${MQTT_USERNAME:-}"
+export MQTT_PASSWORD="${MQTT_PASSWORD:-}"
+export MQTT_KEEPALIVE="${MQTT_KEEPALIVE:-60}"
+export MQTT_MAPPINGS_FILE="${MQTT_MAPPINGS_FILE:-}"
+export MQTT_MAPPINGS_JSON="${MQTT_MAPPINGS_JSON:-}"
+export MQTT_ALLOW_REGION_OVERLAP="${MQTT_ALLOW_REGION_OVERLAP:-0}"
+if [ -n "$MQTT_BROKER_URL" ]; then
+    print_info "MQTT bridge: ${MQTT_BROKER_URL}${MQTT_MAPPINGS_FILE:+ + $MQTT_MAPPINGS_FILE}"
+fi
+
+
 # Check if built
 print_step "Step 2: Checking if project is built"
 if [ ! -d "dist" ]; then

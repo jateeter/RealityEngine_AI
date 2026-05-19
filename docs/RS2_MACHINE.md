@@ -70,7 +70,7 @@ Event 2: [0,1] (RESET) - Activated when Event 1 matches, outputs [0,1]
 
 ### Universal Reality Integration
 ```
-En (Perceptual Space - 256 dimensions)
+En (dynamic perceptual space; 768-element compatibility floor)
 │
 ├─ En[0:4]   - Reserved for other machines
 ├─ En[4:6]   - RS2 INPUT  ← Machine reads here
@@ -237,7 +237,7 @@ inputs.forEach(input => {
 ```typescript
 import { PerceptualSpace } from './models/PerceptualSpace';
 
-const perceptualSpace = new PerceptualSpace(256);
+const perceptualSpace = new PerceptualSpace(768);
 
 // Write input to En[4:6]
 perceptualSpace.updateRegion(4, [0, 0]);

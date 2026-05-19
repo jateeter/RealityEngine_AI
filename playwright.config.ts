@@ -10,6 +10,10 @@ import { defineConfig, devices } from '@playwright/test';
  * - Qdrant Vector Database
  */
 
+const reuseServices = process.env.REUSE_SERVICES === 'true';
+const isCI = !!process.env.CI;
+const dockerStartCommand = "bash -c '[ -f certs/server.crt ] && [ -f certs/server.key ] && [ -f certs/keystore.p12 ] || bash certs/generate-dev-certs.sh; docker compose up -d loki grafana reality-engine visualizer-backend visualizer-frontend tls-proxy && sleep 10'";
+
 export default defineConfig({
   testDir: './e2e',
 
@@ -19,7 +23,7 @@ export default defineConfig({
   // Test execution settings
   fullyParallel: false, // Run sequentially to avoid resource contention
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: isCI ? 2 : 0,
   workers: 1, // Single worker to ensure tests don't interfere
 
   // Reporter configuration
@@ -54,35 +58,44 @@ export default defineConfig({
   },
 
   // Configure projects for different browsers
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    // Mobile viewports
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-  ],
+  projects: isCI
+    ? [
+        {
+          name: 'chromium',
+          use: { ...devices['Desktop Chrome'] },
+        }
+      ]
+    : [
+        {
+          name: 'chromium',
+          use: { ...devices['Desktop Chrome'] },
+        },
+        {
+          name: 'firefox',
+          use: { ...devices['Desktop Firefox'] },
+        },
+        {
+          name: 'webkit',
+          use: { ...devices['Desktop Safari'] },
+        },
+        // Mobile viewports
+        {
+          name: 'Mobile Chrome',
+          use: { ...devices['Pixel 5'] },
+        },
+      ],
 
   // Web server configuration
   // Automatically start services if not running
-  webServer: {
-    command: 'docker-compose up -d && sleep 10',
-    url: 'https://localhost:5173',
-    ignoreHTTPSErrors: true,
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: reuseServices
+    ? undefined
+    : {
+        command: dockerStartCommand,
+        url: 'https://localhost:5173',
+        ignoreHTTPSErrors: true,
+        timeout: 120 * 1000,
+        reuseExistingServer: !isCI,
+      },
 
   // Global setup/teardown
   globalSetup: './e2e/global-setup.ts',

@@ -7,17 +7,25 @@
       "category": "data-center",
       "domain": "Data Center — Thermal / Escalation",
       "author": "Reality Engine",
-      "outputSpace": "2D binary at [144:146]: [1,0]=THERMAL_ALARM, [0,1]=THERMAL_SAFE",
+      "outputSpace": "2D binary at [1375:1377]: [1,0]=THERMAL_ALARM, [0,1]=THERMAL_SAFE",
       "tags": [
-        "monitoring",
+        "anomaly-detection",
+        "ces-sequences",
+        "ces-sequences-2",
         "data-center",
-        "thermal",
+        "data-center-thermal-escalation",
+        "dc-thermal-escalation-detector",
+        "dcthermal-escalation",
         "escalation",
+        "input-sequences",
+        "input-sequences-2",
         "kleene-plus",
-        "continuous"
+        "monitoring",
+        "startup-loadable",
+        "thermal"
       ],
       "sequenceCount": 2,
-      "downstreamMachine": "DCCoolingControlFF (reads [144:146])",
+      "downstreamMachine": "DCCoolingControlFF (reads [1375:1377])",
       "regularExpression": {
         "escalation": "NORMAL+ → WARM+ → HOT → CRITICAL+ → EMERGENCY → output[1,0]",
         "recovery": "SAFE+ → output[0,1]",
@@ -42,18 +50,108 @@
           "CRITICAL": "cpu_temp [0.81, 0.95], cpu_load [0.87, 0.97]",
           "EMERGENCY": "cpu_temp [0.93, 1.00], cpu_load [0.95, 1.00]"
         }
+      },
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "data-center",
+        "domainTags": [
+          "data-center",
+          "escalation",
+          "thermal"
+        ],
+        "family": "dc-thermal-escalation-detector",
+        "machineCode": "dcthermal-escalation",
+        "capabilityTags": [
+          "monitoring"
+        ],
+        "workflowTags": [
+          "anomaly-detection",
+          "data-center",
+          "dc-thermal-escalation-detector",
+          "dcthermal-escalation",
+          "kleene-plus"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-2",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "anomaly-detection",
+          "ces-sequences",
+          "ces-sequences-2",
+          "data-center",
+          "data-center-thermal-escalation",
+          "dc-thermal-escalation-detector",
+          "dcthermal-escalation",
+          "escalation",
+          "input-sequences",
+          "input-sequences-2",
+          "kleene-plus",
+          "monitoring",
+          "startup-loadable",
+          "thermal"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "datacenter-noc",
+        "runbook": "https://runbooks.example.org/data-center/dcthermalescalation",
+        "escalationPolicy": "pagerduty:datacenter-noc",
+        "contact": {
+          "primary": "datacenter-noc-primary@example.org",
+          "secondary": "datacenter-noc-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 300,
+          "error": 120
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"data-center\".  Review and tune the routing as the team owning DCThermalEscalation matures."
+      },
+      "triggerConfig": {
+        "processId": "DCTHERMALESCALATION",
+        "processName": "DC Thermal Escalation Detector",
+        "rules": [
+          {
+            "sequenceId": "dc-thermal-escalation",
+            "outputMatches": [
+              1,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "THERMAL EMERGENCY: Alarm signal [1,0] to DCCoolingControlFF at [1375:1377]"
+          },
+          {
+            "sequenceId": "dc-thermal-safe-recovery",
+            "outputMatches": [
+              0,
+              1
+            ],
+            "ragStatusCode": "GREEN",
+            "processStatus": "info",
+            "description": "THERMAL SAFE: Reset signal [0,1] to DCCoolingControlFF at [1375:1377]"
+          }
+        ]
       }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 12,
+        "offset": 3919,
         "length": 4
       },
       "output": {
-        "offset": 144,
+        "offset": 1375,
         "length": 2
-      }
+      },
+      "bitsPerElement": 8
     },
     "sequences": [
       {
@@ -240,7 +338,7 @@
                   0
                 ],
                 "metadata": {
-                  "description": "THERMAL EMERGENCY: Alarm signal [1,0] to DCCoolingControlFF at [144:146]",
+                  "description": "THERMAL EMERGENCY: Alarm signal [1,0] to DCCoolingControlFF at [1375:1377]",
                   "severity": "EMERGENCY",
                   "action": "DCCoolingControlFF will SET; emergency cooling activated"
                 }
@@ -285,7 +383,7 @@
               "role": "continuous-reset-plus",
               "cpu_temp_range": "0.15–0.45 (same as NORMAL)",
               "cpu_load_range": "0.17–0.53 (same as NORMAL)",
-              "semantics": "isInitial (A*A = A+): always active; fires [0,1] to [144:146] on each matching cycle. At least one safe sensor reading is required before any reset output is produced. SAFE* would be incorrect — it would imply output is possible without any sensor match."
+              "semantics": "isInitial (A*A = A+): always active; fires [0,1] to [1375:1377] on each matching cycle. At least one safe sensor reading is required before any reset output is produced. SAFE* would be incorrect — it would imply output is possible without any sensor match."
             },
             "outputVectors": [
               {
@@ -295,7 +393,7 @@
                   1
                 ],
                 "metadata": {
-                  "description": "THERMAL SAFE: Reset signal [0,1] to DCCoolingControlFF at [144:146]",
+                  "description": "THERMAL SAFE: Reset signal [0,1] to DCCoolingControlFF at [1375:1377]",
                   "severity": "INFO",
                   "action": "DCCoolingControlFF will RESET; normal cooling sufficient"
                 }
@@ -396,7 +494,7 @@
             "step_11": "no output (WARM: cooling in progress)",
             "step_12": "SAFE fires [0,1] (normal conditions restored)"
           },
-          "note": "Outputs at [144:146] persist between writes. After step 10 [1,0], bytes [144:146] hold [1,0] until step 12 fires [0,1]. DCCoolingControlFF will read [1,0] on steps 10-11, then read [0,1] at step 12."
+          "note": "Outputs at [1375:1377] persist between writes. After step 10 [1,0], bytes [1375:1377] hold [1,0] until step 12 fires [0,1]. DCCoolingControlFF will read [1,0] on steps 10-11, then read [0,1] at step 12."
         }
       },
       {

@@ -23,7 +23,6 @@ class PerceptionRoutes(
   engine: PerceptionEngine,
   store: SourceStore,
   broadcastActor: ActorRef,
-  perceptionTargetUrl: String,
   realityEngineUrl: String,
   auditCfg: AuditConfig,
 )(implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext) {
@@ -70,7 +69,7 @@ class PerceptionRoutes(
       "matchAlgorithm" -> algoStr.asJson,
     ).noSpaces
 
-    // T-2: push directly to Reality Engine (was perceptionTargetUrl / visualizer-backend)
+    // Push directly to the Reality Engine — VB is a passive SSE observer, not in the path
     val request = basicRequest
       .post(uri"$realityEngineUrl/api/perceive")
       .contentType("application/json")
@@ -87,10 +86,13 @@ class PerceptionRoutes(
           .flatMap(b => io.circe.parser.parse(b).toOption)
           .getOrElse(Json.Null)
 
-        // RE returns SimulationStep directly (perceptualSpace at top level)
+        // RE returns SimulationStep directly (perceptualSpace at top level).
+        // Length need not equal vectorDimension: updateFromPerceptualSpace
+        // auto-grows the engine's persistent vector when RE's space has been
+        // expanded by machines whose mapping extends past our initial size.
         parsed.hcursor.get[Vector[Double]]("perceptualSpace") match {
-          case Right(ps) if ps.length == engine.vectorDimension => engine.updateFromPerceptualSpace(ps)
-          case _                                                =>
+          case Right(ps) if ps.nonEmpty => engine.updateFromPerceptualSpace(ps)
+          case _                        =>
         }
 
         val stepJson = Some(parsed)
@@ -104,6 +106,7 @@ class PerceptionRoutes(
         )
         broadcastState()
         broadcast(Json.obj("type" -> "push-result".asJson).deepMerge(encodePushResult(result)))
+
         result
 
       case resp =>
@@ -212,9 +215,21 @@ class PerceptionRoutes(
       concat(
         get { complete(Json.obj("sources" -> engine.getSources.asJson)) },
         post { entity(as[SourceConfig]) { config =>
-          val src = engine.addSource(config)
-          onComplete(saveAndBroadcast()) { _ =>
-            complete(StatusCodes.OK -> Json.obj("source" -> src.asJson))
+          // Idempotent for sensor sources: if a sensor with the same sensorId already
+          // exists (e.g. from the persisted volume after a non-fresh restart), return it
+          // rather than creating a duplicate with a new UUID.
+          val existing: Option[SourceConfig] = config match {
+            case s: SensorSourceConfig => engine.findSensorBySensorId(s.sensorId)
+            case _                     => None
+          }
+          existing match {
+            case Some(src) =>
+              complete(StatusCodes.OK -> Json.obj("source" -> src.asJson))
+            case None =>
+              val src = engine.addSource(config)
+              onComplete(saveAndBroadcast()) { _ =>
+                complete(StatusCodes.OK -> Json.obj("source" -> src.asJson))
+              }
           }
         }}
       )

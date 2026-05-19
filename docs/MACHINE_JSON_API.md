@@ -37,7 +37,14 @@ The Machine JSON API provides endpoints for loading, saving, and managing Realit
       "metadata": {
         "category": "digital-logic",
         "author": "Reality Engine",
-        "tags": ["flip-flop", "digital-logic", "two-step"]
+        "tags": ["digital-logic", "flip-flop", "startup-loadable", "two-step"],
+        "tagging": {
+          "schemaVersion": "1.0.0",
+          "primaryDomain": "digital-logic",
+          "domainTags": ["digital-logic"],
+          "workflowTags": ["flip-flop", "two-step"],
+          "validationTags": ["startup-loadable"]
+        }
       },
       "sequenceCount": 2
     }
@@ -47,7 +54,7 @@ The Machine JSON API provides endpoints for loading, saving, and managing Realit
 
 **Example**:
 ```bash
-curl http://localhost:3000/api/machines/json/list
+curl -k https://localhost:3000/api/machines/json/list
 ```
 
 ---
@@ -82,7 +89,7 @@ curl http://localhost:3000/api/machines/json/list
 
 **Example**:
 ```bash
-curl http://localhost:3000/api/machines/json/RS2
+curl -k https://localhost:3000/api/machines/json/RS2
 ```
 
 **Error Responses**:
@@ -120,7 +127,7 @@ curl http://localhost:3000/api/machines/json/RS2
 
 **Example**:
 ```bash
-curl -X POST http://localhost:3000/api/machines/json/import \
+curl -k -X POST https://localhost:3000/api/machines/json/import \
   -H "Content-Type: application/json" \
   -d '{"json": "{...}"}'
 ```
@@ -156,7 +163,7 @@ curl -X POST http://localhost:3000/api/machines/json/import \
 
 **Example**:
 ```bash
-curl http://localhost:3000/api/machines/abc123/export?pretty=true -o MyMachine.json
+curl -k https://localhost:3000/api/machines/abc123/export?pretty=true -o MyMachine.json
 ```
 
 ---
@@ -170,10 +177,10 @@ Frontend → Visualizer Backend (port 3001) → Reality Engine (port 3000)
 ```
 
 **Visualizer Endpoints**:
-- `GET http://localhost:3001/api/machines/json/list`
-- `GET http://localhost:3001/api/machines/json/:name`
-- `POST http://localhost:3001/api/machines/json/import`
-- `GET http://localhost:3001/api/machines/:id/export`
+- `GET https://localhost:3001/api/machines/json/list`
+- `GET https://localhost:3001/api/machines/json/:name`
+- `POST https://localhost:3001/api/machines/json/import`
+- `GET https://localhost:3001/api/machines/:id/export`
 
 **WebSocket Broadcasting**: When machines are loaded or imported, the visualizer broadcasts updates to all connected clients:
 
@@ -189,30 +196,7 @@ Frontend → Visualizer Backend (port 3001) → Reality Engine (port 3000)
 
 ## Initialization on Startup
 
-The Reality Engine automatically loads machines from JSON files on startup:
-
-```
-Loading example machines from JSON files on startup...
-  ✓ RS Flip Flop loaded from RSFlipFlop.json
-  ✓ RS2 loaded from RS2.json
-  ✓ Multi-Step State Machine loaded from MultiStep.json
-  ✓ Data Center Monitoring loaded from DataCenterMonitoring.json
-  ✓ Kleene Star Operator loaded from KleeneStar.json
-
-Machine loading complete: 5 loaded, 0 failed
-```
-
-**Configuration**: Edit `src/api/routes.ts` to change which machines load on startup:
-
-```typescript
-const machinesToLoad = [
-  'RSFlipFlop.json',
-  'RS2.json',
-  'MultiStep.json',
-  'DataCenterMonitoring.json',
-  'KleeneStar.json'
-];
-```
+The Reality Engine automatically loads **every** `*.json` file in `examples/machines/` at startup via `scala/.../Routes.scala::loadDefaultMachines`. No allowlist to edit — add a file and restart the stack to register it. The current corpus contains 1006 machines across 11 domains.
 
 ---
 
@@ -222,7 +206,7 @@ const machinesToLoad = [
 
 ```javascript
 // Load RS2 machine
-const response = await fetch('http://localhost:3000/api/machines/json/RS2');
+const response = await fetch('https://localhost:3000/api/machines/json/RS2');
 const data = await response.json();
 
 console.log(`Loaded: ${data.machine.name}`);
@@ -242,7 +226,7 @@ const machineJSON = {
   }
 };
 
-const response = await fetch('http://localhost:3000/api/machines/json/import', {
+const response = await fetch('https://localhost:3000/api/machines/json/import', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ json: JSON.stringify(machineJSON) })
@@ -256,7 +240,7 @@ console.log(data.message); // "Machine \"My Custom Machine\" imported successful
 
 ```javascript
 // Get machine ID
-const machinesResponse = await fetch('http://localhost:3000/api/machines');
+const machinesResponse = await fetch('https://localhost:3000/api/machines');
 const { machines } = await machinesResponse.json();
 const rs2 = machines.find(m => m.name === 'RS2');
 

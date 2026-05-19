@@ -1,10 +1,54 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useVisualizerStore } from '../store';
 import { Machine } from '../types';
-import MachineCard from '../components/MachineCard';
 import MachineCreateDialog from '../components/MachineCreateDialog';
 import MachineEditDialog from '../components/MachineEditDialog';
 import MachineManagementModal from '../components/MachineManagementModal';
+import {
+  classifyMachine,
+  DOMAINS,
+  DOMAIN_ORDER,
+  DomainId,
+} from '../components/machineDomains';
+import './MachineSelectionView.css';
+
+// ── Tree shape ──────────────────────────────────────────────────────────────
+// Three node kinds; flattened at render time into a single visible-rows list
+// so keyboard navigation (Up/Down/Left/Right/Home/End/Enter) walks the tree
+// in the order the user sees it.
+
+type DomainNode = {
+  kind: 'domain';
+  id: string;            // `domain:<DomainId>`
+  domainId: DomainId;
+  label: string;
+  color: string;
+  machineCount: number;
+  cesCount: number;
+  children: MachineNode[];
+};
+
+type MachineNode = {
+  kind: 'machine';
+  id: string;            // `machine:<machineId>`
+  domainId: DomainId;
+  machine: Machine;
+  children: CesNode[];
+};
+
+type CesNode = {
+  kind: 'ces';
+  id: string;            // `ces:<machineId>:<sequenceId>`
+  domainId: DomainId;
+  machineId: string;
+  sequenceId: string;
+  sequenceName: string;
+};
+
+type FlatRow =
+  | { node: DomainNode; depth: 0 }
+  | { node: MachineNode; depth: 1 }
+  | { node: CesNode; depth: 2 };
 
 const MachineSelectionView: React.FC = () => {
   const {
@@ -12,427 +56,513 @@ const MachineSelectionView: React.FC = () => {
     setMachines,
     loadMachine,
     deleteMachine,
-    setCurrentView
+    setCurrentView,
+    setSelectedSequenceId,
   } = useVisualizerStore();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterMode, setFilterMode] = useState<'all' | 'examples' | 'custom'>('all');
-  const [sortMode, setSortMode] = useState<'name' | 'recent' | 'sequences'>('recent');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [searchQuery,         setSearchQuery]         = useState('');
+  const [filterMode,          setFilterMode]          = useState<'all' | 'examples' | 'custom'>('all');
+  const [sortMode,            setSortMode]            = useState<'name' | 'recent' | 'sequences'>('name');
+  const [isLoading,           setIsLoading]           = useState(false);
+  const [showCreateDialog,    setShowCreateDialog]    = useState(false);
+  const [showEditDialog,      setShowEditDialog]      = useState(false);
   const [showManagementModal, setShowManagementModal] = useState(false);
-  const [editingMachine, setEditingMachine] = useState<Machine | null>(null);
+  const [editingMachine,      setEditingMachine]      = useState<Machine | null>(null);
 
-  // Load machines on mount
+  // Expansion + focus state for the tree.
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set<string>());
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+
+  const treeRef = useRef<HTMLDivElement>(null);
+  const rowRefs = useRef(new Map<string, HTMLDivElement>());
+
+  // ── Load machines on mount ────────────────────────────────────────────────
   useEffect(() => {
     const loadMachines = async () => {
       setIsLoading(true);
       try {
         const { api } = await import('../api');
-        const machinesData = await api.getMachines();
-        setMachines(machinesData);
+        setMachines(await api.getMachines());
       } catch (error) {
         console.error('Error loading machines:', error);
       } finally {
         setIsLoading(false);
       }
     };
-
     loadMachines();
   }, [setMachines]);
 
-  // Filter and sort machines
-  const filteredAndSortedMachines = useMemo(() => {
+  // ── Build the Domain → Machine → CES tree ────────────────────────────────
+  const tree: DomainNode[] = useMemo(() => {
+    // Filter + sort the raw machine list using the same toolbar controls as
+    // before so the tree respects search/example/custom/sort settings.
     let filtered = machines;
-
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (m) =>
-          m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          m.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      filtered = filtered.filter(m => {
+        if (m.name.toLowerCase().includes(q)) return true;
+        if (m.description.toLowerCase().includes(q)) return true;
+        // Match against CES names too so a user typing a sequence still finds
+        // the parent machine.
+        return m.sequences?.some(s => s.name.toLowerCase().includes(q));
+      });
     }
+    if (filterMode === 'examples') filtered = filtered.filter(m =>  m.isExample);
+    if (filterMode === 'custom')   filtered = filtered.filter(m => !m.isExample);
 
-    // Apply filter mode
-    if (filterMode === 'examples') {
-      filtered = filtered.filter((m) => m.isExample);
-    } else if (filterMode === 'custom') {
-      filtered = filtered.filter((m) => !m.isExample);
-    }
-
-    // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
       switch (sortMode) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'recent':
-          const aTime = a.lastAccessedAt || 0;
-          const bTime = b.lastAccessedAt || 0;
-          return bTime - aTime;
-        case 'sequences':
-          return b.sequenceCount - a.sequenceCount;
-        default:
-          return 0;
+        case 'name':      return a.name.localeCompare(b.name);
+        case 'recent':    return (b.lastAccessedAt || 0) - (a.lastAccessedAt || 0);
+        case 'sequences': return b.sequenceCount - a.sequenceCount;
+        default:          return 0;
       }
     });
 
-    return sorted;
+    // Group by classified domain.
+    const groups = new Map<DomainId, Machine[]>();
+    for (const m of sorted) {
+      const d = classifyMachine(m).domain;
+      if (!groups.has(d)) groups.set(d, []);
+      groups.get(d)!.push(m);
+    }
+
+    const result: DomainNode[] = [];
+    for (const domainId of DOMAIN_ORDER) {
+      const list = groups.get(domainId);
+      if (!list || list.length === 0) continue;
+      const def = DOMAINS[domainId];
+
+      const machineNodes: MachineNode[] = list.map(m => {
+        const sequences = m.sequences ?? [];
+        // CES list — filter against the search query when present so the tree
+        // doesn't expand to irrelevant siblings while the user is hunting.
+        const filteredSeqs = q
+          ? sequences.filter(s => s.name.toLowerCase().includes(q) || m.name.toLowerCase().includes(q))
+          : sequences;
+        return {
+          kind: 'machine',
+          id: `machine:${m.id}`,
+          domainId,
+          machine: m,
+          children: filteredSeqs.map(s => ({
+            kind: 'ces',
+            id: `ces:${m.id}:${s.id}`,
+            domainId,
+            machineId: m.id,
+            sequenceId: s.id,
+            sequenceName: s.name,
+          })),
+        };
+      });
+
+      result.push({
+        kind: 'domain',
+        id: `domain:${domainId}`,
+        domainId,
+        label: def.label,
+        color: def.color,
+        machineCount: machineNodes.length,
+        cesCount: machineNodes.reduce((acc, mn) => acc + mn.machine.sequenceCount, 0),
+        children: machineNodes,
+      });
+    }
+    return result;
   }, [machines, searchQuery, filterMode, sortMode]);
 
-  const handleSelectMachine = async (machineId: string) => {
+  // ── Auto-expand domains that contain search matches ──────────────────────
+  // While typing, open every domain (and matching machine) so results are
+  // immediately visible — without forgetting the user's prior manual choices
+  // once the search clears.
+  const baselineExpansion = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q) {
+      if (!baselineExpansion.current) baselineExpansion.current = new Set(expanded);
+      const next = new Set(expanded);
+      for (const d of tree) {
+        next.add(d.id);
+        for (const m of d.children) {
+          if (m.children.length > 0) next.add(m.id);
+        }
+      }
+      setExpanded(next);
+    } else if (baselineExpansion.current) {
+      setExpanded(baselineExpansion.current);
+      baselineExpansion.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, tree]);
+
+  // ── Flatten visible rows for keyboard navigation ─────────────────────────
+  const flatRows: FlatRow[] = useMemo(() => {
+    const rows: FlatRow[] = [];
+    for (const d of tree) {
+      rows.push({ node: d, depth: 0 });
+      if (!expanded.has(d.id)) continue;
+      for (const m of d.children) {
+        rows.push({ node: m, depth: 1 });
+        if (!expanded.has(m.id)) continue;
+        for (const c of m.children) rows.push({ node: c, depth: 2 });
+      }
+    }
+    return rows;
+  }, [tree, expanded]);
+
+  // Keep focusedId valid as the row set changes (search/filter/expand).
+  useEffect(() => {
+    if (focusedId && flatRows.some(r => r.node.id === focusedId)) return;
+    setFocusedId(flatRows[0]?.node.id ?? null);
+  }, [flatRows, focusedId]);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  const toggle = useCallback((id: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const focusAndScroll = useCallback((id: string) => {
+    setFocusedId(id);
+    const el = rowRefs.current.get(id);
+    if (el) el.scrollIntoView({ block: 'nearest' });
+  }, []);
+
+  const openMachine = useCallback(async (machineId: string, sequenceId: string | null) => {
     setIsLoading(true);
     try {
+      // Set the CES scope BEFORE loadMachine so the admin view picks it up on
+      // its first render — loadMachine flips currentView to 'administration'.
+      setSelectedSequenceId(sequenceId);
       await loadMachine(machineId);
     } catch (error) {
       console.error('Error loading machine:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [loadMachine, setSelectedSequenceId]);
 
-  const handleEditMachine = (machine: Machine) => {
-    setEditingMachine(machine);
-    setShowEditDialog(true);
-  };
-
-  const handleDeleteMachine = async (machineId: string) => {
-    setIsLoading(true);
-    try {
-      await deleteMachine(machineId);
-    } catch (error) {
-      console.error('Error deleting machine:', error);
-    } finally {
-      setIsLoading(false);
+  const activateRow = useCallback((row: FlatRow) => {
+    const n = row.node;
+    if (n.kind === 'domain' || n.kind === 'machine') {
+      toggle(n.id);
+      return;
     }
+    // CES leaf — open machine scoped to this sequence.
+    openMachine(n.machineId, n.sequenceId);
+  }, [toggle, openMachine]);
+
+  // ── Keyboard navigation (ARIA tree pattern) ──────────────────────────────
+  const handleKey = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!focusedId) return;
+    const idx = flatRows.findIndex(r => r.node.id === focusedId);
+    if (idx === -1) return;
+    const row = flatRows[idx];
+    const n = row.node;
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        const next = flatRows[idx + 1];
+        if (next) { e.preventDefault(); focusAndScroll(next.node.id); }
+        break;
+      }
+      case 'ArrowUp': {
+        const prev = flatRows[idx - 1];
+        if (prev) { e.preventDefault(); focusAndScroll(prev.node.id); }
+        break;
+      }
+      case 'ArrowRight': {
+        if (n.kind === 'ces') break;
+        e.preventDefault();
+        if (!expanded.has(n.id)) {
+          if (n.children.length > 0) toggle(n.id);
+        } else {
+          // Already expanded — move to first child.
+          const next = flatRows[idx + 1];
+          if (next && next.depth > row.depth) focusAndScroll(next.node.id);
+        }
+        break;
+      }
+      case 'ArrowLeft': {
+        e.preventDefault();
+        if ((n.kind === 'domain' || n.kind === 'machine') && expanded.has(n.id)) {
+          toggle(n.id);
+        } else {
+          // Jump to the parent row by walking back to the first row of lower depth.
+          for (let j = idx - 1; j >= 0; j--) {
+            if (flatRows[j].depth < row.depth) { focusAndScroll(flatRows[j].node.id); break; }
+          }
+        }
+        break;
+      }
+      case 'Home':
+        if (flatRows[0]) { e.preventDefault(); focusAndScroll(flatRows[0].node.id); }
+        break;
+      case 'End':
+        if (flatRows.length) { e.preventDefault(); focusAndScroll(flatRows[flatRows.length - 1].node.id); }
+        break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        activateRow(row);
+        break;
+    }
+  }, [flatRows, focusedId, expanded, toggle, focusAndScroll, activateRow]);
+
+  const reloadMachines = async () => {
+    const { api } = await import('../api');
+    setMachines(await api.getMachines());
   };
+
+  // Expand / collapse all helpers for the toolbar.
+  const expandAll = () => {
+    const next = new Set<string>();
+    for (const d of tree) {
+      next.add(d.id);
+      for (const m of d.children) if (m.children.length > 0) next.add(m.id);
+    }
+    setExpanded(next);
+  };
+  const collapseAll = () => setExpanded(new Set());
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#0a0a0a', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <div
-        style={{
-          height: '60px',
-          background: '#0f172a',
-          borderBottom: '2px solid #1e293b',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 32px'
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#e2e8f0' }}>
-          Reality Engine
-        </h1>
+    <div className="msv-root">
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Search */}
+      {/* ── Header ──────────────────────────────────────── */}
+      <header className="msv-header">
+        <div className="msv-wordmark">
+          <div className="msv-title">
+            Reality<span className="msv-title-accent"> Engine</span>
+          </div>
+          <div className="msv-subtitle">perception · sequence · visualization</div>
+        </div>
+
+        <div className="msv-header-actions">
           <input
             type="text"
-            placeholder="Search machines..."
+            className="msv-search"
+            placeholder="search domains · machines · CES…"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              background: '#1e293b',
-              border: '1px solid #334155',
-              borderRadius: '8px',
-              color: '#e2e8f0',
-              padding: '8px 16px',
-              fontSize: '14px',
-              width: '300px',
-              outline: 'none'
-            }}
+            onChange={e => setSearchQuery(e.target.value)}
           />
 
-          {/* Interconnection View Button */}
-          <button
-            onClick={() => setCurrentView('interconnection')}
-            style={{
-              background: '#10b981',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#fff',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'background 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#059669';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#10b981';
-            }}
-          >
-            <span style={{ fontSize: '18px' }}>⚡</span>
-            Interconnection View
+          <button className="msv-nav-btn msv-nav-btn-interconnect" onClick={() => setCurrentView('interconnection')}>
+            <span className="msv-btn-icon">⚡</span>
+            Interconnect
           </button>
 
-          {/* Tobias Canvas Button */}
-          <button
-            onClick={() => setCurrentView('tobias')}
-            style={{
-              background: '#7c3aed',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#fff',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'background 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#6d28d9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#7c3aed';
-            }}
-          >
-            <span style={{ fontSize: '18px' }}>🔮</span>
+          <button className="msv-nav-btn msv-nav-btn-tobias" onClick={() => setCurrentView('tobias')}>
+            <span className="msv-btn-icon">🔮</span>
             Tobias
           </button>
 
-          {/* Machine Management Button */}
-          <button
-            onClick={() => setShowManagementModal(true)}
-            style={{
-              background: '#8b5cf6',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#fff',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'background 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#7c3aed';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#8b5cf6';
-            }}
-          >
-            <span style={{ fontSize: '18px' }}>📦</span>
-            Machine Files
+          <button className="msv-nav-btn msv-nav-btn-files" onClick={() => setShowManagementModal(true)}>
+            <span className="msv-btn-icon">📦</span>
+            Files
           </button>
 
-          {/* Create New Button */}
-          <button
-            onClick={() => setShowCreateDialog(true)}
-            style={{
-              background: '#3b82f6',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#fff',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'background 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#2563eb';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#3b82f6';
-            }}
-          >
-            <span style={{ fontSize: '18px' }}>+</span>
+          <button className="msv-nav-btn msv-nav-btn-create" onClick={() => setShowCreateDialog(true)}>
+            <span className="msv-btn-icon">+</span>
             New Machine
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Toolbar */}
-      <div
-        style={{
-          height: '50px',
-          background: '#0f172a',
-          borderBottom: '1px solid #1e293b',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 32px'
-        }}
-      >
-        {/* Filter Tabs */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {(['all', 'examples', 'custom'] as const).map((mode) => (
+      {/* ── Toolbar ─────────────────────────────────────── */}
+      <div className="msv-toolbar">
+        <div className="msv-filter-group">
+          {(['all', 'examples', 'custom'] as const).map(mode => (
             <button
               key={mode}
+              className={`msv-filter-btn${filterMode === mode ? ' active' : ''}`}
               onClick={() => setFilterMode(mode)}
-              style={{
-                background: filterMode === mode ? '#3b82f6' : 'transparent',
-                border: filterMode === mode ? 'none' : '1px solid #334155',
-                borderRadius: '6px',
-                color: filterMode === mode ? '#fff' : '#94a3b8',
-                padding: '6px 16px',
-                fontSize: '13px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                textTransform: 'capitalize',
-                transition: 'all 0.2s ease'
-              }}
             >
               {mode}
             </button>
           ))}
         </div>
 
-        {/* Sort Dropdown */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '13px', color: '#94a3b8' }}>Sort by:</span>
-          <select
-            value={sortMode}
-            onChange={(e) => setSortMode(e.target.value as any)}
-            style={{
-              background: '#1e293b',
-              border: '1px solid #334155',
-              borderRadius: '6px',
-              color: '#e2e8f0',
-              padding: '6px 12px',
-              fontSize: '13px',
-              cursor: 'pointer',
-              outline: 'none'
-            }}
-          >
-            <option value="recent">Last Accessed</option>
-            <option value="name">Name</option>
-            <option value="sequences">Sequences</option>
-          </select>
+        <div className="msv-toolbar-right">
+          <div className="msv-tree-controls">
+            <button className="msv-tree-btn" onClick={expandAll}    title="Expand all domains and machines">expand all</button>
+            <button className="msv-tree-btn" onClick={collapseAll}  title="Collapse all">collapse all</button>
+          </div>
+          <div className="msv-sort-group">
+            <span className="msv-sort-label">sort</span>
+            <select
+              className="msv-sort-select"
+              value={sortMode}
+              onChange={e => setSortMode(e.target.value as any)}
+            >
+              <option value="name">name</option>
+              <option value="recent">last accessed</option>
+              <option value="sequences">sequences</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Machine Grid */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '32px'
-        }}
-      >
+      {/* ── Tree ─────────────────────────────────────────── */}
+      <div className="msv-tree-wrapper">
         {isLoading ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              fontSize: '16px',
-              color: '#64748b'
-            }}
-          >
-            Loading machines...
+          <div className="msv-state">
+            <span className="msv-state-text">loading machines…</span>
           </div>
-        ) : filteredAndSortedMachines.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              gap: '16px'
-            }}
-          >
-            <div style={{ fontSize: '18px', color: '#64748b' }}>
-              {searchQuery || filterMode !== 'all'
-                ? 'No machines found'
-                : 'No machines available'}
-            </div>
-            <button
-              onClick={() => setShowCreateDialog(true)}
-              style={{
-                background: '#3b82f6',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#fff',
-                padding: '12px 24px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer'
-              }}
-            >
-              Create Your First Machine
-            </button>
+        ) : flatRows.length === 0 ? (
+          <div className="msv-state">
+            <span className="msv-state-text">
+              {searchQuery || filterMode !== 'all' ? 'no machines found' : 'no machines available'}
+            </span>
+            <span className="msv-state-hint">
+              {searchQuery ? 'try a different search term' : 'create your first machine to get started'}
+            </span>
+            {filterMode === 'all' && !searchQuery && (
+              <button className="msv-state-btn" onClick={() => setShowCreateDialog(true)}>
+                + create machine
+              </button>
+            )}
           </div>
         ) : (
           <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '24px',
-              maxWidth: '1600px',
-              margin: '0 auto'
-            }}
+            ref={treeRef}
+            role="tree"
+            aria-label="Machines grouped by domain"
+            className="msv-tree"
+            tabIndex={0}
+            onKeyDown={handleKey}
           >
-            {filteredAndSortedMachines.map((machine) => (
-              <MachineCard
-                key={machine.id}
-                machine={machine}
-                onSelect={handleSelectMachine}
-                onEdit={handleEditMachine}
-                onDelete={handleDeleteMachine}
-              />
-            ))}
+            {flatRows.map(row => {
+              const n = row.node;
+              const isFocused = focusedId === n.id;
+              const isExp     = (n.kind === 'domain' || n.kind === 'machine') && expanded.has(n.id);
+              const hasKids   = (n.kind === 'domain' || n.kind === 'machine') && (n.children?.length ?? 0) > 0;
+
+              if (n.kind === 'domain') {
+                return (
+                  <div
+                    key={n.id}
+                    ref={el => { if (el) rowRefs.current.set(n.id, el); else rowRefs.current.delete(n.id); }}
+                    role="treeitem"
+                    aria-level={1}
+                    aria-expanded={hasKids ? isExp : undefined}
+                    aria-selected={isFocused}
+                    className={`msv-row msv-row-domain${isFocused ? ' is-focused' : ''}`}
+                    style={{ ['--domain-color' as any]: n.color }}
+                    onClick={() => { setFocusedId(n.id); toggle(n.id); }}
+                  >
+                    <span className={`msv-chevron${isExp ? ' is-open' : ''}`}>▶</span>
+                    <span className="msv-domain-swatch" style={{ background: n.color }} />
+                    <span className="msv-row-label msv-row-label-domain">{n.label}</span>
+                    <span className="msv-row-meta">
+                      {n.machineCount} machine{n.machineCount === 1 ? '' : 's'}
+                      <span className="msv-meta-divider">·</span>
+                      {n.cesCount} CES
+                    </span>
+                  </div>
+                );
+              }
+
+              if (n.kind === 'machine') {
+                const m = n.machine;
+                const seqCount = m.sequenceCount ?? n.children.length;
+                const lifeSafety = (m.severity ?? '').toString() === 'life-safety';
+                return (
+                  <div
+                    key={n.id}
+                    ref={el => { if (el) rowRefs.current.set(n.id, el); else rowRefs.current.delete(n.id); }}
+                    role="treeitem"
+                    aria-level={2}
+                    aria-expanded={hasKids ? isExp : undefined}
+                    aria-selected={isFocused}
+                    className={`msv-row msv-row-machine${isFocused ? ' is-focused' : ''}`}
+                    style={{ ['--domain-color' as any]: DOMAINS[n.domainId].color }}
+                    onClick={() => { setFocusedId(n.id); openMachine(m.id, null); }}
+                  >
+                    <span
+                      className={`msv-chevron${isExp ? ' is-open' : ''}${hasKids ? '' : ' is-empty'}`}
+                      onClick={(e) => { e.stopPropagation(); if (hasKids) toggle(n.id); }}
+                    >
+                      {hasKids ? '▶' : '·'}
+                    </span>
+                    <span className="msv-row-icon">⚙</span>
+                    <span className="msv-row-label">{m.name}</span>
+                    {m.isExample && <span className="msv-row-badge msv-badge-example">example</span>}
+                    {lifeSafety && <span className="msv-row-badge msv-badge-safety">life-safety</span>}
+                    <span className="msv-row-meta">
+                      {seqCount} CES
+                      <span className="msv-meta-divider">·</span>
+                      {m.totalVectors} vectors
+                    </span>
+                    <div className="msv-row-actions" onClick={e => e.stopPropagation()}>
+                      <button
+                        className="msv-action-btn"
+                        onClick={() => { setEditingMachine(m); setShowEditDialog(true); }}
+                        title="Edit machine"
+                      >
+                        edit
+                      </button>
+                      {!m.isExample && (
+                        <button
+                          className="msv-action-btn msv-action-btn-delete"
+                          onClick={async () => {
+                            if (!window.confirm(`Delete "${m.name}"?`)) return;
+                            setIsLoading(true);
+                            try { await deleteMachine(m.id); }
+                            catch (err) { console.error(err); }
+                            finally { setIsLoading(false); }
+                          }}
+                          title="Delete machine"
+                        >
+                          del
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              // CES leaf row.
+              return (
+                <div
+                  key={n.id}
+                  ref={el => { if (el) rowRefs.current.set(n.id, el); else rowRefs.current.delete(n.id); }}
+                  role="treeitem"
+                  aria-level={3}
+                  aria-selected={isFocused}
+                  className={`msv-row msv-row-ces${isFocused ? ' is-focused' : ''}`}
+                  style={{ ['--domain-color' as any]: DOMAINS[n.domainId].color }}
+                  onClick={() => { setFocusedId(n.id); openMachine(n.machineId, n.sequenceId); }}
+                >
+                  <span className="msv-chevron is-empty">·</span>
+                  <span className="msv-row-icon msv-row-icon-ces">◆</span>
+                  <span className="msv-row-label">{n.sequenceName}</span>
+                  <span className="msv-row-meta msv-row-meta-ces">CES</span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Dialogs */}
+      {/* ── Dialogs ───────────────────────────────────────── */}
       <MachineCreateDialog
         isOpen={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
-        onCreate={async () => {
-          // Reload machines after creation
-          const { api } = await import('../api');
-          const machinesData = await api.getMachines();
-          setMachines(machinesData);
-        }}
+        onCreate={reloadMachines}
       />
 
       <MachineEditDialog
         machine={editingMachine}
         isOpen={showEditDialog}
-        onClose={() => {
-          setShowEditDialog(false);
-          setEditingMachine(null);
-        }}
-        onSave={async () => {
-          // Reload machines after edit
-          const { api } = await import('../api');
-          const machinesData = await api.getMachines();
-          setMachines(machinesData);
-        }}
+        onClose={() => { setShowEditDialog(false); setEditingMachine(null); }}
+        onSave={reloadMachines}
       />
 
       <MachineManagementModal
         isOpen={showManagementModal}
-        onClose={() => {
-          setShowManagementModal(false);
-          // Reload machines after management operations
-          (async () => {
-            const { api } = await import('../api');
-            const machinesData = await api.getMachines();
-            setMachines(machinesData);
-          })();
-        }}
+        onClose={() => { setShowManagementModal(false); reloadMachines(); }}
       />
     </div>
   );

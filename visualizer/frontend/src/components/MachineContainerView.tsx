@@ -39,9 +39,7 @@ const MachineInputsStrip: React.FC<MachineInputsStripProps> = ({
 
   // Group machines by domain for rendering and counts.
   const byDomain = useMemo(() => {
-    const groups: Record<DomainId, { machine: Machine; isExternal: boolean }[]> = {
-      healthservices: [], ai: [], datacenter: [], agriculture: [], communityservices: [], general: [],
-    };
+    const groups = Object.fromEntries(DOMAIN_ORDER.map(d => [d, [] as { machine: Machine; isExternal: boolean }[]])) as Record<DomainId, { machine: Machine; isExternal: boolean }[]>;
     for (const m of mapped) {
       const cls = classifyMachine(m);
       groups[cls.domain].push({ machine: m, isExternal: cls.isExternal });
@@ -306,8 +304,20 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
     ws,
   } = useVisualizerStore();
 
-  const [viewMode, setViewMode] = useState<'graph' | 'sequences'>('graph');
+  // If a specific CES (sequence) was selected via the Machines tree, open the
+  // sequences (per-CES) graph by default — otherwise show the interconnection
+  // graph as before.
+  const [viewMode, setViewMode] = useState<'graph' | 'sequences'>(
+    selectedSequenceId ? 'sequences' : 'graph'
+  );
   const [allMachines, setAllMachines] = useState(machines);
+
+  // When the tree-selected CES changes after mount (e.g. user picks a sibling
+  // CES under the same machine while admin view is open via deep link), keep
+  // the view in sync.
+  useEffect(() => {
+    if (selectedSequenceId) setViewMode('sequences');
+  }, [selectedSequenceId]);
 
   // Universal Perceptual Space state — updated passively via WebSocket
   const [currentUniversalVector, setCurrentUniversalVector] = useState<number[]>(new Array(PERCEPTUAL_DIM).fill(0));
@@ -316,7 +326,9 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
   // Log viewer modal state
   const [isLogViewerOpen, setIsLogViewerOpen] = useState(false);
 
-  // Fetch all machines for interconnection graph
+  // Fetch all machines for interconnection graph — once on mount only.
+  // The machines prop carries per-step state updates; re-fetching the full
+  // list on every prop change would fire once per simulation step.
   useEffect(() => {
     const fetchMachines = async () => {
       try {
@@ -324,11 +336,10 @@ const MachineContainerView: React.FC<MachineContainerViewProps> = ({ selectedSeq
         setAllMachines(machinesData);
       } catch (error) {
         console.error('Error fetching machines:', error);
-        setAllMachines(machines);
       }
     };
     fetchMachines();
-  }, [machines]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for perceptual space updates via WebSocket.
   // Depend on `ws` so we re-subscribe whenever the connection is (re)established.

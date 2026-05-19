@@ -199,54 +199,7 @@ Click the **"Reset"** button to:
 
 ## Integration Details
 
-### Backend Integration
-
-The RS Flip Flop machine is automatically loaded on server startup:
-
-**Location:** `src/api/routes.ts`
-```typescript
-// Auto-loaded in initialize() method
-const { createRSFlipFlopMachine } = await import(
-  '../examples/rs-flip-flop/rs-flip-flop-sequences.js'
-);
-const rsFlipFlopMachine = createRSFlipFlopMachine();
-this.engine.addMachine(rsFlipFlopMachine);
-```
-
-**API Endpoint:** `GET /api/demo/rs-flip-flop`
-- Loads the RS Flip Flop machine
-- Returns metadata and machine configuration
-- Loads test input vectors automatically
-
-### Frontend Integration
-
-**API Method:** `api.loadRSFlipFlopExample()`
-**Store Action:** `loadRSFlipFlopExample()`
-
-The frontend automatically:
-1. Fetches the RS Flip Flop machine from backend
-2. Loads critical event sequences
-3. Loads test input vectors
-4. Updates the visualization
-5. Prepares the simulation controls
-
-### Visualizer Backend
-
-**Proxy Endpoint:** `GET /api/demo/rs-flip-flop`
-- Proxies requests to Reality Engine
-- Broadcasts demo-loaded events via WebSocket
-- Updates connected clients in real-time
-
-**Mock Machine Entry:**
-```typescript
-{
-  id: 'rs-flip-flop-example',
-  name: 'RS Flip Flop',
-  description: 'Bistable multivibrator with Set and Reset critical event sequences',
-  isExample: true,
-  metadata: { type: 'digital-logic', difficulty: 'beginner' }
-}
-```
+The RS Flip Flop machine is defined in `examples/machines/RSFlipFlop.json` and loaded automatically at engine startup via `scala/.../Routes.scala::loadDefaultMachines`. It appears in the machine library in the Visualizer — select it and click **Load** to view its CES graph and run simulations.
 
 ## Educational Use Cases
 
@@ -299,30 +252,9 @@ Perfect for learning the Reality Engine visualization tools:
 
 ## Implementation Files
 
-### Core Implementation
-- **Sequence Definition:** `src/examples/rs-flip-flop/rs-flip-flop-sequences.ts`
-  - `createSetSequence()` - SET sequence (00→10→[1])
-  - `createResetSequence()` - RESET sequence (00→01→[0])
-  - `createRSFlipFlopMachine()` - Machine configuration
-  - `generateRSTestVectors()` - Test input vectors
-
-### Backend Integration
-- **API Routes:** `src/api/routes.ts`
-  - Auto-loading in `initialize()` (lines 58-66)
-  - Demo endpoint `/api/demo/rs-flip-flop` (line 154)
-  - `loadRSFlipFlopExample()` method (lines 1082-1150)
-
-### Frontend Integration
-- **API Client:** `visualizer/frontend/src/api.ts`
-  - `loadRSFlipFlopExample()` method (lines 212-216)
-
-- **State Management:** `visualizer/frontend/src/store.ts`
-  - `loadRSFlipFlopExample()` action (lines 797-830)
-
-### Visualizer Backend
-- **Proxy Server:** `visualizer/backend/src/server.ts`
-  - Proxy endpoint `/api/demo/rs-flip-flop` (lines 612-630)
-  - Mock machine entry (lines 677-683)
+- **Machine definition:** `examples/machines/RSFlipFlop.json` — loaded at startup
+- **Related machines:** `examples/machines/RS2.json`, `examples/machines/RSFlipFlopTrigger.json`
+- **Reference:** `docs/examples/RS_FLIPFLOP.md`, `docs/RS2_MACHINE.md`
 
 ## Testing
 
@@ -427,12 +359,11 @@ Create multi-bit storage by chaining multiple flip flops:
 - Input: 16D vector [S0,R0,S1,R1,...,S7,R7]
 - Output: 8D vector [Q0,Q1,Q2,...,Q7]
 
-## Support and Documentation
+## Related Examples
 
-- **Main Documentation:** This file (RS_FLIP_FLOP.md)
-- **API Reference:** See `src/api/routes.ts` for endpoint details
-- **Source Code:** `src/examples/rs-flip-flop/rs-flip-flop-sequences.ts`
-- **Related Examples:** Multi-Step State Machine, Kleene Star
+- Multi-Step State Machine (`examples/machines/MultiStep.json`)
+- Kleene Star (`examples/machines/KleeneStar.json`)
+- RS2 Variant (`examples/machines/RS2.json`)
 
 ## Version History
 

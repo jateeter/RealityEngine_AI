@@ -60,39 +60,62 @@ export default function VectorDisplay({ vector, sources, hoveredSourceId }: Prop
 
   return (
     <div style={{ position: 'relative' }}>
-      <div style={{ fontSize: 11, color: '#64748b', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
-        Assembled Reality Vector ({vector.length} cells)
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontSize: 10, color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
+          Input Vector <span style={{ color: '#475569', fontWeight: 400 }}>({vector.length})</span>
+        </span>
+        <span style={{ display: 'flex', gap: 8, fontSize: 10, color: '#475569' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <span style={{ width: 7, height: 7, borderRadius: 1, background: 'rgb(59,130,246)', display: 'inline-block', flexShrink: 0 }} />
+            Test
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <span style={{ width: 7, height: 7, borderRadius: 1, background: 'rgb(34,197,94)', display: 'inline-block', flexShrink: 0 }} />
+            Sim
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <span style={{ width: 7, height: 7, borderRadius: 1, background: 'rgb(245,158,11)', display: 'inline-block', flexShrink: 0 }} />
+            Sensor
+          </span>
+        </span>
       </div>
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${Math.min(32, vector.length)}, 1fr)`,
-          gap: 1,
+          maxHeight: 80,
+          overflowY: 'auto',
           background: '#0a0a0a',
-          padding: 4,
+          padding: 3,
           borderRadius: 6,
           border: '1px solid #1e293b',
         }}
       >
-        {cells.map((cell, i) => (
-          <div
-            key={i}
-            style={{
-              width: '100%',
-              paddingBottom: '100%',
-              position: 'relative',
-              borderRadius: 2,
-              background: cell.color,
-              outline: cell.highlighted ? '1px solid rgba(255,255,255,0.4)' : undefined,
-              cursor: 'default',
-            }}
-            onMouseEnter={e => {
-              const rect = (e.target as HTMLElement).getBoundingClientRect();
-              setTooltip({ index: i, value: cell.value, x: rect.left, y: rect.top });
-            }}
-            onMouseLeave={() => setTooltip(null)}
-          />
-        ))}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, 5px)',
+            gap: 1,
+          }}
+        >
+          {cells.map((cell, i) => (
+            <div
+              key={i}
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 1,
+                background: cell.color,
+                outline: cell.highlighted ? '1px solid rgba(255,255,255,0.5)' : undefined,
+                cursor: 'default',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => {
+                const rect = (e.target as HTMLElement).getBoundingClientRect();
+                setTooltip({ index: i, value: cell.value, x: rect.left, y: rect.top });
+              }}
+              onMouseLeave={() => setTooltip(null)}
+            />
+          ))}
+        </div>
       </div>
       {tooltip && (
         <div style={{
@@ -112,20 +135,6 @@ export default function VectorDisplay({ vector, sources, hoveredSourceId }: Prop
           [{tooltip.index}] {tooltip.value.toFixed(4)}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 12, marginTop: 6, fontSize: 11, color: '#64748b' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ width: 10, height: 10, borderRadius: 2, background: 'rgb(59,130,246)', display: 'inline-block' }} />
-          Test source
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ width: 10, height: 10, borderRadius: 2, background: 'rgb(34,197,94)', display: 'inline-block' }} />
-          Simulated
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ width: 10, height: 10, borderRadius: 2, background: 'rgb(245,158,11)', display: 'inline-block' }} />
-          Sensor
-        </span>
-      </div>
     </div>
   );
 }

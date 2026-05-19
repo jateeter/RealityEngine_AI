@@ -2,22 +2,28 @@
   "version": "1.0.0",
   "machine": {
     "name": "Home Food Security Monitor",
-    "description": "Monitors household food access, meal frequency, and nutrition assistance engagement for low- and medium-income families receiving home-based care. Tracks the progression from adequate food access through food insecurity to crisis conditions requiring immediate SNAP, WIC, or food-bank referral. Output at [342:346] feeds the Adolescent Mental Health Monitor, reflecting the documented link between food insecurity and adolescent behavioral health outcomes.",
+    "description": "Monitors household food access, meal frequency, and nutrition assistance engagement for low- and medium-income families receiving home-based care. Tracks the progression from adequate food access through food insecurity to crisis conditions requiring immediate SNAP, WIC, or food-bank referral. Output at [1995:1999] feeds the Adolescent Mental Health Monitor, reflecting the documented link between food insecurity and adolescent behavioral health outcomes.",
     "metadata": {
-      "category": "healthcare",
+      "category": "health-personal",
       "domain": "Home Health — Social Determinants / Food Security",
       "author": "Reality Engine",
-      "outputSpace": "4D binary at [342:346]: [1,0,0,0]=FOOD_CRISIS, [0,1,0,0]=FOOD_INSECURE, [0,0,1,0]=ASSISTANCE_NEEDED, [0,0,0,1]=FOOD_SECURE",
+      "outputSpace": "4D binary at [1995:1999]: [1,0,0,0]=FOOD_CRISIS, [0,1,0,0]=FOOD_INSECURE, [0,0,1,0]=ASSISTANCE_NEEDED, [0,0,0,1]=FOOD_SECURE",
       "tags": [
-        "healthcare",
-        "home health",
-        "food security",
-        "social determinants",
+        "benefits-eligibility",
+        "ces-sequences",
+        "ces-sequences-3",
+        "food-insecurity",
+        "food-security",
+        "health-personal",
+        "home-food-security-monitor",
+        "home-health",
+        "home-health-social-determinants-food-security",
+        "input-sequences",
+        "input-sequences-2",
+        "kleene-plus",
         "low-income",
-        "snap",
-        "wic",
-        "food insecurity",
-        "kleene-plus"
+        "social-determinants",
+        "startup-loadable"
       ],
       "sequenceCount": 3,
       "populationFocus": "Low- and medium-income households; families with children; adults on fixed incomes",
@@ -27,18 +33,125 @@
         "pantry_days_norm": "0.0=empty pantry (0 days supply), 0.5=3–5 day supply, 1.0=2+ week supply",
         "food_assistance_norm": "0.0=no assistance active (not enrolled or access lapsed), 0.5=partial benefit (SNAP pending/partial), 1.0=full assistance active (SNAP/WIC/food bank regular)"
       },
-      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [342:346])"
+      "downstreamMachine": "AdolescentMentalHealthMonitor (reads [1995:1999])",
+      "tagging": {
+        "schemaVersion": "1.0.0",
+        "managedBy": "scripts/manage_machine_tags.mjs",
+        "primaryDomain": "health-personal",
+        "domainTags": [
+          "food-security",
+          "health-personal",
+          "home-health",
+          "social-determinants"
+        ],
+        "family": "home-food-security-monitor",
+        "machineCode": "home-food-security-monitor",
+        "capabilityTags": [],
+        "workflowTags": [
+          "benefits-eligibility",
+          "food-insecurity",
+          "home-food-security-monitor",
+          "home-health-social-determinants-food-security",
+          "kleene-plus",
+          "low-income"
+        ],
+        "integrationTags": [],
+        "validationTags": [
+          "ces-sequences",
+          "ces-sequences-3",
+          "input-sequences",
+          "input-sequences-2",
+          "startup-loadable"
+        ],
+        "allTags": [
+          "benefits-eligibility",
+          "ces-sequences",
+          "ces-sequences-3",
+          "food-insecurity",
+          "food-security",
+          "health-personal",
+          "home-food-security-monitor",
+          "home-health",
+          "home-health-social-determinants-food-security",
+          "input-sequences",
+          "input-sequences-2",
+          "kleene-plus",
+          "low-income",
+          "social-determinants",
+          "startup-loadable"
+        ]
+      },
+      "governance": {
+        "schemaVersion": "1.0.0",
+        "ownerTeam": "patient-safety-on-call",
+        "runbook": "https://runbooks.example.org/health-personal/homefoodsecuritymonitor",
+        "escalationPolicy": "pagerduty:patient-safety",
+        "contact": {
+          "primary": "patient-safety-on-call-primary@example.org",
+          "secondary": "patient-safety-on-call-secondary@example.org"
+        },
+        "sla": {
+          "ok": null,
+          "info": null,
+          "warning": 600,
+          "error": 60
+        },
+        "notes": "Auto-backfilled by scripts/backfill-governance.mjs from primaryDomain=\"health-personal\".  Review and tune the routing as the team owning HomeFoodSecurityMonitor matures."
+      },
+      "triggerConfig": {
+        "processId": "HOMEFOODSECURITYMONITOR",
+        "processName": "Home Food Security Monitor",
+        "rules": [
+          {
+            "sequenceId": "home-food-crisis-escalation",
+            "outputMatches": [
+              1,
+              0,
+              0,
+              0
+            ],
+            "ragStatusCode": "RED",
+            "processStatus": "error",
+            "description": "FOOD_CRISIS: immediate food assistance referral required at [1995:1999]"
+          },
+          {
+            "sequenceId": "home-food-assistance-needed",
+            "outputMatches": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "ASSISTANCE_NEEDED: household qualifies for food assistance but not enrolled at [1995:1999]"
+          },
+          {
+            "sequenceId": "home-food-secure",
+            "outputMatches": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "ragStatusCode": "AMBER",
+            "processStatus": "warning",
+            "description": "FOOD_SECURE: household food access adequate at [1995:1999]"
+          }
+        ]
+      }
     },
     "arbiterRule": "PASSTHROUGH",
     "perceptualMapping": {
       "input": {
-        "offset": 302,
+        "offset": 1963,
         "length": 4
       },
       "output": {
-        "offset": 342,
+        "offset": 1995,
         "length": 4
-      }
+      },
+      "bitsPerElement": 8
     },
     "sequences": [
       {
@@ -53,10 +166,22 @@
           {
             "id": "hf-adequate",
             "elements": [
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.58, "threshold": 0.5 },
-              { "value": 0.55, "threshold": 0.5 },
-              { "value": 0.5, "threshold": 0.5 }
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.55,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -65,15 +190,30 @@
               "meal_frequency": "0.55–0.70 (2–3 solid meals/day)",
               "pantry_supply": "0.50–0.65 (3–7 day supply)"
             },
-            "nextVectorIds": ["hf-adequate", "hf-strained"]
+            "nextVectorIds": [
+              "hf-adequate",
+              "hf-strained"
+            ]
           },
           {
             "id": "hf-strained",
             "elements": [
-              { "value": 0.38, "threshold": 0.5 },
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.3, "threshold": 0.5 },
-              { "value": 0.5, "threshold": 0.5 }
+              {
+                "value": 0.38,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.3,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -82,15 +222,29 @@
               "meal_frequency": "0.28–0.45 (1–2 meals/day)",
               "pantry_supply": "0.22–0.38 (1–3 day supply)"
             },
-            "nextVectorIds": ["hf-insecure"]
+            "nextVectorIds": [
+              "hf-insecure"
+            ]
           },
           {
             "id": "hf-insecure",
             "elements": [
-              { "value": 0.22, "threshold": 0.5 },
-              { "value": 0.2, "threshold": 0.5 },
-              { "value": 0.15, "threshold": 0.5 },
-              { "value": 0.5, "threshold": 0.5 }
+              {
+                "value": 0.22,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.2,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.15,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.5,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -99,15 +253,29 @@
               "meal_frequency": "0.12–0.28 (<1 adequate meal/day)",
               "pantry_supply": "0.08–0.18 (<1 day supply)"
             },
-            "nextVectorIds": ["hf-crisis"]
+            "nextVectorIds": [
+              "hf-crisis"
+            ]
           },
           {
             "id": "hf-crisis",
             "elements": [
-              { "value": 0.06, "threshold": 0.5 },
-              { "value": 0.05, "threshold": 0.5 },
-              { "value": 0.04, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.06,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.05,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.04,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": false,
             "metadata": {
@@ -119,9 +287,14 @@
             "outputVectors": [
               {
                 "id": "hf-crisis-output",
-                "vector": [1, 0, 0, 0],
+                "vector": [
+                  1,
+                  0,
+                  0,
+                  0
+                ],
                 "metadata": {
-                  "description": "FOOD_CRISIS: immediate food assistance referral required at [342:346]",
+                  "description": "FOOD_CRISIS: immediate food assistance referral required at [1995:1999]",
                   "action": "Emergency food bank referral; SNAP expedited application; care coordinator notification"
                 }
               }
@@ -141,10 +314,22 @@
           {
             "id": "hf-struggling",
             "elements": [
-              { "value": 0.35, "threshold": 0.5 },
-              { "value": 0.32, "threshold": 0.5 },
-              { "value": 0.28, "threshold": 0.5 },
-              { "value": 0.1, "threshold": 0.5 }
+              {
+                "value": 0.35,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.32,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.28,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.1,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -155,9 +340,14 @@
             "outputVectors": [
               {
                 "id": "hf-assistance-needed-output",
-                "vector": [0, 0, 1, 0],
+                "vector": [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
                 "metadata": {
-                  "description": "ASSISTANCE_NEEDED: household qualifies for food assistance but not enrolled at [342:346]",
+                  "description": "ASSISTANCE_NEEDED: household qualifies for food assistance but not enrolled at [1995:1999]",
                   "action": "Benefits navigator outreach; screen for SNAP/WIC eligibility; food bank connection"
                 }
               }
@@ -177,10 +367,22 @@
           {
             "id": "hf-secure",
             "elements": [
-              { "value": 0.62, "threshold": 0.5 },
-              { "value": 0.6, "threshold": 0.5 },
-              { "value": 0.58, "threshold": 0.5 },
-              { "value": 0.9, "threshold": 0.5 }
+              {
+                "value": 0.62,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.6,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.58,
+                "threshold": 0.5
+              },
+              {
+                "value": 0.9,
+                "threshold": 0.5
+              }
             ],
             "isInitial": true,
             "metadata": {
@@ -191,9 +393,14 @@
             "outputVectors": [
               {
                 "id": "hf-secure-output",
-                "vector": [0, 0, 0, 1],
+                "vector": [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
                 "metadata": {
-                  "description": "FOOD_SECURE: household food access adequate at [342:346]",
+                  "description": "FOOD_SECURE: household food access adequate at [1995:1999]",
                   "action": "Downstream adolescent mental health monitor registers stable food environment"
                 }
               }
@@ -208,12 +415,42 @@
         "pattern": "6-step: SECURE → SECURE → STRAINED → INSECURE → CRISIS → ASSISTANCE_ENROLLMENT",
         "description": "Typical month-end pattern for low-income households: benefits exhausted by day 25–28; food crisis peaks; emergency enrollment/food bank restores SECURE state.",
         "vectors": [
-          [0.62, 0.60, 0.58, 0.90],
-          [0.60, 0.57, 0.55, 0.88],
-          [0.37, 0.34, 0.29, 0.45],
-          [0.21, 0.19, 0.14, 0.12],
-          [0.05, 0.04, 0.03, 0.08],
-          [0.63, 0.61, 0.57, 0.92]
+          [
+            0.62,
+            0.6,
+            0.58,
+            0.9
+          ],
+          [
+            0.6,
+            0.57,
+            0.55,
+            0.88
+          ],
+          [
+            0.37,
+            0.34,
+            0.29,
+            0.45
+          ],
+          [
+            0.21,
+            0.19,
+            0.14,
+            0.12
+          ],
+          [
+            0.05,
+            0.04,
+            0.03,
+            0.08
+          ],
+          [
+            0.63,
+            0.61,
+            0.57,
+            0.92
+          ]
         ],
         "metadata": {
           "scenario": "month-end-benefit-exhaustion",
@@ -231,10 +468,30 @@
         "pattern": "4-step: STRUGGLING(×3) → ASSISTANCE_NEEDED confirmed",
         "description": "Family above SNAP threshold but below food-stable income; no active benefits; assistance navigator needed.",
         "vectors": [
-          [0.34, 0.31, 0.27, 0.08],
-          [0.35, 0.32, 0.29, 0.09],
-          [0.33, 0.30, 0.27, 0.10],
-          [0.34, 0.33, 0.28, 0.09]
+          [
+            0.34,
+            0.31,
+            0.27,
+            0.08
+          ],
+          [
+            0.35,
+            0.32,
+            0.29,
+            0.09
+          ],
+          [
+            0.33,
+            0.3,
+            0.27,
+            0.1
+          ],
+          [
+            0.34,
+            0.33,
+            0.28,
+            0.09
+          ]
         ],
         "metadata": {
           "scenario": "working-family-no-benefits",
