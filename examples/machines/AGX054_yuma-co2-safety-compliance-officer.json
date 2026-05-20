@@ -246,7 +246,7 @@
                 "threshold": 0.5
               },
               {
-                "value": 0,
+                "value": 1,
                 "threshold": 0.5
               },
               {
@@ -261,7 +261,7 @@
             "isInitial": false,
             "metadata": {
               "name": "WATCH",
-              "description": "Two sensor cells leaving the nominal band."
+              "description": "One sensor cell leaving the nominal band (HD=1 from NORMAL)."
             },
             "nextVectorIds": [
               "agx-054-critical"
@@ -271,11 +271,11 @@
             "id": "agx-054-critical",
             "elements": [
               {
-                "value": 0,
+                "value": 1,
                 "threshold": 0.5
               },
               {
-                "value": 0,
+                "value": 1,
                 "threshold": 0.5
               },
               {
@@ -290,7 +290,7 @@
             "isInitial": false,
             "metadata": {
               "name": "CRITICAL",
-              "description": "All four sensor cells outside nominal \u2014 fault state."
+              "description": "Two sensor cells outside nominal \u2014 fault state (HD=1 from WATCH)."
             },
             "outputVectors": [
               {
@@ -470,7 +470,7 @@
     "inputSequences": [
       {
         "name": "Escalation to urgent maintenance",
-        "description": "A stable sensor stream degrades through watch conditions and then reaches a fault state.",
+        "description": "A stable sensor stream degrades one cell at a time through watch conditions and then reaches a fault state.",
         "vectors": [
           [
             1,
@@ -480,13 +480,13 @@
           ],
           [
             1,
-            0,
+            1,
             1,
             0
           ],
           [
-            0,
-            0,
+            1,
+            1,
             0,
             0
           ]
