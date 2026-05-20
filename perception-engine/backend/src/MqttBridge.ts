@@ -256,7 +256,15 @@ export function fromEnvironment(env: NodeJS.ProcessEnv = process.env): EnvBridge
   // the bridge off even if mappings are present.
   if (env['MQTT_DISABLED'] === '1' || env['MQTT_DISABLED'] === 'true') return null;
   if (env['MQTT_BROKER_URL'] === '') return null;
-  const brokerUrl = env['MQTT_BROKER_URL'] || DEFAULT_MQTT_BROKER_URL;
+  let brokerUrl = env['MQTT_BROKER_URL'];
+  if (!brokerUrl) {
+    if (env['MQTT_BROKER_HOST']) {
+      const port = env['MQTT_BROKER_PORT'] ?? '1883';
+      brokerUrl = `mqtt://${env['MQTT_BROKER_HOST']}:${port}`;
+    } else {
+      brokerUrl = DEFAULT_MQTT_BROKER_URL;
+    }
+  }
 
   const config: BridgeConfig = {
     brokerUrl,
