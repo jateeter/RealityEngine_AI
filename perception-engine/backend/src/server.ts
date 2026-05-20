@@ -12,6 +12,29 @@ import { mountMcp } from './mcp.js';
 import { MqttBridge, fromEnvironment as mqttFromEnvironment } from './MqttBridge.js';
 import type { IngestPayload } from './MqttBridge.js';
 import type { SourceConfig, SensorSourceConfig, TestSourceConfig, PushResult, MatchAlgorithm } from './types.js';
+import {
+  emptyRegistryState,
+  integrationStatus,
+  loadRegistry,
+  resolveRegistryPath,
+} from './integrations/Registry.js';
+import type { RegistryState } from './integrations/types.js';
+import { resolveCompletion } from './integrations/SourceMapper.js';
+import type { CompletionRequest, ResolvedSignal } from './integrations/SourceMapper.js';
+import { Dispatcher } from './triggers/Dispatcher.js';
+import type { MachineRecord } from './triggers/types.js';
+import { Ledger } from './dispatch/Ledger.js';
+import type { DispatchRecordPatch } from './dispatch/types.js';
+import { AdapterPipeline } from './integrations/AdapterPipeline.js';
+import { OllamaAdapter } from './integrations/adapters/OllamaAdapter.js';
+import { OpenAIAdapter } from './integrations/adapters/OpenAIAdapter.js';
+import type { IntegrationEntry } from './integrations/types.js';
+import { applyExtract, applyNormalize } from './integrations/extractors.js';
+import type { ExtractSpec, NormalizeSpec } from './integrations/extractors.js';
+import {
+  resolveHKBatch, checkBridgeAuth,
+} from './integrations/adapters/HealthKitBridge.js';
+import type { HKBridgePayload } from './integrations/adapters/HealthKitBridge.js';
 
 // Bundled example mapping registry — served by GET /api/mqtt/example so
 // the PE visualizer's MqttConfigModal can offer a "Load example" button
@@ -22,22 +45,48 @@ import type { SourceConfig, SensorSourceConfig, TestSourceConfig, PushResult, Ma
 const EXAMPLE_MAPPINGS_JSON = {
   defaults: { ttlMs: 60000, qos: 0, acceptRetained: true, pushMode: 'debounced', debounceMs: 500 },
   mappings: [
-    { id: 'agx001-ph-ok',         topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.ph.ok',         region: { offset: 40,  length: 1 }, extract: { type: 'json', pointer: '/data/wpH'         }, normalize: { mode: 'band', min: 6.5,  max: 8.5  } },
-    { id: 'agx001-ec-ok',         topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.ec.ok',         region: { offset: 41,  length: 1 }, extract: { type: 'json', pointer: '/data/wEC'         }, normalize: { mode: 'band', min: 0.5,  max: 3.0  } },
-    { id: 'agx001-orp-ok',        topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.orp.ok',        region: { offset: 42,  length: 1 }, extract: { type: 'json', pointer: '/data/wORP'        }, normalize: { mode: 'band', min: 200,  max: 600  } },
-    { id: 'agx001-turbidity-ok',  topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.turbidity.ok',  region: { offset: 43,  length: 1 }, extract: { type: 'json', pointer: '/data/wTurbidity'  }, normalize: { mode: 'band', min: 0,    max: 100  } },
-    { id: 'agx005-do-ok',         topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.level.ok',         region: { offset: 84,  length: 1 }, extract: { type: 'json', pointer: '/data/wDO'         }, normalize: { mode: 'band', min: 5,    max: 25   } },
-    { id: 'agx005-do-temp-ok',    topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.temp.ok',          region: { offset: 85,  length: 1 }, extract: { type: 'json', pointer: '/data/wDOTemp'     }, normalize: { mode: 'band', min: 60,   max: 85   } },
-    { id: 'agx005-do-watch',      topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.watch',            region: { offset: 86,  length: 1 }, extract: { type: 'json', pointer: '/data/wDO'         }, normalize: { mode: 'band', min: 3,    max: 5    } },
-    { id: 'agx005-temp-watch',    topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.temp.watch',       region: { offset: 87,  length: 1 }, extract: { type: 'json', pointer: '/data/wDOTemp'     }, normalize: { mode: 'band', min: 85,   max: 95   } },
-    { id: 'agx026-temp-ok',       topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.temp.ok',           region: { offset: 184, length: 1 }, extract: { type: 'json', pointer: '/data/aTemp'       }, normalize: { mode: 'band', min: 65,   max: 85   } },
-    { id: 'agx026-humidity-ok',   topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.humidity.ok',       region: { offset: 185, length: 1 }, extract: { type: 'json', pointer: '/data/aHum'        }, normalize: { mode: 'band', min: 40,   max: 70   } },
-    { id: 'agx026-temp-watch',    topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.temp.watch',        region: { offset: 186, length: 1 }, extract: { type: 'json', pointer: '/data/aTemp'       }, normalize: { mode: 'band', min: 85,   max: 95   } },
-    { id: 'agx026-humidity-watch',topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.humidity.watch',    region: { offset: 187, length: 1 }, extract: { type: 'json', pointer: '/data/aHum'        }, normalize: { mode: 'band', min: 20,   max: 40   } },
-    { id: 'agx032-co2-ok',        topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.co2.ok',            region: { offset: 228, length: 1 }, extract: { type: 'json', pointer: '/data/aCO2'        }, normalize: { mode: 'band', min: 600,  max: 1500 } },
-    { id: 'agx032-co2-watch',     topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.co2.watch',         region: { offset: 229, length: 1 }, extract: { type: 'json', pointer: '/data/aCO2'        }, normalize: { mode: 'band', min: 1500, max: 3000 } },
-    { id: 'agx032-co2-danger',    topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.co2.danger',        region: { offset: 230, length: 1 }, extract: { type: 'json', pointer: '/data/aCO2'        }, normalize: { mode: 'band', min: 3000, max: 5000 } },
-    { id: 'agx032-temp-ok',       topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.temp.ok',           region: { offset: 231, length: 1 }, extract: { type: 'json', pointer: '/data/aTemp'       }, normalize: { mode: 'band', min: 65,   max: 85   } },
+    { id: 'agx001-ph-ok',         topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.ph.ok',         region: { offset: 40,  length: 1 }, extract: { type: 'json', pointer: '/data/wpH'         }, normalize: { mode: 'minmax', min: 6.5,  max: 8.5  } },
+    { id: 'agx001-ec-ok',         topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.ec.ok',         region: { offset: 41,  length: 1 }, extract: { type: 'json', pointer: '/data/wEC'         }, normalize: { mode: 'minmax', min: 0.5,  max: 3.0  } },
+    { id: 'agx001-orp-ok',        topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.orp.ok',        region: { offset: 42,  length: 1 }, extract: { type: 'json', pointer: '/data/wORP'        }, normalize: { mode: 'minmax', min: 200,  max: 600  } },
+    { id: 'agx001-turbidity-ok',  topicFilter: 'LATERAL/WaterSuite/DEV0000001/SensorReadings/v1', sensorIdTemplate: 'agx001.water.turbidity.ok',  region: { offset: 43,  length: 1 }, extract: { type: 'json', pointer: '/data/wTurbidity'  }, normalize: { mode: 'minmax', min: 0,    max: 100  } },
+    { id: 'agx005-do-ok',         topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.level.ok',         region: { offset: 84,  length: 1 }, extract: { type: 'json', pointer: '/data/wDO'         }, normalize: { mode: 'minmax', min: 5,    max: 25   } },
+    { id: 'agx005-do-temp-ok',    topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.temp.ok',          region: { offset: 85,  length: 1 }, extract: { type: 'json', pointer: '/data/wDOTemp'     }, normalize: { mode: 'minmax', min: 60,   max: 85   } },
+    { id: 'agx005-do-watch',      topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.watch',            region: { offset: 86,  length: 1 }, extract: { type: 'json', pointer: '/data/wDO'         }, normalize: { mode: 'minmax', min: 3,    max: 5    } },
+    { id: 'agx005-temp-watch',    topicFilter: 'LATERAL/DOSuite/DEV0000017/SensorReadings/v1',    sensorIdTemplate: 'agx005.do.temp.watch',       region: { offset: 87,  length: 1 }, extract: { type: 'json', pointer: '/data/wDOTemp'     }, normalize: { mode: 'minmax', min: 85,   max: 95   } },
+    { id: 'agx026-temp-ok',       topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.temp.ok',           region: { offset: 184, length: 1 }, extract: { type: 'json', pointer: '/data/aTemp'       }, normalize: { mode: 'minmax', min: 65,   max: 85   } },
+    { id: 'agx026-humidity-ok',   topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.humidity.ok',       region: { offset: 185, length: 1 }, extract: { type: 'json', pointer: '/data/aHum'        }, normalize: { mode: 'minmax', min: 40,   max: 70   } },
+    { id: 'agx026-temp-watch',    topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.temp.watch',        region: { offset: 186, length: 1 }, extract: { type: 'json', pointer: '/data/aTemp'       }, normalize: { mode: 'minmax', min: 85,   max: 95   } },
+    { id: 'agx026-humidity-watch',topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx026.humidity.watch',    region: { offset: 187, length: 1 }, extract: { type: 'json', pointer: '/data/aHum'        }, normalize: { mode: 'minmax', min: 20,   max: 40   } },
+    { id: 'agx032-co2-ok',        topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.co2.ok',            region: { offset: 228, length: 1 }, extract: { type: 'json', pointer: '/data/aCO2'        }, normalize: { mode: 'minmax', min: 600,  max: 1500 } },
+    { id: 'agx032-co2-watch',     topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.co2.watch',         region: { offset: 229, length: 1 }, extract: { type: 'json', pointer: '/data/aCO2'        }, normalize: { mode: 'minmax', min: 1500, max: 3000 } },
+    { id: 'agx032-co2-danger',    topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.co2.danger',        region: { offset: 230, length: 1 }, extract: { type: 'json', pointer: '/data/aCO2'        }, normalize: { mode: 'minmax', min: 3000, max: 5000 } },
+    { id: 'agx032-temp-ok',       topicFilter: 'LATERAL/AmbientSuite/DEV0000009/SensorReadings/v1', sensorIdTemplate: 'agx032.temp.ok',           region: { offset: 231, length: 1 }, extract: { type: 'json', pointer: '/data/aTemp'       }, normalize: { mode: 'minmax', min: 65,   max: 85   } },
+  ],
+};
+
+// Bundled HealthKit bridge example registry — served by
+// GET /api/integrations/healthkit/example so operators can load a starter
+// config without hand-crafting source mappings for the 12 most common HK types.
+// Offsets are illustrative placeholders for the home-health domain (302-390);
+// adjust to match the actual perceptual vector layout of your universe.
+const EXAMPLE_HK_REGISTRY_JSON = {
+  version: '1.0',
+  integrations: [
+    { id: 'healthkit-home', kind: 'healthkit', enabled: true, apiKey: 'change-me-in-production' },
+  ],
+  sourceMappings: [
+    { id: 'healthkit:HKQuantityTypeIdentifierHeartRate',                name: 'Heart Rate',              region: { offset: 302, length: 1 }, ttlMs: 300_000, normalize: { mode: 'minmax', min: 60,   max: 100  } },
+    { id: 'healthkit:HKQuantityTypeIdentifierRestingHeartRate',         name: 'Resting Heart Rate',      region: { offset: 303, length: 1 }, ttlMs: 900_000, normalize: { mode: 'minmax', min: 40,   max: 80   } },
+    { id: 'healthkit:HKQuantityTypeIdentifierHeartRateVariabilitySDNN', name: 'HRV (SDNN ms)',           region: { offset: 304, length: 1 }, ttlMs: 900_000, normalize: { mode: 'minmax', min: 0,    max: 100  } },
+    { id: 'healthkit:HKQuantityTypeIdentifierOxygenSaturation',         name: 'SpO₂',                   region: { offset: 305, length: 1 }, ttlMs: 300_000, normalize: { mode: 'minmax', min: 0.95, max: 1.0  } },
+    { id: 'healthkit:HKQuantityTypeIdentifierRespiratoryRate',          name: 'Respiratory Rate',        region: { offset: 306, length: 1 }, ttlMs: 300_000, normalize: { mode: 'minmax', min: 12,   max: 20   } },
+    { id: 'healthkit:HKQuantityTypeIdentifierBloodPressureSystolic',    name: 'Blood Pressure Systolic', region: { offset: 307, length: 1 }, ttlMs: 3_600_000, normalize: { mode: 'minmax', min: 90,   max: 130  } },
+    { id: 'healthkit:HKQuantityTypeIdentifierBloodPressureDiastolic',   name: 'Blood Pressure Diastolic',region: { offset: 308, length: 1 }, ttlMs: 3_600_000, normalize: { mode: 'minmax', min: 60,   max: 90   } },
+    { id: 'healthkit:HKQuantityTypeIdentifierStepCount',                name: 'Step Count',              region: { offset: 309, length: 1 }, ttlMs: 3_600_000, normalize: { mode: 'minmax', min: 0,    max: 10_000 } },
+    { id: 'healthkit:HKQuantityTypeIdentifierActiveEnergyBurned',       name: 'Active Energy Burned',    region: { offset: 310, length: 1 }, ttlMs: 3_600_000, normalize: { mode: 'minmax', min: 0,    max: 1_000  } },
+    { id: 'healthkit:HKCategoryTypeIdentifierSleepAnalysis',            name: 'Sleep Analysis',          region: { offset: 311, length: 1 }, ttlMs: 86_400_000, normalize: { mode: 'passthrough', clamp: true } },
+    { id: 'healthkit:HKQuantityTypeIdentifierBodyTemperature',          name: 'Body Temperature',        region: { offset: 312, length: 1 }, ttlMs: 3_600_000, normalize: { mode: 'minmax', min: 96,   max: 100  } },
+    { id: 'healthkit:HKQuantityTypeIdentifierBloodGlucose',             name: 'Blood Glucose',           region: { offset: 313, length: 1 }, ttlMs: 3_600_000, normalize: { mode: 'minmax', min: 70,   max: 180  } },
   ],
 };
 
@@ -87,6 +136,137 @@ const wss = new WebSocketServer({ server, path: '/ws' });
 
 app.use(cors());
 app.use(express.json());
+
+// ── Integration registry ──────────────────────────────────────────────────
+// Provider-neutral catalog loaded at startup.  Mirrors the C++ contract
+// in RealityEngine_CPP/src/perception_engine_server.cpp
+// (`load_integration_registry` + `integration_status`).  See
+// docs/INTEGRATION_ROADMAP.md §Phase 0 for the wire shape.
+//
+// Resolution order:
+//   1. INTEGRATIONS_CONFIG env var (absolute or relative to CWD)
+//   2. config/integrations.json in CWD, if present
+//   3. otherwise: PE starts with an empty registry
+let integrationRegistry: RegistryState = (() => {
+  const resolved = resolveRegistryPath(process.env['INTEGRATIONS_CONFIG']);
+  return resolved ? loadRegistry(resolved) : emptyRegistryState();
+})();
+console.log(
+  integrationRegistry.loaded
+    ? `Integrations: loaded ${(integrationRegistry.config.integrations ?? []).length} integrations, ${integrationRegistry.sourceMappingIndex.size} sourceMapping(s) from ${integrationRegistry.path}`
+    : integrationRegistry.error
+      ? `Integrations: failed to load (${integrationRegistry.error}); status endpoint will report the error`
+      : 'Integrations: no registry configured (set INTEGRATIONS_CONFIG or place config/integrations.json)',
+);
+
+// ── Trigger dispatcher (Phase 2) ──────────────────────────────────────────
+// Subscribes to every RE step result and synthesises a `ces.terminal.event`
+// envelope per qualifying mergeOp.  Fire-and-record only — never blocks the
+// PE cycle and never calls a provider.  See docs/INTEGRATION_ROADMAP.md
+// §Phase 2 and the wire contract in RealityEngine_CPP::dispatch_triggers.
+const triggersEnabled = (process.env['TRIGGERS_ENABLED'] ?? '').toLowerCase() === 'true'
+  || process.env['TRIGGERS_ENABLED'] === '1';
+const triggerDispatchMode = process.env['TRIGGER_DISPATCH_MODE'] ?? 'dry-run';
+const localAIBaseUrl = process.env['LOCAL_AI_BASE_URL'] ?? 'http://localhost:4000';
+const triggerGraphQLEndpoint = process.env['TRIGGER_GRAPHQL_URL'] ?? `${localAIBaseUrl}/graphql`;
+
+// Lazy machine-catalog cache, populated from RE.  The dispatcher's lookup
+// closes over this map so steps fired before the first refresh just drop
+// to `droppedNoDispatch` (instead of crashing).
+const machineCatalog = new Map<string, MachineRecord>();
+async function refreshMachineCatalog(): Promise<void> {
+  try {
+    const response = await reAxios.get<{ machines?: MachineRecord[] }>(`${REALITY_ENGINE_URL}/api/machines`);
+    const machines = Array.isArray(response.data?.machines) ? response.data.machines : [];
+    machineCatalog.clear();
+    for (const m of machines) {
+      if (m && typeof m.id === 'string') machineCatalog.set(m.id, m);
+    }
+  } catch (err: any) {
+    // Soft-fail: dispatcher continues to operate with whatever it had.
+    if (triggersEnabled) {
+      console.warn(`[triggers] machine catalog refresh failed: ${err?.message ?? err}`);
+    }
+  }
+}
+// Best-effort initial fetch + 60s refresh.  Both are async so PE boot is
+// never blocked on RE availability.
+void refreshMachineCatalog();
+setInterval(refreshMachineCatalog, 60_000).unref();
+
+// Dispatch ledger — in-memory ring shared between the trigger dispatcher
+// (which appends on each envelope) and the Phase-3 `/api/dispatch/*` routes
+// (which read + PATCH).  When DISPATCH_LEDGER_FILE is set the ledger appends
+// every mutation as JSONL and replays it on restart for crash-survivable
+// audit.
+const dispatchLedgerFile = process.env['DISPATCH_LEDGER_FILE'] ?? null;
+const dispatchLedger = new Ledger({ persistencePath: dispatchLedgerFile });
+if (dispatchLedgerFile) {
+  console.log(`Dispatch ledger: persisting to ${dispatchLedgerFile} (replayed ${dispatchLedger.size()} record(s) on boot)`);
+}
+
+// Adapter pipeline (Phase 4) — fan-out from the dispatcher to provider
+// adapters.  Each enabled integration in the registry that has a kind
+// the pipeline recognises is initialised here.  Empty by default; the
+// dispatcher keeps working even with no adapters registered.
+const adapterPipeline = new AdapterPipeline({
+  ledgerPatchBaseUrl: `http://127.0.0.1:${PORT}`,
+});
+
+(function bootstrapAdapters() {
+  const integrations = Array.isArray(integrationRegistry.config.integrations)
+    ? (integrationRegistry.config.integrations as IntegrationEntry[])
+    : [];
+  // Phase 4a — Ollama.  Cloud providers land in later PRs.
+  const completionUrl = `http://127.0.0.1:${PORT}/api/integrations/completions`;
+  for (const entry of integrations) {
+    if (!entry || entry.enabled !== true) continue;
+    if (entry.kind === 'ollama') {
+      const adapter = new OllamaAdapter();
+      void adapter.init(entry, {
+        registry: integrationRegistry,
+        completionUrl,
+        ledgerPatchBaseUrl: `http://127.0.0.1:${PORT}`,
+      });
+      adapterPipeline.register(adapter);
+      console.log(`Adapters: ollama "${entry.id}" registered (baseUrl=${(entry as any).baseUrl ?? 'http://localhost:11434'} model=${(entry as any).model ?? 'default'})`);
+    }
+    if (entry.kind === 'openai') {
+      const adapter = new OpenAIAdapter();
+      void adapter.init(entry, {
+        registry: integrationRegistry,
+        completionUrl,
+        ledgerPatchBaseUrl: `http://127.0.0.1:${PORT}`,
+      });
+      adapterPipeline.register(adapter);
+      const e = entry as any;
+      console.log(`Adapters: openai "${entry.id}" registered (baseUrl=${e.baseUrl ?? 'https://api.openai.com/v1'} model=${e.model ?? 'gpt-4.1'} mode=${e.completionMode ?? 'sync'})`);
+    }
+  }
+  if (adapterPipeline.size() === 0) {
+    console.log('Adapters: none enabled (set enabled:true on an integration in INTEGRATIONS_CONFIG to wire a provider)');
+  }
+})();
+
+const triggerDispatcher = new Dispatcher(
+  {
+    enabled: triggersEnabled,
+    mode: triggerDispatchMode,
+    graphqlEndpoint: triggerGraphQLEndpoint,
+    realityEngineUrl: REALITY_ENGINE_URL,
+  },
+  {
+    getMachine: (id) => machineCatalog.get(id),
+    broadcast: (evt) => broadcast(evt),
+    ledger: dispatchLedger,
+    pipeline: adapterPipeline,
+  },
+);
+console.log(
+  triggersEnabled
+    ? `Triggers: enabled mode=${triggerDispatchMode} graphqlEndpoint=${triggerGraphQLEndpoint}`
+    : `Triggers: disabled (set TRIGGERS_ENABLED=true to enable; default mode is "dry-run")`,
+);
 
 // ── Engine instance ───────────────────────────────────────────────────────
 
@@ -266,6 +446,11 @@ async function doPush(): Promise<PushResult> {
     if (Array.isArray(returnedPs) && returnedPs.length >= VECTOR_SIZE) {
       engine.updateFromPerceptualSpace(returnedPs);
     }
+
+    // Phase 2 — fire-and-record trigger dispatch.  Synchronous against the
+    // returned step but the dispatcher does not call any provider, so this
+    // stays off the critical path even at engine line-rate.
+    triggerDispatcher.dispatchStep(step);
 
     const result: PushResult = {
       success: true,
@@ -520,6 +705,11 @@ mountMcp(app, {
   resetAndBroadcast,
   realityEngineUrl: REALITY_ENGINE_URL,
   httpClient: reAxios,
+  // Phase 5 — share the in-process dispatcher + ledger so the new dotted
+  // MCP tools (trigger.replay, dispatch.read_ledger) operate on the same
+  // state the REST routes do.
+  dispatcher: triggerDispatcher,
+  ledger: dispatchLedger,
 });
 
 // ── HTTP API ──────────────────────────────────────────────────────────────
@@ -632,6 +822,539 @@ app.get('/api/metrics', (_req: Request, res: Response) => {
 app.get('/api/state', (_req: Request, res: Response) => {
   const state = engine.getState(lastPush, { running: autoTimer !== null, intervalMs: autoIntervalMs });
   res.json(state);
+});
+
+// Integration registry status — provider-neutral catalog loaded at startup.
+// Wire-compatible with RealityEngine_CPP `integration_status()`.  See
+// docs/INTEGRATION_ROADMAP.md §Phase 0 for the response shape and
+// Appendix A for the cross-engine contract.
+app.get('/api/integrations/status', (_req: Request, res: Response) => {
+  res.json(integrationStatus(integrationRegistry));
+});
+
+// Trigger dispatcher status (Phase 2) — counters and config.  Wire-
+// compatible with RealityEngine_CPP `trigger_status()`, plus a
+// TS-side `replaysCreated` field driven by the replay endpoint below.
+app.get('/api/triggers/status', (_req: Request, res: Response) => {
+  res.json(triggerDispatcher.status());
+});
+
+// POST /api/triggers/replay/:dispatchId — re-emit an existing ledger
+// record as a new envelope.  Fire-and-record only: never mutates PE/RE
+// state, never calls a provider.  Body (optional): `{ freshIds: true }`
+// to mint new envelope+correlation IDs, otherwise the replay reuses the
+// originals so subscribers see the same causal chain.
+app.post('/api/triggers/replay/:dispatchId', (req: Request, res: Response) => {
+  const id = req.params['dispatchId'] ?? '';
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+    ? (req.body as { freshIds?: unknown })
+    : {};
+  const freshIds = body.freshIds === true;
+  const replayed = triggerDispatcher.replay(id, { freshIds });
+  if (!replayed) {
+    res.status(404).json({ error: 'Dispatch record not found' });
+    return;
+  }
+  res.json({ success: true, record: replayed, replayOf: id, freshIds });
+});
+
+// ── Dispatch ledger HTTP surface (Phase 3) ───────────────────────────────
+// Wire-compatible with RealityEngine_CPP:
+//   dispatch_ledger()             → GET    /api/dispatch/ledger
+//   read_dispatch_record(id)      → GET    /api/dispatch/records/:id
+//   update_dispatch_record(id, …) → PATCH  /api/dispatch/records/:id
+// No query params on the ledger (matches C++ — pagination is client-side).
+// PATCH accepts only delivery-metadata fields (see DispatchRecordPatch);
+// unknown / forbidden keys are silently ignored.
+
+app.get('/api/dispatch/ledger', (_req: Request, res: Response) => {
+  const status = triggerDispatcher.status();
+  res.json({
+    enabled: status.enabled,
+    mode: status.mode,
+    records: dispatchLedger.list(),
+  });
+});
+
+app.get('/api/dispatch/records/:id', (req: Request, res: Response) => {
+  const record = dispatchLedger.get(req.params['id'] ?? '');
+  if (!record) {
+    res.status(404).json({ error: 'Dispatch record not found' });
+    return;
+  }
+  res.json({ record });
+});
+
+app.patch('/api/dispatch/records/:id', (req: Request, res: Response) => {
+  const body = req.body;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    res.status(400).json({ error: 'dispatch update body must be a JSON object' });
+    return;
+  }
+  const updated = dispatchLedger.update(req.params['id'] ?? '', body as DispatchRecordPatch);
+  if (!updated) {
+    res.status(404).json({ error: 'Dispatch record not found' });
+    return;
+  }
+  broadcast(dispatchLedger.toUpdatedEvent(updated));
+  res.json({ success: true, record: updated });
+});
+
+// ── Provider-neutral signal / completion ingestion (Phase 1) ──────────────
+// Wire-compatible with RealityEngine_CPP `ingest_signal()` /
+// `ingest_completion()` in src/perception_engine_server.cpp.  Both routes
+// route through the same in-process helper so MQTT, HealthKit, OpenAI, and
+// Ollama adapters land their results through one path.
+
+interface SignalIngestBody {
+  sensorId?: string;
+  name?: string;
+  region?: { offset: number; length: number };
+  values?: number[];
+  active?: boolean;
+  ttlMs?: number;
+  triggerPush?: boolean;
+  compactPush?: boolean;
+}
+
+interface SignalIngestResult {
+  status: number;
+  body: Record<string, unknown>;
+}
+
+/** Auto-generated sensorId for region-only `POST /api/signals` callers. */
+function makeExternalSensorId(): string {
+  return `external-sensor-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** Find an existing sensor source by its `sensorId` field. */
+function findSensorSourceBySensorId(sensorId: string): SensorSourceConfig | undefined {
+  return engine.getSources()
+    .find((s): s is SensorSourceConfig => s.type === 'sensor' && s.sensorId === sensorId);
+}
+
+/**
+ * Core ingest path used by both `POST /api/signals` and the completion
+ * adapter.  Returns a structured result rather than touching the response
+ * directly so the completion handler can wrap it with its own metadata.
+ */
+async function ingestSignal(body: SignalIngestBody): Promise<SignalIngestResult> {
+  if (!Array.isArray(body.values) || body.values.length === 0) {
+    return { status: 400, body: { error: 'values must be a non-empty array' } };
+  }
+  for (const v of body.values) {
+    if (typeof v !== 'number' || !Number.isFinite(v)) {
+      return { status: 400, body: { error: 'values must contain only finite numbers' } };
+    }
+  }
+  const values = body.values.slice();
+
+  let source: SourceConfig | undefined;
+  const explicitSensorId = typeof body.sensorId === 'string' && body.sensorId !== '';
+  const region = body.region;
+  const regionValid = region
+    && typeof region.offset === 'number' && typeof region.length === 'number'
+    && region.offset >= 0 && region.length >= 1 && region.offset < VECTOR_SIZE;
+
+  if (explicitSensorId) {
+    const sensorId = body.sensorId!;
+    const existed = engine.updateSensorValue(sensorId, values);
+    if (existed) {
+      source = findSensorSourceBySensorId(sensorId);
+    } else if (regionValid) {
+      // Auto-provision a new sensor source — matches C++ fall-through path.
+      const newSource: Omit<SensorSourceConfig, 'id'> = {
+        type: 'sensor',
+        name: typeof body.name === 'string' && body.name !== '' ? body.name : sensorId,
+        sensorId,
+        region: { offset: region!.offset, length: region!.length },
+        active: body.active !== false,
+        lastValue: values,
+        lastUpdated: Date.now(),
+        ttlMs: typeof body.ttlMs === 'number' ? body.ttlMs : 30_000,
+      };
+      source = engine.addSource(newSource);
+    } else {
+      return { status: 404, body: { error: `No sensor source with sensorId "${sensorId}"` } };
+    }
+  } else if (regionValid) {
+    const sensorId = typeof body.name === 'string' && body.name !== ''
+      ? body.name
+      : makeExternalSensorId();
+    const newSource: Omit<SensorSourceConfig, 'id'> = {
+      type: 'sensor',
+      name: typeof body.name === 'string' && body.name !== '' ? body.name : 'external/signal',
+      sensorId,
+      region: { offset: region!.offset, length: region!.length },
+      active: true,
+      lastValue: values,
+      lastUpdated: Date.now(),
+      ttlMs: typeof body.ttlMs === 'number' ? body.ttlMs : 30_000,
+    };
+    source = engine.addSource(newSource);
+  } else {
+    return { status: 400, body: { error: 'signal requires sensorId or region' } };
+  }
+
+  const responseBody: Record<string, unknown> = {
+    success: true,
+    timestamp: Date.now(),
+    source: source ?? null,
+  };
+
+  if (body.triggerPush === true) {
+    const push = await doPush();
+    if (body.compactPush === false) {
+      responseBody.push = push;
+    } else {
+      // Compact view: drop the verbose step payload, keep timing + success.
+      responseBody.push = {
+        success: push.success,
+        timestamp: push.timestamp,
+        globalStep: push.globalStep,
+        error: push.error,
+      };
+    }
+  }
+
+  scheduleSensorBroadcast();
+  return { status: 200, body: responseBody };
+}
+
+// POST /api/signals — underlying primitive (publicly exposed; matches C++).
+app.post('/api/signals', async (req: Request, res: Response) => {
+  const result = await ingestSignal(req.body as SignalIngestBody);
+  res.status(result.status).json(result.body);
+});
+
+// Helpers for the OpenAI webhook handler below.  Tolerate every shape we
+// have seen in the wild: Responses API (`output[*].content[*].text` or
+// `output_text`), chat-completions (`choices[0].message.content`), or
+// the most-minimal `{text, metadata}` test fixtures.
+
+function pickFirstString(candidates: unknown[]): string {
+  for (const c of candidates) {
+    if (typeof c === 'string' && c !== '') return c;
+  }
+  return '';
+}
+
+function walkResponsesOutput(output: unknown): string[] {
+  const out: string[] = [];
+  if (!Array.isArray(output)) return out;
+  for (const item of output) {
+    if (!item || typeof item !== 'object') continue;
+    const content = (item as { content?: unknown }).content;
+    if (!Array.isArray(content)) continue;
+    for (const block of content) {
+      if (block && typeof block === 'object' && typeof (block as { text?: unknown }).text === 'string') {
+        out.push((block as { text: string }).text);
+      }
+    }
+  }
+  return out;
+}
+
+function walkChatCompletionsContent(choices: unknown): string {
+  if (!Array.isArray(choices) || choices.length === 0) return '';
+  const first = choices[0] as { message?: { content?: unknown } } | undefined;
+  const content = first?.message?.content;
+  return typeof content === 'string' ? content : '';
+}
+
+function extractValuesFromParsed(parsed: unknown): number[] | undefined {
+  // The webhook can either supply `values: number[]` directly, or rely
+  // on the source-mapping `extract` pipeline that the registry-driven
+  // SourceMapper applies inside resolveCompletion when values are
+  // present.  Here we pull values when the model returns them explicitly.
+  if (parsed && typeof parsed === 'object' && Array.isArray((parsed as { values?: unknown }).values)) {
+    const v = (parsed as { values: unknown[] }).values;
+    if (v.every((x) => typeof x === 'number' && Number.isFinite(x))) return v as number[];
+  }
+  return undefined;
+}
+
+// POST /api/integrations/openai/webhook — receives OpenAI-shaped webhook
+// payloads (background Responses runs).  Resolves the original envelope
+// from `metadata.envelopeId / correlationId`, parses the model output
+// text as JSON, applies the source-mapping pipeline, and routes through
+// the in-process completion path so the same source update lands
+// whether the run finished sync or async.
+app.post('/api/integrations/openai/webhook', async (req: Request, res: Response) => {
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+    ? (req.body as Record<string, unknown>)
+    : null;
+  if (!body) {
+    res.status(400).json({ error: 'webhook body must be a JSON object' });
+    return;
+  }
+
+  const metadata = (body['metadata'] && typeof body['metadata'] === 'object' && !Array.isArray(body['metadata']))
+    ? body['metadata'] as Record<string, unknown>
+    : {};
+  const correlationId = typeof metadata['correlationId'] === 'string' ? metadata['correlationId'] : '';
+  const envelopeId = typeof metadata['envelopeId'] === 'string' ? metadata['envelopeId'] : '';
+  const dispatchId = typeof metadata['dispatchId'] === 'string' ? metadata['dispatchId'] : '';
+  // Optional caller-supplied resolution: explicit sourceMappingId wins.
+  const sourceMappingIdRaw = typeof body['sourceMappingId'] === 'string'
+    ? body['sourceMappingId']
+    : '';
+
+  // Pull the model output text out of a Responses-API webhook payload.
+  // Accept either `output_text`, the `output[].content[].text` walk, or
+  // a top-level `text` field for very small payloads.
+  const text = pickFirstString([
+    body['output_text'],
+    body['text'],
+    ...walkResponsesOutput(body['output']),
+    walkChatCompletionsContent(body['choices']),
+  ]);
+  if (text === '') {
+    res.status(400).json({ error: 'webhook payload contained no output text' });
+    return;
+  }
+
+  let parsed: unknown;
+  try { parsed = JSON.parse(text); }
+  catch (err: any) {
+    res.status(400).json({ error: `webhook output was not valid JSON: ${err?.message ?? err}` });
+    return;
+  }
+
+  // Resolve the source mapping.  Order: explicit body.sourceMappingId →
+  // look up via dispatchId on the ledger record → null.
+  // Also pull `agent` from the dispatch record's target so the webhook
+  // produces the same sensorId as the sync path did when first dispatched.
+  let sourceMappingId = sourceMappingIdRaw;
+  let agentDefault = typeof body['agent'] === 'string' ? body['agent'] : '';
+  if (dispatchId !== '') {
+    const rec = dispatchLedger.get(dispatchId);
+    if (!rec) {
+      res.status(404).json({ error: 'webhook references unknown dispatchId' });
+      return;
+    }
+    if (agentDefault === '') agentDefault = rec.target;
+  }
+  if (agentDefault === '') agentDefault = 'openai';
+
+  // Pull values either directly from the parsed payload or via the
+  // mapping's extract+normalize pipeline (same pipeline the adapter
+  // applies on the sync path, so async/sync webhooks land identically).
+  let values = extractValuesFromParsed(parsed);
+  if (!values && sourceMappingId !== '') {
+    const mapping = integrationRegistry.sourceMappingIndex.get(sourceMappingId);
+    if (mapping) {
+      const extract = (mapping.extract ?? { type: 'passthrough' as const }) as ExtractSpec;
+      const normalize = mapping.normalize as NormalizeSpec | undefined;
+      try {
+        values = applyNormalize(applyExtract(parsed, extract), normalize);
+      } catch (err: any) {
+        res.status(400).json({ error: `webhook extract failed: ${err?.message ?? err}` });
+        return;
+      }
+    }
+  }
+  if (!values || values.length === 0) {
+    res.status(400).json({ error: 'webhook produced no commit-able values' });
+    return;
+  }
+
+  // Build the completion body and route through the same internal
+  // helper /api/integrations/completions uses.  This keeps the
+  // wire-shape identical to the sync path.
+  const resolved = resolveCompletion({
+    provider: 'openai',
+    agent: agentDefault,
+    correlationId,
+    envelopeId,
+    completionId: typeof body['id'] === 'string' ? body['id'] : undefined,
+    sourceMappingId: sourceMappingId !== '' ? sourceMappingId : undefined,
+    values,
+    metadata: { ...metadata, raw: parsed },
+  }, integrationRegistry);
+
+  if (!resolved.ok) {
+    res.status(resolved.status).json({ error: resolved.error });
+    return;
+  }
+  const { signal, ctx } = resolved;
+  const result = await ingestSignal({
+    sensorId: signal.sensorId,
+    name: signal.name,
+    region: signal.region,
+    values: signal.values,
+    active: signal.active,
+    ttlMs: signal.ttlMs,
+    triggerPush: false,
+    compactPush: true,
+  });
+  if (result.status < 200 || result.status >= 300) {
+    res.status(result.status).json(result.body);
+    return;
+  }
+
+  const receivedAt = Date.now();
+  broadcast({
+    type: 'agent.completion.received',
+    provider: ctx.provider,
+    agent: ctx.agent,
+    sensorId: signal.sensorId,
+    sourceMappingId: ctx.sourceMappingId,
+    correlationId: ctx.correlationId,
+    envelopeId: ctx.envelopeId,
+    timestamp: receivedAt,
+    source: 'openai.webhook',
+  });
+  res.json({
+    success: true,
+    timestamp: receivedAt,
+    completion: {
+      provider: ctx.provider,
+      agent: ctx.agent,
+      sensorId: signal.sensorId,
+      sourceMappingId: ctx.sourceMappingId,
+      correlationId: ctx.correlationId,
+      envelopeId: ctx.envelopeId,
+      dispatchId,
+      receivedAt,
+    },
+    signal: result.body,
+  });
+});
+
+// POST /api/integrations/healthkit/bridge — receives authenticated batches
+// of HKSample values from the device-resident HealthKit bridge.
+//
+// Each (typeIdentifier × source-name) pair maps to its own sensor source
+// via the integration registry (source mappings keyed by
+// "healthkit:<typeIdentifier>" or "healthkit:<typeIdentifier>:<sourceName>").
+// Unmapped samples are returned in the response as 207-style warnings rather
+// than rejected outright, so well-mapped samples still land.
+//
+// Auth: Bearer <apiKey> on the Authorization header.  The apiKey is taken
+// from the matching integrations[].apiKey field; absent means open (dev-only).
+app.post('/api/integrations/healthkit/bridge', async (req: Request, res: Response) => {
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+    ? (req.body as HKBridgePayload)
+    : null;
+  if (!body || typeof body.bridgeId !== 'string' || body.bridgeId === '') {
+    res.status(400).json({ error: 'body.bridgeId is required' });
+    return;
+  }
+  if (!Array.isArray(body.samples) || body.samples.length === 0) {
+    res.status(400).json({ error: 'body.samples must be a non-empty array' });
+    return;
+  }
+
+  const presentedKey = (() => {
+    const auth = req.headers['authorization'] ?? '';
+    return typeof auth === 'string' && auth.toLowerCase().startsWith('bearer ')
+      ? auth.slice(7).trim()
+      : undefined;
+  })();
+
+  const authResult = checkBridgeAuth(integrationRegistry, body.bridgeId, presentedKey);
+  if (!authResult.ok) {
+    res.status(authResult.status).json({ error: authResult.error });
+    return;
+  }
+
+  const { resolved, unmapped } = resolveHKBatch(body, integrationRegistry);
+
+  const ingested: Array<Record<string, unknown>> = [];
+  const failed: Array<{ sensorId: string; error: string }> = [];
+
+  for (const sample of resolved) {
+    const result = await ingestSignal({
+      sensorId: sample.sensorId,
+      name: sample.name,
+      region: sample.region,
+      values: sample.values,
+      active: true,
+      ttlMs: sample.ttlMs,
+      triggerPush: false,
+      compactPush: false,
+    });
+    if (result.status >= 200 && result.status < 300) {
+      ingested.push({ sensorId: sample.sensorId, origin: sample.origin });
+    } else {
+      failed.push({ sensorId: sample.sensorId, error: String((result.body as Record<string, unknown>)['error'] ?? result.status) });
+    }
+  }
+
+  if (ingested.length > 0) void doPush();
+
+  const status = failed.length > 0 || unmapped.length > 0 ? 207 : 200;
+  res.status(status).json({
+    success: ingested.length > 0,
+    bridgeId: body.bridgeId,
+    anchorToken: body.anchorToken,
+    ingested,
+    failed,
+    unmapped,
+  });
+});
+
+// POST /api/integrations/completions — provider-neutral adapter that
+// resolves a sourceMappingId (or inline mapping) and routes through
+// ingestSignal().  Default behaviour is commit-only (triggerPush:false).
+app.post('/api/integrations/completions', async (req: Request, res: Response) => {
+  const resolved = resolveCompletion(req.body as CompletionRequest, integrationRegistry);
+  if (!resolved.ok) {
+    res.status(resolved.status).json({ error: resolved.error });
+    return;
+  }
+  const { signal, ctx } = resolved;
+
+  const result = await ingestSignal({
+    sensorId: signal.sensorId,
+    name: signal.name,
+    region: signal.region,
+    values: signal.values,
+    active: signal.active,
+    ttlMs: signal.ttlMs,
+    triggerPush: signal.triggerPush,
+    compactPush: signal.compactPush,
+  } satisfies SignalIngestBody as SignalIngestBody);
+
+  if (result.status < 200 || result.status >= 300) {
+    res.status(result.status).json(result.body);
+    return;
+  }
+
+  const receivedAt = Date.now();
+  const completion: Record<string, unknown> = {
+    provider: ctx.provider,
+    agent: ctx.agent,
+    sensorId: signal.sensorId,
+    sourceMappingId: ctx.sourceMappingId,
+    correlationId: ctx.correlationId,
+    envelopeId: ctx.envelopeId,
+    completionId: ctx.completionId,
+    receivedAt,
+  };
+  if (ctx.metadata) completion.metadata = ctx.metadata;
+
+  // Wire-compatible with C++ broadcast in ingest_completion().  The
+  // visualizer (Phase 6) subscribes to this event to refresh the ledger
+  // drawer and flash the affected machine's tooltip.
+  broadcast({
+    type: 'agent.completion.received',
+    provider: ctx.provider,
+    agent: ctx.agent,
+    sensorId: signal.sensorId,
+    sourceMappingId: ctx.sourceMappingId,
+    correlationId: ctx.correlationId,
+    envelopeId: ctx.envelopeId,
+    timestamp: receivedAt,
+  });
+
+  res.json({
+    success: true,
+    timestamp: receivedAt,
+    completion,
+    signal: result.body,
+  });
 });
 
 // Manual push
@@ -911,6 +1634,14 @@ app.post('/api/mqtt/disable', async (_req: Request, res: Response) => {
 // registry the demo binaries use.
 app.get('/api/mqtt/example', (_req: Request, res: Response) => {
   res.json(EXAMPLE_MAPPINGS_JSON);
+});
+
+// GET /api/integrations/healthkit/example — bundled starter integration
+// registry for the 12 most common HealthKit types.  Operators can save
+// this as config/integrations.json (adding their own apiKey) and pass
+// INTEGRATIONS_CONFIG=config/integrations.json to the PE.
+app.get('/api/integrations/healthkit/example', (_req: Request, res: Response) => {
+  res.json(EXAMPLE_HK_REGISTRY_JSON);
 });
 
 // Machine listing — proxy from Reality Engine for use in the add-source form
