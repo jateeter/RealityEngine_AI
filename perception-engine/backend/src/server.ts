@@ -35,6 +35,10 @@ import {
   resolveHKBatch, checkBridgeAuth,
 } from './integrations/adapters/HealthKitBridge.js';
 import type { HKBridgePayload } from './integrations/adapters/HealthKitBridge.js';
+import {
+  resolveCKBatch, checkCareKitAuth, buildCKStatusBody,
+} from './integrations/adapters/CareKitBridge.js';
+import type { CKIngestPayload } from './integrations/adapters/CareKitBridge.js';
 
 // Bundled example mapping registry — served by GET /api/mqtt/example so
 // the PE visualizer's MqttConfigModal can offer a "Load example" button
@@ -87,6 +91,33 @@ const EXAMPLE_HK_REGISTRY_JSON = {
     { id: 'healthkit:HKCategoryTypeIdentifierSleepAnalysis',            name: 'Sleep Analysis',          region: { offset: 311, length: 1 }, ttlMs: 86_400_000, normalize: { mode: 'passthrough', clamp: true } },
     { id: 'healthkit:HKQuantityTypeIdentifierBodyTemperature',          name: 'Body Temperature',        region: { offset: 312, length: 1 }, ttlMs: 3_600_000, normalize: { mode: 'minmax', min: 96,   max: 100  } },
     { id: 'healthkit:HKQuantityTypeIdentifierBloodGlucose',             name: 'Blood Glucose',           region: { offset: 313, length: 1 }, ttlMs: 3_600_000, normalize: { mode: 'minmax', min: 70,   max: 180  } },
+  ],
+};
+
+// Bundled CareKit bridge example registry — served by
+// GET /api/integrations/carekit/example.  Wire-compatible with CPP and LSP:
+// offset 4310, length 4 matching all three reference implementations.
+const EXAMPLE_CK_REGISTRY_JSON = {
+  version: '1.0',
+  integrations: [
+    { id: 'carekit-ios-bridge', kind: 'carekit', enabled: false,
+      bridgeId: 'carekit-ios-bridge', defaultSourceMappingId: 'carekit-task', transport: 'https' },
+  ],
+  sourceMappings: [
+    { id: 'carekit-task',
+      sensorIdTemplate: 'carekit.{sampleType}',
+      region: { offset: 4310, length: 4 },
+      extract: { type: 'json', pointers: ['/completed', '/missed', '/adherence', '/confidence'] },
+      normalize: { mode: 'passthrough', clamp: true },
+      ttlMs: 900_000,
+      pushMode: 'debounced', debounceMs: 250 },
+    { id: 'carekit-outcome',
+      sensorIdTemplate: 'carekit.{sampleType}.{taskId}',
+      region: { offset: 4314, length: 4 },
+      extract: { type: 'json', pointers: ['/value', '/progress', '/confidence', '/class'] },
+      normalize: { mode: 'passthrough', clamp: true },
+      ttlMs: 900_000,
+      pushMode: 'debounced', debounceMs: 250 },
   ],
 };
 
@@ -164,6 +195,11 @@ console.log(
 // envelope per qualifying mergeOp.  Fire-and-record only — never blocks the
 // PE cycle and never calls a provider.  See docs/INTEGRATION_ROADMAP.md
 // §Phase 2 and the wire contract in RealityEngine_CPP::dispatch_triggers.
+// CareKit bridge — env vars match CPP / LSP defaults exactly.
+const careKitBridgeId = process.env['CAREKIT_BRIDGE_ID'] ?? 'carekit-ios-bridge';
+const careKitDefaultSourceMappingId = process.env['CAREKIT_DEFAULT_SOURCE_MAPPING_ID'] ?? 'carekit-task';
+const careKitBridgeToken = process.env['CAREKIT_BRIDGE_TOKEN'] ?? '';
+
 const triggersEnabled = (process.env['TRIGGERS_ENABLED'] ?? '').toLowerCase() === 'true'
   || process.env['TRIGGERS_ENABLED'] === '1';
 const triggerDispatchMode = process.env['TRIGGER_DISPATCH_MODE'] ?? 'dry-run';
@@ -1295,6 +1331,110 @@ app.post('/api/integrations/healthkit/bridge', async (req: Request, res: Respons
   });
 });
 
+// ── CareKit bridge ────────────────────────────────────────────────────────────
+// Wire-compatible with RealityEngine_CPP (ingest_carekit / carekit_status) and
+// RealityEngine_LSP (ingest-carekit / carekit-status-json).
+//
+// Auth: optional bridgeToken field in the request body (matches CPP / LSP).
+// The native Apple app owns the CareKit store; PE receives pre-normalised
+// task/outcome payloads and maps each onto a sensor source.
+
+// GET /api/integrations/carekit/status — bridge configuration + contract info.
+app.get('/api/integrations/carekit/status', (_req: Request, res: Response) => {
+  // Registry entry wins over env vars when present.
+  const integrations = Array.isArray(integrationRegistry.config.integrations)
+    ? (integrationRegistry.config.integrations as Array<Record<string, unknown>>)
+    : [];
+  const entry = integrations.find((i) => i['kind'] === 'carekit');
+  const effectiveBridgeId = typeof entry?.['bridgeId'] === 'string' ? entry['bridgeId'] : careKitBridgeId;
+  const effectiveMappingId = typeof entry?.['defaultSourceMappingId'] === 'string'
+    ? entry['defaultSourceMappingId'] : careKitDefaultSourceMappingId;
+  const tokenConfigured = careKitBridgeToken !== '' || typeof entry?.['bridgeToken'] === 'string';
+  res.json(buildCKStatusBody(effectiveBridgeId, effectiveMappingId, tokenConfigured));
+});
+
+// POST /api/integrations/carekit/ingest — single sample or batch.
+// Resolves each sample through the registry source mappings, applies the
+// normalize pipeline, and ingests via the same in-process path as all other
+// providers.  Returns 200 on full success, 207 on partial batch failure.
+app.post('/api/integrations/carekit/ingest', async (req: Request, res: Response) => {
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+    ? (req.body as CKIngestPayload)
+    : null;
+  if (!body) {
+    res.status(400).json({ error: 'CareKit ingest body must be a JSON object' });
+    return;
+  }
+
+  // Registry entry bridgeToken overrides env var (allows per-bridge tokens).
+  const integrations = Array.isArray(integrationRegistry.config.integrations)
+    ? (integrationRegistry.config.integrations as Array<Record<string, unknown>>)
+    : [];
+  const entry = integrations.find((i) => i['kind'] === 'carekit');
+  const effectiveBridgeId = typeof entry?.['bridgeId'] === 'string' ? entry['bridgeId'] : careKitBridgeId;
+  const effectiveMappingId = typeof entry?.['defaultSourceMappingId'] === 'string'
+    ? entry['defaultSourceMappingId'] : careKitDefaultSourceMappingId;
+  const expectedToken = (typeof entry?.['bridgeToken'] === 'string' && entry['bridgeToken'] !== '')
+    ? entry['bridgeToken'] as string
+    : careKitBridgeToken !== '' ? careKitBridgeToken : undefined;
+
+  if (!checkCareKitAuth(expectedToken, body)) {
+    res.status(401).json({ error: 'CareKit bridge token rejected' });
+    return;
+  }
+
+  const { results } = resolveCKBatch(body, integrationRegistry, effectiveBridgeId, effectiveMappingId);
+
+  const ingested: Array<Record<string, unknown>> = [];
+  const failed: Array<{ sampleType: string; reason: string }> = [];
+
+  for (const r of results) {
+    if (!r.success) {
+      failed.push({ sampleType: r.sampleType, reason: r.reason });
+      continue;
+    }
+    const ingestResult = await ingestSignal({
+      sensorId: r.sensorId,
+      region: r.region,
+      values: r.values,
+      active: true,
+      ttlMs: r.ttlMs,
+      triggerPush: false,
+      compactPush: true,
+    });
+    if (ingestResult.status >= 200 && ingestResult.status < 300) {
+      ingested.push({
+        sampleType: r.sampleType,
+        taskId: r.taskId,
+        carePlanId: r.carePlanId,
+        sourceMappingId: r.sourceMappingId,
+        sensorId: r.sensorId,
+      });
+    } else {
+      failed.push({ sampleType: r.sampleType, reason: String((ingestResult.body as Record<string, unknown>)['error'] ?? ingestResult.status) });
+    }
+  }
+
+  if (ingested.length > 0) void doPush();
+
+  broadcast({
+    type: 'carekit.ingest',
+    bridgeId: effectiveBridgeId,
+    samples: results.length,
+    success: failed.length === 0,
+    timestamp: Date.now(),
+  });
+
+  const httpStatus = failed.length > 0 && ingested.length > 0 ? 207
+    : failed.length > 0 ? (ingested.length === 0 ? 400 : 207) : 200;
+
+  res.status(httpStatus).json({
+    success: failed.length === 0,
+    bridgeId: effectiveBridgeId,
+    results: [...ingested.map((r) => ({ ...r, success: true })), ...failed.map((r) => ({ ...r, success: false }))],
+  });
+});
+
 // POST /api/integrations/completions — provider-neutral adapter that
 // resolves a sourceMappingId (or inline mapping) and routes through
 // ingestSignal().  Default behaviour is commit-only (triggerPush:false).
@@ -1642,6 +1782,12 @@ app.get('/api/mqtt/example', (_req: Request, res: Response) => {
 // INTEGRATIONS_CONFIG=config/integrations.json to the PE.
 app.get('/api/integrations/healthkit/example', (_req: Request, res: Response) => {
   res.json(EXAMPLE_HK_REGISTRY_JSON);
+});
+
+// GET /api/integrations/carekit/example — bundled starter registry.
+// Wire-compatible with CPP / LSP: offset 4310, two standard source mappings.
+app.get('/api/integrations/carekit/example', (_req: Request, res: Response) => {
+  res.json(EXAMPLE_CK_REGISTRY_JSON);
 });
 
 // Machine listing — proxy from Reality Engine for use in the add-source form

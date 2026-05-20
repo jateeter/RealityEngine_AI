@@ -61,6 +61,15 @@
       "defaultSourceMappingId": "healthkit-activity",
       "transport": "https",
       "sourceMappingsFile": "config/healthkit-mappings.example.json"
+    },
+    {
+      "id": "carekit-ios-bridge",
+      "kind": "carekit",
+      "enabled": false,
+      "bridgeId": "carekit-ios-bridge",
+      "defaultSourceMappingId": "carekit-task",
+      "transport": "https",
+      "_comment": "Native Apple app owns the CareKit store. PE receives pre-normalised task/outcome payloads only. Set CAREKIT_BRIDGE_TOKEN for shared-secret auth."
     }
   ],
   "sourceMappings": [
@@ -84,6 +93,31 @@
       "extract": {
         "type": "json",
         "pointers": ["/normalizedValue", "/trend", "/confidence", "/sourceClass"]
+      },
+      "normalize": { "mode": "passthrough", "clamp": true },
+      "ttlMs": 900000,
+      "pushMode": "debounced",
+      "debounceMs": 250
+    },
+    {
+      "id": "carekit-task",
+      "sensorIdTemplate": "carekit.{taskId}.{sampleType}",
+      "region": { "offset": 4310, "length": 4 },
+      "extract": {
+        "type": "json",
+        "pointers": ["/completed", "/missed", "/adherence", "/confidence"]
+      },
+      "normalize": { "mode": "passthrough", "clamp": true },
+      "ttlMs": 900000,
+      "pushMode": "debounced",
+      "debounceMs": 250
+    },
+    {
+      "id": "carekit-outcome",
+      "region": { "offset": 4314, "length": 4 },
+      "extract": {
+        "type": "json",
+        "pointers": ["/value", "/adherenceValue", "/trend", "/confidence"]
       },
       "normalize": { "mode": "passthrough", "clamp": true },
       "ttlMs": 900000,
