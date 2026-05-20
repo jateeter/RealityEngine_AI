@@ -70,6 +70,10 @@ export interface InputSequenceJSON {
   description?: string;
   vectors: number[][];
   metadata?: Record<string, any>;
+  // When false the PE test source created from this sequence will not loop.
+  // Omitting the field (or setting true) is the default: the concatenated
+  // sequence restarts from step 0 upon completion.
+  recur?: boolean;
 }
 
 /**

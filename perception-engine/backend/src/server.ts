@@ -583,7 +583,7 @@ function resetAndBroadcast(): void {
 interface MachineSummary {
   id: string;
   name: string;
-  metadata?: { inputSequences?: Array<{ name: string; vectors: number[][] }> };
+  metadata?: { inputSequences?: Array<{ name: string; vectors: number[][]; recur?: boolean }> };
   perceptualMapping?: { input?: { offset: number; length: number } };
 }
 
@@ -706,7 +706,8 @@ async function bootstrapMachineTestSources(
       sequenceName: segmentLabel,
       segments,
       inputs: concatVectors,
-      loop: true,
+      // Loop unless every sequence explicitly opts out via recur:false.
+      loop: !inputSequences.every(s => s.recur === false),
     };
     engine.addSource(config);
     existingMachineIds.add(machineId);
@@ -736,6 +737,17 @@ async function bootstrapWithRetry(maxAttempts: number = 60, delayMs: number = 20
       );
       if (result.errors.length > 0) {
         for (const e of result.errors) console.warn(`[bootstrap] ${e}`);
+      }
+      // Start the push loop so machine test sequences actually advance and
+      // recur.  Sources are created with loop derived from their recur field
+      // (default true); advance() resets the step counter at the sequence
+      // boundary.  Skip if the operator already started the timer manually.
+      const loopingSources = engine.getSources().filter(
+        (s): s is TestSourceConfig => s.type === 'test' && s.active && (s as TestSourceConfig).loop !== false,
+      );
+      if (loopingSources.length > 0 && autoTimer === null) {
+        startAuto(autoIntervalMs);
+        console.log(`[bootstrap] auto-push started (${autoIntervalMs}ms) — ${loopingSources.length} machine source(s) will recur`);
       }
       return;
     } catch (err: any) {
