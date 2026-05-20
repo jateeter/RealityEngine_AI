@@ -1358,8 +1358,7 @@ app.post('/api/integrations/carekit/ingest', async (req: Request, res: Response)
     timestamp: Date.now(),
   });
 
-  const httpStatus = failed.length > 0 && ingested.length > 0 ? 207
-    : failed.length > 0 ? (ingested.length === 0 ? 400 : 207) : 200;
+  const httpStatus = failed.length === 0 ? 200 : 207;
 
   res.status(httpStatus).json({
     success: failed.length === 0,
