@@ -20,6 +20,7 @@ RE_DIR="$SCRIPT_DIR"
 LAS_DIR="$SCRIPT_DIR/../localAIStack"
 CPP_DIR="$SCRIPT_DIR/../RealityEngine_CPP"
 LSP_DIR="$SCRIPT_DIR/../RealityEngine_LSP"
+OCS_DIR="$SCRIPT_DIR/../localOpenClawStack"
 
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
 ok()   { echo -e "${GREEN}✓${NC} $*"; }
@@ -51,16 +52,34 @@ done
 # CLI values (set before this point) aren't clobbered.
 STAMPED_RE_ENGINE=""
 STAMPED_PE_ENGINE=""
+STAMPED_OPENCLAW="auto"
 if [ -f "$RE_DIR/.universe-engine-selection" ]; then
   while IFS='=' read -r k v; do
     case "$k" in
       RE_ENGINE) STAMPED_RE_ENGINE="$v" ;;
       PE_ENGINE) STAMPED_PE_ENGINE="$v" ;;
+      OPENCLAW)  STAMPED_OPENCLAW="$v" ;;
     esac
   done < "$RE_DIR/.universe-engine-selection"
 fi
 RE_ENGINE="${RE_ENGINE:-${STAMPED_RE_ENGINE:-ai}}"
 PE_ENGINE="${PE_ENGINE:-${STAMPED_PE_ENGINE:-ai}}"
+
+stop_openclaw_stack() {
+  local stamp="${1:-auto}"
+  if [ "$stamp" = "no" ]; then
+    info "OpenClaw: was not started — skipping"
+    return 0
+  fi
+  if [ -d "$OCS_DIR" ] && [ -f "$OCS_DIR/docker-compose.yml" ]; then
+    info "Stopping OpenClaw stack"
+    (cd "$OCS_DIR" && docker compose down 2>/dev/null) || \
+      warn "OpenClaw docker compose down returned non-zero"
+    ok "OpenClaw compose down complete"
+  else
+    info "OpenClaw: not found at $OCS_DIR — nothing to stop"
+  fi
+}
 
 stop_native_engine() {
   local engine_dir="$1" engine_name="$2"
@@ -74,6 +93,7 @@ stop_native_engine() {
 }
 
 stop_ai_stack() {
+  stop_openclaw_stack "$STAMPED_OPENCLAW"
   info "Stopping AI Docker stack"
   if [ -d "$RE_DIR" ] && [ -f "$RE_DIR/docker-compose.yml" ]; then
     (cd "$RE_DIR" && docker compose down 2>/dev/null) || warn "RE docker compose down returned non-zero"

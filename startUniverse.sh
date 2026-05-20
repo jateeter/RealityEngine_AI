@@ -6,14 +6,15 @@
 # pointed at the CPP or LSP runtimes via --re-engine / --pe-engine.
 #
 # AI path (default) runs the dependency-safe sequence:
-#   1  Pre-flight     — docker compose v2, certs, orphaned container cleanup
-#   2  Ollama         — native LLM runtime
-#   3  Infrastructure — RE Loki + localAIStack Qdrant + Redis
-#   4  RealityEngine  — Scala/Akka stack (consumes Qdrant at :4333)
-#   5  localAIStack API — FastAPI lifespan hooks register sensors + machines
-#   6  Integration    — verify machines, sensors, and Qdrant collections
-#   7  Operability    — live smoke-tests: perceive, RAG health, sensor write
-#   8  Summary
+#   1    Pre-flight     — docker compose v2, certs, orphaned container cleanup
+#   2    Ollama         — native LLM runtime
+#   3    Infrastructure — RE Loki + localAIStack Qdrant + Redis
+#   4    RealityEngine  — Scala/Akka stack (consumes Qdrant at :4333)
+#   5    localAIStack API — FastAPI lifespan hooks register sensors + machines
+#   5.5  OpenClaw       — optional ACP xACP gateway + Open WebUI (auto-detected)
+#   6    Integration    — verify machines, sensors, and Qdrant collections
+#   7    Operability    — live smoke-tests: perceive, RAG health, sensor write
+#   8    Summary
 #
 # When --re-engine or --pe-engine is set to cpp or lsp, this script short-
 # circuits to that runtime's native start.sh (no Docker, no localAIStack).
@@ -22,12 +23,14 @@
 #                            [--pe-engine=ai|cpp|lsp]
 #                            [--mqtt-broker-url=URL]
 #                            [--mqtt-mappings=PATH]
+#                            [--openclaw] [--no-openclaw]
 #                            [--help]
 #
 # Examples:
 #   ./startUniverse.sh                                    # full AI stack
 #   ./startUniverse.sh --re-engine=cpp --pe-engine=cpp    # native C++ binaries
 #   ./startUniverse.sh --re-engine=lsp --pe-engine=lsp    # Common Lisp
+#   ./startUniverse.sh --no-openclaw                      # skip OpenClaw even if configured
 #   ./startUniverse.sh --re-engine=cpp \                  # MQTT bridge enabled
 #       --mqtt-broker-url=mqtt://broker:1883 \
 #       --mqtt-mappings=$PWD/../RealityEngine_CPP/config/mqtt-mappings.yuma-agriculture.json
@@ -43,6 +46,7 @@ RE_DIR="$SCRIPT_DIR"
 LAS_DIR="$SCRIPT_DIR/../localAIStack"
 CPP_DIR="$SCRIPT_DIR/../RealityEngine_CPP"
 LSP_DIR="$SCRIPT_DIR/../RealityEngine_LSP"
+OCS_DIR="$SCRIPT_DIR/../localOpenClawStack"
 
 # ── flags ──────────────────────────────────────────────────────────────────
 FRESH_START=false
@@ -50,6 +54,7 @@ RE_ENGINE="${RE_ENGINE:-ai}"       # ai | cpp | lsp   (default ai)
 PE_ENGINE="${PE_ENGINE:-ai}"       # ai | cpp | lsp   (default ai)
 MQTT_BROKER_URL_OVERRIDE=""
 MQTT_MAPPINGS_OVERRIDE=""
+OPENCLAW="${OPENCLAW:-auto}"       # auto | yes | no
 
 print_engine_usage() {
   cat <<'USAGE'
@@ -60,12 +65,15 @@ startUniverse.sh — engine-selectable unified startup
   --pe-engine=ai|cpp|lsp        Perception Engine implementation (default: ai)
   --mqtt-broker-url=URL         MQTT_BROKER_URL (AI) / parsed for CPP/LSP
   --mqtt-mappings=PATH          MQTT_MAPPINGS_FILE — registry projecting topics into PE
+  --openclaw                    Force-start OpenClaw even if auto-detect would skip it
+  --no-openclaw                 Skip OpenClaw startup even if .env is configured
   --help                        Show this message
 
 Examples:
   ./startUniverse.sh
   ./startUniverse.sh --re-engine=cpp --pe-engine=cpp
   ./startUniverse.sh --re-engine=lsp --pe-engine=lsp
+  ./startUniverse.sh --no-openclaw
 USAGE
 }
 
@@ -76,6 +84,8 @@ for arg in "$@"; do
     --pe-engine=*)          PE_ENGINE="${arg#*=}" ;;
     --mqtt-broker-url=*)    MQTT_BROKER_URL_OVERRIDE="${arg#*=}" ;;
     --mqtt-mappings=*)      MQTT_MAPPINGS_OVERRIDE="${arg#*=}" ;;
+    --openclaw)             OPENCLAW=yes ;;
+    --no-openclaw)          OPENCLAW=no ;;
     --help|-h)              print_engine_usage; exit 0 ;;
     *)                      echo "Unknown argument: $arg"; print_engine_usage; exit 2 ;;
   esac
@@ -89,6 +99,7 @@ case "$PE_ENGINE" in ai|cpp|lsp) ;; *) echo "Bad --pe-engine=$PE_ENGINE (expecte
 cat > "$RE_DIR/.universe-engine-selection" <<EOF
 RE_ENGINE=$RE_ENGINE
 PE_ENGINE=$PE_ENGINE
+OPENCLAW=$OPENCLAW
 STARTED_AT=$(date -u +%FT%TZ)
 EOF
 
@@ -313,6 +324,13 @@ else
     ok "localAIStack container state clean"
 fi
 
+# OpenClaw container cleanup — always sweep regardless of OPENCLAW flag so
+# a previous run's leftovers never cause a name collision on next start.
+if [ -d "$OCS_DIR" ] && [ -f "$OCS_DIR/docker-compose.yml" ]; then
+    (cd "$OCS_DIR" && docker compose down 2>/dev/null) || true
+    docker rm -f openclaw-gateway open-webui browser > /dev/null 2>&1 || true
+fi
+
 # Settle time for Docker Desktop VirtioFS file-lock release after container removal
 sleep 2
 
@@ -527,6 +545,83 @@ for k, v in h.items():
 set -e
 
 # =============================================================================
+hdr "5.5 · OpenClaw  (ACP xACP gateway + Open WebUI)"
+# =============================================================================
+
+OCS_STARTED=false
+OCS_GW_PORT=18789
+OCS_UI_PORT=8080
+
+if [ "$OPENCLAW" = "no" ]; then
+    info "OpenClaw: skipped (--no-openclaw)"
+else
+    _ocs_ok=false
+    if [ ! -d "$OCS_DIR" ] || [ ! -f "$OCS_DIR/docker-compose.yml" ]; then
+        if [ "$OPENCLAW" = "yes" ]; then
+            die "OpenClaw repo not found at $OCS_DIR — clone it alongside RealityEngine_AI and retry"
+        else
+            info "OpenClaw: repo not found at $OCS_DIR — skipping (use --openclaw to require it)"
+        fi
+    elif [ ! -f "$OCS_DIR/.env" ]; then
+        if [ "$OPENCLAW" = "yes" ]; then
+            die "OpenClaw .env missing — copy $OCS_DIR/.env.example and set OPENCLAW_GATEWAY_TOKEN"
+        else
+            info "OpenClaw: .env not configured — skipping"
+            info "  To enable:  cp $OCS_DIR/.env.example $OCS_DIR/.env  then edit OPENCLAW_GATEWAY_TOKEN"
+        fi
+    else
+        _ocs_token=$(grep -E '^OPENCLAW_GATEWAY_TOKEN=' "$OCS_DIR/.env" 2>/dev/null \
+            | tail -1 | cut -d= -f2- || true)
+        if [ -z "$_ocs_token" ] || [ "$_ocs_token" = "change-me-to-a-random-secret" ]; then
+            if [ "$OPENCLAW" = "yes" ]; then
+                die "OPENCLAW_GATEWAY_TOKEN not set in $OCS_DIR/.env — edit it before starting"
+            else
+                info "OpenClaw: OPENCLAW_GATEWAY_TOKEN not configured — skipping"
+            fi
+        else
+            _ocs_ok=true
+            # Honour port overrides from .env
+            _p=$(grep -E '^OPENCLAW_GATEWAY_PORT=' "$OCS_DIR/.env" 2>/dev/null \
+                | tail -1 | cut -d= -f2- || true)
+            [ -n "$_p" ] && OCS_GW_PORT="$_p"
+            _p=$(grep -E '^OPEN_WEBUI_PORT=' "$OCS_DIR/.env" 2>/dev/null \
+                | tail -1 | cut -d= -f2- || true)
+            [ -n "$_p" ] && OCS_UI_PORT="$_p"
+        fi
+    fi
+
+    if [ "$_ocs_ok" = true ]; then
+        info "Starting OpenClaw (gateway :$OCS_GW_PORT, webui :$OCS_UI_PORT)..."
+        (cd "$OCS_DIR" && docker compose up -d \
+            2>/tmp/ocs_start_err.log) > /dev/null || \
+            die "OpenClaw docker compose up failed\n$(tail -5 /tmp/ocs_start_err.log 2>/dev/null)\n  Check:  docker logs openclaw-gateway"
+
+        info "Waiting for openclaw-gateway..."
+        if poll_http "http://localhost:${OCS_GW_PORT}/healthz" \
+                "openclaw-gateway ready" 30 "-sf"; then
+            OCS_STARTED=true
+            # Best-effort webui poll (no healthcheck in compose)
+            info "Waiting for open-webui..."
+            _n=0
+            while [ "$_n" -lt 20 ]; do
+                _s=$(curl -so /dev/null -w "%{http_code}" \
+                    "http://localhost:${OCS_UI_PORT}/" 2>/dev/null || true)
+                case "$_s" in 200|302) ok "open-webui ready"; break ;; esac
+                _n=$((_n+1)); echo -n "."; sleep 3
+            done
+            echo ""
+            [ "$_n" -ge 20 ] && {
+                add_warn "open-webui (:$OCS_UI_PORT) did not respond — check:  docker logs open-webui"
+                warn "open-webui health check timed out"
+            }
+        else
+            add_warn "openclaw-gateway (:$OCS_GW_PORT) did not respond — check:  docker logs openclaw-gateway"
+            warn "openclaw-gateway health check timed out"
+        fi
+    fi
+fi
+
+# =============================================================================
 hdr "6 · Integration Verification"
 # =============================================================================
 # The lifespan hooks are async and may still be completing.  Retry up to 3 times
@@ -734,6 +829,13 @@ printf "    %-30s %s\n" "Open WebUI (Chat)"         "http://localhost:4080"
 printf "    %-30s %s\n" "Qdrant Dashboard"          "http://localhost:4333/dashboard"
 printf "    %-30s %s\n" "Ollama"                    "http://localhost:11434"
 echo ""
+if [ "$OCS_STARTED" = true ]; then
+echo "  OpenClaw"
+printf "    %-30s %s\n" "ACP xACP Gateway"          "http://localhost:${OCS_GW_PORT}"
+printf "    %-30s %s\n" "Open WebUI (Chat)"         "http://localhost:${OCS_UI_PORT}"
+printf "    %-30s %s\n" "API key"                   "OPENCLAW_GATEWAY_TOKEN in $OCS_DIR/.env"
+echo ""
+fi
 echo "  RealityEngine"
 printf "    %-30s %s\n" "API"                       "https://localhost:3000"
 printf "    %-30s %s\n" "Visualizer"                "https://localhost:5173"
