@@ -1258,78 +1258,11 @@ app.post('/api/integrations/openai/webhook', async (req: Request, res: Response)
   });
 });
 
-// POST /api/integrations/healthkit/bridge — receives authenticated batches
-// of HKSample values from the device-resident HealthKit bridge.
-//
-// Each (typeIdentifier × source-name) pair maps to its own sensor source
-// via the integration registry (source mappings keyed by
-// "healthkit:<typeIdentifier>" or "healthkit:<typeIdentifier>:<sourceName>").
-// Unmapped samples are returned in the response as 207-style warnings rather
-// than rejected outright, so well-mapped samples still land.
-//
-// Auth: Bearer <apiKey> on the Authorization header.  The apiKey is taken
-// from the matching integrations[].apiKey field; absent means open (dev-only).
-app.post('/api/integrations/healthkit/bridge', async (req: Request, res: Response) => {
-  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
-    ? (req.body as HKBridgePayload)
-    : null;
-  if (!body || typeof body.bridgeId !== 'string' || body.bridgeId === '') {
-    res.status(400).json({ error: 'body.bridgeId is required' });
-    return;
-  }
-  if (!Array.isArray(body.samples) || body.samples.length === 0) {
-    res.status(400).json({ error: 'body.samples must be a non-empty array' });
-    return;
-  }
-
-  const presentedKey = (() => {
-    const auth = req.headers['authorization'] ?? '';
-    return typeof auth === 'string' && auth.toLowerCase().startsWith('bearer ')
-      ? auth.slice(7).trim()
-      : undefined;
-  })();
-
-  const authResult = checkBridgeAuth(integrationRegistry, body.bridgeId, presentedKey);
-  if (!authResult.ok) {
-    res.status(authResult.status).json({ error: authResult.error });
-    return;
-  }
-
-  const { resolved, unmapped } = resolveHKBatch(body, integrationRegistry);
-
-  const ingested: Array<Record<string, unknown>> = [];
-  const failed: Array<{ sensorId: string; error: string }> = [];
-
-  for (const sample of resolved) {
-    const result = await ingestSignal({
-      sensorId: sample.sensorId,
-      name: sample.name,
-      region: sample.region,
-      values: sample.values,
-      active: true,
-      ttlMs: sample.ttlMs,
-      triggerPush: false,
-      compactPush: false,
-    });
-    if (result.status >= 200 && result.status < 300) {
-      ingested.push({ sensorId: sample.sensorId, origin: sample.origin });
-    } else {
-      failed.push({ sensorId: sample.sensorId, error: String((result.body as Record<string, unknown>)['error'] ?? result.status) });
-    }
-  }
-
-  if (ingested.length > 0) void doPush();
-
-  const status = failed.length > 0 || unmapped.length > 0 ? 207 : 200;
-  res.status(status).json({
-    success: ingested.length > 0,
-    bridgeId: body.bridgeId,
-    anchorToken: body.anchorToken,
-    ingested,
-    failed,
-    unmapped,
-  });
-});
+// POST /api/integrations/healthkit/bridge — compat alias for /ingest.
+// Canonical path is /api/integrations/healthkit/ingest (defined below);
+// existing clients that already use /bridge continue to work unchanged.
+app.post('/api/integrations/healthkit/bridge', (req: Request, res: Response) =>
+  handleHealthKitIngest(req, res));
 
 // ── CareKit bridge ────────────────────────────────────────────────────────────
 // Wire-compatible with RealityEngine_CPP (ingest_carekit / carekit_status) and
@@ -1434,6 +1367,241 @@ app.post('/api/integrations/carekit/ingest', async (req: Request, res: Response)
     results: [...ingested.map((r) => ({ ...r, success: true })), ...failed.map((r) => ({ ...r, success: false }))],
   });
 });
+
+// ── Ollama provider surface ───────────────────────────────────────────────────
+// Wire-compatible with RealityEngine_CPP (ollama_status / ollama_dispatch) and
+// RealityEngine_LSP (ollama-status-json / ollama-dispatch-json).
+
+// GET /api/integrations/ollama/status — configuration + reachability probe.
+app.get('/api/integrations/ollama/status', async (_req: Request, res: Response) => {
+  const integrations = Array.isArray(integrationRegistry.config.integrations)
+    ? (integrationRegistry.config.integrations as Array<Record<string, unknown>>)
+    : [];
+  const entry = integrations.find((i) => i['kind'] === 'ollama');
+  const baseUrl = (typeof entry?.['baseUrl'] === 'string' ? entry['baseUrl']
+    : process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434').replace(/\/$/, '');
+  const model = typeof entry?.['model'] === 'string' ? entry['model']
+    : process.env['OLLAMA_MODEL'] ?? '';
+  const completionSourceMappingId = typeof entry?.['completionSourceMappingId'] === 'string'
+    ? entry['completionSourceMappingId']
+    : process.env['OLLAMA_COMPLETION_SOURCE_MAPPING_ID'] ?? '';
+
+  let reachable = false;
+  let tags: string[] = [];
+  let probeError: string | undefined;
+  try {
+    const resp = await axios.get<{ models?: Array<{ name?: string }> }>(
+      `${baseUrl}/api/tags`, { timeout: 3000 });
+    reachable = resp.status >= 200 && resp.status < 300;
+    tags = (Array.isArray(resp.data?.models) ? resp.data.models : [])
+      .map((m) => (typeof m?.name === 'string' ? m.name : ''))
+      .filter(Boolean);
+  } catch (err: any) {
+    probeError = err?.message ?? String(err);
+  }
+
+  const body: Record<string, unknown> = {
+    baseUrl,
+    model,
+    completionSourceMappingId,
+    reachable,
+    tags,
+    statusEndpoint: '/api/integrations/ollama/status',
+    dispatchEndpoint: '/api/integrations/ollama/dispatch',
+  };
+  if (probeError) body['error'] = probeError;
+  res.json(body);
+});
+
+// POST /api/integrations/ollama/dispatch — manually fire a ledger record through
+// the Ollama adapter (awaited, returns receipt).  Body: { id: string }.
+app.post('/api/integrations/ollama/dispatch', async (req: Request, res: Response) => {
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+    ? (req.body as Record<string, unknown>)
+    : null;
+  const dispatchId = typeof body?.['id'] === 'string' ? body['id']
+    : typeof body?.['dispatchId'] === 'string' ? body['dispatchId'] : '';
+  if (!dispatchId) {
+    res.status(400).json({ error: 'body.id (dispatchId) is required' });
+    return;
+  }
+  const record = dispatchLedger.get(dispatchId);
+  if (!record) {
+    res.status(404).json({ error: 'dispatch record not found' });
+    return;
+  }
+  const adapter = adapterPipeline.getAdapter('ollama');
+  if (!adapter) {
+    res.status(503).json({ error: 'no ollama adapter registered (enable an ollama integration in INTEGRATIONS_CONFIG)' });
+    return;
+  }
+  const receipt = await adapterPipeline.runSync(adapter, record.envelope, record);
+  res.json({ success: receipt.status !== 'failed', dispatchId, receipt });
+});
+
+// ── OpenAI provider surface ───────────────────────────────────────────────────
+// Wire-compatible with RealityEngine_CPP (openai_status / openai_dispatch) and
+// RealityEngine_LSP (openai-status-json / openai-dispatch-json).
+
+// GET /api/integrations/openai/status — configuration + reachability probe.
+app.get('/api/integrations/openai/status', async (_req: Request, res: Response) => {
+  const integrations = Array.isArray(integrationRegistry.config.integrations)
+    ? (integrationRegistry.config.integrations as Array<Record<string, unknown>>)
+    : [];
+  const entry = integrations.find((i) => i['kind'] === 'openai');
+  const baseUrl = (typeof entry?.['baseUrl'] === 'string' ? entry['baseUrl']
+    : process.env['OPENAI_BASE_URL'] ?? 'https://api.openai.com/v1').replace(/\/$/, '');
+  const model = typeof entry?.['model'] === 'string' ? entry['model']
+    : process.env['OPENAI_MODEL'] ?? '';
+  const apiKey = typeof entry?.['apiKey'] === 'string' ? entry['apiKey']
+    : process.env['OPENAI_API_KEY'] ?? '';
+  const completionSourceMappingId = typeof entry?.['completionSourceMappingId'] === 'string'
+    ? entry['completionSourceMappingId']
+    : process.env['OPENAI_COMPLETION_SOURCE_MAPPING_ID'] ?? '';
+  const hasApiKey = apiKey !== '';
+
+  let reachable = false;
+  let models: string[] = [];
+  let probeError: string | undefined;
+  if (hasApiKey) {
+    try {
+      const resp = await axios.get<{ data?: Array<{ id?: string }> }>(
+        `${baseUrl}/models`,
+        { headers: { Authorization: `Bearer ${apiKey}` }, timeout: 5000 });
+      reachable = resp.status >= 200 && resp.status < 300;
+      models = (Array.isArray(resp.data?.data) ? resp.data.data : [])
+        .map((m) => (typeof m?.id === 'string' ? m.id : ''))
+        .filter(Boolean);
+    } catch (err: any) {
+      probeError = err?.message ?? String(err);
+    }
+  }
+
+  const body: Record<string, unknown> = {
+    baseUrl,
+    model,
+    hasApiKey,
+    completionSourceMappingId,
+    reachable,
+    models,
+    statusEndpoint: '/api/integrations/openai/status',
+    dispatchEndpoint: '/api/integrations/openai/dispatch',
+  };
+  if (probeError) body['error'] = probeError;
+  res.json(body);
+});
+
+// POST /api/integrations/openai/dispatch — manually fire a ledger record through
+// the OpenAI adapter (awaited, returns receipt).  Body: { id: string }.
+app.post('/api/integrations/openai/dispatch', async (req: Request, res: Response) => {
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+    ? (req.body as Record<string, unknown>)
+    : null;
+  const dispatchId = typeof body?.['id'] === 'string' ? body['id']
+    : typeof body?.['dispatchId'] === 'string' ? body['dispatchId'] : '';
+  if (!dispatchId) {
+    res.status(400).json({ error: 'body.id (dispatchId) is required' });
+    return;
+  }
+  const record = dispatchLedger.get(dispatchId);
+  if (!record) {
+    res.status(404).json({ error: 'dispatch record not found' });
+    return;
+  }
+  const adapter = adapterPipeline.getAdapter('openai');
+  if (!adapter) {
+    res.status(503).json({ error: 'no openai adapter registered (enable an openai integration in INTEGRATIONS_CONFIG)' });
+    return;
+  }
+  const receipt = await adapterPipeline.runSync(adapter, record.envelope, record);
+  res.json({ success: receipt.status !== 'failed', dispatchId, receipt });
+});
+
+// ── HealthKit provider surface (status + canonical ingest path) ───────────────
+// Wire-compatible with RealityEngine_CPP (healthkit_status / ingest_healthkit)
+// and RealityEngine_LSP (healthkit-status-json / ingest-healthkit).
+// The existing /bridge path is kept as a compat alias.
+
+// GET /api/integrations/healthkit/status — bridge configuration.
+app.get('/api/integrations/healthkit/status', (_req: Request, res: Response) => {
+  const integrations = Array.isArray(integrationRegistry.config.integrations)
+    ? (integrationRegistry.config.integrations as Array<Record<string, unknown>>)
+    : [];
+  const entry = integrations.find((i) => i['kind'] === 'healthkit');
+  const bridgeId = typeof entry?.['bridgeId'] === 'string' ? entry['bridgeId']
+    : process.env['HEALTHKIT_BRIDGE_ID'] ?? 'healthkit-ios-bridge';
+  const defaultSourceMappingId = typeof entry?.['defaultSourceMappingId'] === 'string'
+    ? entry['defaultSourceMappingId']
+    : process.env['HEALTHKIT_DEFAULT_SOURCE_MAPPING_ID'] ?? 'healthkit-activity';
+  const tokenRequired = (process.env['HEALTHKIT_BRIDGE_TOKEN'] ?? '') !== ''
+    || (typeof entry?.['apiKey'] === 'string' && entry['apiKey'] !== '');
+  res.json({
+    bridgeId,
+    defaultSourceMappingId,
+    tokenRequired,
+    statusEndpoint: '/api/integrations/healthkit/status',
+    ingestEndpoint: '/api/integrations/healthkit/ingest',
+  });
+});
+
+// POST /api/integrations/healthkit/ingest — canonical ingest path.
+// Delegates to the same handler logic as /bridge; /bridge kept as compat alias.
+async function handleHealthKitIngest(req: Request, res: Response): Promise<void> {
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+    ? (req.body as HKBridgePayload)
+    : null;
+  if (!body || typeof body.bridgeId !== 'string' || body.bridgeId === '') {
+    res.status(400).json({ error: 'body.bridgeId is required' });
+    return;
+  }
+  if (!Array.isArray(body.samples) || body.samples.length === 0) {
+    res.status(400).json({ error: 'body.samples must be a non-empty array' });
+    return;
+  }
+  const presentedKey = (() => {
+    const auth = req.headers['authorization'] ?? '';
+    return typeof auth === 'string' && auth.toLowerCase().startsWith('bearer ')
+      ? auth.slice(7).trim()
+      : undefined;
+  })();
+  const authResult = checkBridgeAuth(integrationRegistry, body.bridgeId, presentedKey);
+  if (!authResult.ok) {
+    res.status(authResult.status).json({ error: authResult.error });
+    return;
+  }
+  const { resolved, unmapped } = resolveHKBatch(body, integrationRegistry);
+  const ingested: Array<Record<string, unknown>> = [];
+  const failed: Array<{ sensorId: string; error: string }> = [];
+  for (const sample of resolved) {
+    const result = await ingestSignal({
+      sensorId: sample.sensorId,
+      name: sample.name,
+      region: sample.region,
+      values: sample.values,
+      active: true,
+      ttlMs: sample.ttlMs,
+      triggerPush: false,
+      compactPush: false,
+    });
+    if (result.status >= 200 && result.status < 300) {
+      ingested.push({ sensorId: sample.sensorId, origin: sample.origin });
+    } else {
+      failed.push({ sensorId: sample.sensorId, error: String((result.body as Record<string, unknown>)['error'] ?? result.status) });
+    }
+  }
+  if (ingested.length > 0) void doPush();
+  const status = failed.length > 0 || unmapped.length > 0 ? 207 : 200;
+  res.status(status).json({
+    success: ingested.length > 0,
+    bridgeId: body.bridgeId,
+    anchorToken: body.anchorToken,
+    ingested,
+    failed,
+    unmapped,
+  });
+}
+
+app.post('/api/integrations/healthkit/ingest', handleHealthKitIngest);
 
 // POST /api/integrations/completions — provider-neutral adapter that
 // resolves a sourceMappingId (or inline mapping) and routes through

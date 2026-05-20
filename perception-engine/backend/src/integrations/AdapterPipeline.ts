@@ -68,6 +68,45 @@ export class AdapterPipeline {
   /** Number of registered adapters. */
   size(): number { return this.adapters.length; }
 
+  /** Look up a registered adapter by kind — used by manual dispatch routes. */
+  getAdapter(kind: string): ProviderAdapter | undefined {
+    return this.findAdapter(kind);
+  }
+
+  /** Invoke an adapter synchronously (awaited) and patch the ledger record. */
+  async runSync(
+    adapter: ProviderAdapter,
+    envelope: TriggerEnvelope,
+    record: DispatchRecord,
+  ): Promise<DispatchReceipt> {
+    let receipt: DispatchReceipt;
+    try {
+      receipt = await adapter.dispatch(envelope, record);
+    } catch (err) {
+      receipt = {
+        provider: adapter.kind, adapter: adapter.kind, latencyMs: 0,
+        status: 'failed',
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+    if (this.ledgerPatchBaseUrl) {
+      try {
+        const patch: DispatchRecordPatch = {
+          status: receipt.status,
+          incrementAttempts: true,
+          provider: receipt.provider,
+          adapter: receipt.adapter,
+          externalRunId: receipt.externalRunId,
+          providerReceipt: { latencyMs: receipt.latencyMs, ...(receipt.metadata ?? {}) },
+        };
+        if (receipt.status === 'failed' && receipt.error) patch.error = receipt.error;
+        const url = `${this.ledgerPatchBaseUrl.replace(/\/$/, '')}/api/dispatch/records/${encodeURIComponent(record.id)}`;
+        await this.http.patch(url, patch);
+      } catch { /* best-effort */ }
+    }
+    return receipt;
+  }
+
   async shutdown(): Promise<void> {
     for (const a of this.adapters) {
       try { await a.shutdown(); } catch { /* ignore */ }
