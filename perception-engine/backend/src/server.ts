@@ -26,6 +26,7 @@ import type { MachineRecord } from './triggers/types.js';
 import { Ledger } from './dispatch/Ledger.js';
 import type { DispatchRecordPatch } from './dispatch/types.js';
 import { AdapterPipeline } from './integrations/AdapterPipeline.js';
+import { AcpAdapter, acpConfigFromRegistry } from './integrations/adapters/AcpAdapter.js';
 import { OllamaAdapter } from './integrations/adapters/OllamaAdapter.js';
 import { OpenAIAdapter } from './integrations/adapters/OpenAIAdapter.js';
 import type { IntegrationEntry } from './integrations/types.js';
@@ -248,13 +249,22 @@ if (dispatchLedgerFile) {
 const adapterPipeline = new AdapterPipeline({
   ledgerPatchBaseUrl: `http://127.0.0.1:${PORT}`,
 });
+const registryIntegrations = Array.isArray(integrationRegistry.config.integrations)
+  ? (integrationRegistry.config.integrations as IntegrationEntry[])
+  : [];
+const acpConfig = acpConfigFromRegistry(registryIntegrations);
+const acpAdapter = new AcpAdapter();
+void acpAdapter.init(acpConfig, {
+  registry: integrationRegistry,
+  completionUrl: `http://127.0.0.1:${PORT}/api/integrations/completions`,
+  ledgerPatchBaseUrl: `http://127.0.0.1:${PORT}`,
+});
 
 (function bootstrapAdapters() {
-  const integrations = Array.isArray(integrationRegistry.config.integrations)
-    ? (integrationRegistry.config.integrations as IntegrationEntry[])
-    : [];
+  const integrations = registryIntegrations;
   // Phase 4a — Ollama.  Cloud providers land in later PRs.
   const completionUrl = `http://127.0.0.1:${PORT}/api/integrations/completions`;
+  let acpRegistered = false;
   for (const entry of integrations) {
     if (!entry || entry.enabled !== true) continue;
     if (entry.kind === 'ollama') {
@@ -278,6 +288,17 @@ const adapterPipeline = new AdapterPipeline({
       const e = entry as any;
       console.log(`Adapters: openai "${entry.id}" registered (baseUrl=${e.baseUrl ?? 'https://api.openai.com/v1'} model=${e.model ?? 'gpt-4.1'} mode=${e.completionMode ?? 'sync'})`);
     }
+    if (entry.kind === 'acp' || entry.kind === 'openclaw-acp') {
+      if (acpConfig.enabled === true) {
+        adapterPipeline.register(acpAdapter);
+        acpRegistered = true;
+        console.log(`Adapters: acp "${entry.id}" registered (platform=${acpConfig.platform ?? 'OpenClaw'} surface=${acpConfig.surface ?? 'xACP'} mode=${acpConfig.dispatchMode ?? 'accepted-no-wait'})`);
+      }
+    }
+  }
+  if (acpConfig.enabled === true && !acpRegistered) {
+    adapterPipeline.register(acpAdapter);
+    console.log(`Adapters: acp "${acpConfig.id}" registered (platform=${acpConfig.platform ?? 'OpenClaw'} surface=${acpConfig.surface ?? 'xACP'} mode=${acpConfig.dispatchMode ?? 'accepted-no-wait'})`);
   }
   if (adapterPipeline.size() === 0) {
     console.log('Adapters: none enabled (set enabled:true on an integration in INTEGRATIONS_CONFIG to wire a provider)');
@@ -1364,6 +1385,77 @@ app.post('/api/integrations/carekit/ingest', async (req: Request, res: Response)
     success: failed.length === 0,
     bridgeId: effectiveBridgeId,
     results: [...ingested.map((r) => ({ ...r, success: true })), ...failed.map((r) => ({ ...r, success: false }))],
+  });
+});
+
+// ── ACP / OpenClaw xACP provider surface ─────────────────────────────────────
+// Wire-compatible with RealityEngine_CPP (acp_status / dispatch_acp).  This
+// records an accepted handoff only; PE never launches OpenClaw or waits for ACP
+// output.  Finished work returns through /api/integrations/completions.
+
+// GET /api/integrations/acp/status — OpenClaw xACP handoff configuration.
+app.get('/api/integrations/acp/status', (_req: Request, res: Response) => {
+  res.json(acpAdapter.status());
+});
+
+// POST /api/integrations/acp/dispatch — annotate a ledger record with an
+// accepted no-wait ACP/OpenClaw receipt.  Body: { dispatchId } or { id }.
+app.post('/api/integrations/acp/dispatch', (req: Request, res: Response) => {
+  const body = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+    ? (req.body as Record<string, unknown>)
+    : null;
+  if (!body) {
+    res.status(400).json({ error: 'ACP dispatch body must be a JSON object' });
+    return;
+  }
+  const dispatchId = typeof body['dispatchId'] === 'string' ? body['dispatchId']
+    : typeof body['id'] === 'string' ? body['id'] : '';
+  if (dispatchId === '') {
+    res.status(400).json({ error: 'ACP dispatch requires dispatchId' });
+    return;
+  }
+  const record = dispatchLedger.get(dispatchId);
+  if (!record) {
+    res.status(404).json({ error: 'Dispatch record not found' });
+    return;
+  }
+
+  const metadata = body['metadata'] && typeof body['metadata'] === 'object' && !Array.isArray(body['metadata'])
+    ? body['metadata'] as Record<string, unknown>
+    : undefined;
+  const receipt = acpAdapter.accept(record.envelope, record, {
+    agent: typeof body['targetAgent'] === 'string' ? body['targetAgent']
+      : typeof body['agent'] === 'string' ? body['agent'] : undefined,
+    sessionKey: typeof body['sessionKey'] === 'string' ? body['sessionKey'] : undefined,
+    sourceMappingId: typeof body['sourceMappingId'] === 'string' ? body['sourceMappingId'] : undefined,
+    prompt: typeof body['prompt'] === 'string' ? body['prompt'] : undefined,
+    externalRunId: typeof body['externalRunId'] === 'string' ? body['externalRunId'] : undefined,
+    command: typeof body['command'] === 'string' ? body['command'] : undefined,
+    gatewayUrl: typeof body['gatewayUrl'] === 'string' ? body['gatewayUrl'] : undefined,
+    metadata,
+  });
+
+  const updated = dispatchLedger.update(dispatchId, {
+    status: typeof body['status'] === 'string' ? body['status'] : 'accepted',
+    adapter: receipt.adapter,
+    provider: receipt.provider,
+    externalRunId: receipt.externalRunId,
+    incrementAttempts: body['incrementAttempts'] !== false,
+    clearError: true,
+    providerReceipt: receipt.metadata,
+  });
+  if (updated) broadcast(dispatchLedger.toUpdatedEvent(updated));
+
+  res.status(202).json({
+    success: true,
+    accepted: true,
+    dispatchId,
+    provider: 'acp',
+    platform: acpConfig.platform ?? 'OpenClaw',
+    surface: acpConfig.surface ?? 'xACP',
+    externalRunId: receipt.externalRunId,
+    noWaitDispatch: true,
+    handoff: receipt.metadata,
   });
 });
 

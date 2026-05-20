@@ -42,6 +42,7 @@ Supported integration kinds are:
 - `localai`
 - `openai`
 - `ollama`
+- `acp`
 - `healthkit`
 - `mcp`
 - `manual`
@@ -61,7 +62,8 @@ Every accepted inbound result resolves to the existing PE sensor-source shape:
 
 Provider-specific payloads may differ, but PE commit semantics do not. MQTT
 messages, HealthKit bridge uploads, OpenAI responses, Ollama responses, MCP tool
-results, and manual callbacks must all enter through configured sources.
+results, ACP/OpenClaw harness completions, and manual callbacks must all enter
+through configured sources.
 
 ### Trigger Envelope Dispatcher
 
@@ -156,6 +158,8 @@ bin/reality_engine_cli pe ollama-status
 bin/reality_engine_cli pe ollama-dispatch <dispatchId> --source-mapping-id agent-completion-risk
 bin/reality_engine_cli pe openai-status
 bin/reality_engine_cli pe openai-dispatch <dispatchId> --source-mapping-id agent-completion-risk
+bin/reality_engine_cli pe acp-status
+bin/reality_engine_cli pe acp-dispatch <dispatchId> --source-mapping-id acp-openclaw-completion
 bin/reality_engine_cli pe healthkit-status
 bin/reality_engine_cli pe healthkit-ingest --sample-type step-count --source-mapping-id healthkit-activity --values 1,0,0.9,0
 bin/reality_engine_cli pe completion --source-mapping-id agent-completion-risk --agent paging-decision --values 1,0,0.82,0
@@ -223,6 +227,38 @@ RealityEngine_CPP implements Ollama first because it is local and PE-controlled:
 The adapter is explicit and caller-driven. PE push cycles still never wait on
 Ollama, model execution, tool calls, or completion handling.
 
+### ACP / OpenClaw xACP
+
+ACP is the editor/client-to-agent protocol boundary. For this integration, PE
+treats OpenClaw as the example xACP platform surface:
+
+- `openclaw acp` is recorded as the external ACP bridge command.
+- PE does not host the ACP session, execute the harness, or wait for an ACP
+  turn.
+- `openclaw-xacp` is a no-wait handoff adapter that annotates dispatch records
+  with ACP/OpenClaw receipt metadata.
+
+The TypeScript PE now mirrors the C++ and LSP ACP surface:
+
+- `GET /api/integrations/acp/status` reports the configured OpenClaw command,
+  gateway URL, session key, target agent, and completion source mapping.
+- `POST /api/integrations/acp/dispatch` takes a recorded `dispatchId`, annotates
+  the dispatch ledger with an `openclaw-xacp` receipt, and returns `202
+  Accepted`. The endpoint does not launch OpenClaw or block on ACP output.
+- ACP/OpenClaw completion returns through `POST /api/integrations/completions`
+  using `provider: "acp"` and a configured source mapping such as
+  `acp-openclaw-completion`.
+
+Operational flow:
+
+1. PE records trigger envelopes as usual.
+2. Call `acp-dispatch` to record that an OpenClaw/xACP handoff was accepted.
+3. Drive OpenClaw through its ACP surface outside the PE push cycle.
+4. Post the finished numeric values back to PE through the completion endpoint.
+
+This keeps RE isolated from ACP runtime state and keeps ACP results on the same
+source-response path as OpenAI, Ollama, HealthKit, MCP, and manual adapters.
+
 ### HealthKit
 
 HealthKit integration is device-side. A native Apple bridge owns HealthKit
@@ -251,9 +287,10 @@ not talk to HealthKit directly.
 The existing localAIStack `updateProcessState` trigger remains a dispatch
 target. It is modeled as a `graphql` mode for trigger envelopes.
 
-## C++ Status
+## Runtime Status
 
-RealityEngine_CPP currently includes the first implementation slice:
+RealityEngine_AI, RealityEngine_CPP, and RealityEngine_LSP share the same PE
+integration contract for the core dispatch and completion path:
 
 - `TRIGGERS_ENABLED` gates trigger envelope creation.
 - `TRIGGER_DISPATCH_MODE` labels the dispatch mode, defaulting to `dry-run`.
@@ -265,6 +302,9 @@ RealityEngine_CPP currently includes the first implementation slice:
   metadata without changing PE/RE workflow state.
 - `GET /api/integrations/status` reports startup-loaded integration registry
   state and source mappings.
+- `GET /api/integrations/acp/status` reports ACP/OpenClaw xACP handoff
+  configuration.
+- `POST /api/integrations/acp/dispatch` records accepted no-wait ACP handoffs.
 - `POST /api/integrations/completions` maps provider/agent results into PE
   sources through the same path as `/api/signals`.
 

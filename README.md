@@ -287,6 +287,11 @@ Plus the minimal example `RSFlipFlopTrigger.json` for smoke-testing.
 | `OPENAI_BASE_URL` | Perception Engine | https://api.openai.com/v1 | OpenAI-compatible Responses API base URL |
 | `OPENAI_MODEL` | Perception Engine | gpt-5 | Default OpenAI model for PE-controlled dispatch |
 | `OPENAI_COMPLETION_SOURCE_MAPPING_ID` | Perception Engine | agent-completion-risk | Default source mapping for OpenAI completion commits |
+| `ACP_ENABLED` | Perception Engine | false | Enable ACP/OpenClaw adapter metadata in PE status and trigger dispatch |
+| `ACP_COMMAND` / `OPENCLAW_ACP_COMMAND` | Perception Engine | openclaw acp | External OpenClaw ACP command recorded in no-wait handoff receipts |
+| `ACP_GATEWAY_URL` / `OPENCLAW_GATEWAY_URL` | Perception Engine | ws://127.0.0.1:18789 | OpenClaw Gateway URL recorded for xACP handoff |
+| `ACP_SESSION_KEY` / `OPENCLAW_ACP_SESSION` | Perception Engine | agent:main:main | OpenClaw Gateway session key for example xACP handoff |
+| `ACP_COMPLETION_SOURCE_MAPPING_ID` | Perception Engine | agent-completion-risk | Default source mapping for ACP/OpenClaw completion commits |
 | `HEALTHKIT_BRIDGE_ID` | Perception Engine | healthkit-ios-bridge | Expected Apple-platform HealthKit bridge identity |
 | `HEALTHKIT_DEFAULT_SOURCE_MAPPING_ID` | Perception Engine | healthkit-activity | Default source mapping for HealthKit bridge ingest |
 | `HEALTHKIT_BRIDGE_TOKEN` | Perception Engine | unset | Optional shared token required in HealthKit bridge ingest payloads |

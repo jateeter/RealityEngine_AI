@@ -214,12 +214,16 @@ describe('integrationStatus — wire shape', () => {
     expect(body.integrationCount).toBeGreaterThanOrEqual(5);
     expect(body.sourceMappingCount).toBeGreaterThanOrEqual(1);
     const kinds = new Set(body.integrations.map((i) => i.kind));
-    for (const k of ['healthkit', 'localai', 'mqtt', 'ollama', 'openai']) {
+    for (const k of ['acp', 'healthkit', 'localai', 'mqtt', 'ollama', 'openai']) {
       expect(kinds.has(k)).toBe(true);
     }
     const archDocMapping = body.sourceMappings.find((m) => m.id === 'agent-completion-risk');
     expect(archDocMapping).toBeDefined();
     expect(archDocMapping?.region).toEqual({ offset: 4200, length: 4 });
     expect(archDocMapping?.sensorIdTemplate).toBe('agent.{agent}.completion');
+    const acpMapping = body.sourceMappings.find((m) => m.id === 'acp-openclaw-completion');
+    expect(acpMapping).toBeDefined();
+    expect(acpMapping?.region).toEqual({ offset: 4210, length: 4 });
+    expect(acpMapping?.sensorIdTemplate).toBe('acp.openclaw.{agent}.completion');
   });
 });

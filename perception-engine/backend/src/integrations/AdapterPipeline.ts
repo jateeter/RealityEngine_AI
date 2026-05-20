@@ -116,6 +116,9 @@ export class AdapterPipeline {
   // ── internals ────────────────────────────────────────────────────────
 
   private findAdapter(kind: string): ProviderAdapter | undefined {
+    if (kind === 'openclaw-acp') {
+      return this.adapters.find((a) => a.kind === 'acp' || a.kind === 'openclaw-acp');
+    }
     return this.adapters.find((a) => a.kind === kind);
   }
 

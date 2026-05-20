@@ -103,6 +103,17 @@ describe('AdapterPipeline', () => {
     expect(a.calls).toHaveLength(0);
   });
 
+  it('routes openclaw-acp envelopes to the acp adapter alias', async () => {
+    const a = stubAdapter('acp', 'sent');
+    const p = new AdapterPipeline();
+    p.register(a);
+
+    p.onRecord(envelope('openclaw-acp'), record());
+    await new Promise((r) => setImmediate(r));
+
+    expect(a.calls).toHaveLength(1);
+  });
+
   it('PATCHes the ledger record with the adapter receipt when ledger base url is provided', async () => {
     const a = stubAdapter('ollama', 'sent');
     const { http, calls } = stubHttp();

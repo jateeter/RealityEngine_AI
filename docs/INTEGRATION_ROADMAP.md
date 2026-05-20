@@ -7,10 +7,12 @@ under `perception-engine/backend/`, its MCP gateway, the example trigger
 artifacts under `examples/triggers/`, the integration registry example under
 `config/`, and the LangGraph orchestrator under `langgraph-orchestrator/`.
 
-The architecture document already enumerates the C++ slice that
-RealityEngine_CPP ships today. **RealityEngine_AI has none of that slice
-implemented in code yet** — only the contract examples and a registry
-schema. This roadmap closes the gap.
+The architecture document enumerates the shared PE integration contract. This
+roadmap started as the `_AI` gap plan; the registry, source mapper, trigger
+dispatcher, dispatch ledger, completion ingest, OpenAI/Ollama bridges,
+HealthKit/CareKit intake, and ACP/OpenClaw xACP handoff are now implemented in
+the TypeScript PE. Remaining work should treat the tables below as planning
+history where an item is already marked present in code.
 
 ---
 
@@ -41,11 +43,11 @@ perceptual_sim_state, perceptual_sim_step, perceptual_sim_start, perceptual_sim_
 perceptual_sim_reset, perceptual_sim_history, demo_load
 ```
 
-### 1.3 Integration contracts present (data only — no runtime)
+### 1.3 Integration contracts present
 
 - `config/integrations.example.json` — full registry example (defaults,
-  `integrations[]` for `mqtt`/`localai`/`openai`/`ollama`/`healthkit`,
-  `sourceMappings[]`). **No loader.**
+  `integrations[]` for `mqtt`/`localai`/`openai`/`ollama`/`acp`/`healthkit`,
+  `sourceMappings[]`). The TS loader indexes these mappings at startup.
 - `examples/triggers/ai_trigger_envelope.template.json` — canonical
   `ces.terminal.event` envelope schema.
 - `examples/triggers/ai_trigger.*.example.json` and
@@ -73,22 +75,23 @@ Legend: ✅ present · ⚠️ partial/data-only · ❌ missing.
 | Architecture element | _AI status | Notes |
 |---|---|---|
 | Provider-neutral commit semantics (sensor-source shape) | ✅ | `/api/sources`, `/api/sensors/:id` already commit to PE state. |
-| **Integration Registry loader** (`INTEGRATIONS_CONFIG` / `config/integrations.json`) | ❌ | Example JSON only. No loader, no normalization. |
-| **Source Mapper** — startup-resolved `sourceMappingId` → sensor source | ❌ | Mappings exist in MQTT bridge but not in a generalized registry. |
-| **Trigger Envelope Dispatcher** — observe `mergeBatch`, build `ces.terminal.event` | ❌ | Envelope schema exists as JSON; no code that emits one. |
-| **Dispatch Ledger** — `GET /api/dispatch/ledger`, `GET/PATCH /api/dispatch/records/{id}` | ❌ | No ledger store, no routes. |
-| **Completion Ingest** — `POST /api/integrations/completions` | ❌ | `POST /api/signals` does not exist in TS PE either; `/api/sensors/:id` is the closest primitive but isn't provider-neutral. |
-| **`GET /api/integrations/status`** | ❌ | No integrations subsystem to report. |
-| **`GET /api/triggers/status`** | ❌ | No dispatcher counters. |
-| Env flags `TRIGGERS_ENABLED`, `TRIGGER_DISPATCH_MODE`, `TRIGGER_GRAPHQL_URL` | ❌ | Not read anywhere in TS. |
+| **Integration Registry loader** (`INTEGRATIONS_CONFIG` / `config/integrations.json`) | ✅ | Loader and C++-compatible status shape are implemented. |
+| **Source Mapper** — startup-resolved `sourceMappingId` → sensor source | ✅ | Generalized mapper backs completion ingest and bridge adapters. |
+| **Trigger Envelope Dispatcher** — observe `mergeBatch`, build `ces.terminal.event` | ✅ | Dispatcher records envelopes without blocking PE push. |
+| **Dispatch Ledger** — `GET /api/dispatch/ledger`, `GET/PATCH /api/dispatch/records/{id}` | ✅ | In-memory ring plus optional JSONL persistence. |
+| **Completion Ingest** — `POST /api/integrations/completions` | ✅ | Provider-neutral completion path routes through `/api/signals`. |
+| **`GET /api/integrations/status`** | ✅ | Reports loaded registry and source mappings. |
+| **`GET /api/triggers/status`** | ✅ | Reports dispatcher counters and replay count. |
+| Env flags `TRIGGERS_ENABLED`, `TRIGGER_DISPATCH_MODE`, `TRIGGER_GRAPHQL_URL` | ✅ | Read at PE startup. |
 | **MCP recommended tools** (`re.read_state`, `re.list_machines`, `re.read_machine`, `pe.list_sources`, `pe.push_signal`, `pe.enqueue_push`, `trigger.replay`, `dispatch.read_ledger`) | ⚠️ | TS gateway exposes equivalent capabilities under snake_case names; **none of the `trigger.*` / `dispatch.*` tools exist**, and naming differs from the spec. |
 | Mutating MCP tool policy gate | ❌ | All MCP tools are currently unguarded. |
-| Provider adapters: **OpenAI** | ❌ | No code path. |
-| Provider adapters: **Ollama** | ❌ | No code path. |
-| Provider adapters: **HealthKit** bridge intake | ❌ | No code path. |
+| Provider adapters: **OpenAI** | ✅ | Responses/chat-compatible adapter and webhook completion path. |
+| Provider adapters: **Ollama** | ✅ | Native and OpenAI-compatible local adapter. |
+| Provider adapters: **ACP / OpenClaw xACP** | ✅ | No-wait handoff adapter plus status/dispatch routes. |
+| Provider adapters: **HealthKit** bridge intake | ✅ | Authorized bridge payloads map through source mappings. |
 | Provider adapters: **localAIStack GraphQL** | ⚠️ | Python reference template only; no in-process dispatcher. |
 | Provider adapters: **MQTT** | ✅ | Already wired. |
-| Provider adapters: **Manual** (CLI/test) | ⚠️ | Possible via `/api/sensors/:id`; not a provider-neutral path. |
+| Provider adapters: **Manual** (CLI/test) | ✅ | Covered by `/api/signals` and `/api/integrations/completions`. |
 
 ### 2.1 Extensions _AI carries beyond the architecture doc
 
@@ -290,7 +293,7 @@ Each adapter is an independent module conforming to a small interface:
 
 ```ts
 interface ProviderAdapter {
-  kind: 'openai' | 'ollama' | 'healthkit' | 'localai' | 'langgraph' | 'mqtt' | 'manual';
+  kind: 'openai' | 'ollama' | 'acp' | 'healthkit' | 'localai' | 'langgraph' | 'mqtt' | 'manual';
   init(cfg: IntegrationEntry, deps: AdapterDeps): Promise<void>;
   dispatch(envelope: TriggerEnvelope): Promise<DispatchReceipt>;   // fire-and-forget for HTTP
   shutdown(): Promise<void>;
@@ -503,6 +506,8 @@ drop-in interchangeable from an adapter's point of view.
 | GET    | `/api/integrations/localai/catalog`     | `localai_catalog()`          | Phase 4b |
 | POST   | `/api/integrations/localai/bootstrap`   | `bootstrap_localai()`        | Phase 4b — also runs at boot when configured |
 | POST   | `/api/integrations/localai/invoke`      | `invoke_localai(body)`       | Phase 4b |
+| GET    | `/api/integrations/acp/status`          | `acp_status()`               | Implemented — OpenClaw xACP handoff metadata |
+| POST   | `/api/integrations/acp/dispatch`        | `dispatch_acp(body)`         | Implemented — accepted no-wait handoff |
 
 ### Environment flags read at boot (C++ contract)
 
@@ -515,6 +520,11 @@ drop-in interchangeable from an adapter's point of view.
 | `LOCAL_AI_BASE_URL`       | (provider-specific) | Phase 4b — base for localAI routes |
 | `BOOTSTRAP_LOCAL_AI`      | `false` | Phase 4b — runs `bootstrap_localai()` at startup |
 | `DISPATCH_LEDGER_FILE`    | unset (in-memory only) | Phase 3 (TS extension) |
+| `ACP_ENABLED`             | `false` | ACP/OpenClaw xACP handoff adapter |
+| `ACP_COMMAND` / `OPENCLAW_ACP_COMMAND` | `openclaw acp` | ACP handoff receipt metadata |
+| `ACP_GATEWAY_URL` / `OPENCLAW_GATEWAY_URL` | `ws://127.0.0.1:18789` | ACP handoff receipt metadata |
+| `ACP_SESSION_KEY` / `OPENCLAW_ACP_SESSION` | `agent:main:main` | ACP handoff receipt metadata |
+| `ACP_COMPLETION_SOURCE_MAPPING_ID` | `agent-completion-risk` | ACP completion source mapping default |
 | `MQTT_BROKER_HOST` etc.   | unset (bridge disabled) | already wired in `_AI` |
 
 ### WebSocket events the visualizer (Phase 6) must handle
