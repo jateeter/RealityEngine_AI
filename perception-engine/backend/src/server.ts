@@ -1658,7 +1658,6 @@ app.post('/api/integrations/completions', async (req: Request, res: Response) =>
 
   res.json({
     success: true,
-    timestamp: receivedAt,
     completion,
     signal: result.body,
   });
