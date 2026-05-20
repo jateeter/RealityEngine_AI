@@ -26,7 +26,7 @@
   "author": "jateeter",
   "license": "MIT",
   "engines": {
-    "node": ">=25.4.0",
+    "node": ">=25.5.0",
     "npm": ">=10.0.0"
   },
   "dependencies": {

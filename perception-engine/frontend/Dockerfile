@@ -1,8 +1,8 @@
-FROM node:25.4-alpine AS build
+FROM node:25.5-alpine AS build
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package*.json .npmrc ./
 RUN npm install
 
 COPY . .

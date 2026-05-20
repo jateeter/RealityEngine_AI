@@ -12,6 +12,7 @@ reports and obsolete fixed-vector notes have been removed.
 | [../ARCHITECTURE.md](../ARCHITECTURE.md) | Visual architecture overview. |
 | [../PERCEPTUAL_SPACE_ARCHITECTURE.md](../PERCEPTUAL_SPACE_ARCHITECTURE.md) | Dynamic perceptual-vector model. |
 | [ACRONYMS.md](ACRONYMS.md) | Acronym definitions. |
+| [INTEGRATION_ARCHITECTURE.md](INTEGRATION_ARCHITECTURE.md) | Provider-neutral PE integration, trigger dispatch, source mapping, and MCP architecture. |
 | [BIBLIOGRAPHY.md](BIBLIOGRAPHY.md) | External and project references. |
 
 ## APIs And Operations

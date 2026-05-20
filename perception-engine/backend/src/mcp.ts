@@ -25,6 +25,12 @@ import type {
   PushResult, MatchAlgorithm,
   SimulatedSourceConfig, SensorSourceConfig, TestSourceConfig,
 } from './types.js';
+import type { Dispatcher } from './triggers/Dispatcher.js';
+import type { Ledger } from './dispatch/Ledger.js';
+import {
+  checkPolicy, loadPolicyFromEnv, policyErrorResult,
+  type PolicyConfig,
+} from './mcpPolicy.js';
 
 // ── Dependency interface ──────────────────────────────────────────────────
 
@@ -47,6 +53,12 @@ export interface McpDeps {
    *  the PE→RE proxy tools validate the self-signed dev cert instead of
    *  erroring on every step.  Defaults to a fresh axios. */
   httpClient?: AxiosInstance;
+  /** Trigger dispatcher — wires `trigger.replay`. */
+  dispatcher?: Dispatcher;
+  /** Dispatch ledger — wires `dispatch.read_ledger` and feeds `trigger.replay`. */
+  ledger?: Ledger;
+  /** Policy config; defaults to loadPolicyFromEnv(). */
+  policy?: PolicyConfig;
 }
 
 // ── MCP server factory (one per session) ─────────────────────────────────
@@ -55,9 +67,10 @@ function buildMcpServer(deps: McpDeps): McpServer {
   const {
     engine, store, push, startAuto, stopAuto,
     getAutoState, getLastPush, saveAndBroadcast, resetAndBroadcast,
-    realityEngineUrl, httpClient,
+    realityEngineUrl, httpClient, dispatcher, ledger,
   } = deps;
   const http = httpClient ?? axios;
+  const policy = deps.policy ?? loadPolicyFromEnv();
 
   const vectorSize = engine.vectorSize;
 
@@ -489,6 +502,161 @@ function buildMcpServer(deps: McpDeps): McpServer {
       const { data } = await http.get(re(`/demo/${demo}`));
       return data;
     }),
+  );
+
+  // ── Dotted-name canonical tools (Phase 5 — architecture-doc surface) ────
+  // The legacy snake_case tools above remain as aliases for one minor
+  // version so existing consumers keep working.  Mutating tools are gated
+  // by `MCP_POLICY_ENFORCE` (see mcpPolicy.ts).
+
+  // re.read_state — alias for perception_get_state.
+  server.tool(
+    're.read_state',
+    'Canonical alias for perception_get_state. Returns full PE state.',
+    {},
+    async () => {
+      const state = engine.getState(getLastPush(), getAutoState());
+      return { content: [{ type: 'text' as const, text: JSON.stringify(state, null, 2) }] };
+    },
+  );
+
+  // re.list_machines — alias for machines_list.
+  server.tool(
+    're.list_machines',
+    'Canonical alias for machines_list. Lists machines loaded in RE plus JSON files on disk.',
+    {},
+    async () => reCall(async () => {
+      const [loaded, jsonFiles] = await Promise.all([
+        http.get(re('/machines')).then(r => r.data),
+        http.get(re('/machines/json/list')).then(r => r.data).catch(() => null),
+      ]);
+      return { loaded, jsonFiles };
+    }),
+  );
+
+  // re.read_machine — NEW: read one machine by id (proxy to RE export endpoint).
+  server.tool(
+    're.read_machine',
+    'Read one machine record from the Reality Engine (full JSON: metadata, sequences, perceptualMapping).',
+    { machine_id: z.string().describe('Machine id (e.g. machine-agx051-...)') },
+    async ({ machine_id }) => reCall(async () => {
+      const { data } = await http.get(re(`/machines/${encodeURIComponent(machine_id)}/export`));
+      return data;
+    }),
+  );
+
+  // pe.list_sources — alias for sources_list.
+  server.tool(
+    'pe.list_sources',
+    'Canonical alias for sources_list. Lists all perception sources.',
+    {},
+    async () => ({
+      content: [{ type: 'text' as const, text: JSON.stringify(engine.getSources(), null, 2) }],
+    }),
+  );
+
+  // pe.push_signal — alias for sensor_push_value (mutating).  The policy
+  // check is inlined so the zod-validated arguments stay in scope.
+  server.tool(
+    'pe.push_signal',
+    'Canonical alias for sensor_push_value. Pushes values to a sensor source ' +
+    '(policy capability: "sources.write").',
+    {
+      sensor_id: z.string().describe('The sensorId of the target sensor source'),
+      values: z.array(z.number().min(0).max(1)).describe('Float values [0,1] to write'),
+    },
+    async ({ sensor_id, values }) => {
+      const decision = checkPolicy(policy, { mutates: true, capability: 'sources.write' });
+      if (!decision.ok) return policyErrorResult(decision);
+      const updated = engine.updateSensorValue(sensor_id, values);
+      if (!updated) {
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify({ error: `No sensor source with sensorId "${sensor_id}"` }) }],
+          isError: true,
+        };
+      }
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify({ success: true, sensorId: sensor_id, timestamp: Date.now() }) }],
+      };
+    },
+  );
+
+  // pe.enqueue_push — alias for perception_push (mutating).
+  server.tool(
+    'pe.enqueue_push',
+    'Canonical alias for perception_push. Assembles the perceptual vector and pushes ' +
+    'it to the Reality Engine (policy capability: "engine.control").',
+    {},
+    async () => {
+      const decision = checkPolicy(policy, { mutates: true, capability: 'engine.control' });
+      if (!decision.ok) return policyErrorResult(decision);
+      const result = await push();
+      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+    },
+  );
+
+  // dispatch.read_ledger — NEW: read in-process dispatch ledger.
+  server.tool(
+    'dispatch.read_ledger',
+    'Return the current dispatch ledger (full record set in insertion order). ' +
+    'Read-only — wire-compatible with GET /api/dispatch/ledger.',
+    {
+      limit: z.number().int().min(1).max(1000).optional()
+        .describe('Optional client-side cap on the number of records returned (newest first when set).'),
+    },
+    async ({ limit }) => {
+      if (!ledger || !dispatcher) {
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify({ error: 'dispatch ledger not wired into this MCP server' }) }],
+          isError: true,
+        };
+      }
+      const status = dispatcher.status();
+      let records = ledger.list();
+      if (typeof limit === 'number') {
+        records = records.slice(-limit);
+      }
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify({
+          enabled: status.enabled, mode: status.mode, records,
+        }, null, 2) }],
+      };
+    },
+  );
+
+  // trigger.replay — NEW: re-emit an existing dispatch record's envelope.
+  server.tool(
+    'trigger.replay',
+    'Replay an existing dispatch record by id — appends a new ledger entry with ' +
+    'mode:"replay" and replayOf set.  Never mutates PE/RE state; never calls a ' +
+    'provider.  Policy capability: "trigger.dispatch".',
+    {
+      dispatch_id: z.string().describe('Dispatch record id from dispatch.read_ledger.'),
+      fresh_ids: z.boolean().optional().default(false)
+        .describe('Mint new envelopeId+correlationId.  Default false (same causal chain).'),
+    },
+    async ({ dispatch_id, fresh_ids }) => {
+      const decision = checkPolicy(policy, { mutates: true, capability: 'trigger.dispatch' });
+      if (!decision.ok) return policyErrorResult(decision);
+      if (!dispatcher) {
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify({ error: 'trigger dispatcher not wired into this MCP server' }) }],
+          isError: true,
+        };
+      }
+      const replayed = dispatcher.replay(dispatch_id, { freshIds: fresh_ids });
+      if (!replayed) {
+        return {
+          content: [{ type: 'text' as const, text: JSON.stringify({ error: 'Dispatch record not found' }) }],
+          isError: true,
+        };
+      }
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify({
+          success: true, replayOf: dispatch_id, freshIds: fresh_ids === true, record: replayed,
+        }, null, 2) }],
+      };
+    },
   );
 
   return server;

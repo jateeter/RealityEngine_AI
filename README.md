@@ -279,6 +279,17 @@ Plus the minimal example `RSFlipFlopTrigger.json` for smoke-testing.
 | `REALITY_ENGINE_URL` | Visualizer Backend, PE | http://reality-engine:3000 | Internal RE address |
 | `PERCEPTION_TARGET_URL` | Perception Engine | http://visualizer-backend:3001 | Where PE pushes vectors |
 | `DATA_PATH` | Perception Engine | /app/data | Source persistence directory |
+| `INTEGRATIONS_CONFIG` | Perception Engine | unset | Provider-neutral startup registry for source mappings |
+| `OLLAMA_BASE_URL` | Perception Engine | http://localhost:11434 | Local Ollama adapter base URL |
+| `OLLAMA_MODEL` | Perception Engine | gpt-oss:20b | Default Ollama model for PE-controlled dispatch |
+| `OLLAMA_COMPLETION_SOURCE_MAPPING_ID` | Perception Engine | agent-completion-risk | Default source mapping for Ollama completion commits |
+| `OPENAI_API_KEY` | Perception Engine | unset | API key for caller-driven OpenAI Responses dispatch |
+| `OPENAI_BASE_URL` | Perception Engine | https://api.openai.com/v1 | OpenAI-compatible Responses API base URL |
+| `OPENAI_MODEL` | Perception Engine | gpt-5 | Default OpenAI model for PE-controlled dispatch |
+| `OPENAI_COMPLETION_SOURCE_MAPPING_ID` | Perception Engine | agent-completion-risk | Default source mapping for OpenAI completion commits |
+| `HEALTHKIT_BRIDGE_ID` | Perception Engine | healthkit-ios-bridge | Expected Apple-platform HealthKit bridge identity |
+| `HEALTHKIT_DEFAULT_SOURCE_MAPPING_ID` | Perception Engine | healthkit-activity | Default source mapping for HealthKit bridge ingest |
+| `HEALTHKIT_BRIDGE_TOKEN` | Perception Engine | unset | Optional shared token required in HealthKit bridge ingest payloads |
 
 ### TLS Proxy
 

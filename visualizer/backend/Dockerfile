@@ -1,9 +1,9 @@
-FROM node:25.4-alpine AS build
+FROM node:25.5-alpine AS build
 
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package*.json .npmrc ./
 
 # Install all dependencies (including devDependencies for build)
 RUN npm install
@@ -16,12 +16,12 @@ COPY src ./src
 RUN npm run build
 
 # Production stage
-FROM node:25.4-alpine
+FROM node:25.5-alpine
 
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package*.json .npmrc ./
 
 # Install production dependencies only
 RUN npm install --production

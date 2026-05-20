@@ -1,10 +1,10 @@
 # Build stage
-FROM node:25.4-alpine AS build
+FROM node:25.5-alpine AS build
 
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package*.json .npmrc ./
 
 # Install dependencies
 RUN npm install
