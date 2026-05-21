@@ -622,6 +622,35 @@ else
     fi
 
     if [ "$_ocs_ok" = true ]; then
+        # Seed the openclaw config dir from the native install if not already present.
+        # The gateway container volume-mounts ./openclaw as /home/node/.openclaw.
+        # Two constraints apply:
+        #   1. A config file must exist — the gateway exits "Missing config" without one.
+        #   2. gateway.bind must be "lan" (not "loopback") so Docker port publishing
+        #      can forward traffic from the host to the container's HTTP server.
+        #      The native install uses "loopback"; the env-var override does not take
+        #      effect when a config file sets it explicitly, so we patch it after copy.
+        mkdir -p "$OCS_DIR/openclaw"
+        if [ ! -f "$OCS_DIR/openclaw/openclaw.json" ] && \
+           [ -f "$HOME/.openclaw/openclaw.json" ]; then
+            cp "$HOME/.openclaw/openclaw.json" "$OCS_DIR/openclaw/openclaw.json"
+            info "Seeded OpenClaw config from ~/.openclaw/openclaw.json"
+        fi
+        # Patch gateway.bind to "lan" regardless of source — ensures the container's
+        # HTTP server binds to all interfaces so Docker's port publishing reaches it.
+        if [ -f "$OCS_DIR/openclaw/openclaw.json" ] && command -v python3 >/dev/null 2>&1; then
+            python3 - "$OCS_DIR/openclaw/openclaw.json" <<'PYEOF'
+import json, sys
+path = sys.argv[1]
+with open(path) as f:
+    d = json.load(f)
+d.setdefault('gateway', {})['bind'] = 'lan'
+d.setdefault('gateway', {})['mode'] = 'local'
+with open(path, 'w') as f:
+    json.dump(d, f, indent=2)
+PYEOF
+            ok "OpenClaw config: gateway.bind=lan, gateway.mode=local"
+        fi
         info "Starting OpenClaw (gateway :$OCS_GW_PORT, webui :$OCS_UI_PORT)..."
         # Pre-flight: verify ports are free (a native openclaw-gateway would have
         # been killed in Phase 1, but something else might still be listening).
