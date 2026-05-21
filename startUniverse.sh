@@ -55,6 +55,7 @@ PE_ENGINE="${PE_ENGINE:-ai}"       # ai | cpp | lsp   (default ai)
 MQTT_BROKER_URL_OVERRIDE=""
 MQTT_MAPPINGS_OVERRIDE=""
 OPENCLAW="${OPENCLAW:-auto}"       # auto | yes | no
+OCS_NATIVE_UNLOADED=false          # set true in Phase 1 if native launchd gateway is stopped
 
 print_engine_usage() {
   cat <<'USAGE'
@@ -100,6 +101,7 @@ cat > "$RE_DIR/.universe-engine-selection" <<EOF
 RE_ENGINE=$RE_ENGINE
 PE_ENGINE=$PE_ENGINE
 OPENCLAW=$OPENCLAW
+OCS_NATIVE_UNLOADED=$OCS_NATIVE_UNLOADED
 STARTED_AT=$(date -u +%FT%TZ)
 EOF
 
@@ -329,6 +331,35 @@ fi
 if [ -d "$OCS_DIR" ] && [ -f "$OCS_DIR/docker-compose.yml" ]; then
     (cd "$OCS_DIR" && docker compose down 2>/dev/null) || true
     docker rm -f openclaw-gateway open-webui browser > /dev/null 2>&1 || true
+fi
+# Stop any native openclaw-gateway that may be holding the gateway port.
+# A native install (e.g. via Homebrew/npm) managed by launchd with KeepAlive:true
+# restarts immediately after a plain `kill`; `launchctl unload` is required to
+# prevent the respawn.  Record the action so stopUniverse.sh can reload it.
+_ocs_gw_port_cleanup=18789
+if [ -f "$OCS_DIR/.env" ]; then
+    _p=$(grep -E '^OPENCLAW_GATEWAY_PORT=' "$OCS_DIR/.env" 2>/dev/null \
+        | tail -1 | cut -d= -f2- || true)
+    [ -n "$_p" ] && _ocs_gw_port_cleanup="$_p"
+fi
+_OCS_LAUNCHD_PLIST="$HOME/Library/LaunchAgents/ai.openclaw.gateway.plist"
+if launchctl list 2>/dev/null | grep -q "ai.openclaw.gateway"; then
+    info "Unloading native openclaw-gateway (launchd) to free port $_ocs_gw_port_cleanup..."
+    launchctl unload "$_OCS_LAUNCHD_PLIST" 2>/dev/null || true
+    OCS_NATIVE_UNLOADED=true
+    ok "Native openclaw-gateway unloaded (will be restored by stopUniverse.sh)"
+    # Update the stamp so stopUniverse.sh sees the correct value even though
+    # the stamp was written earlier in this script (before Phase 1 ran).
+    sed -i '' "s/^OCS_NATIVE_UNLOADED=.*/OCS_NATIVE_UNLOADED=true/" \
+        "$RE_DIR/.universe-engine-selection" 2>/dev/null || true
+else
+    # Not a launchd service — fall back to a plain kill if something else holds the port.
+    _ocs_port_pid=$(lsof -ti TCP:"$_ocs_gw_port_cleanup" -sTCP:LISTEN 2>/dev/null | head -1 || true)
+    if [ -n "$_ocs_port_pid" ]; then
+        info "Stopping native process on port $_ocs_gw_port_cleanup (PID $_ocs_port_pid)..."
+        kill "$_ocs_port_pid" 2>/dev/null || true
+        sleep 1
+    fi
 fi
 
 # Settle time for Docker Desktop VirtioFS file-lock release after container removal
@@ -592,9 +623,17 @@ else
 
     if [ "$_ocs_ok" = true ]; then
         info "Starting OpenClaw (gateway :$OCS_GW_PORT, webui :$OCS_UI_PORT)..."
+        # Pre-flight: verify ports are free (a native openclaw-gateway would have
+        # been killed in Phase 1, but something else might still be listening).
+        for _ocs_check_port in "$OCS_GW_PORT" "$OCS_UI_PORT"; do
+            _ocs_blocker=$(lsof -ti TCP:"$_ocs_check_port" -sTCP:LISTEN 2>/dev/null | head -1 || true)
+            if [ -n "$_ocs_blocker" ]; then
+                die "OpenClaw port $_ocs_check_port is still in use by PID $_ocs_blocker\n  Stop that process and re-run."
+            fi
+        done
         (cd "$OCS_DIR" && docker compose up -d \
             2>/tmp/ocs_start_err.log) > /dev/null || \
-            die "OpenClaw docker compose up failed\n$(tail -5 /tmp/ocs_start_err.log 2>/dev/null)\n  Check:  docker logs openclaw-gateway"
+            die "OpenClaw docker compose up failed\n$(tail -5 /tmp/ocs_start_err.log 2>/dev/null)\n  Manual check:  cd $OCS_DIR && docker compose up 2>&1 | tail -20"
 
         info "Waiting for openclaw-gateway..."
         if poll_http "http://localhost:${OCS_GW_PORT}/healthz" \

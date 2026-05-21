@@ -53,12 +53,14 @@ done
 STAMPED_RE_ENGINE=""
 STAMPED_PE_ENGINE=""
 STAMPED_OPENCLAW="auto"
+STAMPED_OCS_NATIVE_UNLOADED="false"
 if [ -f "$RE_DIR/.universe-engine-selection" ]; then
   while IFS='=' read -r k v; do
     case "$k" in
-      RE_ENGINE) STAMPED_RE_ENGINE="$v" ;;
-      PE_ENGINE) STAMPED_PE_ENGINE="$v" ;;
-      OPENCLAW)  STAMPED_OPENCLAW="$v" ;;
+      RE_ENGINE)           STAMPED_RE_ENGINE="$v" ;;
+      PE_ENGINE)           STAMPED_PE_ENGINE="$v" ;;
+      OPENCLAW)            STAMPED_OPENCLAW="$v" ;;
+      OCS_NATIVE_UNLOADED) STAMPED_OCS_NATIVE_UNLOADED="$v" ;;
     esac
   done < "$RE_DIR/.universe-engine-selection"
 fi
@@ -67,17 +69,27 @@ PE_ENGINE="${PE_ENGINE:-${STAMPED_PE_ENGINE:-ai}}"
 
 stop_openclaw_stack() {
   local stamp="${1:-auto}"
+  local native_unloaded="${2:-false}"
   if [ "$stamp" = "no" ]; then
     info "OpenClaw: was not started — skipping"
-    return 0
-  fi
-  if [ -d "$OCS_DIR" ] && [ -f "$OCS_DIR/docker-compose.yml" ]; then
+  elif [ -d "$OCS_DIR" ] && [ -f "$OCS_DIR/docker-compose.yml" ]; then
     info "Stopping OpenClaw stack"
     (cd "$OCS_DIR" && docker compose down 2>/dev/null) || \
       warn "OpenClaw docker compose down returned non-zero"
     ok "OpenClaw compose down complete"
   else
     info "OpenClaw: not found at $OCS_DIR — nothing to stop"
+  fi
+  # Restore the native launchd service if startUniverse.sh unloaded it.
+  if [ "$native_unloaded" = "true" ]; then
+    local _plist="$HOME/Library/LaunchAgents/ai.openclaw.gateway.plist"
+    if [ -f "$_plist" ]; then
+      info "Reloading native openclaw-gateway (launchd)..."
+      launchctl load "$_plist" 2>/dev/null || warn "launchctl load returned non-zero"
+      ok "Native openclaw-gateway restored"
+    else
+      warn "Native openclaw-gateway plist not found at $_plist — cannot restore"
+    fi
   fi
 }
 
@@ -93,7 +105,7 @@ stop_native_engine() {
 }
 
 stop_ai_stack() {
-  stop_openclaw_stack "$STAMPED_OPENCLAW"
+  stop_openclaw_stack "$STAMPED_OPENCLAW" "$STAMPED_OCS_NATIVE_UNLOADED"
   info "Stopping AI Docker stack"
   if [ -d "$RE_DIR" ] && [ -f "$RE_DIR/docker-compose.yml" ]; then
     (cd "$RE_DIR" && docker compose down 2>/dev/null) || warn "RE docker compose down returned non-zero"
@@ -123,6 +135,7 @@ echo ""
 if [ "$STOP_ALL" = true ]; then
   stop_native_engine "$CPP_DIR" "CPP"
   stop_native_engine "$LSP_DIR" "LSP"
+  STAMPED_OCS_NATIVE_UNLOADED="${STAMPED_OCS_NATIVE_UNLOADED:-false}"
   stop_ai_stack
 else
   # Dedup the engine set across RE and PE using plain flags so the script
