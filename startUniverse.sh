@@ -744,8 +744,9 @@ hdr "7 · Operability"
 set +e
 
 # ── RE perceive smoke-test ─────────────────────────────────────────────────
-info "RE perceive smoke-test (768-element zero vector)..."
-ZERO_VEC=$(python3 -c "import json; print(json.dumps([0.0]*768))" 2>/dev/null || echo "")
+SMOKE_DIM="${VECTOR_DIMENSION:-768}"
+info "RE perceive smoke-test (${SMOKE_DIM}-element zero vector)..."
+ZERO_VEC=$(python3 -c "import json; print(json.dumps([0.0]*${SMOKE_DIM}))" 2>/dev/null || echo "")
 if [ -n "$ZERO_VEC" ]; then
     PERCEIVE_RESP=$(curl -sk -X POST https://localhost:3000/api/perceive \
         -H "Content-Type: application/json" \

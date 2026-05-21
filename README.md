@@ -1,6 +1,6 @@
 # Reality Engine
 
-A vector-based state machine system that models reality through observable events and CriticalEventSequence (CES) machines.  Inputs are assembled by the **Perception Engine** from configurable sources (test sequences, simulated waveforms, live sensors, **MQTT brokers**) and pushed into the **Reality Engine**, where registered machines process them through a shared perceptual space (768-element default; grows dynamically to accommodate all machine mappings).
+A vector-based state machine system that models reality through observable events and CriticalEventSequence (CES) machines.  Inputs are assembled by the **Perception Engine** from configurable sources (test sequences, simulated waveforms, live sensors, **MQTT brokers**) and pushed into the **Reality Engine**, where registered machines process them through a shared perceptual space that scales elastically to span all registered machine mappings.
 
 This repo (`RealityEngine_AI`) hosts the **default** runtime — TypeScript on Node.js.  Two sibling implementations provide black-box equivalence on the same JSON corpus:
 
@@ -189,7 +189,7 @@ A named collection of CriticalEventSequences with a **perceptual mapping** — `
 
 ### Perceptual Space
 
-A shared vector (768 elements by default; grows to the highest machine mapping offset + length). All machines snapshot their input region, process concurrently, then merge their outputs in a single atomic phase. Sources outside a machine's assigned regions are unaffected.
+A shared vector that grows elastically to span the highest `offset + length` across all registered machine mappings (configurable via `VECTOR_DIMENSION`; defaults to 768 as a minimum floor). All machines snapshot their input region, process concurrently, then merge their outputs in a single atomic phase. Sources outside a machine's assigned regions are unaffected.
 
 ### Perception Engine
 

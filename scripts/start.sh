@@ -441,7 +441,7 @@ echo "  5. Run Simulation:          Observe perceptual space propagation in real
 echo "  6. View Logs in Grafana:    https://localhost:3002 (admin/admin)"
 echo ""
 echo "New Features:"
-echo "  - Universal Input Vector Display (768-element perceptual space, unified with localAIStack)"
+echo "  - Universal Input Vector Display (elastic perceptual space, unified with localAIStack)"
 echo "  - Machine interconnection visualization with perceptual mappings"
 echo "  - Random stream generator for universal perceptual space"
 echo "  - Real-time visualization of machine output overwrites"
