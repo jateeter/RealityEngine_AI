@@ -4,31 +4,31 @@ A real-time visualization application for the Reality Engine, displaying Critica
 
 ## Features
 
-### Visualization
-- **Directed Network Graphs**: Critical Event Sequences displayed as interactive directed graphs
-- **Active Vector Highlighting**: Real-time green glow and pulsing for active vectors
-- **Slide-out Legend Panel**: Hover on right edge to reveal comprehensive graph legend
-- **Event Space Indicators**: Visual grouping for Input and Output event spaces
-- **Reactive Windowing**: Smooth zoom, pan, and fit controls
-- **Clean Interface**: Production-ready appearance with minimal overlays
+### Views
+- **Machine Selection** (home): Domain-grouped hierarchical tree — Domain → Machine → CES.  Click a machine to open its Administration view; keyboard arrow keys and Enter also navigate the tree.
+- **Machine Administration**: CES graph for the selected machine with live Perception Engine source controls, output stream visualization, and a perceptual-log panel.
+- **Machine Interconnection**: Force-directed graph of all machines, coloured by domain, showing shared perceptual-space regions.  Toggle-button legend panel anchored to the left edge of the graph.
+- **Tobias**: Real-time AI sequence pulse canvas.
 
-### Simulation Controls
-- **Reality Sensing Mode**: Automatically generates random input vectors when no test data available
-- **Random Vector Generator**:
-  - Configurable dimension (1-128) and count (1-1000)
-  - Binary Threshold option: Round values to {0.00, 1.00} for discrete event testing
-  - Continuous or discrete vector generation
-- **Playback Controls**:
-  - Speed adjustment: 200ms to 1000ms per vector
-  - Manual step-through for detailed analysis
-  - Play/Pause/Reset simulation controls
-- **Input Stream Visualization**: Real-time display of upcoming input vectors
+### Visualization
+- **Directed CES Graphs**: CriticalEventSequences rendered as interactive directed graphs (D3 / ReactFlow)
+- **Active Vector Highlighting**: Real-time green glow and pulsing for active vectors driven by live WebSocket pushes
+- **Domain-Coloured Legend Panel**: Click the tab on the left edge of the machine graph to reveal the domain/edge legend
+- **Perceptual Region Heatmap**: `UniversalInputVectorDisplay` shows the full elastic perceptual space with machine input/output regions colour-coded
+- **3-D Graph Toggle**: Switch the interconnection view between 2-D force-directed and 3-D layouts
+- **Reactive Windowing**: Smooth zoom, pan, and fit controls
+
+### Perception Engine Controls
+- **Auto-push**: Start/stop the PE push loop and configure interval (ms)
+- **Manual step and reset**
+- **Source management**: Add, edit, and delete test / sensor / simulated sources
+- **MQTT bridge status**: Live view of broker connection and mapping registry
 
 ### Interaction
-- **Keyboard Controls**: Navigate and control visualization using keyboard shortcuts
-- **Interactive Nodes**: Click nodes to view detailed vector information
-- **Real-time Updates**: WebSocket-based live updates during simulation
-- **Non-invasive**: Separate application that doesn't modify the Reality Engine
+- **Keyboard Controls**: Arrow keys navigate the machine tree; graph keyboard shortcuts (F, C, +, −, arrows) control graph views
+- **Interactive Nodes**: Click nodes to view detailed vector and sequence information
+- **Real-time Updates**: Single persistent WebSocket connection (`ws://localhost:3001/ws`) drives all live state updates
+- **Non-invasive**: Separate application that does not modify the Reality Engine
 
 ## Architecture
 
@@ -141,24 +141,50 @@ The frontend will be available at `http://localhost:5173`
 
 ## API Endpoints
 
-The visualizer backend provides these endpoints:
+The visualizer backend exposes these endpoints (all proxied or assembled by the backend on port 3001):
 
-### Graph Data
-- `GET /api/viz/sequences` - Get all sequences with graph data
-- `GET /api/viz/sequences/:id` - Get specific sequence graph
+### Visualizer Data
+- `GET /api/viz/sequences` - All CES sequences with graph node/edge data
+- `GET /api/viz/sequences/:id` - Single CES sequence graph
+- `GET /api/viz/paging-decisions` - Resolved governance paging decisions (RAG table)
 
-### Engine Data
-- `GET /api/viz/stats` - Get engine statistics
-- `GET /api/viz/active` - Get active vectors
-- `GET /api/viz/history` - Get transition history
+### Machine Management
+- `GET /api/machines` - List all loaded machines (supports `?domain=` filter)
+- `GET /api/machines/:id` - Get single machine
+- `POST /api/machines` - Create machine
+- `PATCH /api/machines/:id` - Partial update
+- `PUT /api/machines/:id` - Full replace
+- `DELETE /api/machines/:id` - Delete machine
+- `GET /api/machines/:id/export` - Export machine as JSON
+- `GET /api/machines/json/list` - List machine JSON files on disk
+- `GET /api/machines/json/:name` - Get machine JSON file contents
+- `POST /api/machines/json/import` - Import machine JSON from disk into the engine
+- `GET /api/machine-graph` - Machine interconnection graph (all machines, domains, shared regions)
 
-### Operations
-- `POST /api/viz/sequences/:id/reset` - Reset sequence to initial state
-- `POST /api/viz/process` - Process input vector
-- `GET /api/viz/poll` - Poll for updates
+### Perceptual Simulation
+- `GET /api/perceptual-simulation/state` - Current simulation state
+- `GET /api/perceptual-simulation/history` - Simulation step history
+- `POST /api/perceptual-simulation/configure/chunk` - Stage a simulation configuration chunk
+- `POST /api/perceptual-simulation/configure/commit` - Apply staged configuration
+- `POST /api/perceptual-simulation/start` - Start simulation
+- `POST /api/perceptual-simulation/stop` - Stop simulation
+- `POST /api/perceptual-simulation/step` - Step simulation forward
+- `POST /api/perceptual-simulation/reset` - Reset simulation
+
+### Perception Engine (proxy to PE)
+- `GET /api/perception/sources` - List PE sensor/test sources
+- `GET /api/perception/mqtt/status` - MQTT bridge connection state and counters
+- `GET /api/perception/mqtt/mappings` - MQTT mapping registry
+- `PUT /api/perception/mqtt/mappings` - Replace and reload MQTT mapping registry
+- `POST /api/perceive` - Direct perceptual input push
+
+### Demo Sequences
+- `GET /api/demo/data-center` - Data-center demo CES graph
+- `GET /api/demo/multi-step` - Multi-step demo CES graph
+- `GET /api/demo/kleene-star` - Kleene-star demo CES graph
 
 ### WebSocket
-- `ws://localhost:3001/ws` - Real-time updates stream
+- `ws://localhost:3001/ws` - Real-time updates stream (active-vector highlights, MQTT ingest events, heartbeat)
 
 ## Configuration
 
@@ -169,6 +195,7 @@ Create a `.env` file in `visualizer/backend/`:
 ```env
 VIZ_PORT=3001
 REALITY_ENGINE_URL=http://localhost:3000
+PERCEPTION_ENGINE_URL=http://localhost:3004
 ```
 
 ### Frontend Configuration
