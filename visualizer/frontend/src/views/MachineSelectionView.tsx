@@ -10,6 +10,14 @@ import {
   DOMAIN_ORDER,
   DomainId,
 } from '../components/machineDomains';
+import {
+  SequenceTooltip,
+  EMPTY_LIVE,
+} from '../components/MachineSequenceTooltip';
+import type {
+  TooltipState,
+  TooltipMachineData,
+} from '../components/MachineSequenceTooltip';
 import './MachineSelectionView.css';
 
 // ── Tree shape ──────────────────────────────────────────────────────────────
@@ -73,8 +81,14 @@ const MachineSelectionView: React.FC = () => {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set<string>());
   const [focusedId, setFocusedId] = useState<string | null>(null);
 
-  const treeRef = useRef<HTMLDivElement>(null);
-  const rowRefs = useRef(new Map<string, HTMLDivElement>());
+  const treeRef  = useRef<HTMLDivElement>(null);
+  const rootRef  = useRef<HTMLDivElement>(null);
+  const rowRefs  = useRef(new Map<string, HTMLDivElement>());
+
+  // ── Tooltip state ─────────────────────────────────────────────────────────
+  const [tooltip,       setTooltip]       = useState<TooltipState | null>(null);
+  const tooltipCacheRef = useRef<Map<string, TooltipMachineData>>(new Map());
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Load machines on mount ────────────────────────────────────────────────
   useEffect(() => {
@@ -311,6 +325,48 @@ const MachineSelectionView: React.FC = () => {
     }
   }, [flatRows, focusedId, expanded, toggle, focusAndScroll, activateRow]);
 
+  // ── Tooltip helpers ───────────────────────────────────────────────────────
+  const fetchAndShowTooltip = useCallback(async (machineId: string, name: string, x: number, y: number) => {
+    setTooltip(prev => {
+      if (prev?.pinned) return prev;
+      return { machineId, name, x, y, pinned: false, data: null };
+    });
+    const cached = tooltipCacheRef.current.get(machineId);
+    if (cached) {
+      setTooltip(prev => prev?.machineId === machineId ? { ...prev, data: cached } : prev);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/machines/${machineId}/export`);
+      if (!res.ok) return;
+      const data: TooltipMachineData = await res.json();
+      tooltipCacheRef.current.set(machineId, data);
+      setTooltip(prev => prev?.machineId === machineId ? { ...prev, data } : prev);
+    } catch {}
+  }, []);
+
+  const handleNodeMouseEnter = useCallback((e: React.MouseEvent, machineId: string, name: string) => {
+    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+    const { clientX, clientY } = e;
+    tooltipTimerRef.current = setTimeout(() => {
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      fetchAndShowTooltip(machineId, name, clientX - rect.left + 14, clientY - rect.top - 10);
+    }, 180);
+  }, [fetchAndShowTooltip]);
+
+  const handleNodeMouseLeave = useCallback(() => {
+    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+    tooltipTimerRef.current = setTimeout(
+      () => setTooltip(prev => prev?.pinned ? prev : null),
+      220,
+    );
+  }, []);
+
+  useEffect(() => () => {
+    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+  }, []);
+
   const reloadMachines = async () => {
     const { api } = await import('../api');
     setMachines(await api.getMachines());
@@ -327,8 +383,14 @@ const MachineSelectionView: React.FC = () => {
   };
   const collapseAll = () => setExpanded(new Set());
 
+  const machineById = useMemo(() => {
+    const m = new Map<string, Machine>();
+    for (const mach of machines) m.set(mach.id, mach);
+    return m;
+  }, [machines]);
+
   return (
-    <div className="msv-root">
+    <div className="msv-root" ref={rootRef}>
 
       {/* ── Header ──────────────────────────────────────── */}
       <header className="msv-header">
@@ -478,6 +540,8 @@ const MachineSelectionView: React.FC = () => {
                     aria-selected={isFocused}
                     className={`msv-row msv-row-machine${isFocused ? ' is-focused' : ''}`}
                     style={{ ['--domain-color' as any]: DOMAINS[n.domainId].color }}
+                    onMouseEnter={e => handleNodeMouseEnter(e, m.id, m.name)}
+                    onMouseLeave={handleNodeMouseLeave}
                     onClick={() => { setFocusedId(n.id); openMachine(m.id, null); }}
                   >
                     <span
@@ -533,6 +597,8 @@ const MachineSelectionView: React.FC = () => {
                   aria-selected={isFocused}
                   className={`msv-row msv-row-ces${isFocused ? ' is-focused' : ''}`}
                   style={{ ['--domain-color' as any]: DOMAINS[n.domainId].color }}
+                  onMouseEnter={e => handleNodeMouseEnter(e, n.machineId, machineById.get(n.machineId)?.name ?? n.sequenceName)}
+                  onMouseLeave={handleNodeMouseLeave}
                   onClick={() => { setFocusedId(n.id); openMachine(n.machineId, n.sequenceId); }}
                 >
                   <span className="msv-chevron is-empty">·</span>
@@ -545,6 +611,26 @@ const MachineSelectionView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* ── Node tooltip ─────────────────────────────────── */}
+      {tooltip && (
+        <SequenceTooltip
+          tooltip={tooltip}
+          live={EMPTY_LIVE}
+          onMouseEnter={() => {
+            if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+          }}
+          onMouseLeave={() => {
+            if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+            tooltipTimerRef.current = setTimeout(
+              () => setTooltip(prev => prev?.pinned ? prev : null),
+              220,
+            );
+          }}
+          onPin={() => setTooltip(prev => prev ? { ...prev, pinned: !prev.pinned } : null)}
+          onClose={() => setTooltip(null)}
+        />
+      )}
 
       {/* ── Dialogs ───────────────────────────────────────── */}
       <MachineCreateDialog
