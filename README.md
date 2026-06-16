@@ -27,7 +27,7 @@ The AI runtime exposes its services through a TLS-terminating nginx proxy:
 | **Perception Engine API** | https://localhost:3004 | Source assembly, auto-push, `/api/signals`, **`/api/mqtt/*`** |
 | **Qdrant Dashboard** | http://localhost:6333/dashboard | Vector database UI |
 
-CPP and LSP runtimes listen on `3299` (RE) + `3300` (PE) without the TLS proxy.
+CPP runtime listens on `5301` (RE) + `5300` (PE); LSP on `5601` (RE) + `5600` (PE) — without the TLS proxy.
 
 ---
 
