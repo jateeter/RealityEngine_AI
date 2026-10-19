@@ -46,3 +46,6 @@ wiki/
 
 # Engine selection stamp written by startUniverse.sh — runtime state, not config
 .universe-engine-selection
+
+# Local machine files
+.claude/settings.local.json
